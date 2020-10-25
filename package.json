@@ -17,5 +17,8 @@
     "dynamodb",
     "redis",
     "elasticsearch"
-  ]
+  ],
+  "dependencies": {
+    "rubico": "latest"
+  }
 }
