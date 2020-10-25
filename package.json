@@ -1,0 +1,21 @@
+{
+  "name": "servicio",
+  "version": "0.0.0",
+  "description": "A toolkit for creating services",
+  "author": "Richard Tong",
+  "license": "MIT",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "github:richytong/servicio"
+  },
+  "homepage": "https://github.com/richytong/servicio",
+  "keywords": [
+    "service",
+    "toolkit",
+    "dynamo",
+    "dynamodb",
+    "redis",
+    "elasticsearch"
+  ]
+}
