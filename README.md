@@ -1,2 +1,2 @@
 # servicio
-A toolkit for creating services.
+A toolkit for creating services. APIs are functional and domain specific.
