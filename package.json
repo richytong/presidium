@@ -1,7 +1,7 @@
 {
   "name": "servicio",
   "version": "0.0.0",
-  "description": "A toolkit for creating services",
+  "description": "A library for creating web services",
   "author": "Richard Tong",
   "license": "MIT",
   "main": "index.js",
@@ -11,6 +11,7 @@
   },
   "homepage": "https://github.com/richytong/servicio",
   "keywords": [
+    "web",
     "service",
     "toolkit",
     "dynamo",
@@ -20,7 +21,8 @@
   ],
   "dependencies": {
     "ioredis": "^4.19.0",
-    "rubico": "latest"
+    "rubico": "latest",
+    "thunk-test": "latest"
   },
   "scripts": {
     "test": "node *.test.js && node internal/*.test.js"
