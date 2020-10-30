@@ -1,5 +1,5 @@
 {
-  "name": "servicio",
+  "name": "presidium",
   "version": "0.0.0",
   "description": "A library for creating web services",
   "author": "Richard Tong",
@@ -7,15 +7,18 @@
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "github:richytong/servicio"
+    "url": "github:richytong/presidium"
   },
-  "homepage": "https://github.com/richytong/servicio",
+  "homepage": "https://github.com/richytong/presidium",
   "keywords": [
     "web",
+    "micro",
     "service",
+    "microservice",
     "toolkit",
     "dynamo",
     "dynamodb",
+    "mongo",
     "redis",
     "elasticsearch"
   ],
