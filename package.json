@@ -19,6 +19,10 @@
     "elasticsearch"
   ],
   "dependencies": {
+    "ioredis": "^4.19.0",
     "rubico": "latest"
+  },
+  "scripts": {
+    "test": "node *.test.js && node internal/*.test.js"
   }
 }
