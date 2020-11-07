@@ -23,11 +23,15 @@
     "elasticsearch"
   ],
   "dependencies": {
+    "engine.io": "^4.0.1",
     "ioredis": "^4.19.0",
     "rubico": "latest",
     "thunk-test": "latest"
   },
   "scripts": {
     "test": "node *.test.js && node internal/*.test.js"
+  },
+  "devDependencies": {
+    "node-fetch": "^2.6.1"
   }
 }
