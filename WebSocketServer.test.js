@@ -1,7 +1,7 @@
 const assert = require('assert')
 const Test = require('thunk-test')
 const WebSocketServer = require('./WebSocketServer')
-const WebSocket = require('ws')
+const WebSocket = require('./WebSocket')
 
 module.exports = Test('WebSocketServer', function (socketHandler) {
   this.clientMessages = []
@@ -22,7 +22,7 @@ module.exports = Test('WebSocketServer', function (socketHandler) {
   let didOpen = false
   await new Promise(resolve => {
     server.listen(1337, async () => {
-      const socket = new WebSocket('ws://localhost:1337/')
+      const socket = WebSocket('ws://localhost:1337/')
       socket.on('open', () => {
         didOpen = true
       })
