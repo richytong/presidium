@@ -14,11 +14,11 @@ const _WebSocket = require('ws')
  * ```javascript
  * const socket = WebSocket('ws://localhost:1337/')
  *
- * socket.on('open', function open() {
+ * socket.on('open', () => {
  *   socket.send('something')
  * })
  *
- * socket.on('message', function incoming(data) {
+ * socket.on('message', data => {
  *   console.log(data)
  * })
  * ```
