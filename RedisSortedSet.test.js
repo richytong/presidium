@@ -3,11 +3,9 @@ const Test = require('thunk-test')
 const assert = require('assert')
 const RedisSortedSet = require('./RedisSortedSet')
 
-Test('RedisSortedSet', RedisSortedSet)
-.before(function () {
+module.exports = Test('RedisSortedSet', RedisSortedSet).before(function () {
   this.redises = []
-})
-.case('redis://localhost:6379', 'test', async function (redisSortedSet) {
+}).case('redis://localhost:6379', 'test', async function (redisSortedSet) {
   assert(typeof redisSortedSet == 'object')
   assert(typeof redisSortedSet.zadd == 'function')
   await redisSortedSet.redis.flushdb()
@@ -122,7 +120,6 @@ Test('RedisSortedSet', RedisSortedSet)
   )
 
   this.redises.push(redisSortedSet.redis)
-})
-.after(function () {
+}).after(function () {
   this.redises.forEach(redis => redis.disconnect())
-})()
+})
