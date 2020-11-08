@@ -18,5 +18,5 @@ map.series(pipe([
     numTests += 1
   })
 ]))(['*.test.js', 'internal/*.test.js']).then(() => {
-  console.log(`✅ ${numTests} passing`)
+  console.log(`-- ✅ ${numTests} passing`)
 })
