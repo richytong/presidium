@@ -1,3 +1,10 @@
-const servicio = {}
+const HttpServer = require('./HttpServer')
+const WebSocketServer = require('./WebSocketServer')
+const RedisSortedSet = require('./RedisSortedSet')
 
-module.exports = servicio
+const Presidium = {
+  HttpServer, WebSocketServer,
+  RedisSortedSet,
+}
+
+module.exports = Presidium

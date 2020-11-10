@@ -6,7 +6,7 @@ const Presidium = require('presidium')
 
 const {
   HttpServer, WebSocketServer, WebSocket,
-  Dynamo, DynamoTable, DynamoItem, DynamoIndex,
+  Dynamo, DynamoTable, DynamoIndex, DynamoStream,
   Redis, RedisString, RedisList, RedisSet, RedisHash,
     RedisSortedSet, RedisBitmap, RedisHyperLogLog, RedisStream,
   Elasticsearch, ElasticsearchIndex,

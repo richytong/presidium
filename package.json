@@ -23,6 +23,7 @@
     "elasticsearch"
   ],
   "dependencies": {
+    "aws-sdk": "^2.787.0",
     "ioredis": "^4.19.0",
     "rubico": "latest",
     "thunk-test": "file:../thunk-test",

@@ -70,6 +70,9 @@ const RedisSortedSet = function (redis, key) {
     : typeof redis == 'string' ? new Redis(parseRedisConnectionString(redis))
     : new Redis(redis)
   this.key = key
+  this.ready = new Promise(resolve => {
+    this.redis.on('ready', resolve)
+  })
 }
 
 RedisSortedSet.prototype.bzpopmax = function bzpopmax(...args) {
