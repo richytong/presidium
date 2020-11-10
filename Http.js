@@ -10,6 +10,10 @@ const fetch = require('node-fetch')
  *
  * @description
  * The Hypertext Transfer Protocol. [wikipedia](https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol)
+ *
+ * @todo
+ * CONNECT method Http.prototype.connect
+ * https://stackoverflow.com/questions/11697943/when-should-one-use-connect-and-get-http-methods-at-http-proxy-server/40329026
  */
 const Http = function (url) {
   if (this == null || this.constructor != Http) {
@@ -41,8 +45,6 @@ const Http = function (url) {
  * [http method reference](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods)
  *
  * [Response reference](https://developer.mozilla.org/en-US/docs/Web/API/Response).
- *
- * @todo CONNECT
  */
 Http.prototype.get = function (path, options) {
   return fetch(new URL(path, this.url), options)
