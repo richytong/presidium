@@ -30,7 +30,7 @@
     "ws": "^7.3.1"
   },
   "scripts": {
-    "test": "node *.test.js && node internal/*.test.js"
+    "test": "node test.js"
   },
   "devDependencies": {
     "glob": "^7.1.6",

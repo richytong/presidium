@@ -22,7 +22,9 @@ HttpServer((request, response) => {
   response.end()
 }).listen(3000)
 
-Http.get('http://localhost:3000/')
+const http = Http('http://localhost:3000/')
+
+http.get('/')
   .then(response => response.json())
   .then(console.log) // { greeting: 'Hello World' }
 
