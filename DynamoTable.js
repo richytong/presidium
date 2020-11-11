@@ -1,9 +1,10 @@
 const rubico = require('rubico')
 const rubicoX = require('rubico/x')
 const crypto = require('crypto')
-const isPromise = require('./internal/isPromise')
 const DynamoDB = require('aws-sdk/clients/dynamodb')
 const Dynamo = require('./Dynamo')
+const isPromise = require('./internal/isPromise')
+const hashJSON = require('./internal/hashJSON')
 
 const {
   pipe, tap,
@@ -25,8 +26,6 @@ const stringifyJSON = JSON.stringify
 const arrayPush = (array, item) => array.push(item)
 
 const join = delimiter => value => value.join(delimiter)
-
-const slice = (from, to) => value => value.slice(from, to < 0 ? value.length - to : to)
 
 const objectSet = (object, key, value) => {
   object[key] = value
@@ -75,14 +74,6 @@ const objectMapEntries = function (object, mapper) {
 map.entries = mapper => object => objectMapEntries(object, mapper)
 
 transform.entries = (transducer, init) => object => transform(transducer, init)(Object.entries(object))
-
-const sha256 = value => crypto.createHash('sha256').update(value).digest('hex')
-
-const hashJSON = pipe([
-  stringifyJSON,
-  sha256,
-  slice(0, 32),
-])
 
 /**
  * @name DynamoTable

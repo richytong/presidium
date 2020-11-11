@@ -3,27 +3,16 @@ const fork = require('rubico/fork')
 const map = require('rubico/map')
 const get = require('rubico/get')
 const curry = require('rubico/curry')
+const defaultsDeep = require('rubico/x/defaultsDeep')
 const DynamoDB = require('aws-sdk/clients/dynamodb')
+const getFirstKey = require('./internal/getFirstKey')
+const getFirstValue = require('./internal/getFirstValue')
 
 const isArray = Array.isArray
 
 const isBinary = ArrayBuffer.isView
 
 const objectKeys = Object.keys
-
-// { [key string]: any } => key
-const getFirstKey = object => {
-  for (const key in object) {
-    return key
-  }
-}
-
-// { [key string]: value any } => value
-const getFirstValue = object => {
-  for (const key in object) {
-    return object[key]
-  }
-}
 
 // message => ()
 const throwTypeError = function throwTypeError(message) {
@@ -152,9 +141,17 @@ Dynamo.prototype.deleteTable = async function deleteTable(tablename) {
  *       ReadCapacityUnits: number,
  *       WriteCapacityUnits: number,
  *     },
- *     BillingMode?: 'PROVISIONED'|'PAY_PER_REQUEST',
+ *     Projection?: {
+ *       NonKeyAttributes?: Array<string>,
+ *       ProjectionType: 'ALL'|'KEYS_ONLY'|'INCLUDE',
+ *     }
  *   },
  * )
+ * ```
+ *
+ * @description
+ * ```javascript
+ * Dynamo(dynamo).createIndex('test-tablename', [{ status: 'string', createTime: 'number' }])
  * ```
  *
  * @reference
@@ -162,24 +159,26 @@ Dynamo.prototype.deleteTable = async function deleteTable(tablename) {
  * https://stackoverflow.com/questions/36493323/adding-new-local-secondary-index-to-an-existing-dynamodb-table
  */
 
-Dynamo.prototype.createIndex = async function createIndex(tablename, index, options) {
+Dynamo.prototype.createIndex = async function createIndex(tablename, index, options = {}) {
   const params = {
     IndexName: Dynamo.Indexname(index),
     KeySchema: Dynamo.KeySchema(index),
-    AttributeDefinitions: Dynamo.AttributeDefinitions(index),
-    ...options,
+    ...defaultsDeep({
+      Projection: {
+        ProjectionType: 'ALL',
+      },
+      ProvisionedThroughput: {
+        ReadCapacityUnits: 5,
+        WriteCapacityUnits: 5,
+      },
+    })(options),
   }
 
-  if (params.BillingMode == 'PROVISIONED') {
-    params.ProvisionedThroughput = get('ProvisionedThroughput', {
-      ReadCapacityUnits: 5,
-      WriteCapacityUnits: 5,
-    })(options)
-  }
   return this.dynamodb.updateTable({
     TableName: tablename,
+    AttributeDefinitions: Dynamo.AttributeDefinitions(index),
     GlobalSecondaryIndexUpdates: [{ Create: params }],
-  })
+  }).promise()
 }
 
 /**
@@ -213,6 +212,15 @@ Dynamo.KeySchema = function DynamoKeySchema(primaryKeyOrIndex) {
 
 /**
  * @name Dynamo.AttributeDefinitions
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * DynamoAttributeType = 'S'|'N'|'B'|'string'|'number'|'binary'
+ *
+ * Dynamo.AttributeDefinitions(
+ *   primaryKeyOrIndex Array<Object<DynamoAttributeType>>
+ * ) -> Array<{ AttributeName: string, AttributeType: any }>
+ * ```
  */
 Dynamo.AttributeDefinitions = function DynamoAttributeDefinitions(primaryKeyOrIndex) {
   return primaryKeyOrIndex.map(fork({
