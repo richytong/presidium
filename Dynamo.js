@@ -32,7 +32,7 @@ const throwTypeError = function throwTypeError(message) {
  * ```
  */
 const Dynamo = function (dynamo) {
-  if (typeof this == null || this.constructor != Dynamo) {
+  if (this == null || this.constructor != Dynamo) {
     return new Dynamo(dynamo)
   }
   if (typeof dynamo == 'string') {
@@ -54,6 +54,7 @@ const Dynamo = function (dynamo) {
       ...dynamo,
     })
   }
+  return this
 }
 
 /**
@@ -64,7 +65,7 @@ const Dynamo = function (dynamo) {
  * DynamoAttributeType = 'S'|'N'|'B'|'string'|'number'|'binary'
  *
  * Dynamo(dynamo).createTable(
- *   tablename string, 
+ *   tablename string,
  *   primaryKey [Object<DynamoAttributeType>, Object<DynamoAttributeType>?],
  *   options? {
  *     ProvisionedThroughput?: {
@@ -134,7 +135,7 @@ Dynamo.prototype.deleteTable = async function deleteTable(tablename) {
  * DynamoAttributeType = 'S'|'N'|'B'|'string'|'number'|'binary'
  *
  * Dynamo(dynamo).createIndex(
- *   tablename string, 
+ *   tablename string,
  *   index [Object<DynamoAttributeType>, Object<DynamoAttributeType>?],
  *   options? {
  *     ProvisionedThroughput?: {

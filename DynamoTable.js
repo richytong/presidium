@@ -101,11 +101,12 @@ transform.entries = (transducer, init) => object => transform(transducer, init)(
  * ```
  */
 const DynamoTable = function (dynamo, tablename) {
-  if (typeof this == null || this.constructor != DynamoTable) {
+  if (this == null || this.constructor != DynamoTable) {
     return new DynamoTable(dynamo, tablename)
   }
   this.dynamodb = new Dynamo(dynamo).dynamodb
   this.tablename = tablename
+  return this
 }
 
 /**

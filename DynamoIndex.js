@@ -136,12 +136,13 @@ const parseQuery = function parseQuery(abstractQuery) {
  * ```
  */
 const DynamoIndex = function (dynamo, tablename, indexname) {
-  if (typeof this == null || this.constructor != DynamoIndex) {
+  if (this == null || this.constructor != DynamoIndex) {
     return new DynamoIndex(dynamo, tablename, indexname)
   }
   this.dynamodb = new Dynamo(dynamo).dynamodb
   this.tablename = tablename
   this.indexname = indexname
+  return this
 }
 
 /**

@@ -20,6 +20,7 @@ const Http = function (url) {
     return new Http(url)
   }
   this.url = url
+  return this
 }
 
 /**

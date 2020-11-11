@@ -73,6 +73,7 @@ const RedisSortedSet = function (redis, key) {
   this.ready = new Promise(resolve => {
     this.redis.on('ready', resolve)
   })
+  return this
 }
 
 RedisSortedSet.prototype.bzpopmax = function bzpopmax(...args) {

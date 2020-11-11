@@ -1,8 +1,11 @@
 // { [key string]: any } => key
 const getFirstKey = object => {
-  for (const key in object) {
-    return key
+  let key = null
+  for (const firstKey in object) {
+    key = firstKey
+    break
   }
+  return key
 }
 
 module.exports = getFirstKey

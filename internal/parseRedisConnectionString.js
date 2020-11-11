@@ -1,7 +1,9 @@
 const pipe = require('rubico/pipe')
+const curry = require('rubico/curry')
+const __ = require('rubico/__')
 
-// pattern RegExp => value string => matches object
-const match = pattern => value => value.match(pattern)
+// (expression RegExp, value string) => execResult object
+const exec = (expression, value) => expression.exec(value)
 
 /**
  * @name parseRedisConnectionString
@@ -23,8 +25,8 @@ const match = pattern => value => value.match(pattern)
  * ```
  */
 const parseRedisConnectionString = pipe([
-  match(/redis:\/\/(\w[-_\.\w]*)(:\d+)?(\/\d+)?/),
-  ([match, host, port, database]) => ({
+  curry(exec, /redis:\/\/(?<host>\w[-_.\w]*)(?<port>:\d+)?(?<database>\/\d+)?/, __),
+  ({ groups: { host, port, database } }) => ({
     host: host == null ? '127.0.0.1' : host,
     port: port == null ? 6379 : Number(port.slice(1)),
     database: database == null ? 0 : Number(database.slice(1)),

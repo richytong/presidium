@@ -34,6 +34,7 @@ const WebSocketServer = function (socketHandler) {
   webSocketServer.on('connection', socketHandler)
   this.httpServer = httpServer
   this.webSocketServer = webSocketServer
+  return this
 }
 
 /**
