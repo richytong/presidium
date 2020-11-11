@@ -24,7 +24,7 @@ module.exports = [
     .case({ N: '-1' }, -1)
     .case({ BOOL: true }, true)
     .case({ NULL: true }, null)
-    .case({ NULL: true }, null)
+    .case({ NULL: false }, null)
     .case({ M: { a: { N: '1' }, b: { L: [{ S: 'a' }, { BOOL: true }] } } }, { a: 1, b: ['a', true] })
     .throws(NaN, new TypeError('unknown attributeValue NaN')),
 ]
