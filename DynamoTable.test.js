@@ -17,14 +17,14 @@ module.exports = Test('DynamoTable', DynamoTable)
     await testTable.putItem({ id: '1', name: 'george' })
     assert.deepEqual(
       await testTable.getItem({ id: '1' }),
-      { Item: map(Dynamo.toAttributeValue)({ id: '1', name: 'george' }) })
+      { Item: map(Dynamo.AttributeValue)({ id: '1', name: 'george' }) })
     assert.deepEqual(
       await testTable.putItem({ id: '1', name: 'george' }, {
         ReturnValues: 'ALL_OLD',
         ReturnConsumedCapacity: 'TOTAL',
       }),
       {
-        Attributes: map(Dynamo.toAttributeValue)({ id: '1', name: 'george' }),
+        Attributes: map(Dynamo.AttributeValue)({ id: '1', name: 'george' }),
         ConsumedCapacity: { CapacityUnits: 1, TableName: 'test-tablename' },
       })
 
@@ -49,7 +49,7 @@ module.exports = Test('DynamoTable', DynamoTable)
     assert.deepEqual(
       await testTable.getItem({ id: '1' }),
       {
-        Item: map(Dynamo.toAttributeValue)({
+        Item: map(Dynamo.AttributeValue)({
           id: '1',
           name: 'George III',
           isKing: true,

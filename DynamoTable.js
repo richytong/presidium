@@ -113,25 +113,7 @@ const DynamoTable = function (dynamo, tablename) {
   if (typeof this == null || this.constructor != DynamoTable) {
     return new DynamoTable(dynamo, tablename)
   }
-  if (typeof dynamo == 'string') {
-    this.dynamo = new DynamoDB({
-      apiVersion: '2012-08-10',
-      accessKeyId: 'accessKeyId-placeholder',
-      secretAccessKey: 'secretAccessKey-placeholder',
-      region: 'region-placeholder',
-      endpoint: dynamo,
-    })
-  } else if (dynamo.constructor == DynamoDB) {
-    this.dynamo = dynamo
-  } else {
-    this.dynamo = new DynamoDB({
-      apiVersion: '2012-08-10',
-      accessKeyId: 'accessKeyId-placeholder',
-      secretAccessKey: 'secretAccessKey-placeholder',
-      region: 'region-placeholder',
-      ...dynamo,
-    })
-  }
+  this.dynamodb = new Dynamo(dynamo).dynamodb
   this.tablename = tablename
 }
 
@@ -162,9 +144,9 @@ const DynamoTable = function (dynamo, tablename) {
  * ```
  */
 DynamoTable.prototype.putItem = function putItem(item, options) {
-  return this.dynamo.putItem({
+  return this.dynamodb.putItem({
     TableName: this.tablename,
-    Item: map(Dynamo.toAttributeValue)(item),
+    Item: map(Dynamo.AttributeValue)(item),
     ...options,
   }).promise()
 }
@@ -178,9 +160,9 @@ DynamoTable.prototype.putItem = function putItem(item, options) {
  * ```
  */
 DynamoTable.prototype.getItem = function getItem(key) {
-  return this.dynamo.getItem({
+  return this.dynamodb.getItem({
     TableName: this.tablename,
-    Key: map(Dynamo.toAttributeValue)(key),
+    Key: map(Dynamo.AttributeValue)(key),
   }).promise().then(tap(result => {
     if (result.Item == null) {
       throw new Error(`Item not found for ${stringifyJSON(key)}`)
@@ -220,9 +202,9 @@ DynamoTable.prototype.getItem = function getItem(key) {
  * ```
  */
 DynamoTable.prototype.updateItem = function updateItem(key, updates, options) {
-  return this.dynamo.updateItem({
+  return this.dynamodb.updateItem({
     TableName: this.tablename,
-    Key: map(Dynamo.toAttributeValue)(key),
+    Key: map(Dynamo.AttributeValue)(key),
     UpdateExpression: pipe([
       transform.entries(
         map(([key, value]) => `#${hashJSON(key)} = :${hashJSON(value)}`),
@@ -234,7 +216,7 @@ DynamoTable.prototype.updateItem = function updateItem(key, updates, options) {
       ([key, value]) => [`#${hashJSON(key)}`, key],
     )(updates),
     ExpressionAttributeValues: map.entries(
-      ([key, value]) => [`:${hashJSON(value)}`, Dynamo.toAttributeValue(value)],
+      ([key, value]) => [`:${hashJSON(value)}`, Dynamo.AttributeValue(value)],
     )(updates),
     ...options,
   }).promise()
@@ -256,9 +238,9 @@ DynamoTable.prototype.updateItem = function updateItem(key, updates, options) {
  * ```
  */
 DynamoTable.prototype.deleteItem = function deleteItem(key, options) {
-  return this.dynamo.deleteItem({
+  return this.dynamodb.deleteItem({
     TableName: this.tablename,
-    Key: map(Dynamo.toAttributeValue)(key),
+    Key: map(Dynamo.AttributeValue)(key),
     ...options,
   }).promise()
 }

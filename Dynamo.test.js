@@ -2,7 +2,7 @@ const Test = require('thunk-test')
 const Dynamo = require('./Dynamo')
 
 module.exports = [
-  Test('Dynamo.toAttributeValue', Dynamo.toAttributeValue)
+  Test('Dynamo.toAttributeValue', Dynamo.AttributeValue)
     .case('hey', { S: 'hey' })
     .case('', { S: '' })
     .case(1, { N: '1' })
@@ -15,7 +15,7 @@ module.exports = [
     .case({ a: 1, b: ['a', true] }, { M: { a: { N: '1' }, b: { L: [{ S: 'a' }, { BOOL: true }] } } })
     .throws(NaN, new TypeError('unknown value NaN')),
 
-  Test('Dynamo.fromAttributeValue', Dynamo.fromAttributeValue)
+  Test('Dynamo.attributeValueToJSON', Dynamo.attributeValueToJSON)
     .case({ S: 'hey' }, 'hey')
     .case({ S: '' }, '')
     .case({ N: '1' }, 1)
@@ -26,6 +26,6 @@ module.exports = [
     .case({ NULL: true }, null)
     .case({ NULL: true }, null)
     .case({ M: { a: { N: '1' }, b: { L: [{ S: 'a' }, { BOOL: true }] } } }, { a: 1, b: ['a', true] })
-    .throws(NaN, new TypeError('unknown value NaN')),
+    .throws(NaN, new TypeError('unknown attributeValue NaN')),
 ]
 
