@@ -15,7 +15,7 @@ const identity = require('rubico/x/identity')
  * }, bucketname string) -> S3Bucket
  * ```
  */
-function S3Bucket(s3, bucketname) {
+const S3Bucket = function (s3, bucketname) {
   if (this == null || this.constructor != S3Bucket) {
     return new S3Bucket(s3, bucketname)
   }
