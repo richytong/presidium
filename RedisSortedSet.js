@@ -1,9 +1,8 @@
 const rubico = require('rubico')
 const rubicoX = require('rubico/x')
-const Redis = require('ioredis')
 const ThunkTest = require('thunk-test')
 const assert = require('assert')
-const parseRedisConnectionString = require('./internal/parseRedisConnectionString')
+const Redis = require('./Redis')
 
 const {
   pipe, tap,
@@ -21,26 +20,16 @@ const {
   trace,
 } = rubicoX
 
-const arrayBufferIsView = ArrayBuffer.isView
-
-const arrayFrom = Array.from
-
-const stringifyJSON = JSON.stringify
-
-const parseJSON = JSON.parse
-
-// (from number, to number) => value Array|string => Array|string
-const slice = (from, to) => value => value.slice(from, to < 0 ? value.length + to : to)
-
 /**
  * @name RedisSortedSet
  *
  * @synopsis
  * ```coffeescript [specscript]
- * RedisSortedSet(
- *   key string|(any=>string),
- *   connection string|{ host: string, port: number, database: number },
- * ) -> redisSortedSet Object
+ * RedisSortedSet(value Redis|IORedis|string|{
+ *   host: string,
+ *   port: number,
+ *   database: number,
+ * }, key string) -> RedisSortedSet
  * ```
  *
  * @description
@@ -56,19 +45,11 @@ const slice = (from, to) => value => value.slice(from, to < 0 ? value.length + t
  * }, 'your:key')
  * ```
  */
-const RedisSortedSet = function (redis, key) {
+const RedisSortedSet = function (value, key) {
   if (this == null || this.constructor != RedisSortedSet) {
-    return new RedisSortedSet(redis, key)
+    return new RedisSortedSet(value, key)
   }
-  if (redis == null) {
-    throw new TypeError('redis must be a Redis instance, a connection string, or a connection object')
-  }
-  if (key == null) {
-    throw new TypeError('key must be a string')
-  }
-  this.redis = redis.constructor == Redis ? redis
-    : typeof redis == 'string' ? new Redis(parseRedisConnectionString(redis))
-    : new Redis(redis)
+  this.redis = new Redis(value).redis
   this.key = key
   this.ready = new Promise(resolve => {
     this.redis.on('ready', resolve)

@@ -14,8 +14,10 @@ const {
   Dynamo, DynamoTable, DynamoIndex, DynamoStream,
   Redis, RedisString, RedisList, RedisSet, RedisHash,
     RedisSortedSet, RedisBitmap, RedisHyperLogLog, RedisStream,
+  ElasticTranscoder, ElasticTranscoderPipeline,
   Elasticsearch, ElasticsearchIndex,
   Kinesis, KinesisStream,
+  Gremlin, GremlinGraph,
   Mongo, MongoTable,
   S3, S3Bucket,
 } = Presidium
