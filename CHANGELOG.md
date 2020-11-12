@@ -1,0 +1,11 @@
+# 0.3.0
+ * Http
+ * HttpServer
+ * WebSocket
+ * WebSocketServer
+ * Dynamo
+ * DynamoTable
+ * DynamoIndex
+ * RedisSortedSet
+ * S3
+ * S3Bucket
