@@ -147,6 +147,7 @@ module.exports = {
         'no-div-regex': 'error',
         'no-duplicate-imports': 'error',
         'no-else-return': 'error',
+        'no-empty': 'off',
         'no-empty-function': 'off',
         'no-eq-null': 'off',
         'no-eval': 'error',
