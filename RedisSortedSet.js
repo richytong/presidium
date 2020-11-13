@@ -1,31 +1,12 @@
-const rubico = require('rubico')
-const rubicoX = require('rubico/x')
-const ThunkTest = require('thunk-test')
-const assert = require('assert')
+const thunkify = require('rubico/thunkify')
 const Redis = require('./Redis')
-
-const {
-  pipe, tap,
-  switchCase, tryCatch,
-  fork, assign, get, pick, omit,
-  map, filter, reduce, transform, flatMap,
-  and, or, not, any, all,
-  eq, gt, lt, gte, lte,
-  thunkify, always,
-  curry, __,
-} = rubico
-
-const {
-  isString,
-  trace,
-} = rubicoX
 
 /**
  * @name RedisSortedSet
  *
  * @synopsis
  * ```coffeescript [specscript]
- * RedisSortedSet(value Redis|IORedis|string|{
+ * RedisSortedSet(connection Redis|IORedis|string|{
  *   host: string,
  *   port: number,
  *   database: number,
@@ -33,7 +14,7 @@ const {
  * ```
  *
  * @description
- * A Redis SortedSet ([redis docs](https://redis.io/topics/data-types#sorted-sets)). Supply a function as the key to create a sharded collection.
+ * A Redis SortedSet ([redis docs](https://redis.io/topics/data-types#sorted-sets)).
  *
  * ```javascript
  * RedisSortedSet('redis://localhost:6379', 'your:key')
@@ -45,23 +26,25 @@ const {
  * }, 'your:key')
  * ```
  */
-const RedisSortedSet = function (value, key) {
+const RedisSortedSet = function (connection, key) {
   if (this == null || this.constructor != RedisSortedSet) {
-    return new RedisSortedSet(value, key)
+    return new RedisSortedSet(connection, key)
   }
-  const redis = new Redis(value)
+  const redis = new Redis(connection)
   this.redis = redis.redis
-  this.readyPromise = redis.readyPromise
+  this.readyPromise = new Promise(resolve => {
+    this.redis.on('ready', thunkify(resolve, this))
+  })
   this.key = key
   return this
 }
 
 /**
- * @name Redis.prototype.ready
+ * @name RedisSortedSet.prototype.ready
  *
  * @synopsis
  * ```coffeescript [specscript]
- * RedisSortedSet(value).ready() -> Promise<RedisSortedSet>
+ * RedisSortedSet(connection).ready() -> Promise<RedisSortedSet>
  * ```
  */
 RedisSortedSet.prototype.ready = function ready() {

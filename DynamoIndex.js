@@ -114,7 +114,7 @@ const parseQuery = function parseQuery(abstractQuery) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DynamoIndex(dynamo string|DynamoDB|{
+ * DynamoIndex(connection string|DynamoDB|{
  *   accessKeyId: string,
  *   secretAccessKey: string,
  *   region: string,
@@ -135,11 +135,11 @@ const parseQuery = function parseQuery(abstractQuery) {
  * })
  * ```
  */
-const DynamoIndex = function (dynamo, tablename, indexname) {
+const DynamoIndex = function (connection, tablename, indexname) {
   if (this == null || this.constructor != DynamoIndex) {
-    return new DynamoIndex(dynamo, tablename, indexname)
+    return new DynamoIndex(connection, tablename, indexname)
   }
-  this.dynamodb = new Dynamo(dynamo).dynamodb
+  this.dynamo = new Dynamo(connection).dynamo
   this.tablename = tablename
   this.indexname = indexname
   return this
@@ -150,7 +150,7 @@ const DynamoIndex = function (dynamo, tablename, indexname) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DynamoIndex(dynamo, tablename, indexname).query(abstractQuery $=>())
+ * DynamoIndex(connection, tablename, indexname).query(abstractQuery $=>())
  * ```
  *
  * @description
@@ -170,7 +170,7 @@ const DynamoIndex = function (dynamo, tablename, indexname) {
  * ```
  */
 DynamoIndex.prototype.query = function query(abstractQuery, options) {
-  return this.dynamodb.query({
+  return this.dynamo.query({
     TableName: this.tablename,
     IndexName: this.indexname,
     ...parseQuery(abstractQuery),

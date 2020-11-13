@@ -1,45 +1,45 @@
-const S3Client = require('aws-sdk/clients/s3')
+const AWSS3 = require('aws-sdk/clients/s3')
 
 /**
  * @name S3
  *
  * @synopsis
  * ```coffeescript [specscript]
- * S3(s3 string|S3Client|{
+ * S3(connection string|AWSS3|{
  *   accessKeyId: string,
  *   secretAccessKey: string,
  *   region: string,
  * }) -> S3
  * ```
  */
-const S3 = function (value, options) {
+const S3 = function (connection, options) {
   if (this == null || this.constructor != S3) {
     return new S3(s3)
   }
-  if (typeof value == 'string') {
-    this.s3 = new S3Client({
+  if (typeof connection == 'string') {
+    this.s3 = new AWSS3({
       apiVersion: '2006-03-01',
       accessKeyId: 'accessKey',
       secretAccessKey: 'secretKey',
       region: 'x-x-x',
-      endpoint: value,
+      endpoint: connection,
       s3ForcePathStyle: true,
       signatureVersion: 'v4',
       ...options,
     })
-  } else if (value.constructor == S3) {
-    this.s3 = value.s3
-  } else if (value.constructor == S3Client) {
-    this.s3 = value
+  } else if (connection.constructor == S3) {
+    this.s3 = connection.s3
+  } else if (connection.constructor == AWSS3) {
+    this.s3 = connection
   } else {
-    this.s3 = new S3Client({
+    this.s3 = new AWSS3({
       apiVersion: '2006-03-01',
       accessKeyId: 'accessKey',
       secretAccessKey: 'secretKey',
       region: 'x-x-x',
       s3ForcePathStyle: true,
       signatureVersion: 'v4',
-      ...value,
+      ...connection,
     })
   }
   return this

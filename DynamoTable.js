@@ -80,7 +80,7 @@ transform.entries = (transducer, init) => object => transform(transducer, init)(
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DynamoTable(dynamo string|DynamoDB|{
+ * DynamoTable(connection string|DynamoDB|{
  *   accessKeyId: string,
  *   secretAccessKey: string,
  *   region: string,
@@ -100,11 +100,11 @@ transform.entries = (transducer, init) => object => transform(transducer, init)(
  * }, 'my-aws-table') // -> DynamoTable
  * ```
  */
-const DynamoTable = function (dynamo, tablename) {
+const DynamoTable = function (connection, tablename) {
   if (this == null || this.constructor != DynamoTable) {
-    return new DynamoTable(dynamo, tablename)
+    return new DynamoTable(connection, tablename)
   }
-  this.dynamodb = new Dynamo(dynamo).dynamodb
+  this.dynamo = new Dynamo(connection).dynamo
   this.tablename = tablename
   return this
 }
@@ -114,7 +114,7 @@ const DynamoTable = function (dynamo, tablename) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DynamoTable(dynamo string|object, tablename string).putItem(
+ * DynamoTable(connection string|object, tablename string).putItem(
  *   item Object,
  *   options? {
  *     ReturnConsumedCapacity?: 'INDEXES'|'TOTAL'|'NONE',
@@ -136,7 +136,7 @@ const DynamoTable = function (dynamo, tablename) {
  * ```
  */
 DynamoTable.prototype.putItem = function putItem(item, options) {
-  return this.dynamodb.putItem({
+  return this.dynamo.putItem({
     TableName: this.tablename,
     Item: map(Dynamo.AttributeValue)(item),
     ...options,
@@ -152,7 +152,7 @@ DynamoTable.prototype.putItem = function putItem(item, options) {
  * ```
  */
 DynamoTable.prototype.getItem = function getItem(key) {
-  return this.dynamodb.getItem({
+  return this.dynamo.getItem({
     TableName: this.tablename,
     Key: map(Dynamo.AttributeValue)(key),
   }).promise().then(tap(result => {
@@ -167,7 +167,7 @@ DynamoTable.prototype.getItem = function getItem(key) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DynamoTable(dynamo string|object, tablename string).updateItem(
+ * DynamoTable(connection string|object, tablename string).updateItem(
  *   key Object,
  *   updates Object,
  *   options? {
@@ -194,7 +194,7 @@ DynamoTable.prototype.getItem = function getItem(key) {
  * ```
  */
 DynamoTable.prototype.updateItem = function updateItem(key, updates, options) {
-  return this.dynamodb.updateItem({
+  return this.dynamo.updateItem({
     TableName: this.tablename,
     Key: map(Dynamo.AttributeValue)(key),
     UpdateExpression: pipe([
@@ -219,7 +219,7 @@ DynamoTable.prototype.updateItem = function updateItem(key, updates, options) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DynamoTable(dynamo).deleteItem(
+ * DynamoTable(connection, tablename).deleteItem(
  *   key Object,
  *   options? {
  *     ReturnConsumedCapacity?: 'INDEXES'|'TOTAL'|'NONE',
@@ -230,7 +230,7 @@ DynamoTable.prototype.updateItem = function updateItem(key, updates, options) {
  * ```
  */
 DynamoTable.prototype.deleteItem = function deleteItem(key, options) {
-  return this.dynamodb.deleteItem({
+  return this.dynamo.deleteItem({
     TableName: this.tablename,
     Key: map(Dynamo.AttributeValue)(key),
     ...options,

@@ -4,7 +4,7 @@ const map = require('rubico/map')
 const get = require('rubico/get')
 const curry = require('rubico/curry')
 const defaultsDeep = require('rubico/x/defaultsDeep')
-const DynamoDB = require('aws-sdk/clients/dynamodb')
+const AWSDynamo = require('aws-sdk/clients/dynamodb')
 const getFirstKey = require('./internal/getFirstKey')
 const getFirstValue = require('./internal/getFirstValue')
 
@@ -24,34 +24,34 @@ const throwTypeError = function throwTypeError(message) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * Dynamo(dynamo string|DynamoDB|{
+ * Dynamo(connection string|AWSDynamo|{
  *   accessKeyId: string,
  *   secretAccessKey: string,
  *   region: string,
  * }) -> DynamoTable
  * ```
  */
-const Dynamo = function (dynamo) {
+const Dynamo = function (connection) {
   if (this == null || this.constructor != Dynamo) {
-    return new Dynamo(dynamo)
+    return new Dynamo(connection)
   }
-  if (typeof dynamo == 'string') {
-    this.dynamodb = new DynamoDB({
+  if (typeof connection == 'string') {
+    this.dynamo = new AWSDynamo({
       apiVersion: '2012-08-10',
       accessKeyId: 'accessKeyId-placeholder',
       secretAccessKey: 'secretAccessKey-placeholder',
       region: 'region-placeholder',
-      endpoint: dynamo,
+      endpoint: connection,
     })
-  } else if (dynamo.constructor == DynamoDB) {
-    this.dynamodb = dynamo
+  } else if (connection.constructor == AWSDynamo) {
+    this.dynamo = connection
   } else {
-    this.dynamodb = new DynamoDB({
+    this.dynamo = new AWSDynamo({
       apiVersion: '2012-08-10',
       accessKeyId: 'accessKeyId-placeholder',
       secretAccessKey: 'secretAccessKey-placeholder',
       region: 'region-placeholder',
-      ...dynamo,
+      ...connection,
     })
   }
   return this
@@ -64,7 +64,7 @@ const Dynamo = function (dynamo) {
  * ```coffeescript [specscript]
  * DynamoAttributeType = 'S'|'N'|'B'|'string'|'number'|'binary'
  *
- * Dynamo(dynamo).createTable(
+ * Dynamo(connection).createTable(
  *   tablename string,
  *   primaryKey [Object<DynamoAttributeType>, Object<DynamoAttributeType>?],
  *   options? {
@@ -86,9 +86,9 @@ const Dynamo = function (dynamo) {
  *  * `'B'` - binary
  *
  * ```javascript
- * Dynamo(dynamo).createTable('my-table', [{ id: 'string' }])
+ * Dynamo(connection).createTable('my-table', [{ id: 'string' }])
  *
- * Dynamo(dynamo).createTable('my-table', [{ id: 'string' }, { createTime: 'number' }])
+ * Dynamo(connection).createTable('my-table', [{ id: 'string' }, { createTime: 'number' }])
  * ```
  */
 Dynamo.prototype.createTable = function createTable(
@@ -106,7 +106,7 @@ Dynamo.prototype.createTable = function createTable(
       WriteCapacityUnits: 5,
     })(options)
   }
-  return this.dynamodb.createTable(params).promise()
+  return this.dynamo.createTable(params).promise()
 }
 
 /**
@@ -114,11 +114,11 @@ Dynamo.prototype.createTable = function createTable(
  *
  * @synopsis
  * ```coffeescript [specscript]
- * Dynamo(dynamo).deleteTable(tablename string) -> Promise<DynamoResponse>
+ * Dynamo(connection).deleteTable(tablename string) -> Promise<DynamoResponse>
  * ```
  */
 Dynamo.prototype.deleteTable = async function deleteTable(tablename) {
-  return this.dynamodb.deleteTable({
+  return this.dynamo.deleteTable({
     TableName: tablename,
   }).promise().catch(error => {
     if (error.name != 'ResourceNotFoundException') {
@@ -134,7 +134,7 @@ Dynamo.prototype.deleteTable = async function deleteTable(tablename) {
  * ```coffeescript [specscript]
  * DynamoAttributeType = 'S'|'N'|'B'|'string'|'number'|'binary'
  *
- * Dynamo(dynamo).createIndex(
+ * Dynamo(connection).createIndex(
  *   tablename string,
  *   index [Object<DynamoAttributeType>, Object<DynamoAttributeType>?],
  *   options? {
@@ -152,7 +152,7 @@ Dynamo.prototype.deleteTable = async function deleteTable(tablename) {
  *
  * @description
  * ```javascript
- * Dynamo(dynamo).createIndex('test-tablename', [{ status: 'string', createTime: 'number' }])
+ * Dynamo(connection).createIndex('test-tablename', [{ status: 'string', createTime: 'number' }])
  * ```
  *
  * @reference
@@ -175,7 +175,7 @@ Dynamo.prototype.createIndex = async function createIndex(tablename, index, opti
     })(options),
   }
 
-  return this.dynamodb.updateTable({
+  return this.dynamo.updateTable({
     TableName: tablename,
     AttributeDefinitions: Dynamo.AttributeDefinitions(index),
     GlobalSecondaryIndexUpdates: [{ Create: params }],

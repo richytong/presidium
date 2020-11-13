@@ -1,5 +1,4 @@
 const S3 = require('./S3')
-const S3Client = require('aws-sdk/clients/s3')
 const fork = require('rubico/fork')
 const identity = require('rubico/x/identity')
 
@@ -8,7 +7,7 @@ const identity = require('rubico/x/identity')
  *
  * @synopsis
  * ```coffeescript [specscript]
- * S3(s3 string|S3Client|{
+ * S3(s3 string|AWSS3|{
  *   accessKeyId: string,
  *   secretAccessKey: string,
  *   region: string,

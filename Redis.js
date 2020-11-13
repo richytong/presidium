@@ -7,20 +7,20 @@ const parseRedisConnectionString = require('./internal/parseRedisConnectionStrin
  *
  * @synopsis
  * ```coffeescript [specscript]
- * Redis(value Redis|IORedis|string|{
+ * Redis(connection Redis|IORedis|string|{
  *   host: string,
  *   port: number,
  *   database: number,
  * })
  * ```
  */
-const Redis = function (value) {
-  this.redis = value.constructor == Redis ? value.redis
-    : value.constructor == IORedis ? value
-    : typeof redis == 'string' ? new IORedis(parseRedisConnectionString(value))
-    : new IORedis(value)
+const Redis = function (connection) {
+  this.redis = connection.constructor == Redis ? connection.redis
+    : connection.constructor == IORedis ? connection
+    : typeof redis == 'string' ? new IORedis(parseRedisConnectionString(connection))
+    : new IORedis(connection)
   this.readyPromise = new Promise(resolve => {
-    this.redis.on('ready', thunkify(resolve))
+    this.redis.on('ready', thunkify(resolve, this))
   })
   return this
 }
@@ -30,7 +30,7 @@ const Redis = function (value) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * Redis(value).ready() -> Promise<Redis>
+ * Redis(connection).ready() -> Promise<Redis>
  * ```
  */
 Redis.prototype.ready = function ready() {
