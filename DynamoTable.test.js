@@ -11,6 +11,7 @@ module.exports = Test('DynamoTable', DynamoTable)
   })
   .before(async function () {
     await this.dynamo.createTable('test-tablename', [{ id: 'string' }])
+    await this.dynamo.waitFor('test-tablename', 'tableExists')
   })
 
   .case('http://localhost:8000/', 'test-tablename', async function (testTable) {
@@ -65,4 +66,5 @@ module.exports = Test('DynamoTable', DynamoTable)
   })
   .after(async function () {
     await this.dynamo.deleteTable('test-tablename')
+    await this.dynamo.waitFor('test-tablename', 'tableNotExists')
   })

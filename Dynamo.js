@@ -131,6 +131,72 @@ Dynamo.prototype.deleteTable = async function deleteTable(tablename) {
 }
 
 /**
+ * @name Dynamo.prototype.waitFor
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Dynamo(connection).waitFor(
+ *   tablename string,
+ *   status 'tableExists'|'tableNotExists',
+ * ) -> Promise<{
+ *   AttributeDefinitions: Array<{ AttributeName: string, AttributeType: any }>,
+ *   TableName: string,
+ *   KeySchema: Array<{ AttributeName: string, KeyType: 'HASH'|'RANGE' }>,
+ *   TableStatus: 'CREATING'|'UPDATING'|'DELETING'|'ACTIVE'|'INACCESSIBLE_ENCRYPTION_CREDENTIALS'|'ARCHIVING'|'ARCHIVED'
+ *   CreationDateTime: Date,
+ *   ProvisionedThroughput: {
+ *     LastIncreaseDateTime: Date,
+ *     LastDecreaseDateTime: Date,
+ *     NumberOfDecreasesToday: number,
+ *     ReadCapacityUnits: number,
+ *     WriteCapacityUnits: number,
+ *   },
+ *   TableSizeBytes: number,
+ *   ItemCount: number, // The number of items in the specified table. DynamoDB updates this value approximately every six hours. Recent changes might not be reflected in this value.
+ *   TableArn: string,
+ *   TableId: string,
+ *   BillingModeSummary: {
+ *     BillingMode: 'PROVISIONED'|'PAY_PER_REQUEST',
+ *     LocalSecondaryIndexes: Array<Object>,
+ *     GlobalSecondaryIndexes: Array<Object>,
+ * }>
+ * ```
+ *
+ * @description
+ * Wait for a Dynamo Table
+ *
+ * ```javascript
+ * Dynamo('http://localhost:8000/')
+ *   .waitFor('test-tablename', 'tableExists')
+ *   .then(console.log)
+ * // {
+ * //   Table: {
+ * //     AttributeDefinitions: [ [Object] ],
+ * //     TableName: 'test-tablename',
+ * //     KeySchema: [ [Object] ],
+ * //     TableStatus: 'ACTIVE',
+ * //     CreationDateTime: 2020-11-13T22:29:35.269Z,
+ * //     ProvisionedThroughput: {
+ * //       LastIncreaseDateTime: 1970-01-01T00:00:00.000Z,
+ * //       LastDecreaseDateTime: 1970-01-01T00:00:00.000Z,
+ * //       NumberOfDecreasesToday: 0,
+ * //       ReadCapacityUnits: 5,
+ * //       WriteCapacityUnits: 5
+ * //     },
+ * //     TableSizeBytes: 0,
+ * //     ItemCount: 0,
+ * //     TableArn: 'arn:aws:dynamodb:ddblocal:000000000000:table/test-tablename'
+ * //   }
+ * // }
+ * ```
+ */
+Dynamo.prototype.waitFor = async function waitFor(tablename, status) {
+  return this.connection.waitFor(status, {
+    TableName: tablename,
+  }).promise()
+}
+
+/**
  * @name Dynamo.prototype.createIndex
  *
  * @synopsis
