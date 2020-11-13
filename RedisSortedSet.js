@@ -49,12 +49,23 @@ const RedisSortedSet = function (value, key) {
   if (this == null || this.constructor != RedisSortedSet) {
     return new RedisSortedSet(value, key)
   }
-  this.redis = new Redis(value).redis
+  const redis = new Redis(value)
+  this.redis = redis.redis
+  this.readyPromise = redis.readyPromise
   this.key = key
-  this.ready = new Promise(resolve => {
-    this.redis.on('ready', resolve)
-  })
   return this
+}
+
+/**
+ * @name Redis.prototype.ready
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * RedisSortedSet(value).ready() -> Promise<RedisSortedSet>
+ * ```
+ */
+RedisSortedSet.prototype.ready = function ready() {
+  return this.readyPromise
 }
 
 RedisSortedSet.prototype.bzpopmax = function bzpopmax(...args) {

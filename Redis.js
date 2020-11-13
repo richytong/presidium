@@ -1,3 +1,4 @@
+const thunkify = require('rubico/thunkify')
 const IORedis = require('ioredis')
 const parseRedisConnectionString = require('./internal/parseRedisConnectionString')
 
@@ -14,14 +15,26 @@ const parseRedisConnectionString = require('./internal/parseRedisConnectionStrin
  * ```
  */
 const Redis = function (value) {
-  if (this == null || this.constructor != Redis) {
-    return new Redis(value)
-  }
   this.redis = value.constructor == Redis ? value.redis
     : value.constructor == IORedis ? value
     : typeof redis == 'string' ? new IORedis(parseRedisConnectionString(value))
     : new IORedis(value)
+  this.readyPromise = new Promise(resolve => {
+    this.redis.on('ready', thunkify(resolve))
+  })
   return this
+}
+
+/**
+ * @name Redis.prototype.ready
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Redis(value).ready() -> Promise<Redis>
+ * ```
+ */
+Redis.prototype.ready = function ready() {
+  return this.readyPromise
 }
 
 module.exports = Redis

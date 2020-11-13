@@ -8,6 +8,7 @@ module.exports = Test('RedisSortedSet', RedisSortedSet).before(function () {
 }).case('redis://localhost:6379', 'test', async function (redisSortedSet) {
   assert(typeof redisSortedSet == 'object')
   assert(typeof redisSortedSet.zadd == 'function')
+  await redisSortedSet.ready()
   await redisSortedSet.redis.flushdb()
   await Promise.all([
     redisSortedSet.zadd(1, 'one'),
