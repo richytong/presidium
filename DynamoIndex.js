@@ -139,7 +139,7 @@ const DynamoIndex = function (connection, tablename, indexname) {
   if (this == null || this.constructor != DynamoIndex) {
     return new DynamoIndex(connection, tablename, indexname)
   }
-  this.dynamo = new Dynamo(connection).dynamo
+  this.connection = new Dynamo(connection).connection
   this.tablename = tablename
   this.indexname = indexname
   return this
@@ -170,7 +170,7 @@ const DynamoIndex = function (connection, tablename, indexname) {
  * ```
  */
 DynamoIndex.prototype.query = function query(abstractQuery, options) {
-  return this.dynamo.query({
+  return this.connection.query({
     TableName: this.tablename,
     IndexName: this.indexname,
     ...parseQuery(abstractQuery),

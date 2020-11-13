@@ -7,6 +7,7 @@ const defaultsDeep = require('rubico/x/defaultsDeep')
 const AWSDynamo = require('aws-sdk/clients/dynamodb')
 const getFirstKey = require('./internal/getFirstKey')
 const getFirstValue = require('./internal/getFirstValue')
+const HttpAgent = require('./HttpAgent')
 
 const isArray = Array.isArray
 
@@ -36,21 +37,23 @@ const Dynamo = function (connection) {
     return new Dynamo(connection)
   }
   if (typeof connection == 'string') {
-    this.dynamo = new AWSDynamo({
+    this.connection = new AWSDynamo({
       apiVersion: '2012-08-10',
       accessKeyId: 'accessKeyId-placeholder',
       secretAccessKey: 'secretAccessKey-placeholder',
       region: 'region-placeholder',
       endpoint: connection,
+      httpOptions: { agent: HttpAgent() },
     })
   } else if (connection.constructor == AWSDynamo) {
-    this.dynamo = connection
+    this.connection = connection
   } else {
-    this.dynamo = new AWSDynamo({
+    this.connection = new AWSDynamo({
       apiVersion: '2012-08-10',
       accessKeyId: 'accessKeyId-placeholder',
       secretAccessKey: 'secretAccessKey-placeholder',
       region: 'region-placeholder',
+      httpOptions: { agent: HttpAgent() },
       ...connection,
     })
   }
@@ -106,7 +109,7 @@ Dynamo.prototype.createTable = function createTable(
       WriteCapacityUnits: 5,
     })(options)
   }
-  return this.dynamo.createTable(params).promise()
+  return this.connection.createTable(params).promise()
 }
 
 /**
@@ -118,7 +121,7 @@ Dynamo.prototype.createTable = function createTable(
  * ```
  */
 Dynamo.prototype.deleteTable = async function deleteTable(tablename) {
-  return this.dynamo.deleteTable({
+  return this.connection.deleteTable({
     TableName: tablename,
   }).promise().catch(error => {
     if (error.name != 'ResourceNotFoundException') {
@@ -175,7 +178,7 @@ Dynamo.prototype.createIndex = async function createIndex(tablename, index, opti
     })(options),
   }
 
-  return this.dynamo.updateTable({
+  return this.connection.updateTable({
     TableName: tablename,
     AttributeDefinitions: Dynamo.AttributeDefinitions(index),
     GlobalSecondaryIndexUpdates: [{ Create: params }],

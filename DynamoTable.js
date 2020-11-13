@@ -104,7 +104,7 @@ const DynamoTable = function (connection, tablename) {
   if (this == null || this.constructor != DynamoTable) {
     return new DynamoTable(connection, tablename)
   }
-  this.dynamo = new Dynamo(connection).dynamo
+  this.connection = new Dynamo(connection).connection
   this.tablename = tablename
   return this
 }
@@ -136,7 +136,7 @@ const DynamoTable = function (connection, tablename) {
  * ```
  */
 DynamoTable.prototype.putItem = function putItem(item, options) {
-  return this.dynamo.putItem({
+  return this.connection.putItem({
     TableName: this.tablename,
     Item: map(Dynamo.AttributeValue)(item),
     ...options,
@@ -152,7 +152,7 @@ DynamoTable.prototype.putItem = function putItem(item, options) {
  * ```
  */
 DynamoTable.prototype.getItem = function getItem(key) {
-  return this.dynamo.getItem({
+  return this.connection.getItem({
     TableName: this.tablename,
     Key: map(Dynamo.AttributeValue)(key),
   }).promise().then(tap(result => {
@@ -194,7 +194,7 @@ DynamoTable.prototype.getItem = function getItem(key) {
  * ```
  */
 DynamoTable.prototype.updateItem = function updateItem(key, updates, options) {
-  return this.dynamo.updateItem({
+  return this.connection.updateItem({
     TableName: this.tablename,
     Key: map(Dynamo.AttributeValue)(key),
     UpdateExpression: pipe([
@@ -230,7 +230,7 @@ DynamoTable.prototype.updateItem = function updateItem(key, updates, options) {
  * ```
  */
 DynamoTable.prototype.deleteItem = function deleteItem(key, options) {
-  return this.dynamo.deleteItem({
+  return this.connection.deleteItem({
     TableName: this.tablename,
     Key: map(Dynamo.AttributeValue)(key),
     ...options,
