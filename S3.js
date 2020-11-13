@@ -1,4 +1,5 @@
 const AWSS3 = require('aws-sdk/clients/s3')
+const HttpAgent = require('./HttpAgent')
 
 /**
  * @name S3
@@ -22,6 +23,7 @@ const S3 = function (connection, options) {
       accessKeyId: 'accessKey',
       secretAccessKey: 'secretKey',
       region: 'x-x-x',
+      httpOptions: { agent: HttpAgent() },
       endpoint: connection,
       s3ForcePathStyle: true,
       signatureVersion: 'v4',
@@ -37,6 +39,7 @@ const S3 = function (connection, options) {
       accessKeyId: 'accessKey',
       secretAccessKey: 'secretKey',
       region: 'x-x-x',
+      httpOptions: { agent: HttpAgent() },
       s3ForcePathStyle: true,
       signatureVersion: 'v4',
       ...connection,
