@@ -15,10 +15,16 @@ const parseRedisConnectionString = require('./internal/parseRedisConnectionStrin
  * ```
  */
 const Redis = function (connection) {
+  if (this == null || this.constructor != Redis) {
+    return new Redis(connection)
+  }
   this.connection = connection.constructor == Redis ? connection.redis
     : connection.constructor == IORedis ? connection
-    : typeof redis == 'string' ? new IORedis(parseRedisConnectionString(connection))
-    : new IORedis(connection)
+    : typeof redis == 'string' ? new IORedis({
+        ...parseRedisConnectionString(connection),
+        keepAlive: 1000,
+      })
+    : new IORedis({ keepAlive: 1000, ...connection })
   return this
 }
 
