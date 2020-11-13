@@ -4,14 +4,10 @@ const assert = require('assert')
 const RedisSortedSet = require('./RedisSortedSet')
 
 module.exports = Test('RedisSortedSet', RedisSortedSet)
-  .before(function () {
-    this.redises = []
-  })
   .case('redis://localhost:6379', 'test', async function (redisSortedSet) {
     assert(typeof redisSortedSet == 'object')
     assert(typeof redisSortedSet.zadd == 'function')
-    await redisSortedSet.ready()
-    await redisSortedSet.redis.flushdb()
+    await redisSortedSet.connection.flushdb()
     await Promise.all([
       redisSortedSet.zadd(1, 'one'),
       redisSortedSet.zadd(2, 'two'),
@@ -37,7 +33,7 @@ module.exports = Test('RedisSortedSet', RedisSortedSet)
       await redisSortedSet.zrevrangebyscore(3, 2, 'WITHSCORES'),
       ['three', '3', 'two', '2'],
     )
-    await redisSortedSet.redis.flushdb()
+    await redisSortedSet.connection.flushdb()
     await redisSortedSet.zadd(0, 'a', 1, 'b', 2, 'c')
     assert.deepEqual(
       await redisSortedSet.bzpopmax('does-not-exist', 0),
@@ -121,8 +117,6 @@ module.exports = Test('RedisSortedSet', RedisSortedSet)
       await redisSortedSet.zrange(0, -1),
       [],
     )
-    this.redises.push(redisSortedSet.redis)
-  })
-  .after(function () {
-    this.redises.forEach(redis => redis.disconnect())
+    await redisSortedSet.connection.flushdb()
+    redisSortedSet.connection.disconnect()
   })

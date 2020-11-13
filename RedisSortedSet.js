@@ -30,33 +30,17 @@ const RedisSortedSet = function (connection, key) {
   if (this == null || this.constructor != RedisSortedSet) {
     return new RedisSortedSet(connection, key)
   }
-  const redis = new Redis(connection)
-  this.redis = redis.redis
-  this.readyPromise = new Promise(resolve => {
-    this.redis.on('ready', thunkify(resolve, this))
-  })
+  this.connection = new Redis(connection).connection
   this.key = key
   return this
 }
 
-/**
- * @name RedisSortedSet.prototype.ready
- *
- * @synopsis
- * ```coffeescript [specscript]
- * RedisSortedSet(connection).ready() -> Promise<RedisSortedSet>
- * ```
- */
-RedisSortedSet.prototype.ready = function ready() {
-  return this.readyPromise
-}
-
 RedisSortedSet.prototype.bzpopmax = function bzpopmax(...args) {
-  return this.redis.bzpopmax(this.key, ...args)
+  return this.connection.bzpopmax(this.key, ...args)
 }
 
 RedisSortedSet.prototype.bzpopmin = function bzpopmin(...args) {
-  return this.redis.bzpopmin(this.key, ...args)
+  return this.connection.bzpopmin(this.key, ...args)
 }
 
 /**
@@ -91,91 +75,91 @@ RedisSortedSet.prototype.bzpopmin = function bzpopmin(...args) {
  * ```
  */
 RedisSortedSet.prototype.zadd = function zadd(...args) {
-  return this.redis.zadd(this.key, ...args)
+  return this.connection.zadd(this.key, ...args)
 }
 
 RedisSortedSet.prototype.zcard = function zcard() {
-  return this.redis.zcard(this.key)
+  return this.connection.zcard(this.key)
 }
 
 RedisSortedSet.prototype.zcount = function zcount(min, max) {
-  return this.redis.zcount(this.key, min, max)
+  return this.connection.zcount(this.key, min, max)
 }
 
 RedisSortedSet.prototype.zincrby = function zincrby(increment, member) {
-  return this.redis.zincrby(this.key, increment, member)
+  return this.connection.zincrby(this.key, increment, member)
 }
 
 RedisSortedSet.prototype.zlexcount = function zlexcount(min, max) {
-  return this.redis.zlexcount(this.key, min, max)
+  return this.connection.zlexcount(this.key, min, max)
 }
 
 RedisSortedSet.prototype.zmscore = function zmscore(member, ...members) {
-  return this.redis.zmscore(this.key, member, ...members)
+  return this.connection.zmscore(this.key, member, ...members)
 }
 
 RedisSortedSet.prototype.zpopmax = function zpopmax(count) {
-  return this.redis.zpopmax(this.key, count)
+  return this.connection.zpopmax(this.key, count)
 }
 
 RedisSortedSet.prototype.zpopmin = function zpopmin(count) {
-  return this.redis.zpopmin(this.key, count)
+  return this.connection.zpopmin(this.key, count)
 }
 
 RedisSortedSet.prototype.zrange = function zrange(start, stop, ...options) {
-  return this.redis.zrange(this.key, start, stop, ...options)
+  return this.connection.zrange(this.key, start, stop, ...options)
 }
 
 RedisSortedSet.prototype.zrangebylex = function zrangebylex(min, max, ...options) {
-  return this.redis.zrangebylex(this.key, min, max, ...options)
+  return this.connection.zrangebylex(this.key, min, max, ...options)
 }
 
 RedisSortedSet.prototype.zrangebyscore = function zrangebyscore(min, max, ...options) {
-  return this.redis.zrangebyscore(this.key, min, max, ...options)
+  return this.connection.zrangebyscore(this.key, min, max, ...options)
 }
 
 RedisSortedSet.prototype.zrank = function zrank(member) {
-  return this.redis.zrank(this.key, member)
+  return this.connection.zrank(this.key, member)
 }
 
 RedisSortedSet.prototype.zrem = function zrem(member, ...members) {
-  return this.redis.zrem(this.key, member, ...members)
+  return this.connection.zrem(this.key, member, ...members)
 }
 
 RedisSortedSet.prototype.zremrangebylex = function zremrangebylex(min, max) {
-  return this.redis.zremrangebylex(this.key, min, max)
+  return this.connection.zremrangebylex(this.key, min, max)
 }
 
 RedisSortedSet.prototype.zremrangebyrank = function zremrangebyrank(start, stop) {
-  return this.redis.zremrangebyrank(this.key, start, stop)
+  return this.connection.zremrangebyrank(this.key, start, stop)
 }
 
 RedisSortedSet.prototype.zremrangebyscore = function zremrangebyscore(min, max) {
-  return this.redis.zremrangebyscore(this.key, min, max)
+  return this.connection.zremrangebyscore(this.key, min, max)
 }
 
 RedisSortedSet.prototype.zrevrange = function zrevrange(start, stop, ...options) {
-  return this.redis.zrevrange(this.key, start, stop, ...options)
+  return this.connection.zrevrange(this.key, start, stop, ...options)
 }
 
 RedisSortedSet.prototype.zrevrangebylex = function zrevrangebylex(max, min, ...options) {
-  return this.redis.zrevrangebylex(this.key, max, min, ...options)
+  return this.connection.zrevrangebylex(this.key, max, min, ...options)
 }
 
 RedisSortedSet.prototype.zrevrangebyscore = function zrevrangebyscore(max, min, ...options) {
-  return this.redis.zrevrangebyscore(this.key, max, min, ...options)
+  return this.connection.zrevrangebyscore(this.key, max, min, ...options)
 }
 
 RedisSortedSet.prototype.zrevrank = function zrevrank(member) {
-  return this.redis.zrevrank(this.key, member)
+  return this.connection.zrevrank(this.key, member)
 }
 
 RedisSortedSet.prototype.zscan = function zscan(cursor, ...options) {
-  return this.redis.zscan(this.key, cursor, ...options)
+  return this.connection.zscan(this.key, cursor, ...options)
 }
 
 RedisSortedSet.prototype.zscore = function zscore(member) {
-  return this.redis.zscore(this.key, member)
+  return this.connection.zscore(this.key, member)
 }
 
 module.exports = RedisSortedSet
