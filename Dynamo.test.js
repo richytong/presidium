@@ -2,7 +2,7 @@ const Test = require('thunk-test')
 const Dynamo = require('./Dynamo')
 
 module.exports = [
-  Test('Dynamo.toAttributeValue', Dynamo.AttributeValue)
+  Test('Dynamo.AttributeValue', Dynamo.AttributeValue)
     .case('hey', { S: 'hey' })
     .case('', { S: '' })
     .case(1, { N: '1' })
@@ -27,5 +27,14 @@ module.exports = [
     .case({ NULL: false }, null)
     .case({ M: { a: { N: '1' }, b: { L: [{ S: 'a' }, { BOOL: true }] } } }, { a: 1, b: ['a', true] })
     .throws(NaN, new TypeError('unknown attributeValue NaN')),
+
+  Test('Dynamo.AttributeType', Dynamo.AttributeType)
+    .case('string', 'S')
+    .case('S', 'S')
+    .case('number', 'N')
+    .case('N', 'N')
+    .case('binary', 'B')
+    .case('B', 'B')
+    .throws('?', new TypeError('unknown type for ?'))
 ]
 

@@ -3,6 +3,7 @@ const fork = require('rubico/fork')
 const map = require('rubico/map')
 const get = require('rubico/get')
 const curry = require('rubico/curry')
+const noop = require('rubico/x/noop')
 const defaultsDeep = require('rubico/x/defaultsDeep')
 const AWSDynamo = require('aws-sdk/clients/dynamodb')
 const getFirstKey = require('./internal/getFirstKey')
@@ -123,11 +124,7 @@ Dynamo.prototype.createTable = function createTable(
 Dynamo.prototype.deleteTable = async function deleteTable(tablename) {
   return this.connection.deleteTable({
     TableName: tablename,
-  }).promise().catch(error => {
-    if (error.name != 'ResourceNotFoundException') {
-      throw error
-    }
-  })
+  }).promise().catch(noop)
 }
 
 /**
