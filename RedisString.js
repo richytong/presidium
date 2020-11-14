@@ -104,7 +104,9 @@ RedisString.prototype.incrby = function incrby(increment) {
  * ```
  */
 RedisString.prototype.get = function get(value) {
-  return this.connection.get(this.key)
+  return value == null
+    ? this.connection.get(this.key)
+    : this.connection.getrange(this.key, value, value)
 }
 
 /**
