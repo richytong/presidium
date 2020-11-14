@@ -4,6 +4,8 @@ const assert = require('assert')
 const Dynamo = require('./Dynamo')
 const DynamoTable = require('./DynamoTable')
 
+const dynamo = Dynamo('http://localhost:8000/')
+
 module.exports = Test('DynamoTable', DynamoTable)
   .before(async function () {
     this.dynamo = Dynamo('http://localhost:8000/')
@@ -64,6 +66,15 @@ module.exports = Test('DynamoTable', DynamoTable)
       () => testTable.getItem({ id: '1' }),
       new Error('Item not found for {"id":"1"}'))
   })
+
+  .case(dynamo, async function () {
+    assert(dynamo.constructor == Dynamo)
+  })
+
+  .case(dynamo.connection, async function () {
+    assert(dynamo.constructor == Dynamo)
+  })
+
   .after(async function () {
     await this.dynamo.deleteTable('test-tablename')
     await this.dynamo.waitFor('test-tablename', 'tableNotExists')

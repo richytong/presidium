@@ -45,6 +45,8 @@ const Dynamo = function (connection) {
       endpoint: connection,
       httpOptions: { agent: HttpAgent() },
     })
+  } else if (connection.constructor == Dynamo) {
+    this.connection = connection.connection
   } else if (connection.constructor == AWSDynamo) {
     this.connection = connection
   } else {
