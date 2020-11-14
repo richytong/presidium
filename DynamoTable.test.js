@@ -67,12 +67,14 @@ module.exports = Test('DynamoTable', DynamoTable)
       new Error('Item not found for {"id":"1"}'))
   })
 
-  .case(dynamo, async function () {
-    assert(dynamo.constructor == Dynamo)
+  .case(dynamo, 'test-table', async function (testTable) {
+    assert(testTable.constructor == DynamoTable)
+    assert(testTable.connection === dynamo.connection)
   })
 
-  .case(dynamo.connection, async function () {
-    assert(dynamo.constructor == Dynamo)
+  .case({ endpoint: 'http://localhost:8000/' }, 'test-table', async function (testTable) {
+    assert(testTable.constructor == DynamoTable)
+    assert(testTable.connection !== dynamo.connection)
   })
 
   .after(async function () {

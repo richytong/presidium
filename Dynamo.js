@@ -47,8 +47,6 @@ const Dynamo = function (connection) {
     })
   } else if (connection.constructor == Dynamo) {
     this.connection = connection.connection
-  } else if (connection.constructor == AWSDynamo) {
-    this.connection = connection
   } else {
     this.connection = new AWSDynamo({
       apiVersion: '2012-08-10',
