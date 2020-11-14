@@ -152,7 +152,7 @@ RedisList.prototype.lpushx = function lpushx(item, ...moreItems) {
  * @synopsis
  * ```coffeescript [specscript]
  * RedisList(connection, key).lrange(
- *   start number, 
+ *   start number,
  *   stop number,
  * ) -> items Promise<Array<string>>
  * ```
@@ -206,7 +206,7 @@ RedisList.prototype.lset = function lset(index, item) {
  * @synopsis
  * ```coffeescript [specscript]
  * RedisList(connection, key).ltrim(
- *   start number, 
+ *   start number,
  *   stop number,
  * ) -> Promise<'OK'>
  * ```

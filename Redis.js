@@ -18,11 +18,18 @@ const Redis = function (connection) {
   if (this == null || this.constructor != Redis) {
     return new Redis(connection)
   }
-  this.connection = connection.constructor == Redis ? connection.connection
-    : connection.constructor == IORedis ? connection
-    : typeof connection == 'string' ? new IORedis({
-      ...parseRedisConnectionString(connection), keepAlive: 1000 })
-    : new IORedis({ keepAlive: 1000, ...connection })
+  if (connection.constructor == Redis) {
+    this.connection = connection.connection
+  } else if (connection.constructor == IORedis) {
+    this.connection = connection
+  } else if (typeof connection == 'string') {
+    this.connection = new IORedis({
+      ...parseRedisConnectionString(connection),
+      keepAlive: 1000,
+    })
+  } else {
+    this.connection = new IORedis({ keepAlive: 1000, ...connection })
+  }
   return this
 }
 
