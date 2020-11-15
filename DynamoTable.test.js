@@ -10,9 +10,13 @@ module.exports = Test('DynamoTable', DynamoTable)
   .before(async function () {
     this.dynamo = Dynamo('http://localhost:8000/')
     await this.dynamo.deleteTable('test-tablename')
+    await this.dynamo.deleteTable('test-tablename-2')
   })
   .before(async function () {
     await this.dynamo.createTable('test-tablename', [{ id: 'string' }])
+    await this.dynamo.createTable('test-tablename-2', [{ id: 'string' }], {
+      BillingMode: 'PAY_PER_REQUEST',
+    })
     await this.dynamo.waitFor('test-tablename', 'tableExists')
   })
 
@@ -79,5 +83,6 @@ module.exports = Test('DynamoTable', DynamoTable)
 
   .after(async function () {
     await this.dynamo.deleteTable('test-tablename')
+    await this.dynamo.deleteTable('test-tablename-2')
     await this.dynamo.waitFor('test-tablename', 'tableNotExists')
   })
