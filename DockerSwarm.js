@@ -3,8 +3,12 @@ const HttpAgent = require('./HttpAgent')
 const stringifyJSON = require('./internal/stringifyJSON')
 const pipe = require('rubico/pipe')
 const tap = require('rubico/tap')
+const fork = require('rubico/fork')
+const switchCase = require('rubico/switchCase')
 const get = require('rubico/get')
 const thunkify = require('rubico/thunkify')
+const identity = require('rubico/x/identity')
+const isString = require('rubico/x/isString')
 
 const json = response => response.json()
 
@@ -58,7 +62,7 @@ DockerSwarm.prototype.inspect = function swarmInspect() {
  *   ForceNewCluster: boolean, // force create new swarm
  *   SubnetSize: number, // subnet size of networks created from default subnet pool
  *   Spec: SwarmSpec,
- * }) -> output Promise<string>
+ * }) -> output Promise<Object>
  * ```
  */
 DockerSwarm.prototype.init = async function swarmInit(options) {
@@ -68,7 +72,14 @@ DockerSwarm.prototype.init = async function swarmInit(options) {
       ListenAddr: this.address,
       ...options,
     }),
-  }).then(json)
+  }).then(pipe([
+    json,
+    switchCase([
+      isString,
+      fork({ node: identity }),
+      identity,
+    ]),
+  ]))
 }
 
 /**

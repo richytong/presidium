@@ -1,5 +1,6 @@
 const assert = require('assert')
 const Test = require('thunk-test')
+const get = require('rubico/get')
 const fork = require('rubico/fork')
 const DockerSwarm = require('./DockerSwarm')
 
@@ -11,8 +12,8 @@ module.exports = Test('DockerSwarm', DockerSwarm)
     assert.equal(swarm.address, '127.0.0.1:2378')
   })
   .case('127.0.0.1:2377', async function (swarm) {
-    await swarm.leave({ force: true }).catch(() => {})
-    assert.equal(typeof await swarm.init(), 'string')
+    await swarm.leave({ force: true })
+    assert.equal(typeof get('node')(await swarm.init()), 'string')
     const swarmInfo = await swarm.inspect()
     assert.equal(typeof swarmInfo.JoinTokens.Worker, 'string')
     assert.equal(typeof swarmInfo.JoinTokens.Manager, 'string')
