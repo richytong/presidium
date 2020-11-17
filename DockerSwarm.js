@@ -1,5 +1,4 @@
-const Http = require('./Http')
-const HttpAgent = require('./HttpAgent')
+const Docker = require('./Docker')
 const stringifyJSON = require('./internal/stringifyJSON')
 const pipe = require('rubico/pipe')
 const tap = require('rubico/tap')
@@ -19,7 +18,7 @@ const text = response => response.text()
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DockerSwarm(address string|{ AdvertiseAddr: string }) -> DockerSwarm
+ * DockerSwarm(address? string|{ AdvertiseAddr: string }) -> DockerSwarm
  * // `${ipv6Address}[:${port}]`
  * ```
  */
@@ -27,10 +26,7 @@ const DockerSwarm = function (address) {
   if (this == null || this.constructor != DockerSwarm) {
     return new DockerSwarm(address)
   }
-  const agent = new HttpAgent({
-    socketPath: '/var/run/docker.sock',
-  })
-  this.http = new Http('http://0.0.0.0/v1.40', { agent })
+  this.http = new Docker().http
   this.address = address == null ? '127.0.0.1:2377'
     : typeof address == 'string' ? address
     : address.AdvertiseAddr
@@ -45,7 +41,7 @@ const DockerSwarm = function (address) {
  * Docker(address)
  * ```
  */
-DockerSwarm.prototype.inspect = function swarmInspect() {
+DockerSwarm.prototype.inspect = function dockerSwarmInspect() {
   return this.http.get('/swarm').then(json)
 }
 
@@ -65,7 +61,7 @@ DockerSwarm.prototype.inspect = function swarmInspect() {
  * }) -> output Promise<Object>
  * ```
  */
-DockerSwarm.prototype.init = async function swarmInit(options) {
+DockerSwarm.prototype.init = async function dockerSwarmInit(options) {
   return this.http.post('/swarm/init', {
     body: stringifyJSON({
       AdvertiseAddr: this.address,
@@ -103,7 +99,7 @@ DockerSwarm.prototype.init = async function swarmInit(options) {
  * }) -> output Promise<string>
  * ```
  */
-DockerSwarm.prototype.join = async function swarmJoin(token, options) {
+DockerSwarm.prototype.join = async function dockerSwarmJoin(token, options) {
   return this.http.post('/swarm/join', {
     body: stringifyJSON({
       AdvertiseAddr: this.address,
@@ -122,7 +118,7 @@ DockerSwarm.prototype.join = async function swarmJoin(token, options) {
  * DockerSwarm(address).leave(options? { force: boolean }) -> output Promise<string>
  * ```
  */
-DockerSwarm.prototype.leave = async function swarmLeave(options) {
+DockerSwarm.prototype.leave = async function dockerSwarmLeave(options) {
   const force = get('force', false)(options)
   return this.http.post(`/swarm/leave?force=${encodeURIComponent(force)}`)
     .then(pipe([
