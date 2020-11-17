@@ -10,73 +10,55 @@ module.exports = Test('DynamoIndex', DynamoIndex)
   .before(async function () {
     this.dynamo = Dynamo('http://localhost:8000/')
     await this.dynamo.deleteTable('test-tablename')
+    await this.dynamo.deleteTable('test-tablename-2')
   })
   .before(async function () {
     await this.dynamo.createTable('test-tablename', [{ id: 'string' }])
     await this.dynamo.createIndex('test-tablename', [{ status: 'string' }, { createTime: 'number' }])
+    await this.dynamo.createTable('test-tablename-2', [{ id: 'string' }])
+    await this.dynamo.createIndex('test-tablename-2', [{ status: 'string' }, { name: 'string' }])
   })
   .before(async function () {
 
     this.testTable = DynamoTable('http://localhost:8000/', 'test-tablename')
-    await this.testTable.putItem({
-      id: '1',
-      status: 'waitlist',
-      createTime: 1000,
-    })
-    await this.testTable.putItem({
-      id: '2',
-      status: 'waitlist',
-      createTime: 1001,
-    })
-
-    await this.testTable.putItem({
-      id: '3',
-      status: 'waitlist',
-      createTime: 1002,
-    })
-    await this.testTable.putItem({
-      id: '4',
-      status: 'approved',
-      createTime: 1003,
-    })
-    await this.testTable.putItem({
-      id: '5',
-      status: 'approved',
-      createTime: 1004,
-    })
+    this.testTable2 = DynamoTable('http://localhost:8000/', 'test-tablename-2')
+    for (const table of [this.testTable, this.testTable2]) {
+      await table.putItem({
+        id: '1',
+        status: 'waitlist',
+        createTime: 1000,
+        name: 'George',
+      })
+      await table.putItem({
+        id: '2',
+        status: 'waitlist',
+        createTime: 1001,
+        name: 'geo',
+      })
+      await table.putItem({
+        id: '3',
+        status: 'waitlist',
+        createTime: 1002,
+        name: 'john',
+      })
+      await table.putItem({
+        id: '4',
+        status: 'approved',
+        createTime: 1003,
+        name: 'sally',
+      })
+      await table.putItem({
+        id: '5',
+        status: 'approved',
+        createTime: 1004,
+        name: 'sally',
+      })
+    }
 
   })
   .case('http://localhost:8000/', 'test-tablename', 'status-createTime-index', async statusCreateTimeIndex => {
     assert(statusCreateTimeIndex.tablename == 'test-tablename')
     assert(statusCreateTimeIndex.indexname == 'status-createTime-index')
-
-    assert.deepEqual(
-      await statusCreateTimeIndex.query($ => {
-        $.and([
-          $.eq('status', 'waitlist'),
-        ])
-      }),
-      {
-        Items: [
-          {
-            createTime: { N: '1000' },
-            id: { S: '1' },
-            status: { S: 'waitlist' }
-          },
-          {
-            createTime: { N: '1001' },
-            id: { S: '2' },
-            status: { S: 'waitlist' }
-          },
-          {
-            createTime: { N: '1002' },
-            id: { S: '3' },
-            status: { S: 'waitlist' }
-          }
-        ],
-        Count: 3,
-        ScannedCount: 3
-      })
 
     assert.deepEqual(
       await statusCreateTimeIndex.query($ => {
@@ -90,16 +72,51 @@ module.exports = Test('DynamoIndex', DynamoIndex)
           {
             createTime: { N: '1001' },
             id: { S: '2' },
-            status: { S: 'waitlist' }
+            status: { S: 'waitlist' },
+            name: { S: 'geo' },
           },
           {
             createTime: { N: '1002' },
             id: { S: '3' },
-            status: { S: 'waitlist' }
+            status: { S: 'waitlist' },
+            name: { S: 'john' },
           }
         ],
         Count: 2,
         ScannedCount: 2
+      })
+
+    assert.deepEqual(
+      await statusCreateTimeIndex.query($ => {
+        $.and([
+          $.eq('status', 'waitlist'),
+          $.between('createTime', 999, 2000),
+        ])
+        $.sortBy('createTime', 1)
+      }),
+      {
+        Items: [
+          {
+            createTime: { N: '1000' },
+            id: { S: '1' },
+            status: { S: 'waitlist' },
+            name: { S: 'George' },
+          },
+          {
+            createTime: { N: '1001' },
+            id: { S: '2' },
+            status: { S: 'waitlist' },
+            name: { S: 'geo' },
+          },
+          {
+            createTime: { N: '1002' },
+            id: { S: '3' },
+            status: { S: 'waitlist' },
+            name: { S: 'john' },
+          }
+        ],
+        Count: 3,
+        ScannedCount: 3
       })
 
     assert.deepEqual(
@@ -115,17 +132,20 @@ module.exports = Test('DynamoIndex', DynamoIndex)
           {
             createTime: { N: '1000' },
             id: { S: '1' },
-            status: { S: 'waitlist' }
+            status: { S: 'waitlist' },
+            name: { S: 'George' },
           },
           {
             createTime: { N: '1001' },
             id: { S: '2' },
-            status: { S: 'waitlist' }
+            status: { S: 'waitlist' },
+            name: { S: 'geo' },
           },
           {
             createTime: { N: '1002' },
             id: { S: '3' },
-            status: { S: 'waitlist' }
+            status: { S: 'waitlist' },
+            name: { S: 'john' },
           }
         ],
         Count: 3,
@@ -145,17 +165,20 @@ module.exports = Test('DynamoIndex', DynamoIndex)
           {
             createTime: { N: '1002' },
             id: { S: '3' },
-            status: { S: 'waitlist' }
+            status: { S: 'waitlist' },
+            name: { S: 'john' },
           },
           {
             createTime: { N: '1001' },
             id: { S: '2' },
-            status: { S: 'waitlist' }
+            status: { S: 'waitlist' },
+            name: { S: 'geo' },
           },
           {
             createTime: { N: '1000' },
             id: { S: '1' },
-            status: { S: 'waitlist' }
+            status: { S: 'waitlist' },
+            name: { S: 'George' },
           },
         ],
         Count: 3,
@@ -168,24 +191,27 @@ module.exports = Test('DynamoIndex', DynamoIndex)
           $.eq('status', 'waitlist'),
           $.gte('createTime', 1000),
         ])
-        $.order(-1)
+        $.sort(-1)
       }),
       {
         Items: [
           {
             createTime: { N: '1002' },
             id: { S: '3' },
-            status: { S: 'waitlist' }
+            status: { S: 'waitlist' },
+            name: { S: 'john' },
           },
           {
             createTime: { N: '1001' },
             id: { S: '2' },
-            status: { S: 'waitlist' }
+            status: { S: 'waitlist' },
+            name: { S: 'geo' },
           },
           {
             createTime: { N: '1000' },
             id: { S: '1' },
-            status: { S: 'waitlist' }
+            status: { S: 'waitlist' },
+            name: { S: 'George' },
           },
         ],
         Count: 3,
@@ -198,7 +224,7 @@ module.exports = Test('DynamoIndex', DynamoIndex)
           $.eq('status', 'waitlist'),
           $.lte('createTime', 10000),
         ])
-        $.order(-1)
+        $.sort(-1)
         $.limit(2)
       }),
       {
@@ -206,18 +232,20 @@ module.exports = Test('DynamoIndex', DynamoIndex)
           {
             createTime: { N: '1002' },
             id: { S: '3' },
-            status: { S: 'waitlist' }
+            status: { S: 'waitlist' },
+            name: { S: 'john' },
           },
           {
             createTime: { N: '1001' },
             id: { S: '2' },
-            status: { S: 'waitlist' }
+            status: { S: 'waitlist' },
+            name: { S: 'geo' },
           },
         ],
         LastEvaluatedKey: {
           createTime: { N: '1001' },
           id: { S: '2' },
-          status: { S: 'waitlist' }
+          status: { S: 'waitlist' },
         },
         Count: 2,
         ScannedCount: 2,
@@ -234,12 +262,14 @@ module.exports = Test('DynamoIndex', DynamoIndex)
           {
             createTime: { N: '1003' },
             id: { S: '4' },
-            status: { S: 'approved' }
+            status: { S: 'approved' },
+            name: { S: 'sally' },
           },
           {
             createTime: { N: '1004' },
             id: { S: '5' },
-            status: { S: 'approved' }
+            status: { S: 'approved' },
+            name: { S: 'sally' },
           },
         ],
         Count: 2,
@@ -258,13 +288,74 @@ module.exports = Test('DynamoIndex', DynamoIndex)
           {
             createTime: { N: '1004' },
             id: { S: '5' },
-            status: { S: 'approved' }
+            status: { S: 'approved' },
+            name: { S: 'sally' },
           },
         ],
         Count: 1,
         ScannedCount: 1
       })
+
+    assert.deepEqual(
+      await statusCreateTimeIndex.query($ => {
+        $.and([
+          $.eq('status', 'approved'),
+          $.lt('createTime', 10),
+        ])
+      }),
+      {
+        Items: [],
+        Count: 0,
+        ScannedCount: 0
+      })
+  })
+  .case('http://localhost:8000/', 'test-tablename-2', 'status-name-index', async function (statusNameIndex) {
+    assert(statusNameIndex.tablename == 'test-tablename-2')
+    assert(statusNameIndex.indexname == 'status-name-index')
+    assert.deepEqual(
+      await statusNameIndex.query($ => {
+        $.eq('status', 'waitlist'),
+        $.startsWith('name', 'geo')
+      }),
+      {
+        Items: [
+          {
+            createTime: { N: '1001' },
+            id: { S: '2' },
+            status: { S: 'waitlist' },
+            name: { S: 'geo' },
+          },
+        ],
+        Count: 1,
+        ScannedCount: 1
+      })
+
+    assert.deepEqual(
+      await statusNameIndex.query($ => {
+        $.eq('status', 'approved'),
+        $.beginsWith('name', 's')
+      }),
+      {
+        Items: [
+          {
+            name: { S: 'sally' },
+            id: { S: '4' },
+            createTime: { N: '1003' },
+            status: { S: 'approved' }
+          },
+          {
+            name: { S: 'sally' },
+            id: { S: '5' },
+            createTime: { N: '1004' },
+            status: { S: 'approved' }
+          }
+        ],
+        Count: 2,
+        ScannedCount: 2
+      })
+
   })
   .after(async function () {
     await this.dynamo.deleteTable('test-tablename')
+    await this.dynamo.deleteTable('test-tablename-2')
   })

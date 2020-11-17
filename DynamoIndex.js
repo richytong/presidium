@@ -6,7 +6,7 @@ const hashJSON = require('./internal/hashJSON')
 const objectFromEntries = require('./internal/objectFromEntries')
 
 /**
- * @name parseQuery
+ * @name dynamoParseQuery
  *
  * @synopsis
  * ```coffeescript [specscript]
@@ -23,7 +23,7 @@ const objectFromEntries = require('./internal/objectFromEntries')
  *   limit: number=>this,
  * }
  *
- * parseQuery(abstractQuery function) -> dynamoQuery {
+ * dynamoParseQuery($query function) -> dynamoQuery {
  *   KeyConditionExpression: string,
  *   ExpressionAttributeValues: Object,
  *   ExpressionAttributeNames: Object,
@@ -33,80 +33,100 @@ const objectFromEntries = require('./internal/objectFromEntries')
  * ```
  */
 
-const parseQuery = function parseQuery(abstractQuery) {
+const dynamoParseQuery = function dynamoParseQuery($query) {
   const $ = {
     fields: [],
     values: [],
-    query: {},
+    statements: [],
+    ScanIndexForward: null,
+    Limit: null,
+
     and(statements) {
-      this.query.KeyConditionExpression = statements.join(' AND ')
-      this.query.ExpressionAttributeNames = pipe([
-        map(field => [`#${hashJSON(field)}`, field]),
-        objectFromEntries,
-      ])(this.fields)
-      this.query.ExpressionAttributeValues = pipe([
-        map(value => [`:${hashJSON(value)}`, Dynamo.AttributeValue(value)]),
-        objectFromEntries,
-      ])(this.values)
       return this
     },
 
     eq(field, value) {
       this.fields.push(field)
       this.values.push(value)
-      return `#${hashJSON(field)} = :${hashJSON(value)}`
+      this.statements.push(`#${hashJSON(field)} = :${hashJSON(value)}`)
+      return this
     },
+
     gt(field, value) {
       this.fields.push(field)
       this.values.push(value)
-      return `#${hashJSON(field)} > :${hashJSON(value)}`
+      this.statements.push(`#${hashJSON(field)} > :${hashJSON(value)}`)
+      return this
     },
+
     lt(field, value) {
       this.fields.push(field)
       this.values.push(value)
-      return `#${hashJSON(field)} < :${hashJSON(value)}`
+      this.statements.push(`#${hashJSON(field)} < :${hashJSON(value)}`)
+      return this
     },
+
     gte(field, value) {
       this.fields.push(field)
       this.values.push(value)
-      return `#${hashJSON(field)} >= :${hashJSON(value)}`
+      this.statements.push(`#${hashJSON(field)} >= :${hashJSON(value)}`)
+      return this
     },
+
     lte(field, value) {
       this.fields.push(field)
       this.values.push(value)
-      return `#${hashJSON(field)} <= :${hashJSON(value)}`
+      this.statements.push(`#${hashJSON(field)} <= :${hashJSON(value)}`)
+      return this
     },
 
-    startsWith(field, prefix) {
-      return `begins_with(#${hashJSON(field)}, :${hashJSON(prefix)})`
+    startsWith(field, value) {
+      this.fields.push(field)
+      this.values.push(value)
+      this.statements.push(`begins_with(#${hashJSON(field)}, :${hashJSON(value)})`)
+      return this
+    },
+
+    beginsWith(field, value) {
+      return this.startsWith(field, value)
+    },
+    between(field, start, stop) {
+      this.fields.push(field)
+      this.values.push(start, stop)
+      this.statements.push(
+        `#${hashJSON(field)} BETWEEN :${hashJSON(start)} AND :${hashJSON(stop)}`)
+    },
+
+    sort(value) {
+      if (typeof value == 'string') {
+        this.ScanIndexForward = value.toLowerCase() == 'asc'
+      } else {
+        this.ScanIndexForward = value == 1
+      }
+      return this
     },
     sortBy(field, value) {
-      if (value != null) {
-        if (typeof value.toLowerCase == 'function') {
-          this.query.ScanIndexForward = value.toLowerCase() == 'asc'
-        } else {
-          this.query.ScanIndexForward = !(value != 1)
-        }
-      }
-      return this
-    },
-    order(value) {
-      if (value != null) {
-        if (typeof value.toLowerCase == 'function') {
-          this.query.ScanIndexForward = value.toLowerCase() == 'asc'
-        } else {
-          this.query.ScanIndexForward = !(value != 1)
-        }
-      }
-      return this
+      return this.sort(value)
     },
     limit(value) {
-      this.query.Limit = value
+      this.Limit = value
       return this
     },
   }
-  abstractQuery($)
-  return $.query
+  $query($)
+  return {
+    KeyConditionExpression: $.statements.join(' AND '),
+    ExpressionAttributeNames: pipe([
+      map(field => [`#${hashJSON(field)}`, field]),
+      objectFromEntries,
+    ])($.fields),
+    ExpressionAttributeValues: pipe([
+      map(value => [`:${hashJSON(value)}`, Dynamo.AttributeValue(value)]),
+      objectFromEntries,
+    ])($.values),
+    Limit: $.Limit,
+    ScanIndexForward: $.ScanIndexForward,
+  }
 }
 
 /**
@@ -150,7 +170,7 @@ const DynamoIndex = function (connection, tablename, indexname) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DynamoIndex(connection, tablename, indexname).query(abstractQuery $=>())
+ * DynamoIndex(connection, tablename, indexname).query($query $=>())
  * ```
  *
  * @description
@@ -169,11 +189,11 @@ const DynamoIndex = function (connection, tablename, indexname) {
  * })
  * ```
  */
-DynamoIndex.prototype.query = function query(abstractQuery, options) {
+DynamoIndex.prototype.query = function query($query, options) {
   return this.connection.query({
     TableName: this.tablename,
     IndexName: this.indexname,
-    ...parseQuery(abstractQuery),
+    ...dynamoParseQuery($query),
     ...options,
   }).promise()
 }
