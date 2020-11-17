@@ -15,7 +15,7 @@ const text = response => response.text()
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DockerSwarm(address string) -> DockerSwarm
+ * DockerSwarm(address string|{ AdvertiseAddr: string }) -> DockerSwarm
  * // `${ipv6Address}[:${port}]`
  * ```
  */
@@ -85,9 +85,7 @@ DockerSwarm.prototype.init = async function swarmInit(options) {
  *   },
  * ) -> output Promise<string>
  *
- * DockerSwarm(address string|{
- *   address '127.0.0.1:2377'|string,
- * }).join(options? {
+ * DockerSwarm(address).join(options? {
  *   ListenAddr: string, // Listen address for inter-manager communication <address|interface>:<port>
  *   DataPathAddr: string, // address or interface for data traffic
  *   RemoteAddrs: Array<string>, // addresses of manager nodes already participating in the swarm
@@ -110,9 +108,7 @@ DockerSwarm.prototype.join = async function swarmJoin(token, options) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DockerSwarm(address string|{
- *   address '127.0.0.1:2377'|string,
- * }).leave(options? { force: boolean }) -> output Promise<string>
+ * DockerSwarm(address).leave(options? { force: boolean }) -> output Promise<string>
  * ```
  */
 DockerSwarm.prototype.leave = async function swarmLeave(options) {
