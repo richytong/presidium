@@ -8,22 +8,7 @@ A library for creating web services.
 ```javascript
 const Presidium = require('presidium')
 
-const {
-  Http, HttpServer,
-  WebSocket, WebSocketServer,
-  DockerSwarm, DockerService, DockerSecret,
-  Dynamo, DynamoTable, DynamoIndex, DynamoStream,
-  Redis, RedisString, RedisList, RedisSet, RedisHash,
-    RedisSortedSet, RedisBitmap, RedisHyperLogLog, RedisStream,
-  ElasticTranscoder, ElasticTranscoderPipeline,
-  CloudFront, CloudFrontDistribution,
-  Elasticsearch, ElasticsearchIndex,
-  Kinesis, KinesisStream,
-  Lambda, LambdaFunction,
-  Gremlin, GremlinGraph,
-  Mongo, MongoTable,
-  S3, S3Bucket,
-} = Presidium
+const { Http, HttpServer, WebSocket, WebSocketServer } = Presidium
 
 HttpServer((request, response) => {
   response.writeHead(200, { 'Content-Type': 'application/json' })
