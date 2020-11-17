@@ -6,8 +6,6 @@
 A library for creating web services.
 
 ```javascript
-const Presidium = require('presidium')
-
 const { Http, HttpServer, WebSocket, WebSocketServer } = Presidium
 
 HttpServer((request, response) => {
