@@ -1,9 +1,9 @@
 const Http = require('./Http')
 const HttpAgent = require('./HttpAgent')
 const stringifyJSON = require('./internal/stringifyJSON')
-const pipe= require('rubico/pipe')
-const tap= require('rubico/tap')
-const get= require('rubico/get')
+const pipe = require('rubico/pipe')
+const tap = require('rubico/tap')
+const get = require('rubico/get')
 const thunkify = require('rubico/thunkify')
 
 const json = response => response.json()
@@ -20,7 +20,7 @@ const text = response => response.text()
  * ```
  */
 const DockerSwarm = function (address) {
-  if (typeof this == null || this.constructor != DockerSwarm) {
+  if (this == null || this.constructor != DockerSwarm) {
     return new DockerSwarm(address)
   }
   const agent = new HttpAgent({
@@ -30,6 +30,7 @@ const DockerSwarm = function (address) {
   this.address = address == null ? '127.0.0.1:2377'
     : typeof address == 'string' ? address
     : address.AdvertiseAddr
+  return this
 }
 
 /**
