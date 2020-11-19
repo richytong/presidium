@@ -55,26 +55,22 @@ const DockerImage = function (dockerfile) {
  * @TODO refactor tarball to TarArchive
  */
 DockerImage.prototype.build = async function (path, options) {
-  const archive = new Archive({
-    ignore: isArray(options?.ignore)
-      ? options.ignore
-      : ['Dockerfile', 'node_modules', '.git', '.nyc_output'],
-    defaults: {
-      Dockerfile: this.dockerfile,
-    },
-  })
-
-  const response = await this.http.post(`/build?${querystring.stringify({
+  return this.http.post(`/build?${querystring.stringify({
     dockerfile: 'Dockerfile',
     t: get('tags', [])(options),
   })}`, {
-    // body: (await archive.tar(path)).pipe(zlib.createGzip()),
-    body: await archive.tar(path),
+    body: (await new Archive({
+      ignore: isArray(options?.ignore)
+        ? options.ignore
+        : ['Dockerfile', 'node_modules', '.git', '.nyc_output'],
+      defaults: {
+        Dockerfile: this.dockerfile,
+      },
+    }).tar(path)).pipe(zlib.createGzip()),
     headers: {
       'Content-Type': 'application/x-tar',
     },
   })
-  return response
 }
 
 DockerImage.prototype.push = function (remote, options) {}
