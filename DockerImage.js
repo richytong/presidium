@@ -15,7 +15,9 @@ const parseJSON = require('./internal/parseJSON')
  *
  * @synopsis
  * ```coffeescript [specscript]
- * new DockerImage(dockerfile string) -> DockerImage
+ * new DockerImage(dockerfile string, options? {
+ *   tags: Array<string>,
+ * }) -> DockerImage
  * ```
  *
  * @description
@@ -26,12 +28,13 @@ const parseJSON = require('./internal/parseJSON')
  * EXPOSE 8888`)
  * ```
  */
-const DockerImage = function (dockerfile) {
+const DockerImage = function (dockerfile, options) {
   if (this == null || this.constructor != DockerImage) {
-    return new DockerImage(dockerfile)
+    return new DockerImage(dockerfile, options)
   }
   this.http = new Docker().http
   this.dockerfile = dockerfile
+  this.tags = get('tags', [])(options)
   return this
 }
 
@@ -55,24 +58,25 @@ const DockerImage = function (dockerfile) {
  * @TODO refactor tarball to TarArchive
  */
 DockerImage.prototype.build = async function (path, options) {
+  const archive = new Archive({
+    ignore: isArray(options?.ignore)
+      ? options.ignore
+      : ['Dockerfile', 'node_modules', '.git', '.nyc_output'],
+    defaults: {
+      Dockerfile: this.dockerfile,
+    },
+  })
   return this.http.post(`/build?${querystring.stringify({
     dockerfile: 'Dockerfile',
-    t: get('tags', [])(options),
+    t: this.tags,
   })}`, {
-    body: (await new Archive({
-      ignore: isArray(options?.ignore)
-        ? options.ignore
-        : ['Dockerfile', 'node_modules', '.git', '.nyc_output'],
-      defaults: {
-        Dockerfile: this.dockerfile,
-      },
-    }).tar(path)).pipe(zlib.createGzip()),
+    body: (await archive.tar(path)).pipe(zlib.createGzip()),
     headers: {
       'Content-Type': 'application/x-tar',
     },
   })
 }
 
-DockerImage.prototype.push = function (remote, options) {}
+DockerImage.prototype.push = function (tag, repository, options) {}
 
 module.exports = DockerImage

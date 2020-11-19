@@ -14,11 +14,10 @@ module.exports = Test('DockerImage', DockerImage)
 FROM node:15-alpine
 WORKDIR /opt
 COPY . .
-EXPOSE 8888`,
-  async nodeAlpineImage => {
-    const response = await nodeAlpineImage.build(pathResolve(__dirname), {
-      tags: ['presidium-test:ayo'],
-    })
+EXPOSE 8888`, {
+    tags: ['presidium-test:ayo']
+  }, async nodeAlpineImage => {
+    const response = await nodeAlpineImage.build(pathResolve(__dirname))
     response.body.pipe(process.stdout)
     await new Promise(resolve => {
       response.body.on('end', () => {
