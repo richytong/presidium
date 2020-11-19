@@ -26,6 +26,7 @@
     "aws-sdk": "^2.787.0",
     "ioredis": "^4.19.0",
     "rubico": "latest",
+    "tar-stream": "^2.1.4",
     "thunk-test": "latest",
     "ws": "^7.3.1"
   },
