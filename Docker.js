@@ -40,6 +40,6 @@ Docker.prototype.removeImage = function dockerRemoveImage(name, options) {
   }`)
 }
 
-Docker.prototype.pushImage = function dockerPushImage(name, options) {}
+// Docker.prototype.pushImage = function dockerPushImage(name, options) {}
 
 module.exports = Docker
