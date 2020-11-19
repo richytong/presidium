@@ -12,14 +12,33 @@ module.exports = Test('DockerSwarm', DockerSwarm)
     assert.equal(swarm.address, '127.0.0.1:2378')
   })
   .case('127.0.0.1:2377', async function (swarm) {
-    await swarm.leave({ force: true })
-    assert.equal(typeof get('node')(await swarm.init()), 'string')
-    const swarmInfo = await swarm.inspect()
-    assert.equal(typeof swarmInfo.JoinTokens.Worker, 'string')
-    assert.equal(typeof swarmInfo.JoinTokens.Manager, 'string')
-    assert.rejects(() => swarm.leave(), new Error('You are attempting to leave the swarm on a node that is participating as a manager. Removing the last manager erases all current state of the swarm. Use `--force` to ignore this message. '))
-    assert.deepEqual(await swarm.leave({ force: true }), { message: 'Left the swarm successfully.' })
-    assert.deepEqual(
-      await swarm.join(),
-      { message: 'at least 1 RemoteAddr is required to join' })
+    {
+      const response = await swarm.leave({ force: true })
+      assert([200, 503].includes(response.status))
+    }
+    {
+      const response = await swarm.init()
+      assert.equal(response.status, 200)
+    }
+    {
+      const response = await swarm.inspect()
+      assert.equal(response.status, 200)
+      const body = await response.json()
+      assert.equal(typeof body.JoinTokens.Worker, 'string')
+      assert.equal(typeof body.JoinTokens.Manager, 'string')
+      this.workerJoinToken = body.JoinTokens.Worker
+    }
+    {
+      const response = await swarm.leave()
+      assert.equal(response.status, 503)
+      assert((await response.json()).message.startsWith('You are attempting to leave'))
+    }
+    {
+      const response = await swarm.leave({ force: true })
+      assert.equal(response.status, 200)
+    }
+    {
+      const response = await swarm.join(this.workerJoinToken)
+      assert.equal(response.status, 400)
+    }
   })

@@ -1,17 +1,7 @@
 const Docker = require('./Docker')
 const stringifyJSON = require('./internal/stringifyJSON')
-const pipe = require('rubico/pipe')
-const tap = require('rubico/tap')
-const fork = require('rubico/fork')
-const switchCase = require('rubico/switchCase')
 const get = require('rubico/get')
-const thunkify = require('rubico/thunkify')
-const identity = require('rubico/x/identity')
-const isString = require('rubico/x/isString')
-
-const json = response => response.json()
-
-const text = response => response.text()
+const querystring = require('querystring')
 
 /**
  * @name DockerSwarm
@@ -42,7 +32,7 @@ const DockerSwarm = function (address) {
  * ```
  */
 DockerSwarm.prototype.inspect = function dockerSwarmInspect() {
-  return this.http.get('/swarm').then(json)
+  return this.http.get('/swarm')
 }
 
 /**
@@ -68,14 +58,7 @@ DockerSwarm.prototype.init = async function dockerSwarmInit(options) {
       ListenAddr: this.address,
       ...options,
     }),
-  }).then(pipe([
-    json,
-    switchCase([
-      isString,
-      fork({ node: identity }),
-      identity,
-    ]),
-  ]))
+  })
 }
 
 /**
@@ -107,7 +90,7 @@ DockerSwarm.prototype.join = async function dockerSwarmJoin(token, options) {
       JoinToken: token,
       ...options,
     }),
-  }).then(json)
+  })
 }
 
 /**
@@ -120,26 +103,7 @@ DockerSwarm.prototype.join = async function dockerSwarmJoin(token, options) {
  */
 DockerSwarm.prototype.leave = async function dockerSwarmLeave(options) {
   const force = get('force', false)(options)
-  return this.http.post(`/swarm/leave?force=${encodeURIComponent(force)}`)
-    .then(pipe([
-      json,
-      tap(({ message }) => {
-        if (message.startsWith('You are attempting to leave')) {
-          throw new Error(message)
-        }
-      }),
-    ])).catch(error => {
-      // looks like node-fetch playing not nicely with the docker API
-      // if stuff concerning DockerSwarm starts breaking, investigate this
-      if (
-        error.name == 'FetchError'
-          && error.type == 'invalid-json'
-          && error.message.startsWith('invalid json response body')
-      ) {
-        return { message: 'Left the swarm successfully.' }
-      }
-      throw error
-    })
+  return this.http.post(`/swarm/leave?${querystring.stringify({ force })}`)
 }
 
 module.exports = DockerSwarm
