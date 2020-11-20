@@ -104,11 +104,11 @@ DockerImage.prototype.push = function (repository, options) {
         name => name.split(':')[0],
         curry.arity(2, pathJoin, repository, __),
       ]),
-      querystring: name => querystring.stringify({ tag: name.split(':')[1] }),
+      search: name => querystring.stringify({ tag: name.split(':')[1] }),
     }),
     ({
-      image, querystring,
-    }) => this.http.post(`/images/${image}/push?${querystring}`, {
+      image, search,
+    }) => this.http.post(`/images/${image}/push?${search}`, {
       headers: {
         'X-Registry-Auth': pipe([
           get('authorization', { identitytoken: '' }),
