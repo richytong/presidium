@@ -2,6 +2,7 @@ const tar = require('tar-stream')
 const fs = require('fs/promises')
 const pathWalk = require('./internal/pathWalk')
 const isArray = require('./internal/isArray')
+const parsePath = require('./internal/parsePath')
 const pipe = require('rubico/pipe')
 const tap = require('rubico/tap')
 const get = require('rubico/get')
@@ -16,21 +17,14 @@ const pick = require('rubico/pick')
  *
  * @synopsis
  * ```coffeescript [specscript]
- * new Archive(options? {
- *   ignore: Array<string>, // paths or names to ignore
- *   defaults: Object<path=>(content string)>, // default entries for the archive
- * }) -> Archive
+ * new Archive(base Object<path=>(content string)>) -> Archive
  * ```
  */
-const Archive = function (defaults, options = {}) {
+const Archive = function (base) {
   if (this == null || this.constructor != Archive) {
-    return new Archive(defaults, options)
+    return new Archive(base)
   }
-  if (options == null) {
-    return this
-  }
-  this.ignore = get('ignore', [])(options)
-  this.defaults = defaults
+  this.base = base == null ? {} : base
   return this
 }
 
@@ -39,34 +33,31 @@ const Archive = function (defaults, options = {}) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * new Archive(options).compress(path string)
+ * new Archive(base?).compress(path string, options {
+ *   ignore: Array<string>, // paths or names to ignore
+ * })
  * ```
  *
  * @description
  * Note: `path` must be absolute
  */
-Archive.prototype.tar = function archiveTar(path) {
-  const pathWithSlash = path.endsWith('/') ? path : `${path}/`
+Archive.prototype.tar = function archiveTar(path, options) {
+  const pathWithSlash = path.endsWith('/') ? path : `${path}/`,
+    ignore = get('ignore', [])(options)
   return pipe([
-    curry.arity(2, pathWalk, __, {
-      ignore: this.ignore,
-    }),
+    curry.arity(2, pathWalk, __, { ignore }),
     reduce(async (pack, filePath) => {
-      const shouldIgnore = this.ignore.length > 1
-        && this.ignore.includes(filePath)
-      if (!shouldIgnore) {
-        pack.entry({
-          name: filePath.replace(pathWithSlash, ''),
-          ...pick([
-            'size', 'mode', 'mtime', 'uid', 'gid',
-          ])(await fs.stat(filePath)),
-        }, await fs.readFile(filePath))
-      }
+      pack.entry({
+        name: filePath.replace(pathWithSlash, ''),
+        ...pick([
+          'size', 'mode', 'mtime', 'uid', 'gid',
+        ])(await fs.stat(filePath)),
+      }, await fs.readFile(filePath))
       return pack
     }, tar.pack()),
     tap(pack => {
-      for (const defaultPath in this.defaults) {
-        pack.entry({ name: defaultPath }, this.defaults[defaultPath])
+      for (const basePath in this.base) {
+        pack.entry({ name: basePath }, this.base[basePath])
       }
       pack.finalize()
     }),
@@ -78,8 +69,11 @@ Archive.prototype.tar = function archiveTar(path) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * new Archive(options).untar(
+ * new Archive(base?).untar(
  *   archive Archive,
+ *   options {
+ *     ignore: Array<string>, // paths or names to ignore
+ *   },
  * ) -> Map<(header EntryHeader)=>(stream EntryStream)>
  * ```
  */

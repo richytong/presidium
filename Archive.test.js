@@ -6,10 +6,10 @@ const map = require('rubico/map')
 const reduce = require('rubico/reduce')
 
 module.exports = Test('Archive', Archive)
-  .case({}, {
-    ignore: ['Dockerfile', 'node_modules', '.git', '.nyc_output'],
-  }, async archive => {
-    const pack = await archive.tar(pathResolve(__dirname, 'internal'))
+  .case(async archive => {
+    const pack = await archive.tar(pathResolve(__dirname), {
+      ignore: ['Dockerfile', 'node_modules', '.git', '.nyc_output'],
+    })
     const extracted = await archive.untar(pack)
     assert(extracted.size > 0)
     for (const [path, stream] of extracted) {
@@ -29,4 +29,17 @@ module.exports = Test('Archive', Archive)
     assert.equal(
       await reduce((a, b) => a + b, '')(extracted.get('Dockerfile')),
       'FROM node:15-alpine')
+  })
+  .case({
+    Dockerfile: 'FROM busybox:1.32'
+  }, async archive => {
+    const pack = await archive.tar(pathResolve(__dirname, 'internal') + '/', {
+      ignore: ['hashJSON.js'],
+    })
+    const extracted = await archive.untar(pack)
+    assert(extracted.size > 0)
+    assert(extracted.has('Dockerfile'))
+    assert.equal(
+      await reduce((a, b) => a + b, '')(extracted.get('Dockerfile')),
+      'FROM busybox:1.32')
   })

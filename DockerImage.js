@@ -62,15 +62,15 @@ const DockerImage = function (name) {
  * Build a Docker Image. `path` must be absolute
  */
 DockerImage.prototype.build = async function (path, options) {
-  const archive = new Archive(get('archive', {})(options), {
-    ignore: get('ignore', ['node_modules', '.git', '.nyc_output'])(options),
-  })
+  const archive = new Archive(options?.archive)
   return this.http.post(`/build?${querystring.stringify({
     dockerfile: 'Dockerfile',
     t: this.name,
     forcerm: true,
   })}`, {
-    body: (await archive.tar(path)).pipe(zlib.createGzip()),
+    body: (await archive.tar(path, {
+      ignore: get('ignore', ['node_modules', '.git', '.nyc_output'])(options),
+    })).pipe(zlib.createGzip()),
     headers: {
       'Content-Type': 'application/x-tar',
     },
@@ -106,7 +106,6 @@ DockerImage.prototype.push = function (repository, options) {
       ]),
       querystring: name => querystring.stringify({ tag: name.split(':')[1] }),
     }),
-    tap(console.log),
     ({
       image, querystring,
     }) => this.http.post(`/images/${image}/push?${querystring}`, {
