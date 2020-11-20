@@ -94,7 +94,7 @@ DockerImage.prototype.build = async function (path, options) {
  * })
  * ```
  *
- * @TODO push in DockerImage.test.js
+ * @description
  * https://docs.docker.com/registry/deploying/
  */
 DockerImage.prototype.push = function (repository, options) {
