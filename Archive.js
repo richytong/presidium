@@ -29,23 +29,26 @@ const Archive = function (base) {
 }
 
 /**
- * @name Archive.prototype.compress
+ * @name Archive.prototype.tar
  *
  * @synopsis
  * ```coffeescript [specscript]
- * new Archive(base?).compress(path string, options {
+ * new Archive(base?).tar(path string, options {
  *   ignore: Array<string>, // paths or names to ignore
- * })
+ * }) -> HotReadableStream
  * ```
  *
  * @description
  * Note: `path` must be absolute
+ * Note: Returned readable stream is hot, so please pipe this immediately
+ * Note: pack.packing is a Promise that represents the entire packing operation of the tar
+ * Note: pack.packing resolves when the tar operation is complete
  */
 Archive.prototype.tar = function archiveTar(path, options) {
   const pathWithSlash = path.endsWith('/') ? path : `${path}/`,
-    ignore = get('ignore', [])(options),
+    ignore = get('ignore')(options),
     pack = tar.pack()
-  pack.streamingPromise = pipe([
+  pack.packing = pipe([
     curry.arity(2, pathWalk, __, { ignore }),
     reduce(async (pack, filePath) => {
       pack.entry({
