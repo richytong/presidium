@@ -33,7 +33,7 @@ module.exports = Test('Archive', Archive)
   .case({
     Dockerfile: 'FROM busybox:1.32'
   }, async archive => {
-    const pack = await archive.tar(pathResolve(__dirname, 'internal') + '/', {
+    const pack = await archive.tar(`${pathResolve(__dirname, 'internal')}/`, {
       ignore: ['hashJSON.js'],
     })
     const extracted = await archive.untar(pack)
