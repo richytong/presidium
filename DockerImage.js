@@ -1,21 +1,25 @@
 const Archive = require('./Archive')
 const Docker = require('./Docker')
-const isArray = require('./internal/isArray')
 const pipe = require('rubico/pipe')
+const tap = require('rubico/tap')
+const fork = require('rubico/fork')
 const get = require('rubico/get')
 const map = require('rubico/map')
-const tap = require('rubico/tap')
-const transform = require('rubico/transform')
+const curry = require('rubico/curry')
+const __ = require('rubico/__')
 const querystring = require('querystring')
 const zlib = require('zlib')
-const parseJSON = require('./internal/parseJSON')
+const pathJoin = require('./internal/pathJoin')
+const isArray = require('./internal/isArray')
+const stringifyJSON = require('./internal/stringifyJSON')
+const { exec } = require('child_process')
 
 /**
  * @name DockerImage
  *
  * @synopsis
  * ```coffeescript [specscript]
- * new DockerImage(dockerfile string, options? {
+ * new DockerImage(dockerfile string, options {
  *   tags: Array<string>,
  * }) -> DockerImage
  * ```
@@ -25,16 +29,17 @@ const parseJSON = require('./internal/parseJSON')
  * DockerImage(`
  * FROM node:15-alpine
  * RUN apk add openssh openntp neovim
- * EXPOSE 8888`)
+ * EXPOSE 8888`, {
+ *   tags: ['my-image:latest'],
+ * })
  * ```
  */
-const DockerImage = function (dockerfile, options) {
+const DockerImage = function (name) {
   if (this == null || this.constructor != DockerImage) {
-    return new DockerImage(dockerfile, options)
+    return new DockerImage(name)
   }
   this.http = new Docker().http
-  this.dockerfile = dockerfile
-  this.tags = get('tags', [])(options)
+  this.name = name
   return this
 }
 
@@ -43,32 +48,27 @@ const DockerImage = function (dockerfile, options) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DockerImage(dockerfile).build(
+ * DockerImage(name).build(
  *   path string,
  *   options? {
- *     tags Array<string>, // <name>:<tag>
+ *     Dockerfile string,
  *     ignore: Array<string>, // paths or names to ignore in tarball
+ *     archive: Object<path string)=>(content string)>, // object representation of the base archive for build context
  *   },
  * ) -> ()
  * ```
  *
  * @description
  * Build a Docker Image. `path` must be absolute
- *
- * @TODO refactor tarball to TarArchive
  */
 DockerImage.prototype.build = async function (path, options) {
-  const archive = new Archive({
-    ignore: isArray(options?.ignore)
-      ? options.ignore
-      : ['Dockerfile', 'node_modules', '.git', '.nyc_output'],
-    defaults: {
-      Dockerfile: this.dockerfile,
-    },
+  const archive = new Archive(get('archive', {})(options), {
+    ignore: get('ignore', ['node_modules', '.git', '.nyc_output'])(options),
   })
   return this.http.post(`/build?${querystring.stringify({
     dockerfile: 'Dockerfile',
-    t: this.tags,
+    t: this.name,
+    forcerm: true,
   })}`, {
     body: (await archive.tar(path)).pipe(zlib.createGzip()),
     headers: {
@@ -77,6 +77,47 @@ DockerImage.prototype.build = async function (path, options) {
   })
 }
 
-DockerImage.prototype.push = function (tag, repository, options) {}
+/**
+ * @name DockerImage.prototype.push
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * DockerImage(dockerfile, opts).push(repository string, options {
+ *   authorization: {
+ *     username: string,
+ *     password: string,
+ *     email: string,
+ *     serveraddress: string,
+ *   }|{
+ *     identitytoken: string,
+ *   },
+ * })
+ * ```
+ *
+ * @TODO push in DockerImage.test.js
+ * https://docs.docker.com/registry/deploying/
+ */
+DockerImage.prototype.push = function (repository, options) {
+  return pipe([
+    fork({
+      image: pipe([
+        name => name.split(':')[0],
+        curry.arity(2, pathJoin, repository, __),
+      ]),
+      querystring: name => querystring.stringify({ tag: name.split(':')[1] }),
+    }),
+    tap(console.log),
+    ({
+      image, querystring,
+    }) => this.http.post(`/images/${image}/push?${querystring}`, {
+      headers: {
+        'X-Registry-Auth': pipe([
+          get('authorization', { identitytoken: '' }),
+          stringifyJSON,
+        ])(options),
+      },
+    }),
+  ])(this.name)
+}
 
 module.exports = DockerImage

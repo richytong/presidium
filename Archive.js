@@ -22,15 +22,15 @@ const pick = require('rubico/pick')
  * }) -> Archive
  * ```
  */
-const Archive = function (options) {
+const Archive = function (defaults, options = {}) {
   if (this == null || this.constructor != Archive) {
-    return new Archive(options)
+    return new Archive(defaults, options)
   }
   if (options == null) {
     return this
   }
   this.ignore = get('ignore', [])(options)
-  this.defaults = get('defaults', {})(options)
+  this.defaults = defaults
   return this
 }
 

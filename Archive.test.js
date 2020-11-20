@@ -6,7 +6,7 @@ const map = require('rubico/map')
 const reduce = require('rubico/reduce')
 
 module.exports = Test('Archive', Archive)
-  .case({
+  .case({}, {
     ignore: ['Dockerfile', 'node_modules', '.git', '.nyc_output'],
   }, async archive => {
     const pack = await archive.tar(pathResolve(__dirname, 'internal'))
@@ -20,9 +20,7 @@ module.exports = Test('Archive', Archive)
     }
   })
   .case({
-    defaults: {
-      Dockerfile: 'FROM node:15-alpine'
-    },
+    Dockerfile: 'FROM node:15-alpine'
   }, async archive => {
     const pack = await archive.tar(pathResolve(__dirname, 'internal'))
     const extracted = await archive.untar(pack)
