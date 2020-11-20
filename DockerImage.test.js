@@ -33,10 +33,9 @@ EXPOSE 8888`,
       const response = await this.docker.auth({
         username: 'admin',
         password: 'password',
+        email: 'hey@example.com',
         serveraddress: 'localhost:5000',
       })
-      console.log('response', response)
-      console.log('response.statusText', response.statusText)
       assert.equal(response.status, 200)
       const body = await pipe([
         reduce((a, b) => a + b, ''),
