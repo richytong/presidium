@@ -35,6 +35,8 @@ EXPOSE 8888`,
         password: 'password',
         serveraddress: 'localhost:5000',
       })
+      console.log('response', response)
+      console.log('response.statusText', response.statusText)
       assert.equal(response.status, 200)
       const body = await pipe([
         reduce((a, b) => a + b, ''),
