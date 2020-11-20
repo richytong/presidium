@@ -29,7 +29,8 @@ EXPOSE 8888`,
         response.body.on('end', resolve)
       })
     }
-    {
+
+    /* {
       const response = await this.docker.auth({
         username: 'admin',
         password: 'password',
@@ -43,7 +44,8 @@ EXPOSE 8888`,
       ])(response.body)
       this.identitytoken = get('IdentityToken')(body)
       assert.equal(this.identitytoken, '')
-    }
+    } */
+
     {
       const response = await this.docker.listImages()
       assert.equal(response.status, 200)
