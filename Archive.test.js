@@ -1,4 +1,5 @@
 const assert = require('assert')
+const fs = require('fs/promises')
 const Test = require('thunk-test')
 const Archive = require('./Archive')
 const pathResolve = require('./internal/pathResolve')
@@ -24,7 +25,8 @@ module.exports = Test('Archive', Archive)
   }, async archive => {
     const pack = await archive.tar(pathResolve(__dirname, 'internal'))
     const extracted = await archive.untar(pack)
-    assert(extracted.size > 0)
+    const dir = await fs.readdir(pathResolve(__dirname, 'internal'))
+    assert.equal(extracted.size, dir.length + 1) // extra Dockerfile
     assert(extracted.has('Dockerfile'))
     assert.equal(
       await reduce((a, b) => a + b, '')(extracted.get('Dockerfile')),
