@@ -43,8 +43,9 @@ const Archive = function (base) {
  */
 Archive.prototype.tar = function archiveTar(path, options) {
   const pathWithSlash = path.endsWith('/') ? path : `${path}/`,
-    ignore = get('ignore', [])(options)
-  return pipe([
+    ignore = get('ignore', [])(options),
+    pack = tar.pack()
+  pack.streamingPromise = pipe([
     curry.arity(2, pathWalk, __, { ignore }),
     reduce(async (pack, filePath) => {
       pack.entry({
@@ -54,7 +55,7 @@ Archive.prototype.tar = function archiveTar(path, options) {
         ])(await fs.stat(filePath)),
       }, await fs.readFile(filePath))
       return pack
-    }, tar.pack()),
+    }, pack),
     tap(pack => {
       for (const basePath in this.base) {
         pack.entry({ name: basePath }, this.base[basePath])
@@ -62,6 +63,7 @@ Archive.prototype.tar = function archiveTar(path, options) {
       pack.finalize()
     }),
   ])(path)
+  return pack
 }
 
 /**

@@ -68,9 +68,9 @@ DockerImage.prototype.build = async function (path, options) {
     t: this.name,
     forcerm: true,
   })}`, {
-    body: (await archive.tar(path, {
+    body: archive.tar(path, {
       ignore: get('ignore', ['node_modules', '.git', '.nyc_output'])(options),
-    })).pipe(zlib.createGzip()),
+    }).pipe(zlib.createGzip()),
     headers: {
       'Content-Type': 'application/x-tar',
     },
