@@ -9,7 +9,6 @@ const querystring = require('querystring')
 const stringifyJSON = require('./internal/stringifyJSON')
 const split = require('./internal/split')
 const join = require('./internal/join')
-const toString = require('./internal/toString')
 const isArray = require('./internal/isArray')
 
 const {
@@ -152,7 +151,7 @@ Docker.prototype.create = function dockerCreate(image, options) {
       },
       ...options.expose && {
         ExposedPorts: transform(map(pipe([
-          toString,
+          String,
           split('/'),
           fork([get(0), get(1, 'tcp')]),
           join('/'),
@@ -183,14 +182,14 @@ Docker.prototype.create = function dockerCreate(image, options) {
           PortBindings: map.entries(fork([ // publish and PortBindings are reversed
             pipe([ // container port
               get(1),
-              toString,
+              String,
               split('/'),
               fork([get(0), get(1, 'tcp')]),
               join('/'),
             ]),
             pipe([ // host port
               get(0),
-              toString,
+              String,
               HostPort => [{ HostPort }],
             ]),
           ]))(options.publish),
@@ -204,7 +203,7 @@ Docker.prototype.create = function dockerCreate(image, options) {
         ...options.restart && {
           RestartPolicy: fork({
             Name: get(0, ''),
-            MaximumRetryCount: get(1, 0),
+            MaximumRetryCount: pipe([get(1, '0'), Number]),
           })(options.restart.split(':')),
         },
       },

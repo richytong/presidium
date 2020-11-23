@@ -10,7 +10,6 @@ const isArray = require('./internal/isArray')
 const stringifyJSON = require('./internal/stringifyJSON')
 const split = require('./internal/split')
 const join = require('./internal/join')
-const toString = require('./internal/toString')
 
 const {
   pipe, tap,

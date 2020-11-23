@@ -114,6 +114,7 @@ EXPOSE 8888`,
         env: { HEY: 'hey' },
         volume: ['/opt/my-volume'],
         memory: 512e6, // bytes
+        restart: 'on-failure:5',
         healthcheck: {
           test: ['CMD', 'echo', 'ok'],
           interval: 1e9,
