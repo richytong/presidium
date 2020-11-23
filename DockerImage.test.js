@@ -121,7 +121,7 @@ EXPOSE 8888`,
           startPeriod: 5e9,
         },
         publish: {
-          22: 22, // hostPort -> containerPort[/protocol]
+          23: 22, // hostPort -> containerPort[/protocol]
           8888: '8000/tcp',
         },
         logDriver: 'json-file',
@@ -144,7 +144,7 @@ EXPOSE 8888`,
       assert.deepEqual(body.Config.ExposedPorts, { '22/tcp': {}, '8888/tcp': {}, '8889/udp': {} })
       assert.equal(body.HostConfig.Memory, 512e6)
       assert.deepEqual(body.HostConfig.PortBindings, {
-        '22/tcp': [{ HostIp: '', HostPort: '22' }],
+        '22/tcp': [{ HostIp: '', HostPort: '23' }],
         '8000/tcp': [{ HostIp: '', HostPort: '8888' }]
       })
       assert.deepEqual(body.HostConfig.LogConfig, {
