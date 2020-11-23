@@ -23,6 +23,7 @@ jobs:
     - name: Run containers
       run:
         docker run -p 8000:8000 -d amazon/dynamodb-local:1.13.5
+        && docker run -p 5000:5000 -d --restart always --name registry registry:2.7
         && docker run -p 27017:27017 -d mongo:4.0.6-xenial
         && docker run -p 6379:6379 -d redis:6.0.9
         && docker run -p 9200:9200 -d -m "512m" -e "discovery.type=single-node" -e "ES_JAVA_OPTS=-Xms256m -Xmx256m" docker.elastic.co/elasticsearch/elasticsearch:7.1.0
