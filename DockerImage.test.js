@@ -179,7 +179,6 @@ EXPOSE 8888`,
     {
       const attachResponsePromise = this.docker.attach(this.containerId)
       const startResponse = await this.docker.start(this.containerId)
-      console.log('startResponse', startResponse)
       assert.equal(startResponse.status, 204)
       const attachResponse = await attachResponsePromise
       assert.equal(attachResponse.status, 200)
