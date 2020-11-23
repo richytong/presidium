@@ -48,14 +48,6 @@ EXPOSE 8888`,
         serveraddress: 'localhost:5000',
       })
 
-      console.log('response start')
-      response.body.pipe(process.stdout)
-      await new Promise(resolve => {
-        response.body.on('end', resolve)
-      })
-      console.log('response end')
-
-        /*
       assert.equal(response.status, 200)
       const body = await pipe([
         reduce((a, b) => a + b, ''),
@@ -63,8 +55,6 @@ EXPOSE 8888`,
       ])(response.body)
       this.identitytoken = get('IdentityToken')(body)
       assert.equal(this.identitytoken, '')
-      */
-
     }
 
     {
