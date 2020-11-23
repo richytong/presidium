@@ -101,8 +101,8 @@ DockerSwarm.prototype.join = async function dockerSwarmJoin(token, options) {
  * DockerSwarm(address).leave(options? { force: boolean }) -> output Promise<string>
  * ```
  */
-DockerSwarm.prototype.leave = async function dockerSwarmLeave(options) {
-  const force = get('force', false)(options)
+DockerSwarm.prototype.leave = async function dockerSwarmLeave(options = {}) {
+  const force = options.force ?? false
   return this.http.post(`/swarm/leave?${querystring.stringify({ force })}`)
 }
 
