@@ -47,6 +47,7 @@ EXPOSE 8888`,
         email: 'hey@example.com',
         serveraddress: 'localhost:5000',
       })
+
       /*
       console.log('response start')
       response.body.pipe(process.stdout)
@@ -55,6 +56,7 @@ EXPOSE 8888`,
       })
       console.log('response end')
       */
+
       assert.equal(response.status, 200)
       const body = await pipe([
         reduce((a, b) => a + b, ''),
