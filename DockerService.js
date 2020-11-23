@@ -5,61 +5,70 @@ const Docker = require('Docker')
  *
  * @synopsis
  * ```coffeescript [specscript]
- * new DockerService(servicename string) -> DockerService
+ * new DockerService(image string, address string) -> DockerService
  * ```
  *
  * @description
- * The name of a DockerService corresponds 1:1 with a DockerImage. The name should be the name of the Docker image.
- */
-const DockerService = function (name) {
-  if (this == null || this.constructor != DockerService) {
-    return new DockerService(name)
-  }
-  this.http = new Docker().http
-  this.name = name
-  this.mounts = []
-  return this
-}
-
-/**
- * @name DockerService.prototype.withVolume
+ * One Docker swarm = N Docker services = N ports exposed on every host
  *
- * @synopsis
- * ```coffeescript [specscript]
- * DockerService(name)
- *   .withVolume(name string, containerPath string, {
- *     readonly: boolean,
- *     labels: Object<string>,
- *   })
- *   .apply()
+ * ```javascript
+ * DockerService('my-image:latest', '[::1]:2377')
  * ```
  */
-DockerService.prototype.withVolume = function dockerServiceWithVolume(
-  name, containerPath, options,
-) {
-  this.mounts.push({
-    Type: 'volume',
-    Source: name,
-    Target: containerPath,
-    ReadOnly: get('readonly', false)(options),
-  })
+const DockerService = function (address, image) {
+  if (this == null || this.constructor != DockerService) {
+    return new DockerService(address, image)
+  }
+  this.http = new Docker().http
+  this.address = address
   return this
 }
 
 /**
- * @namae DockerService.prototype.create
+ * @name DockerService.prototype.create
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DockerService(name).create(options {
- *   replicas: number,
- *   hosts: Array<string>,
- *   mounts: Array<DockerVolume>,
+ * DockerService(image, address).create({
+ *   replicas: 1|number,
+ *   restart: 'no'|'on-failure[:<max-retries>]'|'always'|'unless-stopped',
+ *   logDriver: 'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'none',
+ *   logDriverOptions: Object<string>,
+ *   publish: Object<(hostPort string)=>(containerPort string)>,
+ *   healthcheck: {
+ *     test: Array<string>, // healthcheck command configuration. See description
+ *     interval: 0|>1e6, // nanoseconds to wait between healthchecks; 0 means inherit
+ *     timeout: 0|>1e6, // nanoseconds to wait before healthcheck fails
+ *     retries: number, // number of retries before unhealhty
+ *     startPeriod: 0|>1e6, // nanoseconds to wait on container init before starting first healthcheck
+ *   },
+ *   mounts: Array<{
+ *     source: string, // name of volume
+ *     target: string, // mounted path inside container
+ *     readonly: boolean,
+ *   }>|Array<string>, // '<source>:<target>[:readonly]'
+ *
+ *   cmd: Array<string|number>, // CMD
+ *   expose: Array<(port string)>, // EXPOSE
+ *   volume: Array<path string>, // VOLUME
+ *   workdir: path string, // WORKDIR
+ *   env: {
+ *     HOME: string,
+ *     HOSTNAME: string,
+ *     PATH: string, // $PATH
+ *     ...(moreEnvOptions Object<string>),
+ *   }, // ENV; environment variables exposed to container during run time
+ * }) -> Promise<HttpResponse>
+ * ```
+ *
+ * @description
+ * ```javascript
+ * DockerService(image, address).create({
+ *   replicas: 1,
  * })
  * ```
  */
-DockerService.prototype.create = function create(tasks) {
-  return this
+DockerService.prototype.create = function dockerServiceCreate(options) {
 }
 
 /* {

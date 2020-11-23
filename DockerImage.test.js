@@ -113,6 +113,11 @@ EXPOSE 8888`,
         expose: [22, 8888, '8889/udp'],
         env: { HEY: 'hey' },
         volume: ['/opt/my-volume'],
+        mounts: [{
+          source: 'other-volume',
+          target: '/opt/other-volume',
+          readonly: true,
+        }],
         memory: 512e6, // bytes
         restart: 'on-failure:5',
         healthcheck: {

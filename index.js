@@ -44,10 +44,10 @@ const S3Bucket = require('./S3Bucket')
 const Presidium = {
   Http, HttpServer,
   WebSocket, WebSocketServer,
-  Docker, DockerImage, DockerService,
   Dynamo, DynamoTable, DynamoIndex, DynamoStream,
   Redis, RedisString, RedisList, RedisSet, RedisHash,
     RedisSortedSet, RedisBitmap, RedisHyperLogLog, RedisStream,
+  Docker, DockerImage, DockerContainer, DockerService,
   ElasticTranscoder, ElasticTranscoderPipeline,
   CloudFront, CloudFrontDistribution,
   Elasticsearch, ElasticsearchIndex,

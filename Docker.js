@@ -88,7 +88,7 @@ Docker.prototype.auth = function dockerAuth(authorization) {
  *     restart: 'no'|'on-failure[:<max-retries>]'|'always'|'unless-stopped',
  *     cleanup: false|true, // remove the container's file system when the container exits
  *     logDriver: 'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'none',
- *     portBindings: Object<(containerPort string)=>(hostports Array<string>)> // <port>[/<protocol 'tcp'|'udp'>]
+ *     logDriverOptions: Object<string>,
  *     publish: Object<(hostPort string)=>(containerPort string)>,
  *     healthcheck: {
  *       test: Array<string>, // healthcheck command configuration. See description
@@ -97,7 +97,6 @@ Docker.prototype.auth = function dockerAuth(authorization) {
  *       retries: number, // number of retries before unhealhty
  *       startPeriod: 0|>1e6, // nanoseconds to wait on container init before starting first healthcheck
  *     },
- *     mounts: Array<Docker.Volume>,
  *     memory: number, // memory limit in bytes
  *
  *     // Dockerfile defaults
@@ -164,6 +163,7 @@ Docker.prototype.create = function dockerCreate(image, options) {
       ...options.volume && {
         Volumes: transform(map(path => ({ [path]: {} })), {})(options.volume),
       },
+
       ...options.healthcheck && {
         Healthcheck: fork({
           Test: get('test', () => {
