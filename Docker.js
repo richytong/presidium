@@ -98,6 +98,11 @@ Docker.prototype.auth = function dockerAuth(authorization) {
  *       startPeriod: 0|>1e6, // nanoseconds to wait on container init before starting first healthcheck
  *     },
  *     memory: number, // memory limit in bytes
+ *     mounts: Array<{
+ *       source: string, // name of volume
+ *       target: string, // mounted path inside container
+ *       readonly: boolean,
+ *     }>|Array<string>, // '<source>:<target>[:readonly]'
  *
  *     // Dockerfile defaults
  *     cmd: Array<string|number>, // CMD
@@ -177,6 +182,25 @@ Docker.prototype.create = function dockerCreate(image, options) {
       },
 
       HostConfig: {
+        ...options.mounts && {
+          Mounts: options.mounts.map(pipe([
+            switchCase([
+              isString,
+              pipe([
+                split(':'),
+                fork({ target: get(0), source: get(1), readonly: get(2) }),
+              ]),
+              identity,
+            ]),
+            fork({
+              Target: get('target'),
+              Source: get('source'),
+              Type: get('type', 'volume'),
+              ReadOnly: get('readonly', false),
+            }),
+          ]))
+        },
+
         ...options.memory && { Memory: options.memory },
         ...options.publish && {
           PortBindings: map.entries(fork([ // publish and PortBindings are reversed
@@ -194,6 +218,7 @@ Docker.prototype.create = function dockerCreate(image, options) {
             ]),
           ]))(options.publish),
         },
+
         ...options.logDriver && {
           LogConfig: {
             Type: options.logDriver,
@@ -308,7 +333,7 @@ Docker.prototype.inspectImage = function dockerInspectImage(image) {
  * @synopsis
  * ```coffeescript [specscript]
  * Docker().tagImage(
- *   name string,
+ *   image string,
  *   options {
  *     repo: string, // some_user/some_image
  *     tag: string,
@@ -316,8 +341,8 @@ Docker.prototype.inspectImage = function dockerInspectImage(image) {
  * ) -> Promise<HttpResponse>
  * ```
  */
-Docker.prototype.tagImage = function dockerTagImage(name, options) {
-  return this.http.post(`/images/${name}/tag?${
+Docker.prototype.tagImage = function dockerTagImage(image, options) {
+  return this.http.post(`/images/${image}/tag?${
     querystring.stringify(pick(['repo', 'tag'])(options))
   }`)
 }

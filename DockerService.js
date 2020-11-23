@@ -15,9 +15,9 @@ const Docker = require('Docker')
  * DockerService('my-image:latest', '[::1]:2377')
  * ```
  */
-const DockerService = function (address, image) {
+const DockerService = function (image, address) {
   if (this == null || this.constructor != DockerService) {
-    return new DockerService(address, image)
+    return new DockerService(image, address)
   }
   this.http = new Docker().http
   this.address = address

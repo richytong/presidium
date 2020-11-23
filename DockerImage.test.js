@@ -168,6 +168,12 @@ EXPOSE 8888`,
         StartPeriod: 5000000000,
         Retries: 10,
       })
+      assert.deepEqual(body.HostConfig.Mounts, [{
+        Type: 'volume',
+        Source: 'other-volume',
+        Target: '/opt/other-volume',
+        ReadOnly: true
+      }])
     }
     assert.throws(() => this.docker.create('presidium-test:ayoyo', {
       cmd: ['echo', 'hey'],
