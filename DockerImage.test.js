@@ -40,13 +40,19 @@ EXPOSE 8888`,
       })
     }
 
-    /* {
+    {
       const response = await this.docker.auth({
         username: 'admin',
         password: 'password',
         email: 'hey@example.com',
         serveraddress: 'localhost:5000',
       })
+      console.log('response start')
+      response.body.pipe(process.stdout)
+      await new Promise(resolve => {
+        response.body.on('end', resolve)
+      })
+      console.log('response end')
       assert.equal(response.status, 200)
       const body = await pipe([
         reduce((a, b) => a + b, ''),
@@ -54,7 +60,7 @@ EXPOSE 8888`,
       ])(response.body)
       this.identitytoken = get('IdentityToken')(body)
       assert.equal(this.identitytoken, '')
-    } */
+    }
 
     {
       const response = await this.docker.listImages()
@@ -179,12 +185,6 @@ EXPOSE 8888`,
     {
       const attachResponsePromise = this.docker.attach(this.containerId)
       const startResponse = await this.docker.start(this.containerId)
-      console.log('startResponse start')
-      startResponse.body.pipe(process.stdout)
-      await new Promise(resolve => {
-        startResponse.body.on('end', resolve)
-      })
-      console.log('startResponse end')
       assert.equal(startResponse.status, 204)
       const attachResponse = await attachResponsePromise
       assert.equal(attachResponse.status, 200)
