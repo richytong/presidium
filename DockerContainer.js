@@ -47,13 +47,13 @@ const DockerContainer = function (image) {
  *   cleanup: false|true, // remove the container's file system when the container exits
  *   logDriver: 'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'none',
  *   logDriverOptions: Object<string>,
- *   publish: Object<(hostPort string)=>(containerPort string)>,
+ *   publish: Array<string>, // '<hostPort>:<containerPort>[:"tcp"|"udp"|"sctp"]'
  *   healthcheck: {
  *     test: Array<string>, // healthcheck command configuration. See description
- *     interval: 0|>1e6, // nanoseconds to wait between healthchecks; 0 means inherit
- *     timeout: 0|>1e6, // nanoseconds to wait before healthcheck fails
- *     retries: number, // number of retries before unhealhty
- *     startPeriod: 0|>1e6, // nanoseconds to wait on container init before starting first healthcheck
+ *     interval?: 10e9|>1e6, // nanoseconds to wait between healthchecks; 0 means inherit
+ *     timeout?: 20e9|>1e6, // nanoseconds to wait before healthcheck fails
+ *     retries?: 5|number, // number of retries before unhealhty
+ *     startPeriod?: >=1e6, // nanoseconds to wait on container init before starting first healthcheck
  *   },
  *   memory: number, // memory limit in bytes
  *   mounts: Array<{
@@ -184,8 +184,8 @@ DockerContainer.prototype.create = function dockerContainerCreate(options = {}) 
         },
         ...options.restart && {
           RestartPolicy: fork({
-            Name: get(0, ''),
-            MaximumRetryCount: pipe([get(1, '0'), Number]),
+            Name: get(0, 'no'),
+            MaximumRetryCount: pipe([get(1, 0), Number]),
           })(options.restart.split(':')),
         },
       },
