@@ -3,6 +3,7 @@ const rubico = require('rubico')
 const Test = require('thunk-test')
 const Docker = require('./Docker')
 const DockerImage = require('./DockerImage')
+const DockerContainer = require('./DockerContainer')
 const pathResolve = require('./internal/pathResolve')
 
 const {
@@ -107,7 +108,7 @@ EXPOSE 8888`,
       assert.equal(response.status, 200)
     }
     {
-      const response = await this.docker.create('presidium-test:ayoyo', {
+      const response = await new DockerContainer('presidium-test:ayoyo').create({
         cmd: ['sh', '-c', 'echo $HEY'],
         workdir: '/opt/heyo',
         expose: [22, 8888, '8889/udp'],
@@ -116,16 +117,11 @@ EXPOSE 8888`,
         mounts: [{
           source: 'other-volume',
           target: '/opt/other-volume',
-          readonly: true,
         }],
         memory: 512e6, // bytes
-        restart: 'on-failure:5',
+        restart: 'no',
         healthcheck: {
           test: ['CMD', 'echo', 'ok'],
-          interval: 1e9,
-          timeout: 30e9,
-          retries: 10,
-          startPeriod: 5e9,
         },
         publish: {
           23: 22, // hostPort -> containerPort[/protocol]
@@ -141,41 +137,7 @@ EXPOSE 8888`,
       const body = await response.json()
       this.containerId = body.Id
     }
-    {
-      const response = await this.docker.inspect(this.containerId)
-      assert.equal(response.status, 200)
-      const body = await response.json()
-      assert.equal(body.Config.Image, 'presidium-test:ayoyo')
-      assert.deepEqual(body.Config.Volumes, { '/opt/my-volume': {} })
-      assert.equal(body.Config.WorkingDir, '/opt/heyo')
-      assert.deepEqual(body.Config.ExposedPorts, { '22/tcp': {}, '8888/tcp': {}, '8889/udp': {} })
-      assert.equal(body.HostConfig.Memory, 512e6)
-      assert.deepEqual(body.HostConfig.PortBindings, {
-        '22/tcp': [{ HostIp: '', HostPort: '23' }],
-        '8000/tcp': [{ HostIp: '', HostPort: '8888' }]
-      })
-      assert.deepEqual(body.HostConfig.LogConfig, {
-        Type: 'json-file',
-        Config: {
-          'max-file': '10',
-          'max-size': '100m',
-        },
-      })
-      assert.deepEqual(body.Config.Healthcheck, {
-        Test: ['CMD', 'echo', 'ok'],
-        Interval: 1000000000,
-        Timeout: 30000000000,
-        StartPeriod: 5000000000,
-        Retries: 10,
-      })
-      assert.deepEqual(body.HostConfig.Mounts, [{
-        Type: 'volume',
-        Source: 'other-volume',
-        Target: '/opt/other-volume',
-        ReadOnly: true
-      }])
-    }
-    assert.throws(() => this.docker.create('presidium-test:ayoyo', {
+    assert.throws(() => new DockerContainer('presidium-test:ayoyo').create({
       cmd: ['echo', 'hey'],
       workdir: '/opt',
       expose: [22, 8888, '8889/udp'],
@@ -190,10 +152,9 @@ EXPOSE 8888`,
       },
     }), new Error('healthcheck.test parameter required'))
     {
-      const attachResponsePromise = this.docker.attach(this.containerId)
+      const attachResponse = await this.docker.attach(this.containerId)
       const startResponse = await this.docker.start(this.containerId)
       assert.equal(startResponse.status, 204)
-      const attachResponse = await attachResponsePromise
       assert.equal(attachResponse.status, 200)
       const heyFromStdout = await reduce(
         (content, chunk) => Buffer.concat([content, chunk]),
