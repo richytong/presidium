@@ -7,7 +7,7 @@ module.exports = Test('DockerContainer', DockerContainer)
   .before(async function () {
     this.docker = new Docker()
   })
-  .case('busybox', async function (alpine) {
+  .case('node:15-alpine', async function (alpine) {
     {
       const response = await alpine.run(['sh', '-c', 'echo $HEY'], {
         workdir: '/opt/heyo',
@@ -75,7 +75,7 @@ module.exports = Test('DockerContainer', DockerContainer)
       const response = await this.docker.inspect(this.containerId)
       assert.equal(response.status, 200)
       const body = await response.json()
-      assert.equal(body.Config.Image, 'busybox')
+      assert.equal(body.Config.Image, 'node:15-alpine')
       assert.deepEqual(body.Config.Volumes, { '/opt/my-volume': {} })
       assert.equal(body.Config.WorkingDir, '/opt/heyo')
       assert.deepEqual(body.Config.ExposedPorts, { '22/tcp': {}, '8888/tcp': {}, '8889/udp': {} })
