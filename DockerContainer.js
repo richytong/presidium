@@ -126,16 +126,14 @@ DockerContainer.prototype.create = function dockerContainerCreate(options = {}) 
         Volumes: transform(map(path => ({ [path]: {} })), {})(options.volume),
       },
 
-      ...options.healthcheck && {
-        Healthcheck: fork({
-          Test: get('test', () => {
-            throw new Error('healthcheck.test parameter required')
-          }),
-          Interval: get('interval', 10e9),
-          Timeout: get('timeout', 20e9),
-          Retries: get('retries', 5),
-          StartPeriod: get('startPeriod', 1e6),
-        })(options.healthcheck),
+      ...options.healthCmd && {
+        Healthcheck: {
+          Test: ['CMD', ...options.healthCmd],
+          Interval: options.healthInterval ?? 10e9,
+          Timeout: options.healthTimeout ?? 20e9,
+          Retries: options.healthRetries ?? 5,
+          StartPeriod: options.healthStartPeriod ?? 1e6,
+        },
       },
 
       HostConfig: {

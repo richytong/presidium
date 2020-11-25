@@ -22,13 +22,12 @@ module.exports = Test('DockerContainer', DockerContainer)
         memory: 512e6, // bytes
         restart: 'on-failure:5',
 
-        healthcheck: {
-          test: ['CMD', 'echo', 'ok'],
-          interval: 1e9,
-          timeout: 30e9,
-          retries: 10,
-          startPeriod: 5e9,
-        },
+        healthCmd: ['echo', 'ok'],
+        healthInterval: 1e9,
+        healthTimeout: 30e9,
+        healthRetries: 10,
+        healthStartPeriod: 5e9,
+
         publish: {
           23: 22, // hostPort -> containerPort[/protocol]
           8888: '8000/tcp',
@@ -55,21 +54,6 @@ module.exports = Test('DockerContainer', DockerContainer)
       assert.strictEqual(body[7], 4) // SIZE4
       assert.strictEqual(body.slice(8).toString(), 'hey\n')
     }
-
-    assert.throws(() => alpine.create({
-      cmd: ['echo', 'hey'],
-      workdir: '/opt',
-      expose: [22, 8888, '8889/udp'],
-      volume: ['/opt/my-volume'],
-      memory: 512e6, // bytes
-      healthcheck: {
-        // test: ['CMD', 'echo', 'ok'], // absence of test parameter should cause an error
-        interval: 1e9,
-        timeout: 30e9,
-        retries: 10,
-        startPeriod: 5e9,
-      },
-    }), new Error('healthcheck.test parameter required'))
 
     {
       const response = await this.docker.inspect(this.containerId)

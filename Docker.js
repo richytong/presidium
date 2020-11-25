@@ -276,4 +276,21 @@ Docker.prototype.leaveSwarm = async function dockerLeaveSwarm(options = {}) {
   `)
 }
 
+/**
+ * @name Docker.prototype.listServices
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Docker().listServices(options? { filters: string })
+ * ```
+ *
+ * @description
+ * See https://docs.docker.com/engine/api/v1.40/#operation/ServiceList
+ */
+Docker.prototype.listServices = async function dockerListServices(options) {
+  return this.http.get(`/services?${
+    querystring.stringify(pick(['filters'])(options))
+  }`)
+}
+
 module.exports = Docker
