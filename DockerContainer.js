@@ -25,6 +25,14 @@ const {
  * ```coffeescript [specscript]
  * new DockerContainer(image string) -> DockerContainer
  * ```
+ *
+ * @TODO
+ * Refactor all Docker functionality to Docker
+ * Use og docker to implement APIs
+ *
+ * ```javascript
+ * new DockerContainer('node:15-alpine').run(['node', '-e', 'console.log(\'hey\')'])
+ * ```
  */
 const DockerContainer = function (image) {
   if (this == null || this.constructor != DockerContainer) {
