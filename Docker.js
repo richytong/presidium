@@ -641,6 +641,157 @@ Docker.prototype.leaveSwarm = async function dockerLeaveSwarm(options = {}) {
 }
 
 /**
+ * @name Docker.prototype.createService
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Docker().createService(image string, address string{
+ *   replicas: 1|number,
+ *   restart: 'no'|'on-failure[:<max-retries>]'|'always'|'unless-stopped',
+ *   restartDelay: 10e9|number, // nanoseconds to delay between restarts
+ *   logDriver: 'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'none',
+ *   logDriverOptions: Object<string>,
+ *   publish: Object<(hostPort string)=>(containerPort string)>,
+ *   healthcheck: {
+ *     test: Array<string>, // healthcheck command configuration. See description
+ *     interval?: 10e9|>1e6, // nanoseconds to wait between healthchecks; 0 means inherit
+ *     timeout?: 20e9|>1e6, // nanoseconds to wait before healthcheck fails
+ *     retries?: 5|number, // number of retries before unhealhty
+ *     startPeriod?: >=1e6, // nanoseconds to wait on container init before starting first healthcheck
+ *   },
+ *   mounts: Array<{
+ *     source: string, // name of volume
+ *     target: string, // mounted path inside container
+ *     readonly: boolean,
+ *   }>|Array<string>, // '<source>:<target>[:readonly]'
+ *
+ *   cmd: Array<string|number>, // CMD
+ *   workdir: path string, // WORKDIR
+ *   env: {
+ *     HOME: string,
+ *     HOSTNAME: string,
+ *     PATH: string, // $PATH
+ *     ...(moreEnvOptions Object<string>),
+ *   }, // ENV; environment variables exposed to container during run time
+ * }) -> Promise<HttpResponse>
+ * ```
+ *
+ * @description
+ * ```javascript
+ * Docker(image, address).createService({
+ *   replicas: 1,
+ * })
+ * ```
+ */
+
+Docker.prototype.createService = function dockerCreateService(image, options) {
+  return this.http.post('/services/create', {
+    body: stringifyJSON({
+      ...options.name && { Name: options.name },
+      TaskTemplate: {
+        ContainerSpec: {
+          Image: image,
+          ...options.cmd && { Command: options.cmd },
+          ...options.env && {
+            Env: Object.entries(options.env)
+              .map(([key, value]) => `${key}=${value}`),
+          },
+          ...options.workdir && {
+            Dir: options.workdir,
+          },
+
+          ...options.mounts && {
+            Mounts: options.mounts.map(pipe([
+              switchCase([
+                isString,
+                pipe([
+                  split(':'),
+                  fork({ target: get(0), source: get(1), readonly: get(2) }),
+                ]),
+                identity,
+              ]),
+              fork({
+                Target: get('target'),
+                Source: get('source'),
+                Type: get('type', 'volume'),
+                ReadOnly: get('readonly', false),
+              }),
+            ]))
+          },
+
+          ...options.healthCmd && {
+            HealthCheck: {
+              Test: ['CMD', ...options.healthCmd],
+              ...fork({
+                Interval: get('healthInterval', 10e9),
+                Timeout: get('healthTimeout', 20e9),
+                Retries: get('healthRetries', 5),
+                StartPeriod: get('healthStartPeriod', 1e6),
+              })(options),
+            },
+          },
+        },
+
+        ...options.restart && {
+          RestartPolicy: fork({
+            Delay: always(options.restartDelay ?? 10e9),
+            Condition: get(0, 'on-failure'),
+            MaxAttempts: pipe([get(1, 10), Number]),
+          })(options.restart.split(':')),
+        },
+        ...options.memory && {
+          Resources: {
+            Limits: { MemoryBytes: Number(options.memory) }, // bytes
+          },
+        },
+        ...options.logDriver && {
+          LogDriver: {
+            Name: options.logDriver,
+            Options: { ...options.logDriverOptions },
+          },
+        },
+      },
+
+      Mode: {
+        Replicated: { Replicas: options.replicas ?? 1 }
+      },
+      UpdateConfig: fork({
+        Parallelism: get('updateParallelism', 2),
+        Delay: get('updateDelay', 1e9),
+        FailureAction: get('updateFailureAction', 'pause'),
+        Monitor: get('updateMonitor', 15e9),
+        MaxFailureRatio: get('updateMaxFailureRatio', 0.15),
+      })(options),
+      RollbackConfig: fork({
+        Parallelism: get('rollbackParallelism', 1),
+        Delay: get('rollbackDelay', 1e9),
+        FailureAction: get('rollbackFailureAction', 'pause'),
+        Monitor: get('rollbackMonitor', 15e9),
+        MaxFailureRatio: get('rollbackMaxFailureRatio', 0.15),
+      })(options),
+
+      ...options.publish && {
+        EndpointSpec: {
+          Ports: Object.entries(options.publish).map(pipe([
+            map(String),
+            fork({
+              Protocol: ([hostPort, containerPort]) => {
+                const hostProtocol = hostPort.split('/')[1],
+                  containerProtocol = containerPort.split('/')[1]
+                return hostProtocol ?? containerProtocol ?? 'tcp'
+              },
+              TargetPort: pipe([get(1), split('/'), get(0), Number]),
+              PublishedPort: pipe([get(0), split('/'), get(0), Number]),
+              PublishMode: always('ingress'),
+            }),
+          ])),
+        },
+      },
+    }),
+  })
+}
+
+/**
  * @name Docker.prototype.listServices
  *
  * @synopsis
