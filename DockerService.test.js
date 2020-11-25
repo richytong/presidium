@@ -16,7 +16,7 @@ module.exports = Test('DockerService', DockerService)
       const response = await service.create({
         name: 'hey1',
         replicas: 2,
-        cmd: ['node', '-e', `http.createServer((request, response) => response.end('hey1')).listen(3000)`],
+        cmd: ['node', '-e', 'http.createServer((request, response) => response.end(\'hey1\')).listen(3000)'],
         workdir: '/opt/heyo',
         env: { HEY: 'hey' },
         mounts: [{
@@ -52,7 +52,7 @@ module.exports = Test('DockerService', DockerService)
       const response = await service.create({
         name: 'hey2',
         replicas: 2,
-        cmd: ['node', '-e', `http.createServer((request, response) => response.end('hey2')).listen(3001)`],
+        cmd: ['node', '-e', 'http.createServer((request, response) => response.end(\'hey2\')).listen(3001)'],
         workdir: '/opt/heyo',
         env: { HEY: 'hey' },
         mounts: [{

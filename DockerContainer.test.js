@@ -9,7 +9,7 @@ module.exports = Test('DockerContainer', DockerContainer)
   })
   .case('node:15-alpine', async function (alpine) {
     {
-      const response = await alpine.run(['node', '-e', `console.log('heyy')`])
+      const response = await alpine.run(['node', '-e', 'console.log(\'heyy\')'])
 
       assert(response.ok)
 
