@@ -1,15 +1,18 @@
 const rubico = require('rubico')
+const zlib = require('zlib')
 const isString = require('rubico/x/isString')
 const identity = require('rubico/x/identity')
 const flatten = require('rubico/x/flatten')
 const trace = require('rubico/x/trace')
 const Http = require('./Http')
 const HttpAgent = require('./HttpAgent')
+const Archive = require('./Archive')
 const querystring = require('querystring')
 const stringifyJSON = require('./internal/stringifyJSON')
 const split = require('./internal/split')
 const join = require('./internal/join')
 const isArray = require('./internal/isArray')
+const pathJoin = require('./internal/pathJoin')
 
 const {
   pipe, tap,
@@ -141,6 +144,132 @@ Docker.prototype.listImages = function dockerListImages() {
 }
 
 /**
+ * @name Docker.prototype.listContainers
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Docker().listContainers() -> Promise<HttpResponse>
+ * ```
+ */
+Docker.prototype.listContainers = function dockerListContainers() {
+  return this.http.get('/containers/json')
+}
+
+/**
+ * @name Docker.prototype.buildImage
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Docker().buildImage(
+ *   image string,
+ *   path string,
+ *   options? {
+ *     ignore: Array<string>, // paths or names to ignore in tarball
+ *     archive: Object<path string)=>(content string)>, // object representation of the base archive for build context
+ *     archiveDockerfile: string, // path to Dockerfile in archive
+ *   },
+ * ) -> ()
+ * ```
+ *
+ * @description
+ * Build a Docker Image. `path` must be absolute
+ *
+ * ```javascript
+ * Docker().buildImage('my-image', path string, {
+ *   archive: {
+ *     Dockerfile: `
+ * FROM node:15-alpine
+ * RUN apk add openssh neovim
+ * EXPOSE 8080`,
+ *   },
+ *   ignore: ['Dockerfile'],
+ * })
+ *
+ * Dockerfile Syntax
+ * ```sh
+ * HEALTHCHECK \
+ *   [--interval=<duration '30s'|string>] \
+ *   [--timeout=<duration '30s'|string>] \
+ *   [--start-period=<duration '0s'|string>] \
+ *   [--retries=<3|number>] \
+ * CMD <string>
+ *
+ * ENV <key>=<value> ...<key>=<value>
+ *
+ * EXPOSE <port> [...<port>/<protocol 'tcp'|'udp'>]
+ *
+ * WORKDIR <path>
+ *
+ * VOLUME ["<path>", ..."<paths>"]|<paths string>
+ *
+ * USER <user>[:<group>]|<UID>[:<GID>]
+ *
+ * ENTRYPOINT ["<executable>", ..."<parameter>"]
+ *   |"<command> ...<parameter>"
+ *
+ * CMD ["<executable>", ..."<parameter>"] # exec form
+ *   |[..."<parameter>"] # default parameters to ENTRYPOINT
+ *   |"<command> ...<parameter>" # shell form
+ * ```
+ */
+
+Docker.prototype.buildImage = async function (image, path, options = {}) {
+  const archive = new Archive(options?.archive)
+  return this.http.post(`/build?${querystring.stringify({
+    dockerfile: options.archiveDockerfile ?? 'Dockerfile',
+    t: image,
+    forcerm: true,
+  })}`, {
+    body: archive.tar(path, {
+      ignore: options.ignore ?? ['node_modules', '.git', '.nyc_output'],
+    }).pipe(zlib.createGzip()),
+    headers: {
+      'Content-Type': 'application/x-tar',
+    },
+  })
+}
+
+/**
+ * @name Docker.prototype.pushImage
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Docker().pushImage(image string, repository string, options {
+ *   authorization: {
+ *     username: string,
+ *     password: string,
+ *     email: string,
+ *     serveraddress: string,
+ *   }|{
+ *     identitytoken: string,
+ *   },
+ * }) -> Promise<HttpResponse>
+ * ```
+ *
+ * @description
+ * https://docs.docker.com/registry/deploying/
+ */
+Docker.prototype.pushImage = function (image, repository, options = {}) {
+  return pipe([
+    fork({
+      imagename: pipe([
+        name => name.split(':')[0],
+        curry.arity(2, pathJoin, repository, __),
+      ]),
+      search: name => querystring.stringify({ tag: name.split(':')[1] }),
+    }),
+    ({
+      imagename, search,
+    }) => this.http.post(`/images/${imagename}/push?${search}`, {
+      headers: {
+        'X-Registry-Auth': stringifyJSON(
+          options.authorization ?? { identitytoken: '' }),
+      },
+    }),
+  ])(image)
+}
+
+/**
  * @name Docker.prototype.inspectImage
  *
  * @synopsis
@@ -190,6 +319,241 @@ Docker.prototype.removeImage = function dockerRemoveImage(image, options) {
   return this.http.delete(`/images/${image}?${
     querystring.stringify(pick(['force', 'noprune'])(options))
   }`)
+}
+
+/**
+ * @name Docker.prototype.createContainer
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * new Docker().createContainer(image string, options? {
+ *   name: string, // specific name for the container
+ *   rm: boolean, // automatically remove the container when it exits TODO
+ *   restart: 'no'|'on-failure[:<max-retries>]'|'always'|'unless-stopped',
+ *   logDriver: 'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'none',
+ *   logDriverOptions: Object<string>,
+ *   publish: Array<string>, // '<hostPort>:<containerPort>[:"tcp"|"udp"|"sctp"]'
+ *   healthcheck: {
+ *     test: Array<string>, // healthcheck command configuration. See description
+ *     interval?: 10e9|>1e6, // nanoseconds to wait between healthchecks; 0 means inherit
+ *     timeout?: 20e9|>1e6, // nanoseconds to wait before healthcheck fails
+ *     retries?: 5|number, // number of retries before unhealhty
+ *     startPeriod?: >=1e6, // nanoseconds to wait on container init before starting first healthcheck
+ *   },
+ *   memory: number, // memory limit in bytes
+ *   mounts: Array<{
+ *     source: string, // name of volume
+ *     target: string, // mounted path inside container
+ *     readonly: boolean,
+ *   }>|Array<string>, // '<source>:<target>[:readonly]'
+ *
+ *   // Dockerfile defaults
+ *   cmd: Array<string|number>, // CMD
+ *   expose: Array<(port string)>, // EXPOSE
+ *   volume: Array<path string>, // VOLUME
+ *   workdir: path string, // WORKDIR
+ *   env: {
+ *     HOME: string,
+ *     HOSTNAME: string,
+ *     PATH: string, // $PATH
+ *     ...(moreEnvOptions Object<string>),
+ *   }, // ENV; environment variables exposed to container during run time
+ * })
+ *
+ * @description
+ * https://docs.docker.com/engine/reference/commandline/create/
+ *
+ * Restart policies:
+ *   * `no` - do not restart the container when it exits
+ *   * `on-failure` - restart only if container exits with non-zero exit code
+ *   * `always` - always restart container regardless of exit code
+ *   * `unless-stopped` - like `always` except if the container was put into a stopped state before the Docker daemon was stopped
+ *
+ * Health checks:
+ *   * `[]` - inherit healthcheck from image or parent image
+ *   * `['NONE']` - disable healthcheck
+ *   * `['CMD', ...args]` - exec arguments directly
+ *   * `['CMD-SHELL', command string]` - run command with system's default shell
+ * ```
+ */
+
+Docker.prototype.createContainer = function dockerCreateContainer(
+  image, options = {}
+) {
+  return this.http.post(`/containers/create?${
+    querystring.stringify({
+      ...options.name && { name: options.name },
+    })
+  }`, {
+    body: stringifyJSON({
+      AttachStderr: true,
+      AttachStdout: true,
+      AttachStdin: false,
+      Tty: false,
+      Image: image,
+
+      ...options.cmd && { Cmd: options.cmd },
+      ...options.env && {
+        Env: Object.entries(options.env)
+          .map(([key, value]) => `${key}=${value}`),
+      },
+      ...options.expose && {
+        ExposedPorts: transform(map(pipe([
+          String,
+          split('/'),
+          fork([get(0), get(1, 'tcp')]),
+          join('/'),
+          port => ({ [port]: {} }),
+        ])), {})(options.expose),
+      },
+      ...options.workdir && {
+        WorkingDir: options.workdir,
+      },
+      ...options.volume && {
+        Volumes: transform(map(path => ({ [path]: {} })), {})(options.volume),
+      },
+
+      ...options.healthCmd && {
+        Healthcheck: { // note: this is correct versus the healthCmd in createService, which is HealthCheck
+          Test: ['CMD', ...options.healthCmd],
+          ...fork({
+            Interval: get('healthInterval', 10e9),
+            Timeout: get('healthTimeout', 20e9),
+            Retries: get('healthRetries', 5),
+            StartPeriod: get('healthStartPeriod', 1e6),
+          })(options),
+        },
+      },
+
+      HostConfig: {
+        ...options.mounts && {
+          Mounts: options.mounts.map(pipe([
+            switchCase([
+              isString,
+              pipe([
+                split(':'),
+                fork({ target: get(0), source: get(1), readonly: get(2) }),
+              ]),
+              identity,
+            ]),
+            fork({
+              Target: get('target'),
+              Source: get('source'),
+              Type: get('type', 'volume'),
+              ReadOnly: get('readonly', false),
+            }),
+          ]))
+        },
+
+        ...options.memory && { Memory: options.memory },
+        ...options.publish && {
+          PortBindings: map.entries(fork([ // publish and PortBindings are reversed
+            pipe([ // container port
+              get(1),
+              String,
+              split('/'),
+              fork([get(0), get(1, 'tcp')]),
+              join('/'),
+            ]),
+            pipe([ // host port
+              get(0),
+              String,
+              HostPort => [{ HostPort }],
+            ]),
+          ]))(options.publish),
+        },
+
+        ...options.logDriver && {
+          LogConfig: {
+            Type: options.logDriver,
+            Config: { ...options.logDriverOptions },
+          },
+        },
+        ...options.restart && {
+          RestartPolicy: fork({
+            Name: get(0, 'no'),
+            MaximumRetryCount: pipe([get(1, 0), Number]),
+          })(options.restart.split(':')),
+        },
+        ...options.rm && { AutoRemove: options.rm },
+      },
+    }),
+
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+/**
+ * @name Docker.prototype.attachContainer
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Docker().attachContainer(containerId string, options? {
+ *   stdout: boolean,
+ *   stderr: boolean,
+ * }) -> Promise<HttpResponse>
+ * ```
+ */
+Docker.prototype.attachContainer = function dockerAttachContainer(
+  containerId, options = {}
+) {
+  return this.http.post(`/containers/${containerId}/attach?${
+    querystring.stringify({
+      stream: 1,
+      stdout: options.stdout ?? 1,
+      stderr: options.stderr ?? 1,
+    })
+  }`)
+}
+
+/**
+ * @name Docker.prototype.startContainer
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Docker().startContainer(containerId string) -> Promise<HttpResponse>
+ * ```
+ */
+Docker.prototype.startContainer = function dockerStartContainer(
+  containerId,
+) {
+  return this.http.post(`/containers/${containerId}/start`)
+}
+
+/**
+ * @name Docker.prototype.stopContainer
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Docker().stopContainer(containerId string, options? {
+ *   time: number, // seconds before killing container
+ * }) -> Promise<HttpResponse>
+ * ```
+ */
+Docker.prototype.stopContainer = function dockerStopContainer(
+  containerId, options = {}
+) {
+  return this.http.post(`/containers/${containerId}/stop?${
+    querystring.stringify({
+      ...options.time && { t: options.time },
+    })
+  }`)
+}
+
+/**
+ * @name Docker.prototype.inspectContainer
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Docker().inspectContainer(containerId string) -> Promise<HttpResponse>
+ * ```
+ */
+Docker.prototype.inspectContainer = function dockerInspectContainer(
+  containerId,
+) {
+  return this.http.get(`/containers/${containerId}/json`)
 }
 
 /**
@@ -303,6 +667,54 @@ Docker.prototype.listServices = async function dockerListServices(options) {
  */
 Docker.prototype.inspectService = async function dockerInspectService(serviceId) {
   return this.http.get(`/services/${serviceId}`)
+}
+
+/**
+ * @name Docker.prototype.pruneImages
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Docker().pruneImages() -> Promise<HttpResponse>
+ * ```
+ */
+Docker.prototype.pruneImages = function dockerPruneImages() {
+  return this.http.post('/images/prune')
+}
+
+/**
+ * @name Docker.prototype.pruneContainers
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Docker().pruneContainers() -> Promise<HttpResponse>
+ * ```
+ */
+Docker.prototype.pruneContainers = function dockerPruneContainers() {
+  return this.http.post('/containers/prune')
+}
+
+/**
+ * @name Docker.prototype.pruneVolumes
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Docker().pruneVolumes() -> Promise<HttpResponse>
+ * ```
+ */
+Docker.prototype.pruneVolumes = function dockerPruneVolumes() {
+  return this.http.post('/volumes/prune')
+}
+
+/**
+ * @name Docker.prototype.pruneNetworks
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Docker().pruneNetworks() -> Promise<HttpResponse>
+ * ```
+ */
+Docker.prototype.pruneNetworks = function dockerPruneNetworks() {
+  return this.http.post('/networks/prune')
 }
 
 module.exports = Docker
