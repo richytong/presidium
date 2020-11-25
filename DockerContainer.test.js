@@ -9,6 +9,24 @@ module.exports = Test('DockerContainer', DockerContainer)
   })
   .case('node:15-alpine', async function (alpine) {
     {
+      const response = await alpine.run(['node', '-e', `console.log('heyy')`])
+
+      assert(response.ok)
+
+      const body = await response.buffer()
+      assert.equal(body.constructor, Buffer)
+      assert.strictEqual(body[0], 1) // stdout
+      assert.strictEqual(body[1], 0) // empty
+      assert.strictEqual(body[2], 0) // empty
+      assert.strictEqual(body[3], 0) // empty
+      assert.strictEqual(body[4], 0) // SIZE1
+      assert.strictEqual(body[5], 0) // SIZE2
+      assert.strictEqual(body[6], 0) // SIZE3
+      assert.strictEqual(body[7], 5) // SIZE4
+      assert.strictEqual(body.slice(8).toString(), 'heyy\n')
+    }
+
+    {
       const response = await alpine.run(['sh', '-c', 'echo $HEY'], {
         workdir: '/opt/heyo',
         expose: [22, 8888, '8889/udp'],

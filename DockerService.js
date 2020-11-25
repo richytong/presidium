@@ -92,6 +92,7 @@ const DockerService = function (image, address) {
 DockerService.prototype.create = function dockerServiceCreate(options) {
   return this.http.post('/services/create', {
     body: stringifyJSON({
+      ...options.name && { Name: options.name },
       TaskTemplate: {
         ContainerSpec: {
           Image: this.image,

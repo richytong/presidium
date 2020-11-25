@@ -293,4 +293,16 @@ Docker.prototype.listServices = async function dockerListServices(options) {
   }`)
 }
 
+/**
+ * @name Docker.prototype.inspectService
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Docker().inspectService(serviceId string) -> Promise<HttpResponse>
+ * ```
+ */
+Docker.prototype.inspectService = async function dockerInspectService(serviceId) {
+  return this.http.get(`/services/${serviceId}`)
+}
+
 module.exports = Docker

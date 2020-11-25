@@ -1,6 +1,7 @@
 const assert = require('assert')
 const Test = require('thunk-test')
 const Docker = require('./Docker')
+const DockerContainer = require('./DockerContainer')
 const DockerService = require('./DockerService')
 const inspect = require('util').inspect
 
@@ -13,8 +14,9 @@ module.exports = Test('DockerService', DockerService)
   .case('node:15-alpine', '[::1]:2377', async function (service) {
     {
       const response = await service.create({
-        replicas: 1,
-        cmd: ['node', '-e', '"let index = -1; while (index < 1e6) { console.log(++index) }"'],
+        name: 'hey1',
+        replicas: 2,
+        cmd: ['node', '-e', `http.createServer((request, response) => response.end('hey1')).listen(3000)`],
         workdir: '/opt/heyo',
         env: { HEY: 'hey' },
         mounts: [{
@@ -25,7 +27,7 @@ module.exports = Test('DockerService', DockerService)
         memory: 512e6, // bytes
         restart: 'on-failure:5',
 
-        healthCmd: ['echo', 'ok'],
+        healthCmd: ['wget', '--no-verbose', '--tries=1', '--spider', 'localhost:3000'],
         healthInterval: 1e9,
         healthTimeout: 30e9,
         healthRetries: 10,
@@ -33,7 +35,7 @@ module.exports = Test('DockerService', DockerService)
 
         publish: {
           23: 22, // hostPort -> containerPort[/protocol]
-          8888: '8000/tcp',
+          8080: 3000,
         },
 
         logDriver: 'json-file',
@@ -48,8 +50,9 @@ module.exports = Test('DockerService', DockerService)
     }
     {
       const response = await service.create({
-        replicas: 1,
-        cmd: ['node', '-e', '"let index = -1; while (index < 1e6) { console.log(++index) }"'],
+        name: 'hey2',
+        replicas: 2,
+        cmd: ['node', '-e', `http.createServer((request, response) => response.end('hey2')).listen(3001)`],
         workdir: '/opt/heyo',
         env: { HEY: 'hey' },
         mounts: [{
@@ -59,8 +62,9 @@ module.exports = Test('DockerService', DockerService)
         }],
         memory: 512e6, // bytes
         restart: 'on-failure',
+        publish: { 8081: 3001 },
 
-        healthCmd: ['echo', 'ok'],
+        healthCmd: ['wget', '--no-verbose', '--tries=1', '--spider', 'localhost:3001'],
       })
       assert.equal(response.status, 201)
     }
@@ -68,7 +72,11 @@ module.exports = Test('DockerService', DockerService)
       const response = await this.docker.listServices()
       assert.equal(response.status, 200)
       const body = await response.json()
-      console.log('body', inspect(body, { depth: Infinity }))
+      assert.equal(body.length, 2)
+    }
+    {
+      const response = await this.docker.inspectService(this.serviceId)
+      assert.equal(response.status, 200)
     }
   })
   .after(async function () {
