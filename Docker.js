@@ -509,6 +509,45 @@ Docker.prototype.attachContainer = function dockerAttachContainer(
 }
 
 /**
+ * @name Docker.prototype.execContainer
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Docker().execContainer(containerId string, cmd Array<string>) -> Promise<HttpResponse>
+ * ```
+ */
+Docker.prototype.execContainer = function dockerExecContainer(
+  containerId, cmd,
+) {
+  return this.http.post(`/containers/${containerId}/exec`, {
+    body: stringifyJSON({
+      AttachStdin: false,
+      AttachStdout: true,
+      AttachStderr: true,
+      Tty: false,
+      Cmd: cmd,
+    }),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  }).then(pipe([
+    tap(async response => {
+      if (!response.ok) {
+        throw new Error(`${response.statusText}: ${await response.text()}`)
+      }
+    }),
+    response => response.json(),
+    get('Id'),
+    execId => this.http.post(`/exec/${execId}/start`, {
+      body: stringifyJSON({ Detach: false, Tty: false }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+  ]))
+}
+
+/**
  * @name Docker.prototype.startContainer
  *
  * @synopsis

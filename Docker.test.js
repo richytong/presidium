@@ -195,6 +195,29 @@ module.exports = [
       }
 
       {
+        const createResponse = await docker.createContainer('node:15-alpine', {
+          cmd: ['node', '-e', 'http.createServer((request, response) => response.end(\'hey0\')).listen(2999)'],
+          rm: true,
+        })
+        assert(createResponse.ok)
+        const containerId = (await createResponse.json()).Id
+        assert((await docker.startContainer(containerId)).ok)
+        const execResponse = await docker.execContainer(containerId, ['node', '-e', 'console.log(\'heyyy\')'])
+        const body = await execResponse.buffer()
+        assert.equal(body.constructor, Buffer)
+        assert.strictEqual(body[0], 1) // stdout
+        assert.strictEqual(body[1], 0) // empty
+        assert.strictEqual(body[2], 0) // empty
+        assert.strictEqual(body[3], 0) // empty
+        assert.strictEqual(body[4], 0) // SIZE1
+        assert.strictEqual(body[5], 0) // SIZE2
+        assert.strictEqual(body[6], 0) // SIZE3
+        assert.strictEqual(body[7], 6) // SIZE4
+        assert.strictEqual(body.slice(8).toString(), 'heyyy\n')
+        await docker.stopContainer(containerId, { time: 1 })
+      }
+
+      {
         const response = await docker.inspect(this.containerId)
         assert.equal(response.status, 200)
         const body = await response.json()
