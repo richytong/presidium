@@ -5,8 +5,9 @@
 
 A library for creating web services.
 
+## Serve Http
 ```javascript
-const { Http, HttpServer, WebSocket, WebSocketServer } = Presidium
+import { HttpServer, Http } from 'presidium'
 
 new HttpServer((request, response) => {
   response.writeHead(200, { 'Content-Type': 'application/json' })
@@ -19,6 +20,11 @@ const http = new Http('http://localhost:3000/')
 http.get('/')
   .then(response => response.json())
   .then(console.log) // { greeting: 'Hello World' }
+```
+
+## Serve WebSocket
+```javascript
+import { WebSocketServer, WebSocket } from 'presidium'
 
 new WebSocketServer(socket => {
   socket.on('message', message => {
@@ -34,4 +40,39 @@ socket.on('open', () => {
 socket.on('message', data => {
   console.log(data) // something from server
 })
+```
+
+## Build && Push Docker Images
+```javascript
+const myAppImage = new DockerImage(`
+FROM node:15-alpine
+WORKDIR /opt
+COPY . .
+RUN echo //registry.npmjs.org/:_authToken=${npmToken} > $HOME/.npmrc
+  && npm i
+  && rm $HOME/.npmrc
+CMD ["npm", "start"]
+`, { tags: ['my-app:latest'] })
+  .build(__dirname, {
+  }, buildStream => {
+    buildStream.on('end', () => {
+      myAppImage.push('my-registry.io', pushStream => {
+        pushStream.pipe(process.stdout)
+      })
+    })
+    buildStream.on('error', error => {
+      // do stuff with error
+    })
+    buildStream.pipe(process.stdout)
+  })
+```
+
+## Execute Docker Containers
+```javascript
+new DockerContainer('node:15-alpine', {
+  env: { FOO: 'foo', BAR: 'bar' },
+  cmd: ['node', '-e', 'console.log(process.env.FOO)'],
+}).attach(dockerRawStream => {
+  dockerRawStream.pipe(process.stdout)
+}).start()
 ```
