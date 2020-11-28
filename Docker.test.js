@@ -218,7 +218,7 @@ module.exports = [
       }
 
       {
-        const response = await docker.inspect(this.containerId)
+        const response = await docker.inspectContainer(this.containerId)
         assert.equal(response.status, 200)
         const body = await response.json()
         assert.equal(body.Config.Image, 'node:15-alpine')

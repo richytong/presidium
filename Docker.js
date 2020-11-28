@@ -69,69 +69,6 @@ Docker.prototype.auth = function dockerAuth(authorization) {
 }
 
 /**
- * @name Docker.prototype.attach
- *
- * @synopsis
- * ```coffeescript [specscript]
- * Docker().attach(containerId string, options? {
- *   stdout: boolean,
- *   stderr: boolean,
- * }) -> Promise<HttpResponse>
- * ```
- */
-Docker.prototype.attach = function dockerAttach(containerId, options = {}) {
-  return this.http.post(`/containers/${containerId}/attach?${
-    querystring.stringify({
-      stream: 1,
-      stdout: get('stdout', 1)(options),
-      stderr: get('stderr', 1)(options),
-    })
-  }`)
-}
-
-/**
- * @name Docker.prototype.start
- *
- * @synopsis
- * ```coffeescript [specscript]
- * Docker().start(containerId string) -> Promise<HttpResponse>
- * ```
- */
-Docker.prototype.start = function dockerStart(containerId) {
-  return this.http.post(`/containers/${containerId}/start`)
-}
-
-/**
- * @name Docker.prototype.stop
- *
- * @synopsis
- * ```coffeescript [specscript]
- * Docker().stop(containerId string, options? {
- *   time: number, // seconds before killing container
- * }) -> Promise<HttpResponse>
- * ```
- */
-Docker.prototype.stop = function dockerStop(containerId, options = {}) {
-  return this.http.post(`/containers/${containerId}/stop?${
-    querystring.stringify({
-      ...options.time && { t: options.time },
-    })
-  }`)
-}
-
-/**
- * @name Docker.prototype.inspect
- *
- * @synopsis
- * ```coffeescript [specscript]
- * Docker().inspect(containerId string) -> Promise<HttpResponse>
- * ```
- */
-Docker.prototype.inspect = function dockerInspect(containerId) {
-  return this.http.get(`/containers/${containerId}/json`)
-}
-
-/**
  * @name Docker.prototype.listImages
  *
  * @synopsis
