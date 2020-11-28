@@ -5,6 +5,8 @@ const DynamoDB = require('aws-sdk/clients/dynamodb')
 const Dynamo = require('./Dynamo')
 const isPromise = require('./internal/isPromise')
 const hashJSON = require('./internal/hashJSON')
+const stringifyJSON = require('./internal/stringifyJSON')
+const join = require('./internal/join')
 
 const {
   pipe, tap,
@@ -20,60 +22,6 @@ const {
 const {
   values,
 } = rubicoX
-
-const stringifyJSON = JSON.stringify
-
-const arrayPush = (array, item) => array.push(item)
-
-const join = delimiter => value => value.join(delimiter)
-
-const objectSet = (object, key, value) => {
-  object[key] = value
-  return object
-}
-
-const objectSetEntry = (object, entry) => {
-  object[entry[0]] = entry[1]
-  return object
-}
-
-const objectMapKeys = function (object, mapper) {
-  const result = {},
-    promises = []
-  for (const key in object) {
-    const mappedKey = mapper(key),
-      value = object[key]
-    if (isPromise(mappedKey)) {
-      promises.push(mappedKey.then(curry(objectSet, result, __, value)))
-    } else {
-      result[mappedKey] = value
-    }
-  }
-  return promises.length == 0 ? result
-    : Promise.all(promises).then(always(result))
-}
-
-map.keys = mapper => object => objectMapKeys(object, mapper)
-
-const objectMapEntries = function (object, mapper) {
-  const result = {},
-    promises = []
-  for (const key in object) {
-    const value = object[key],
-      mappedEntry = mapper([key, value])
-    if (isPromise(mappedEntry)) {
-      promises.push(mappedEntry.then(curry(objectSetEntry, result, __)))
-    } else {
-      result[mappedEntry[0]] = mappedEntry[1]
-    }
-  }
-  return promises.length == 0 ? result
-    : Promise.all(promises).then(always(result))
-}
-
-map.entries = mapper => object => objectMapEntries(object, mapper)
-
-transform.entries = (transducer, init) => object => transform(transducer, init)(Object.entries(object))
 
 /**
  * @name DynamoTable
@@ -105,7 +53,7 @@ transform.entries = (transducer, init) => object => transform(transducer, init)(
  * }, 'my-aws-table') // -> DynamoTable
  * ```
  */
-const DynamoTable = function (table, options = {}) {
+const DynamoTable = function (table, options) {
   if (this == null || this.constructor != DynamoTable) {
     return new DynamoTable(table, options)
   }

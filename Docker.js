@@ -83,8 +83,8 @@ Docker.prototype.attach = function dockerAttach(containerId, options = {}) {
   return this.http.post(`/containers/${containerId}/attach?${
     querystring.stringify({
       stream: 1,
-      stdout: options.stdout ?? 1,
-      stderr: options.stderr ?? 1,
+      stdout: get('stdout', 1)(options),
+      stderr: get('stderr', 1)(options),
     })
   }`)
 }

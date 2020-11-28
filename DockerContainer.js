@@ -78,7 +78,7 @@ const {
  * }).start()
  * ```
  */
-const DockerContainer = function (image, options = {}) {
+const DockerContainer = function (image, options) {
   if (this == null || this.constructor != DockerContainer) {
     return new DockerContainer(image, options)
   }
@@ -88,11 +88,6 @@ const DockerContainer = function (image, options = {}) {
   this.ready = this.docker.createContainer(image, {
     rm: true, ...options,
   }).then(pipe([
-    tap(async response => {
-      if (!response.ok) {
-        throw new Error(`${response.statusText}: ${await response.text()}`)
-      }
-    }),
     response => response.json(),
     get('Id'),
     containerId => {
@@ -111,11 +106,6 @@ DockerContainer.run = function dockerContainerRun(image, options, handler) {
 DockerContainer.prototype.attach = function dockerContainerAttach(handler) {
   const promise = this.ready.then(pipe([
     () => this.docker.attachContainer(this.containerId),
-    tap(async response => {
-      if (!response.ok) {
-        throw new Error(`${response.statusText}: ${await response.text()}`)
-      }
-    }),
     get('body'),
     handler,
     () => this.promises.delete(promise),
@@ -128,11 +118,6 @@ DockerContainer.prototype.attach = function dockerContainerAttach(handler) {
 DockerContainer.prototype.start = function dockerContainerStart() {
   const promise = this.ready.then(pipe([
     () => this.docker.startContainer(this.containerId),
-    tap(async response => {
-      if (!response.ok) {
-        throw new Error(`${response.statusText}: ${await response.text()}`)
-      }
-    }),
     () => this.promises.delete(promise),
   ]))
   this.promises.add(promise)

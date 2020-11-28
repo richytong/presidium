@@ -74,7 +74,11 @@ module.exports = Test('DynamoTable', DynamoTable)
       new Error('Item not found for {"id":"1"}'))
   })
 
-  .case('test-table', { endpoint: 'http://localhost:8000/' }, async function (testTable) {
+  .case('test-table', {
+    accessKeyId: 'my-access-key-id',
+    secretAccessKey: 'my-secret-key',
+    region: 'x-x-x',
+  }, async function (testTable) {
     assert(testTable.constructor == DynamoTable)
     assert(testTable.connection !== dynamo.connection)
   })

@@ -2,12 +2,7 @@ const rubico = require('rubico')
 const uniq = require('rubico/x/uniq')
 const flatten = require('rubico/x/flatten')
 const Dynamo = require('./Dynamo')
-const getFirstKey = require('./internal/getFirstKey')
-const getFirstValue = require('./internal/getFirstValue')
 const hashJSON = require('./internal/hashJSON')
-const objectFromEntries = require('./internal/objectFromEntries')
-const replace = require('./internal/replace')
-const match = require('./internal/match')
 const trim = require('./internal/trim')
 
 const {
