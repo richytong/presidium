@@ -56,16 +56,18 @@ module.exports = Test('DynamoIndex', DynamoIndex)
     }
 
   })
-  .case('http://localhost:8000/', 'test-tablename', 'status-createTime-index', async statusCreateTimeIndex => {
-    assert(statusCreateTimeIndex.tablename == 'test-tablename')
-    assert(statusCreateTimeIndex.indexname == 'status-createTime-index')
+  .case('status-createTime-index', {
+    table: 'test-tablename',
+    key: [{ status: 'string' }, { createTime: 'number' }],
+    endpoint: 'http://localhost:8000/',
+  }, async index => {
+    assert(index.table == 'test-tablename')
+    assert(index.index == 'status-createTime-index')
 
     assert.deepEqual(
-      await statusCreateTimeIndex.query($ => {
-        $.and([
-          $.eq('status', 'waitlist'),
-          $.gt('createTime', 1000),
-        ])
+      await index.query('status = :status AND createTime > :createTime', {
+        status: 'waitlist',
+        createTime: 1000,
       }),
       {
         Items: [
@@ -87,12 +89,10 @@ module.exports = Test('DynamoIndex', DynamoIndex)
       })
 
     assert.deepEqual(
-      await statusCreateTimeIndex.query($ => {
-        $.and([
-          $.eq('status', 'waitlist'),
-          $.between('createTime', 999, 2000),
-        ])
-        $.sortBy('createTime', 1)
+      await index.query('status = :status AND createTime BETWEEN :lower AND :upper', {
+        status: 'waitlist',
+        lower: 999,
+        upper: 2000,
       }),
       {
         Items: [
@@ -119,14 +119,12 @@ module.exports = Test('DynamoIndex', DynamoIndex)
         ScannedCount: 3
       })
 
+
     assert.deepEqual(
-      await statusCreateTimeIndex.query($ => {
-        $.and([
-          $.eq('status', 'waitlist'),
-          $.gte('createTime', 1000),
-        ])
-        $.sortBy('createTime', 1)
-      }),
+      await index.query('status = :status AND createTime >= :createTime', {
+        status: 'waitlist',
+        createTime: 1000,
+      }, { scanIndexForward: true }),
       {
         Items: [
           {
@@ -153,13 +151,10 @@ module.exports = Test('DynamoIndex', DynamoIndex)
       })
 
     assert.deepEqual(
-      await statusCreateTimeIndex.query($ => {
-        $.and([
-          $.eq('status', 'waitlist'),
-          $.gte('createTime', 1000),
-        ])
-        $.sortBy('createTime', -1)
-      }),
+      await index.query('status = :status AND createTime >= :createTime', {
+        status: 'waitlist',
+        createTime: 1000,
+      }, { scanIndexForward: false }),
       {
         Items: [
           {
@@ -186,30 +181,24 @@ module.exports = Test('DynamoIndex', DynamoIndex)
       })
 
     assert.deepEqual(
-      await statusCreateTimeIndex.query($ => {
-        $.and([
-          $.eq('status', 'waitlist'),
-          $.gte('createTime', 1000),
-        ])
-        $.sort(-1)
+      await index.query('status = :status AND createTime >= :createTime', {
+        status: 'waitlist',
+        createTime: 1000,
+      }, {
+        scanIndexForward: false,
+        projectionExpression: 'name,status',
       }),
       {
         Items: [
           {
-            createTime: { N: '1002' },
-            id: { S: '3' },
             status: { S: 'waitlist' },
             name: { S: 'john' },
           },
           {
-            createTime: { N: '1001' },
-            id: { S: '2' },
             status: { S: 'waitlist' },
             name: { S: 'geo' },
           },
           {
-            createTime: { N: '1000' },
-            id: { S: '1' },
             status: { S: 'waitlist' },
             name: { S: 'George' },
           },
@@ -219,13 +208,12 @@ module.exports = Test('DynamoIndex', DynamoIndex)
       })
 
     assert.deepEqual(
-      await statusCreateTimeIndex.query($ => {
-        $.and([
-          $.eq('status', 'waitlist'),
-          $.lte('createTime', 10000),
-        ])
-        $.sort(-1)
-        $.limit(2)
+      await index.query('status = :status AND createTime <= :createTime', {
+        status: 'waitlist',
+        createTime: 10_000,
+      }, {
+        scanIndexForward: false,
+        limit: 2,
       }),
       {
         Items: [
@@ -242,21 +230,43 @@ module.exports = Test('DynamoIndex', DynamoIndex)
             name: { S: 'geo' },
           },
         ],
-        LastEvaluatedKey: {
+        LastEvaluatedKey: JSON.stringify({
           createTime: { N: '1001' },
           id: { S: '2' },
           status: { S: 'waitlist' },
-        },
+        }),
         Count: 2,
         ScannedCount: 2,
       })
 
     assert.deepEqual(
-      await statusCreateTimeIndex.query($ => {
-        $.and([
-          $.eq('status', 'approved'),
-        ])
+      await index.query('status = :status AND createTime <= :createTime', {
+        status: 'waitlist',
+        createTime: 10_000,
+      }, {
+        scanIndexForward: false,
+        limit: 2,
+        exclusiveStartKey: JSON.stringify({
+          createTime: { N: '1001' },
+          id: { S: '2' },
+          status: { S: 'waitlist' },
+        }),
       }),
+      {
+        Items: [
+          {
+            createTime: { N: '1000' },
+            id: { S: '1' },
+            status: { S: 'waitlist' },
+            name: { S: 'George' },
+          },
+        ],
+        Count: 1,
+        ScannedCount: 1,
+      })
+
+    assert.deepEqual(
+      await index.query('status = :status', { status: 'approved' }),
       {
         Items: [
           {
@@ -277,11 +287,9 @@ module.exports = Test('DynamoIndex', DynamoIndex)
       })
 
     assert.deepEqual(
-      await statusCreateTimeIndex.query($ => {
-        $.and([
-          $.eq('status', 'approved'),
-          $.eq('createTime', 1004),
-        ])
+      await index.query('status = :status AND createTime = :createTime', {
+        status: 'approved',
+        createTime: 1004,
       }),
       {
         Items: [
@@ -297,11 +305,9 @@ module.exports = Test('DynamoIndex', DynamoIndex)
       })
 
     assert.deepEqual(
-      await statusCreateTimeIndex.query($ => {
-        $.and([
-          $.eq('status', 'approved'),
-          $.lt('createTime', 10),
-        ])
+      await index.query('status = :status AND createTime < :createTime', {
+        status: 'approved',
+        createTime: 10,
       }),
       {
         Items: [],
@@ -309,13 +315,17 @@ module.exports = Test('DynamoIndex', DynamoIndex)
         ScannedCount: 0
       })
   })
-  .case('http://localhost:8000/', 'test-tablename-2', 'status-name-index', async function (statusNameIndex) {
-    assert(statusNameIndex.tablename == 'test-tablename-2')
-    assert(statusNameIndex.indexname == 'status-name-index')
+  .case('status-name-index', {
+    table: 'test-tablename-2',
+    key: [{ status: 'string' }, { name: 'string' }],
+    endpoint: 'http://localhost:8000/',
+  }, async index => {
+    assert(index.table == 'test-tablename-2')
+    assert(index.index == 'status-name-index')
     assert.deepEqual(
-      await statusNameIndex.query($ => {
-        $.eq('status', 'waitlist'),
-        $.startsWith('name', 'geo')
+      await index.query('status = :status AND begins_with(name, :name)', {
+        status: 'waitlist',
+        name: 'geo',
       }),
       {
         Items: [
@@ -331,9 +341,9 @@ module.exports = Test('DynamoIndex', DynamoIndex)
       })
 
     assert.deepEqual(
-      await statusNameIndex.query($ => {
-        $.eq('status', 'approved'),
-        $.beginsWith('name', 's')
+      await index.query('status = :st AND begins_with ( name, :prefix ) ', {
+        st: 'approved',
+        prefix: 's',
       }),
       {
         Items: [
@@ -358,4 +368,4 @@ module.exports = Test('DynamoIndex', DynamoIndex)
   .after(async function () {
     await this.dynamo.deleteTable('test-tablename')
     await this.dynamo.deleteTable('test-tablename-2')
-  })
+  })()
