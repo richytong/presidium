@@ -126,8 +126,8 @@ DockerContainer.run('node:15-alpine', {
 import { DockerSwarm, DockerService } from 'presidium'
 
 (async function () {
-  await DockerSwarm.join('[::1]:2377', process.env.SWARM_MANAGER_TOKEN)
-  await DockerService.update('my-unique-service-name-in-swarm', {
+  DockerSwarm.join('[::1]:2377', process.env.SWARM_MANAGER_TOKEN)
+  DockerService.update('my-unique-service-name-in-swarm', {
     image: 'my-app:latest',
     env: { FOO: 'foo', BAR: 'bar' },
     cmd: ['npm', 'start'],
