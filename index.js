@@ -3,7 +3,7 @@ const HttpServer = require('./HttpServer')
 const WebSocket = require('./WebSocket')
 const WebSocketServer = require('./WebSocketServer')
 const Docker = require('./Docker')
-const DockerImage = require('./DockerImage')
+const DockerContainer = require('./DockerContainer')
 const DockerService = require('./DockerService')
 const Redis = require('./Redis')
 const RedisString = require('./RedisString')
@@ -47,7 +47,7 @@ const Presidium = {
   Dynamo, DynamoTable, DynamoIndex, DynamoStream,
   Redis, RedisString, RedisList, RedisSet, RedisHash,
     RedisSortedSet, RedisBitmap, RedisHyperLogLog, RedisStream,
-  Docker, DockerImage, DockerContainer, DockerService,
+  Docker, DockerImage, DockerContainer, DockerSwarm, DockerService,
   ElasticTranscoder, ElasticTranscoderPipeline,
   CloudFront, CloudFrontDistribution,
   Elasticsearch, ElasticsearchIndex,

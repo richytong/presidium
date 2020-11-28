@@ -20,8 +20,13 @@ module.exports = Test('DynamoIndex', DynamoIndex)
   })
   .before(async function () {
 
-    this.testTable = DynamoTable('http://localhost:8000/', 'test-tablename')
-    this.testTable2 = DynamoTable('http://localhost:8000/', 'test-tablename-2')
+    this.testTable = new DynamoTable('test-tablename', {
+      endpoint: 'http://localhost:8000/',
+    })
+    this.testTable2 = new DynamoTable('test-tablename-2', {
+      endpoint: 'http://localhost:8000/',
+    })
+
     for (const table of [this.testTable, this.testTable2]) {
       await table.putItem({
         id: '1',
@@ -230,11 +235,11 @@ module.exports = Test('DynamoIndex', DynamoIndex)
             name: { S: 'geo' },
           },
         ],
-        LastEvaluatedKey: JSON.stringify({
+        LastEvaluatedKey: {
           createTime: { N: '1001' },
           id: { S: '2' },
           status: { S: 'waitlist' },
-        }),
+        },
         Count: 2,
         ScannedCount: 2,
       })
@@ -246,11 +251,11 @@ module.exports = Test('DynamoIndex', DynamoIndex)
       }, {
         scanIndexForward: false,
         limit: 2,
-        exclusiveStartKey: JSON.stringify({
+        exclusiveStartKey: {
           createTime: { N: '1001' },
           id: { S: '2' },
           status: { S: 'waitlist' },
-        }),
+        },
       }),
       {
         Items: [
@@ -368,4 +373,4 @@ module.exports = Test('DynamoIndex', DynamoIndex)
   .after(async function () {
     await this.dynamo.deleteTable('test-tablename')
     await this.dynamo.deleteTable('test-tablename-2')
-  })()
+  })

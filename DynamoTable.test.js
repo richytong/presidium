@@ -20,7 +20,10 @@ module.exports = Test('DynamoTable', DynamoTable)
     await this.dynamo.waitFor('test-tablename', 'tableExists')
   })
 
-  .case('http://localhost:8000/', 'test-tablename', async function (testTable) {
+  .case('test-tablename', {
+    endpoint: 'http://localhost:8000/',
+  }, async function (testTable) {
+    // .case('http://localhost:8000/', 'test-tablename', async function (testTable) {
     await testTable.putItem({ id: '1', name: 'george' })
     assert.deepEqual(
       await testTable.getItem({ id: '1' }),
@@ -71,12 +74,7 @@ module.exports = Test('DynamoTable', DynamoTable)
       new Error('Item not found for {"id":"1"}'))
   })
 
-  .case(dynamo, 'test-table', async function (testTable) {
-    assert(testTable.constructor == DynamoTable)
-    assert(testTable.connection === dynamo.connection)
-  })
-
-  .case({ endpoint: 'http://localhost:8000/' }, 'test-table', async function (testTable) {
+  .case('test-table', { endpoint: 'http://localhost:8000/' }, async function (testTable) {
     assert(testTable.constructor == DynamoTable)
     assert(testTable.connection !== dynamo.connection)
   })

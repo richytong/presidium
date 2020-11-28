@@ -42,37 +42,102 @@ socket.on('message', data => {
 })
 ```
 
+## CRUD and query DynamoDB
+```javascript
+import { DynamoTable, DynamoIndex } from 'presidium'
+
+const awsCreds = {
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  region: process.env.AWS_REGION,
+}
+
+const myTable = new DynamoTable('my-table', {
+  key: [{ id: 'string' }],
+  ...awsCreds,
+})
+
+const myIndex = new DynamoIndex('my-index', {
+  key: [{ name: 'string' }, { age: 'number' }],
+  table: 'my-table',
+  ...awsCreds,
+})
+
+;(async function() {
+  await myTable.putItem({ id: '1', name: 'George' })
+  await myTable.updateItem({ id: '1' }, { age: 32 })
+  console.log(
+    await myTable.getItem({ id: '1' }),
+  ) // { Item: { id: '1', ... } }
+
+  console.log(
+    await myIndex.query(
+      'name = :name AND age < :age',
+      { name: 'George', age: 33 }),
+  ) // [{ Items: [{ id: '1', ... }, ...] }]
+  await myTable.deleteItem({ id: '1' })
+})()
+```
+
 ## Build && Push Docker Images
 ```javascript
-const myAppImage = new DockerImage(`
+import { DockerImage } from 'presidium'
+
+const myAppImage = new DockerImage('my-app:latest', `
 FROM node:15-alpine
 WORKDIR /opt
 COPY . .
-RUN echo //registry.npmjs.org/:_authToken=${npmToken} > $HOME/.npmrc
-  && npm i
+RUN echo //registry.npmjs.org/:_authToken=${myNpmToken} > $HOME/.npmrc \
+  && npm i \
   && rm $HOME/.npmrc
+EXPOSE 8080
 CMD ["npm", "start"]
-`, { tags: ['my-app:latest'] })
-  .build(__dirname, {
-  }, buildStream => {
-    buildStream.on('end', () => {
-      myAppImage.push('my-registry.io', pushStream => {
-        pushStream.pipe(process.stdout)
-      })
+`).build(__dirname, {
+  ignore: ['.github', 'node_modules'],
+}, buildStream => {
+  buildStream.pipe(process.stdout)
+  buildStream.on('end', () => {
+    myAppImage.push('my-registry.io', pushStream => {
+      pushStream.pipe(process.stdout)
     })
-    buildStream.on('error', error => {
-      // do stuff with error
-    })
-    buildStream.pipe(process.stdout)
   })
+})
 ```
 
 ## Execute Docker Containers
 ```javascript
+import { DockerContainer } from 'presidium'
+
 new DockerContainer('node:15-alpine', {
   env: { FOO: 'foo', BAR: 'bar' },
   cmd: ['node', '-e', 'console.log(process.env.FOO)'],
-}).attach(dockerRawStream => {
-  dockerRawStream.pipe(process.stdout)
+}).attach(dockerStream => {
+  // dockerStream.pipe(process.stdout) // raw docker stream
 }).start()
+
+DockerContainer.run('node:15-alpine', {
+  env: { FOO: 'foo', BAR: 'bar' },
+  cmd: ['node', '-e', 'console.log(process.env.FOO)'],
+}, dockerStream => { /* ... */ })
+```
+
+## Deploy Docker Swarm Services
+```javascript
+import { DockerSwarm, DockerService } from 'presidium'
+
+(async function () {
+  await DockerSwarm.join('[::1]:2377', process.env.SWARM_MANAGER_TOKEN)
+  await DockerService.update('my-unique-service-name-in-swarm', {
+    image: 'my-app:latest',
+    env: { FOO: 'foo', BAR: 'bar' },
+    cmd: ['npm', 'start'],
+    replicas: 5,
+    restart: 'on-failure',
+    publish: { 3000: 3000 }, // hostPort: containerPort
+    healthCmd: ['wget', '--no-verbose', '--tries=1', '--spider', 'localhost:3000'],
+    mounts: ['my-volume:/opt/data/my-volume:readonly']
+    logDriver: 'json-file',
+    logDriverOptions: { 'max-file': '10', 'max-size': '100m' },
+  })
+})()
 ```

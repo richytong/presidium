@@ -31,28 +31,10 @@ const {
  * Use og docker to implement APIs
  *
  * ```javascript
- * new DockerContainer('node:15-alpine').run(['node', '-e', 'console.log(\'hey\')'])
- * ```
- */
-const DockerContainer = function (image) {
-  if (this == null || this.constructor != DockerContainer) {
-    return new DockerContainer(image)
-  }
-  this.docker = new Docker()
-  this.http = this.docker.http
-  this.image = image
-  return this
-}
-
-/**
- * @name DockerContainer.prototype.create
- *
- * @synopsis
- * ```coffeescript [specscript]
- * new DockerContainer(image string).create(options? {
+ * new DockerContainer('node:15-alpine', options? {
  *   name: string, // specific name for the container
+ *   rm: boolean, // automatically remove the container when it exits TODO
  *   restart: 'no'|'on-failure[:<max-retries>]'|'always'|'unless-stopped',
- *   cleanup: false|true, // remove the container's file system when the container exits
  *   logDriver: 'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'none',
  *   logDriverOptions: Object<string>,
  *   publish: Array<string>, // '<hostPort>:<containerPort>[:"tcp"|"udp"|"sctp"]'
@@ -81,141 +63,31 @@ const DockerContainer = function (image) {
  *     PATH: string, // $PATH
  *     ...(moreEnvOptions Object<string>),
  *   }, // ENV; environment variables exposed to container during run time
- * })
+ * }).run(['node', '-e', 'console.log(\'hey\')'])
+ * ```
  *
  * @description
- * https://docs.docker.com/engine/reference/commandline/create/
- *
- * Restart policies:
- *   * `no` - do not restart the container when it exits
- *   * `on-failure` - restart only if container exits with non-zero exit code
- *   * `always` - always restart container regardless of exit code
- *   * `unless-stopped` - like `always` except if the container was put into a stopped state before the Docker daemon was stopped
- *
- * Health checks:
- *   * `[]` - inherit healthcheck from image or parent image
- *   * `['NONE']` - disable healthcheck
- *   * `['CMD', ...args]` - exec arguments directly
- *   * `['CMD-SHELL', command string]` - run command with system's default shell
+ * Declarative syntax for Docker containers.
+ * ```javascript
+ * new DockerContainer('node:15-alpine', {
+ *   name: 'my-container',
+ *   env: { FOO: 'hey', BAR: 1 },
+ *   cmd: ['node', '-e', 'console.log(process.env.FOO)'],
+ * }).attach(async dockerRawStream => {
+ *   // main process stream
+ * }).start()
  * ```
  */
-
-DockerContainer.prototype.create = function dockerContainerCreate(options = {}) {
-  return this.http.post(`/containers/create?${
-    querystring.stringify({
-      ...options.name && { name: options.name },
-    })
-  }`, {
-    body: stringifyJSON({
-      AttachStderr: true,
-      AttachStdout: true,
-      AttachStdin: false,
-      Tty: false,
-      Image: this.image,
-
-      ...options.cmd && { Cmd: options.cmd },
-      ...options.env && {
-        Env: Object.entries(options.env)
-          .map(([key, value]) => `${key}=${value}`),
-      },
-      ...options.expose && {
-        ExposedPorts: transform(map(pipe([
-          String,
-          split('/'),
-          fork([get(0), get(1, 'tcp')]),
-          join('/'),
-          port => ({ [port]: {} }),
-        ])), {})(options.expose),
-      },
-      ...options.workdir && {
-        WorkingDir: options.workdir,
-      },
-      ...options.volume && {
-        Volumes: transform(map(path => ({ [path]: {} })), {})(options.volume),
-      },
-
-      ...options.healthCmd && {
-        Healthcheck: {
-          Test: ['CMD', ...options.healthCmd],
-          Interval: options.healthInterval ?? 10e9,
-          Timeout: options.healthTimeout ?? 20e9,
-          Retries: options.healthRetries ?? 5,
-          StartPeriod: options.healthStartPeriod ?? 1e6,
-        },
-      },
-
-      HostConfig: {
-        ...options.mounts && {
-          Mounts: options.mounts.map(pipe([
-            switchCase([
-              isString,
-              pipe([
-                split(':'),
-                fork({ target: get(0), source: get(1), readonly: get(2) }),
-              ]),
-              identity,
-            ]),
-            fork({
-              Target: get('target'),
-              Source: get('source'),
-              Type: get('type', 'volume'),
-              ReadOnly: get('readonly', false),
-            }),
-          ]))
-        },
-
-        ...options.memory && { Memory: options.memory },
-        ...options.publish && {
-          PortBindings: map.entries(fork([ // publish and PortBindings are reversed
-            pipe([ // container port
-              get(1),
-              String,
-              split('/'),
-              fork([get(0), get(1, 'tcp')]),
-              join('/'),
-            ]),
-            pipe([ // host port
-              get(0),
-              String,
-              HostPort => [{ HostPort }],
-            ]),
-          ]))(options.publish),
-        },
-
-        ...options.logDriver && {
-          LogConfig: {
-            Type: options.logDriver,
-            Config: { ...options.logDriverOptions },
-          },
-        },
-        ...options.restart && {
-          RestartPolicy: fork({
-            Name: get(0, 'no'),
-            MaximumRetryCount: pipe([get(1, 0), Number]),
-          })(options.restart.split(':')),
-        },
-      },
-    }),
-
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  })
-}
-
-/**
- * @name DockerContainer.prototype.run
- *
- * @synopsis
- * ```coffeescript [specscript]
- * DockerContainer().run(cmd Array<string>) -> Promise<HttpResponse>
- * ```
- */
-
-DockerContainer.prototype.run = async function dockerContainerRun(
-  cmd, options = {}
-) {
-  return this.create({ ...options, cmd }).then(pipe([
+const DockerContainer = function (image, options = {}) {
+  if (this == null || this.constructor != DockerContainer) {
+    return new DockerContainer(image, options)
+  }
+  this.docker = new Docker()
+  this.containerId = null
+  this.promises = new Set()
+  this.ready = this.docker.createContainer(image, {
+    rm: true, ...options,
+  }).then(pipe([
     tap(async response => {
       if (!response.ok) {
         throw new Error(`${response.statusText}: ${await response.text()}`)
@@ -223,17 +95,48 @@ DockerContainer.prototype.run = async function dockerContainerRun(
     }),
     response => response.json(),
     get('Id'),
-    async containerId => {
-      const attachResponse = await this.docker.attach(containerId),
-        startResponse = await this.docker.start(containerId)
-      if (!startResponse.ok) {
-        throw new Error(
-          `${startResponse.statusText}: ${await startResponse.text()}`)
-      }
-      attachResponse.headers.set('x-presidium-container-id', containerId)
-      return attachResponse
+    containerId => {
+      this.containerId = containerId
     },
   ]))
+  return this
+}
+
+// DockerContainer.run(image, options, handler) -> DockerContainer
+DockerContainer.run = function dockerContainerRun(image, options, handler) {
+  return new DockerContainer(image, options).attach(handler).start()
+}
+
+// new DockerContainer(image, options).attach -> DockerContainer
+DockerContainer.prototype.attach = function dockerContainerAttach(handler) {
+  const promise = this.ready.then(pipe([
+    () => this.docker.attachContainer(this.containerId),
+    tap(async response => {
+      if (!response.ok) {
+        throw new Error(`${response.statusText}: ${await response.text()}`)
+      }
+    }),
+    get('body'),
+    handler,
+    () => this.promises.delete(promise),
+  ]))
+  this.promises.add(promise)
+  return this
+}
+
+// new DockerContainer(image, options).start() -> Promise<HttpResponse>
+DockerContainer.prototype.start = function dockerContainerStart() {
+  const promise = this.ready.then(pipe([
+    () => this.docker.startContainer(this.containerId),
+    tap(async response => {
+      if (!response.ok) {
+        throw new Error(`${response.statusText}: ${await response.text()}`)
+      }
+    }),
+    () => this.promises.delete(promise),
+  ]))
+  this.promises.add(promise)
+  return this
 }
 
 module.exports = DockerContainer

@@ -2,109 +2,54 @@ const Test = require('thunk-test')
 const assert = require('assert')
 const DockerContainer = require('./DockerContainer')
 const Docker = require('./Docker')
+const rubico = require('rubico')
+const identity = require('rubico/x/identity')
+const join = require('./internal/join')
+
+const {
+  pipe, tap,
+  switchCase, tryCatch,
+  fork, assign, get, pick, omit,
+  map, filter, reduce, transform, flatMap,
+  and, or, not, any, all,
+  eq, gt, lt, gte, lte,
+  thunkify, always,
+  curry, __,
+} = rubico
+
+const Stdout = {
+  write(...args) {
+    console.log(...args)
+    return this
+  },
+}
 
 module.exports = Test('DockerContainer', DockerContainer)
-  .before(async function () {
-    this.docker = new Docker()
-  })
-  .case('node:15-alpine', async function (alpine) {
-    {
-      const response = await alpine.run(['node', '-e', 'console.log(\'heyy\')'])
+  .case('node:15-alpine', {
+    env: { FOO: 'foo', BAR: 'bar' },
+    cmd: ['node', '-e', 'console.log(process.env.FOO)'],
+  }, async container => {
+    await new Promise(resolve => {
+      const result = container.attach(async dockerStream => {
+        const body = await transform(map(identity), Buffer.from(''))(dockerStream)
+        assert.deepEqual(
+          body,
+          Buffer.from([1, 0, 0, 0, 0, 0, 0, 4, 'f'.charCodeAt(0), 'o'.charCodeAt(0), 'o'.charCodeAt(0), '\n'.charCodeAt(0)]))
+        resolve()
+      }).start()
+      assert.strictEqual(result, container)
+    })
 
-      assert(response.ok)
-
-      const body = await response.buffer()
-      assert.equal(body.constructor, Buffer)
-      assert.strictEqual(body[0], 1) // stdout
-      assert.strictEqual(body[1], 0) // empty
-      assert.strictEqual(body[2], 0) // empty
-      assert.strictEqual(body[3], 0) // empty
-      assert.strictEqual(body[4], 0) // SIZE1
-      assert.strictEqual(body[5], 0) // SIZE2
-      assert.strictEqual(body[6], 0) // SIZE3
-      assert.strictEqual(body[7], 5) // SIZE4
-      assert.strictEqual(body.slice(8).toString(), 'heyy\n')
-    }
-
-    {
-      const response = await alpine.run(['sh', '-c', 'echo $HEY'], {
-        workdir: '/opt/heyo',
-        expose: [22, 8888, '8889/udp'],
-        env: { HEY: 'hey' },
-        volume: ['/opt/my-volume'],
-        mounts: [{
-          source: 'other-volume',
-          target: '/opt/other-volume',
-          readonly: true,
-        }],
-        memory: 512e6, // bytes
-        restart: 'on-failure:5',
-
-        healthCmd: ['echo', 'ok'],
-        healthInterval: 1e9,
-        healthTimeout: 30e9,
-        healthRetries: 10,
-        healthStartPeriod: 5e9,
-
-        publish: {
-          23: 22, // hostPort -> containerPort[/protocol]
-          8888: '8000/tcp',
-        },
-        logDriver: 'json-file',
-        logDriverOptions: {
-          'max-file': '10',
-          'max-size': '100m',
-        },
+    await new Promise(resolve => {
+      const anotherContainer = DockerContainer.run('node:15-alpine', {
+        env: { FOO: 'foo', BAR: 'bar' },
+        cmd: ['node', '-e', 'console.log(process.env.BAR)'],
+      }, async dockerStream => {
+        const body = await transform(map(identity), Buffer.from(''))(dockerStream)
+        assert.deepEqual(
+          body,
+          Buffer.from([1, 0, 0, 0, 0, 0, 0, 4, 'b'.charCodeAt(0), 'a'.charCodeAt(0), 'r'.charCodeAt(0), '\n'.charCodeAt(0)]))
+        resolve()
       })
-
-      assert(response.ok)
-      this.containerId = response.headers.get('x-presidium-container-id')
-
-      const body = await response.buffer()
-      assert.equal(body.constructor, Buffer)
-      assert.strictEqual(body[0], 1) // stdout
-      assert.strictEqual(body[1], 0) // empty
-      assert.strictEqual(body[2], 0) // empty
-      assert.strictEqual(body[3], 0) // empty
-      assert.strictEqual(body[4], 0) // SIZE1
-      assert.strictEqual(body[5], 0) // SIZE2
-      assert.strictEqual(body[6], 0) // SIZE3
-      assert.strictEqual(body[7], 4) // SIZE4
-      assert.strictEqual(body.slice(8).toString(), 'hey\n')
-    }
-
-    {
-      const response = await this.docker.inspect(this.containerId)
-      assert.equal(response.status, 200)
-      const body = await response.json()
-      assert.equal(body.Config.Image, 'node:15-alpine')
-      assert.deepEqual(body.Config.Volumes, { '/opt/my-volume': {} })
-      assert.equal(body.Config.WorkingDir, '/opt/heyo')
-      assert.deepEqual(body.Config.ExposedPorts, { '22/tcp': {}, '8888/tcp': {}, '8889/udp': {} })
-      assert.equal(body.HostConfig.Memory, 512e6)
-      assert.deepEqual(body.HostConfig.PortBindings, {
-        '22/tcp': [{ HostIp: '', HostPort: '23' }],
-        '8000/tcp': [{ HostIp: '', HostPort: '8888' }]
-      })
-      assert.deepEqual(body.HostConfig.LogConfig, {
-        Type: 'json-file',
-        Config: {
-          'max-file': '10',
-          'max-size': '100m',
-        },
-      })
-      assert.deepEqual(body.Config.Healthcheck, {
-        Test: ['CMD', 'echo', 'ok'],
-        Interval: 1000000000,
-        Timeout: 30000000000,
-        StartPeriod: 5000000000,
-        Retries: 10,
-      })
-      assert.deepEqual(body.HostConfig.Mounts, [{
-        Type: 'volume',
-        Source: 'other-volume',
-        Target: '/opt/other-volume',
-        ReadOnly: true
-      }])
-    }
+    })
   })

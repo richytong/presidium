@@ -333,13 +333,11 @@ Docker.prototype.removeImage = function dockerRemoveImage(image, options) {
  *   logDriver: 'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'none',
  *   logDriverOptions: Object<string>,
  *   publish: Array<string>, // '<hostPort>:<containerPort>[:"tcp"|"udp"|"sctp"]'
- *   healthcheck: {
- *     test: Array<string>, // healthcheck command configuration. See description
- *     interval?: 10e9|>1e6, // nanoseconds to wait between healthchecks; 0 means inherit
- *     timeout?: 20e9|>1e6, // nanoseconds to wait before healthcheck fails
- *     retries?: 5|number, // number of retries before unhealhty
- *     startPeriod?: >=1e6, // nanoseconds to wait on container init before starting first healthcheck
- *   },
+ *   healthCmd: Array<string>, // healthcheck command. See description
+ *   healthInterval: 10e9|>1e6, // nanoseconds to wait between healthchecks; 0 means inherit
+ *   healthTimeout: 20e9|>1e6, // nanoseconds to wait before healthcheck fails
+ *   healthRetries: 5|number, // number of retries before unhealhty
+ *   healthStartPeriod: >=1e6, // nanoseconds to wait on container init before starting first healthcheck
  *   memory: number, // memory limit in bytes
  *   mounts: Array<{
  *     source: string, // name of volume
@@ -906,5 +904,7 @@ Docker.prototype.pruneVolumes = function dockerPruneVolumes() {
 Docker.prototype.pruneNetworks = function dockerPruneNetworks() {
   return this.http.post('/networks/prune')
 }
+
+// Docker.RawStreamHeader = function (buffer) {}
 
 module.exports = Docker
