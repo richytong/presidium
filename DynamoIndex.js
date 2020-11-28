@@ -236,13 +236,12 @@ DynamoIndex.prototype.query = function query(filterStatement, values, options = 
     KeyConditionExpression: statements.map(statement => {
       if (statement.startsWith('begins_with')) {
         const [field, prefix] = statement // 'begins_with(name, :prefix)'
-          .split(/[\(\)]/)[1] // 'name, :prefix'
+          .split(/[()]/)[1] // 'name, :prefix'
           .split(',').map(trim) // ['name', ':prefix']
         return `begins_with(#${hashJSON(field)}, ${prefix})`
-      } else {
-        const [field, rest] = statement.split(/ (.+)/)
-        return `#${hashJSON(field)} ${rest}`
       }
+      const [field, rest] = statement.split(/ (.+)/)
+      return `#${hashJSON(field)} ${rest}`
     }).join(' AND '),
 
     ExpressionAttributeNames: pipe([
@@ -254,7 +253,7 @@ DynamoIndex.prototype.query = function query(filterStatement, values, options = 
         {}),
     ])([
       statements.map(statement => statement.trim().startsWith('begins_with')
-        ? statement.split(/[\(\)]/)[1].split(',').map(trim)[0] // begins_with(field, :field)
+        ? statement.split(/[()]/)[1].split(',').map(trim)[0] // begins_with(field, :field)
         : statement.split(/ (.+)/)[0]), // field ...
       options.projectionExpression
         ? options.projectionExpression.split(',')

@@ -210,7 +210,7 @@ module.exports = Test('DynamoIndex', DynamoIndex)
     assert.deepEqual(
       await index.query('status = :status AND createTime <= :createTime', {
         status: 'waitlist',
-        createTime: 10_000,
+        createTime: 10e3,
       }, {
         scanIndexForward: false,
         limit: 2,
@@ -242,7 +242,7 @@ module.exports = Test('DynamoIndex', DynamoIndex)
     assert.deepEqual(
       await index.query('status = :status AND createTime <= :createTime', {
         status: 'waitlist',
-        createTime: 10_000,
+        createTime: 10e3,
       }, {
         scanIndexForward: false,
         limit: 2,
