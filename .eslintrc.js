@@ -254,7 +254,7 @@ module.exports = {
         'prefer-const': 'error',
         'prefer-destructuring': 'off',
         'prefer-exponentiation-operator': 'error',
-        'prefer-named-capture-group': 'error',
+        'prefer-named-capture-group': 'off',
         'prefer-numeric-literals': 'error',
         'prefer-object-spread': 'off',
         'prefer-promise-reject-errors': 'error',
