@@ -619,7 +619,8 @@ Docker.prototype.leaveSwarm = async function dockerLeaveSwarm(options = {}) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * Docker().createService(image string, address string{
+ * Docker().createService(service string, options {
+ *   image: string,
  *   replicas: 1|number,
  *   restart: 'no'|'on-failure[:<max-retries>]'|'always'|'unless-stopped',
  *   restartDelay: 10e9|number, // nanoseconds to delay between restarts
@@ -649,22 +650,15 @@ Docker.prototype.leaveSwarm = async function dockerLeaveSwarm(options = {}) {
  *   }, // ENV; environment variables exposed to container during run time
  * }) -> Promise<HttpResponse>
  * ```
- *
- * @description
- * ```javascript
- * Docker(image, address).createService({
- *   replicas: 1,
- * })
- * ```
  */
 
-Docker.prototype.createService = function dockerCreateService(image, options) {
+Docker.prototype.createService = function dockerCreateService(service, options) {
   return this.http.post('/services/create', {
     body: stringifyJSON({
-      ...options.name && { Name: options.name },
+      Name: service,
       TaskTemplate: {
         ContainerSpec: {
-          Image: image,
+          Image: options.image,
           ...options.cmd && { Command: options.cmd },
           ...options.env && {
             Env: Object.entries(options.env)

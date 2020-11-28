@@ -280,8 +280,8 @@ module.exports = [
       }
 
       {
-        const response = await docker.createService('node:15-alpine', {
-          name: 'hey1',
+        const response = await docker.createService('hey1', {
+          image: 'node:15-alpine',
           replicas: 2,
           cmd: ['node', '-e', 'http.createServer((request, response) => response.end(\'hey1\')).listen(3000)'],
           workdir: '/opt/heyo',
@@ -316,8 +316,8 @@ module.exports = [
         this.serviceId = body.ID
       }
       {
-        const response = await docker.createService('node:15-alpine', {
-          name: 'hey2',
+        const response = await docker.createService('hey2', {
+          image: 'node:15-alpine',
           replicas: 2,
           cmd: ['node', '-e', 'http.createServer((request, response) => response.end(\'hey2\')).listen(3001)'],
           workdir: '/opt/heyo',
