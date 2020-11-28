@@ -71,9 +71,10 @@ const myIndex = new DynamoIndex('my-index', {
   ) // { Item: { id: '1', ... } }
 
   console.log(
-    await myIndex.query(
-      'name = :name AND age < :age',
-      { name: 'George', age: 33 }),
+    await myIndex.query('name = :name AND age < :age', {
+      name: 'George',
+      age: 33,
+    }),
   ) // [{ Items: [{ id: '1', ... }, ...] }]
   await myTable.deleteItem({ id: '1' })
 })()
@@ -83,7 +84,7 @@ const myIndex = new DynamoIndex('my-index', {
 ```javascript
 import { DockerImage } from 'presidium'
 
-const myAppImage = new DockerImage('my-app:latest', `
+const myImage = new DockerImage('my-app:latest', `
 FROM node:15-alpine
 WORKDIR /opt
 COPY . .
@@ -91,51 +92,62 @@ RUN echo //registry.npmjs.org/:_authToken=${myNpmToken} > $HOME/.npmrc \
   && npm i \
   && rm $HOME/.npmrc
 EXPOSE 8080
-CMD ["npm", "start"]
-`).build(__dirname, {
-  ignore: ['.github', 'node_modules'],
-}, buildStream => {
+CMD ["npm", "start"]`)
+
+(async function () {
+  const buildStream = await myImage.build(__dirname, {
+    ignore: ['.github', 'node_modules'],
+  })
   buildStream.pipe(process.stdout)
   buildStream.on('end', () => {
-    myAppImage.push('my-registry.io', pushStream => {
+    myImage.push('my-registry.io').then(pushStream => {
       pushStream.pipe(process.stdout)
     })
   })
-})
+})()
 ```
 
 ## Execute Docker Containers
 ```javascript
 import { DockerContainer } from 'presidium'
 
-new DockerContainer('node:15-alpine', {
+const container = new DockerContainer('node:15-alpine', {
   env: { FOO: 'foo', BAR: 'bar' },
   cmd: ['node', '-e', 'console.log(process.env.FOO)'],
-}).attach(dockerStream => {
-  // dockerStream.pipe(process.stdout) // raw docker stream
-}).start()
+})
 
-DockerContainer.run('node:15-alpine', {
-  env: { FOO: 'foo', BAR: 'bar' },
-  cmd: ['node', '-e', 'console.log(process.env.FOO)'],
-}, dockerStream => { /* ... */ })
+const dockerStream = await container.run() // foo
+
+const anotherDockerStream = await container.run([
+  'node',
+  '-e',
+  'console.log(process.env.BAR)',
+]) // bar
 ```
 
 ## Deploy Docker Swarm Services
 ```javascript
 import { DockerSwarm, DockerService } from 'presidium'
 
-DockerSwarm.join('[::1]:2377', process.env.SWARM_MANAGER_TOKEN)
-DockerService.update('my-unique-service-name-in-swarm', {
-  image: 'my-app:latest',
-  env: { FOO: 'foo', BAR: 'bar' },
-  cmd: ['npm', 'start'],
-  replicas: 5,
-  restart: 'on-failure',
-  publish: { 3000: 3000 }, // hostPort: containerPort
-  healthCmd: ['wget', '--no-verbose', '--tries=1', '--spider', 'localhost:3000'],
-  mounts: ['my-volume:/opt/data/my-volume:readonly']
-  logDriver: 'json-file',
-  logDriverOptions: { 'max-file': '10', 'max-size': '100m' },
-})
+;(async function() {
+  const swarm = new DockerSwarm({
+    availability: 'drain',
+    advertiseAddr: 'my-docker-host:2377',
+  })
+  await swarm.join(process.env.SWARM_MANAGER_TOKEN)
+
+  const myService = new DockerService('my-service', {
+    image: 'my-app:latest',
+    env: { FOO: 'foo', BAR: 'bar' },
+    cmd: ['npm', 'start'],
+    replicas: 5,
+    restart: 'on-failure',
+    publish: { 3000: 3000 }, // hostPort: containerPort
+    healthCmd: ['wget', '--no-verbose', '--tries=1', '--spider', 'localhost:3000'],
+    mounts: ['my-volume:/opt/data/my-volume:readonly']
+    logDriver: 'json-file',
+    logDriverOptions: { 'max-file': '10', 'max-size': '100m' },
+  })
+  await myService.update({ force: true })
+})()
 ```
