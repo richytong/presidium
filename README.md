@@ -68,14 +68,14 @@ const myIndex = new DynamoIndex('my-index', {
   await myTable.updateItem({ id: '1' }, { age: 32 })
   console.log(
     await myTable.getItem({ id: '1' }),
-  ) // { Item: { id: '1', ... } }
+  ) // { Item: { id: { S: '1' }, ... } }
 
   console.log(
     await myIndex.query('name = :name AND age < :age', {
       name: 'George',
       age: 33,
     }),
-  ) // [{ Items: [{ id: '1', ... }, ...] }]
+  ) // [{ Items: [{ id: { S: '1' }, ... }, ...] }]
   await myTable.deleteItem({ id: '1' })
 })()
 ```
@@ -94,17 +94,13 @@ RUN echo //registry.npmjs.org/:_authToken=${myNpmToken} > $HOME/.npmrc \
 EXPOSE 8080
 CMD ["npm", "start"]`)
 
-(async function () {
-  const buildStream = await myImage.build(__dirname, {
-    ignore: ['.github', 'node_modules'],
-  })
-  buildStream.pipe(process.stdout)
-  buildStream.on('end', () => {
-    myImage.push('my-registry.io').then(pushStream => {
-      pushStream.pipe(process.stdout)
-    })
-  })
-})()
+const buildStream = myImage.build(__dirname, {
+  ignore: ['.github', 'node_modules'],
+})
+buildStream.pipe(process.stdout)
+buildStream.on('end', () => {
+  myImage.push('my-registry.io').pipe(process.stdout)
+})
 ```
 
 ## Execute Docker Containers
@@ -116,14 +112,12 @@ const container = new DockerContainer('node:15-alpine', {
   cmd: ['node', '-e', 'console.log(process.env.FOO)'],
 })
 
-(async function () {
-  const fooStream = await container.run() // foo
-  const barStream = await container.exec([
-    'node',
-    '-e',
-    'console.log(process.env.BAR)',
-  ]) // bar
-})()
+container.run().pipe(process.stdout) // foo
+container.exec([
+  'node',
+  '-e',
+  'console.log(process.env.BAR)',
+]).pipe(process.stdout) // bar
 ```
 
 ## Deploy Docker Swarm Services
