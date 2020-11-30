@@ -110,6 +110,7 @@ Docker.prototype.listContainers = function dockerListContainers() {
  *
  * @description
  * Build a Docker Image. `path` must be absolute
+ * [Dockerfile docs](https://docs.docker.com/engine/reference/builder/)
  *
  * ```javascript
  * Docker().buildImage('my-image', path string, {
