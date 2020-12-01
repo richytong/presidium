@@ -131,7 +131,7 @@ DockerContainer.prototype.run = function dockerContainerRun(cmd) {
 DockerContainer.prototype.stop = function dockerContainerStop() {
   const result = new PassThroughStream(),
     promise = this.docker.stopContainer(this.containerId, { time: 1 })
-      .then(async response => {
+      .then(response => {
         response.body.pipe(result)
         this.promises.delete(promise)
       })
