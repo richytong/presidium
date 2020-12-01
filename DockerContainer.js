@@ -6,6 +6,7 @@ const stringifyJSON = require('./internal/stringifyJSON')
 const split = require('./internal/split')
 const join = require('./internal/join')
 const Docker = require('./Docker')
+const stream = require('stream')
 
 const {
   pipe, tap,
@@ -17,6 +18,8 @@ const {
   thunkify, always,
   curry, __,
 } = rubico
+
+const PassThroughStream = stream.PassThrough
 
 /**
  * @name DockerContainer
@@ -83,6 +86,8 @@ const DockerContainer = function (image, options) {
     return new DockerContainer(image, options)
   }
   this.docker = new Docker()
+  this.image = image
+  this.options = options
   this.containerId = null
   this.promises = new Set()
   this.ready = this.docker.createContainer(image, {
@@ -97,31 +102,53 @@ const DockerContainer = function (image, options) {
   return this
 }
 
-// DockerContainer.run(image, options, handler) -> DockerContainer
-DockerContainer.run = function dockerContainerRun(image, options, handler) {
-  return new DockerContainer(image, options).attach(handler).start()
+
+// dockerContainer.run(cmd? Array<string>) -> mainCmdStream ReadableStream
+DockerContainer.prototype.run = function dockerContainerRun(cmd) {
+  if (this.containerId != null) {
+    return this.exec(cmd)
+  }
+  const result = new stream.PassThrough(),
+    promise = this.docker.createContainer(this.image, {
+      ...this.options,
+      ...cmd && { cmd },
+    }).then(pipe([
+      response => response.json(),
+      get('Id'),
+      async containerId => {
+        const attachResponse = await this.docker.attachContainer(containerId)
+        attachResponse.body.pipe(result)
+        await this.docker.startContainer(containerId)
+        this.promises.delete(promise)
+        this.containerId = containerId
+      },
+    ]))
+  result.then = handler => result.on('end', thunkify(handler, result))
+  return result
 }
 
-// new DockerContainer(image, options).attach -> DockerContainer
-DockerContainer.prototype.attach = function dockerContainerAttach(handler) {
-  const promise = this.ready.then(pipe([
-    () => this.docker.attachContainer(this.containerId),
-    get('body'),
-    handler,
-    () => this.promises.delete(promise),
-  ]))
+// dockerContainer.stop(cmd Array<string>) -> sideCmdStream ReadableStream
+DockerContainer.prototype.stop = function dockerContainerStop() {
+  const result = new PassThroughStream(),
+    promise = this.docker.stopContainer(this.containerId, { time: 1 })
+      .then(async response => {
+        response.body.pipe(result)
+        this.promises.delete(promise)
+      })
   this.promises.add(promise)
-  return this
+  return result
 }
 
-// new DockerContainer(image, options).start() -> Promise<HttpResponse>
-DockerContainer.prototype.start = function dockerContainerStart() {
-  const promise = this.ready.then(pipe([
-    () => this.docker.startContainer(this.containerId),
-    () => this.promises.delete(promise),
-  ]))
+// dockerContainer.exec(cmd Array<string>) -> sideCmdStream ReadableStream
+DockerContainer.prototype.exec = function dockerContainerExec(cmd) {
+  const result = new PassThroughStream(),
+    promise = this.docker.execContainer(this.containerId, cmd)
+      .then(response => {
+        response.body.pipe(result)
+        this.promises.delete(promise)
+      })
   this.promises.add(promise)
-  return this
+  return result
 }
 
 module.exports = DockerContainer
