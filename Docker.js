@@ -101,11 +101,11 @@ Docker.prototype.listContainers = function dockerListContainers() {
  *   image string,
  *   path string,
  *   options? {
- *     ignore: Array<string>, // paths or names to ignore in tarball
+ *     ignore: Array<string>, // paths or names to ignore in build context tarball
  *     archive: Object<path string)=>(content string)>, // object representation of the base archive for build context
  *     archiveDockerfile: string, // path to Dockerfile in archive
  *   },
- * ) -> ()
+ * ) -> Promise<HttpResponse>
  * ```
  *
  * @description
