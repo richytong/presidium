@@ -52,8 +52,8 @@ http.createServer((request, response) => {
         await passthrough([])(container.exec(['node', '-e', 'console.log(process.env.BAR)'])),
         [1, 0, 0, 0, 0, 0, 0, 4, charCode('b'), charCode('a'), charCode('r'), charCode('\n')],
       )
-      const stopStream = container.stop()
-      passthrough(process.stdout)(stopStream)
+      const stopResult = await container.stop()
+      assert.equal(stopResult.message, 'success')
     })
     serverStream.on('end', () => {
       content = Buffer.concat(content)
@@ -61,4 +61,4 @@ http.createServer((request, response) => {
         content,
         Buffer.from([1, 0, 0, 0, 0, 0, 0, 4, charCode('f'), charCode('o'), charCode('o'), charCode('\n')]))
     })
-  })
+  })()

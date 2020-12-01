@@ -129,14 +129,8 @@ DockerContainer.prototype.run = function dockerContainerRun(cmd) {
 
 // dockerContainer.stop(cmd Array<string>) -> sideCmdStream ReadableStream
 DockerContainer.prototype.stop = function dockerContainerStop() {
-  const result = new PassThroughStream(),
-    promise = this.docker.stopContainer(this.containerId, { time: 1 })
-      .then(response => {
-        response.body.pipe(result)
-        this.promises.delete(promise)
-      })
-  this.promises.add(promise)
-  return result
+  return this.docker.stopContainer(this.containerId, { time: 1 })
+    .then(always({ message: 'success' }))
 }
 
 // dockerContainer.exec(cmd Array<string>) -> sideCmdStream ReadableStream
