@@ -61,4 +61,4 @@ http.createServer((request, response) => {
         content,
         Buffer.from([1, 0, 0, 0, 0, 0, 0, 4, charCode('f'), charCode('o'), charCode('o'), charCode('\n')]))
     })
-  })()
+  })
