@@ -108,28 +108,11 @@ buildStream.on('end', () => {
 import { DockerContainer } from 'presidium'
 
 const container = new DockerContainer('node:15-alpine', {
-  env: { FOO: 'foo', BAR: 'bar' },
-  expose: { 8080: 8080 },
-  cmd: [
-    'node',
-    '-e',
-    `
-http.createServer((request, response) => {
-  console.log(process.env.FOO)
-  repsonse.end(process.env.BAR)
-}).listen(8080, () => {
-  console.log('listening on port 8080')
-})`,
-  ],
+  env: { FOO: 'foo' },
+  cmd: ['node', '-e', 'console.log(process.env.FOO)'],
 })
 
-container.run().pipe(process.stdout) // listening on port 8080
-
-container.exec([
-  'node',
-  '-e',
-  'console.log(process.env.BAR)',
-]).pipe(process.stdout) // bar
+container.run().pipe(process.stdout) // foo
 ```
 
 ## Deploy Docker Swarm Services
