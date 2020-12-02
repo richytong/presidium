@@ -44,11 +44,15 @@ COPY . .
 EXPOSE 8081
 `, async function (myImage) {
   const buildStream = myImage.build(__dirname)
-  const buildBlob = await buildStream
-  assert(buildBlob.startsWith('{'))
+  buildStream.pipe(process.stdout)
+  await new Promise(resolve => {
+    buildStream.on('end', resolve)
+  })
   const pushStream = myImage.push('localhost:5000')
-  const pushBlob = await pushStream
-  assert(pushBlob.startsWith('{'))
+  pushStream.pipe(process.stdout)
+  await new Promise(resolve => {
+    pushStream.on('end', resolve)
+  })
   const myImageInspection = await myImage.inspect()
   assert.deepEqual(
     myImageInspection.RepoTags,
