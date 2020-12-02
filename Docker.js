@@ -467,11 +467,6 @@ Docker.prototype.execContainer = function dockerExecContainer(
       'Content-Type': 'application/json',
     },
   }).then(pipe([
-    tap(async response => {
-      if (!response.ok) {
-        throw new Error(`${response.statusText}: ${await response.text()}`)
-      }
-    }),
     response => response.json(),
     get('Id'),
     execId => this.http.post(`/exec/${execId}/start`, {
