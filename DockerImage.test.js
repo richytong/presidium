@@ -45,14 +45,10 @@ EXPOSE 8081
 `, async function (myImage) {
   const buildStream = myImage.build(__dirname)
   buildStream.pipe(process.stdout)
-  await new Promise(resolve => {
-    buildStream.on('end', resolve)
-  })
+  await buildStream.promise
   const pushStream = myImage.push('localhost:5000')
   pushStream.pipe(process.stdout)
-  await new Promise(resolve => {
-    pushStream.on('end', resolve)
-  })
+  await pushStream.promise
   const myImageInspection = await myImage.inspect()
   assert.deepEqual(
     myImageInspection.RepoTags,
@@ -61,4 +57,4 @@ EXPOSE 8081
 .after(async function () {
   await this.docker.pruneContainers()
   await this.docker.pruneImages()
-})
+})()

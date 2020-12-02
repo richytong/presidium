@@ -72,7 +72,6 @@ const DockerImage = function (image, dockerfile) {
   this.image = image
   this.dockerfile = dockerfile
   this.docker = new Docker()
-  this.promises = new Set()
   return this
 }
 
@@ -91,20 +90,18 @@ const DockerImage = function (image, dockerfile) {
  * ```
  */
 DockerImage.prototype.build = function (path, options = {}) {
-  const result = new PassThroughStream(),
-    resultPipe = result.pipe.bind(result),
-    promise = new Promise((resolve, reject) => {
-      this.docker.buildImage(this.image, path, defaultsDeep({
-        archive: {
-          Dockerfile: this.dockerfile,
-        },
-      })(pick(['ignore', 'archive'])(options))).then(response => {
-        response.body.on('end', thunkify(resolve, result))
-        response.body.on('error', reject)
-        response.body.pipe(result)
-      })
+  const result = new PassThroughStream()
+  result.promise = new Promise((resolve, reject) => {
+    this.docker.buildImage(this.image, path, defaultsDeep({
+      archive: {
+        Dockerfile: this.dockerfile,
+      },
+    })(pick(['ignore', 'archive'])(options))).then(response => {
+      response.body.on('end', resolve)
+      response.body.on('error', reject)
+      response.body.pipe(result)
     })
-  result.then = (handler, onError) => promise.then(handler, onError)
+  })
   return result
 }
 
@@ -126,23 +123,21 @@ DockerImage.prototype.build = function (path, options = {}) {
  * ```
  */
 DockerImage.prototype.push = function (repository, options) {
-  const result = new PassThroughStream(),
-    resultPipe = result.pipe.bind(result),
-    promise = new Promise((resolve, reject) => {
-      this.docker.tagImage(this.image, {
-        tag: this.image.split(':')[1],
-        repo: pathJoin(repository, this.image.split(':')[0]),
-      }).then(pipe([
-        () => this.docker.pushImage(
-          this.image, repository, pick(['authorization'])(options)),
-        response => {
-          response.body.on('end', thunkify(resolve, result))
-          response.body.on('error', reject)
-          response.body.pipe(result)
-        },
-      ]))
-    })
-  result.then = (handler, onError) => promise.then(handler, onError)
+  const result = new PassThroughStream()
+  result.promise = new Promise((resolve, reject) => {
+    this.docker.tagImage(this.image, {
+      tag: this.image.split(':')[1],
+      repo: pathJoin(repository, this.image.split(':')[0]),
+    }).then(pipe([
+      () => this.docker.pushImage(
+        this.image, repository, pick(['authorization'])(options)),
+      response => {
+        response.body.on('end', thunkify(resolve, result))
+        response.body.on('error', reject)
+        response.body.pipe(result)
+      },
+    ]))
+  })
   return result
 }
 
