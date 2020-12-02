@@ -97,11 +97,11 @@ CMD ["npm", "start"]`)
 const buildStream = myImage.build(__dirname, {
   ignore: ['.github', 'node_modules'],
 })
-buildStream.pipe(process.stdout)
 buildStream.on('end', () => {
   const pushStream = myImage.push('my-registry.io')
   pushStream.pipe(process.stdout)
 })
+buildStream.pipe(process.stdout)
 ```
 
 ## Execute Docker Containers
