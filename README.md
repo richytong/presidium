@@ -94,13 +94,12 @@ RUN echo //registry.npmjs.org/:_authToken=${myNpmToken} > $HOME/.npmrc \
 EXPOSE 8080
 CMD ["npm", "start"]`)
 
-const buildStream = myImage.build(__dirname, {
-  ignore: ['.github', 'node_modules'],
-})
-buildStream.pipe(process.stdout)
-buildStream.on('end', () => {
-  myImage.push('my-registry.io').pipe(process.stdout)
-})
+(async function () {
+  await myImage.build(__dirname, {
+    ignore: ['.github', 'node_modules'],
+  })
+  await myImage.push('my-registry.io')
+})()
 ```
 
 ## Execute Docker Containers
@@ -112,7 +111,10 @@ const container = new DockerContainer('node:15-alpine', {
   cmd: ['node', '-e', 'console.log(process.env.FOO)'],
 })
 
-container.run().pipe(process.stdout) // foo
+(async function () {
+  const output = await container.run()
+  console.log(output) // foo
+})()
 ```
 
 ## Deploy Docker Swarm Services
