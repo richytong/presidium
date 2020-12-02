@@ -42,7 +42,7 @@ socket.on('message', data => {
 })
 ```
 
-## CRUD and query DynamoDB
+## CRUD and Query DynamoDB
 ```javascript
 import { DynamoTable, DynamoIndex } from 'presidium'
 
