@@ -91,7 +91,6 @@ const DockerContainer = function (image, options) {
   this.image = image
   this.options = options
   this.containerId = null
-  this.promises = new Set()
   this.ready = this.docker.createContainer(image, {
     rm: true, ...options,
   }).then(pipe([
@@ -110,8 +109,9 @@ DockerContainer.prototype.run = function dockerContainerRun(cmd) {
   if (this.containerId != null) {
     return this.exec(cmd ?? this.options.cmd)
   }
-  const result = new stream.PassThrough(),
-    promise = this.docker.createContainer(this.image, {
+  const result = new stream.PassThrough()
+  result.promise = new Promise((resolve, reject) => {
+    this.docker.createContainer(this.image, {
       ...this.options,
       ...cmd && { cmd },
     }).then(pipe([
@@ -119,20 +119,27 @@ DockerContainer.prototype.run = function dockerContainerRun(cmd) {
       get('Id'),
       async containerId => {
         const attachResponse = await this.docker.attachContainer(containerId)
+        attachResponse.body.on('end', resolve)
+        attachResponse.body.on('error', reject)
         attachResponse.body.pipe(result)
         await this.docker.startContainer(containerId)
-        this.promises.delete(promise)
         this.containerId = containerId
       },
     ]))
-  this.promises.add(promise)
-  let outputPromise = null
-  result.then = (handler, onError) => {
-    if (outputPromise == null) {
-      outputPromise = passthrough('')(result)
-    }
-    return outputPromise.then(handler, onError)
-  }
+  })
+  return result
+}
+
+// dockerContainer.exec(cmd Array<string>) -> sideCmdStream ReadableStream
+DockerContainer.prototype.exec = function dockerContainerExec(cmd) {
+  const result = new PassThroughStream()
+  result.promise = new Promise((resolve, reject) => {
+    this.docker.execContainer(this.containerId, cmd).then(response => {
+      response.body.on('end', resolve)
+      response.body.on('error', reject)
+      response.body.pipe(result)
+    })
+  })
   return result
 }
 
@@ -140,25 +147,6 @@ DockerContainer.prototype.run = function dockerContainerRun(cmd) {
 DockerContainer.prototype.stop = function dockerContainerStop() {
   return this.docker.stopContainer(this.containerId, { time: 1 })
     .then(always({ message: 'success' }))
-}
-
-// dockerContainer.exec(cmd Array<string>) -> sideCmdStream ReadableStream
-DockerContainer.prototype.exec = function dockerContainerExec(cmd) {
-  const result = new PassThroughStream(),
-    promise = this.docker.execContainer(this.containerId, cmd)
-      .then(response => {
-        response.body.pipe(result)
-        this.promises.delete(promise)
-      })
-  this.promises.add(promise)
-  let outputPromise = null
-  result.then = (handler, onError) => {
-    if (outputPromise == null) {
-      outputPromise = passthrough('')(result)
-    }
-    return outputPromise.then(handler, onError)
-  }
-  return result
 }
 
 module.exports = DockerContainer

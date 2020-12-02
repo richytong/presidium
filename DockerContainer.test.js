@@ -67,11 +67,7 @@ http.createServer((request, response) => {
     cmd: ['node', '-e', 'console.log(process.env.FOO)'],
   }, async container => {
     const logStream = container.run()
-    assert.equal(typeof logStream.then, 'function')
     assert.deepEqual(
-      Buffer.from(await logStream),
-      Buffer.from([1, 0, 0, 0, 0, 0, 0, 4, charCode('f'), charCode('o'), charCode('o'), charCode('\n')]))
-    assert.deepEqual(
-      Buffer.from(await logStream),
+      await passthrough(Buffer.from(''))(logStream),
       Buffer.from([1, 0, 0, 0, 0, 0, 0, 4, charCode('f'), charCode('o'), charCode('o'), charCode('\n')]))
   })

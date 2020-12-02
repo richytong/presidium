@@ -113,10 +113,7 @@ const container = new DockerContainer('node:15-alpine', {
   cmd: ['node', '-e', 'console.log(process.env.FOO)'],
 })
 
-(async function () {
-  const output = await container.run()
-  console.log(output) // foo
-})()
+container.run().pipe(process.stdout) // foo
 ```
 
 ## Deploy Docker Swarm Services

@@ -57,4 +57,4 @@ EXPOSE 8081
 .after(async function () {
   await this.docker.pruneContainers()
   await this.docker.pruneImages()
-})()
+})
