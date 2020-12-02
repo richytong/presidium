@@ -101,9 +101,13 @@ DockerImage.prototype.build = function (path, options = {}) {
       this.promises.delete(promise)
     })
   this.promises.add(promise)
-  result.then = (
-    handler, onError,
-  ) => passthrough('')(result).then(handler, onError)
+  let outputPromise = null
+  result.then = (handler, onError) => {
+    if (outputPromise == null) {
+      outputPromise = passthrough('')(result)
+    }
+    return outputPromise.then(handler, onError)
+  }
   return result
 }
 
@@ -138,9 +142,13 @@ DockerImage.prototype.push = function (repository, options) {
       },
     ]))
   this.promises.add(promise)
-  result.then = (
-    handler, onError,
-  ) => passthrough('')(result).then(handler, onError)
+  let outputPromise = null
+  result.then = (handler, onError) => {
+    if (outputPromise == null) {
+      outputPromise = passthrough('')(result)
+    }
+    return outputPromise.then(handler, onError)
+  }
   return result
 }
 

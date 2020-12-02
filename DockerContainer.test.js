@@ -62,3 +62,16 @@ http.createServer((request, response) => {
         Buffer.from([1, 0, 0, 0, 0, 0, 0, 4, charCode('f'), charCode('o'), charCode('o'), charCode('\n')]))
     })
   })
+  .case('node:15-alpine', {
+    env: { FOO: 'foo' },
+    cmd: ['node', '-e', 'console.log(process.env.FOO)'],
+  }, async container => {
+    const logStream = container.run()
+    assert.equal(typeof logStream.then, 'function')
+    assert.deepEqual(
+      Buffer.from(await logStream),
+      Buffer.from([1, 0, 0, 0, 0, 0, 0, 4, charCode('f'), charCode('o'), charCode('o'), charCode('\n')]))
+    assert.deepEqual(
+      Buffer.from(await logStream),
+      Buffer.from([1, 0, 0, 0, 0, 0, 0, 4, charCode('f'), charCode('o'), charCode('o'), charCode('\n')]))
+  })

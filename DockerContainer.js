@@ -19,6 +19,8 @@ const {
   curry, __,
 } = rubico
 
+const passthrough = target => transform(map(identity), target)
+
 const PassThroughStream = stream.PassThrough
 
 /**
@@ -106,7 +108,7 @@ const DockerContainer = function (image, options) {
 // dockerContainer.run(cmd? Array<string>) -> mainCmdStream ReadableStream
 DockerContainer.prototype.run = function dockerContainerRun(cmd) {
   if (this.containerId != null) {
-    return this.exec(cmd)
+    return this.exec(cmd ?? this.options.cmd)
   }
   const result = new stream.PassThrough(),
     promise = this.docker.createContainer(this.image, {
@@ -123,7 +125,14 @@ DockerContainer.prototype.run = function dockerContainerRun(cmd) {
         this.containerId = containerId
       },
     ]))
-  result.then = handler => result.on('end', thunkify(handler, result))
+  this.promises.add(promise)
+  let outputPromise = null
+  result.then = (handler, onError) => {
+    if (outputPromise == null) {
+      outputPromise = passthrough('')(result)
+    }
+    return outputPromise.then(handler, onError)
+  }
   return result
 }
 
@@ -142,6 +151,13 @@ DockerContainer.prototype.exec = function dockerContainerExec(cmd) {
         this.promises.delete(promise)
       })
   this.promises.add(promise)
+  let outputPromise = null
+  result.then = (handler, onError) => {
+    if (outputPromise == null) {
+      outputPromise = passthrough('')(result)
+    }
+    return outputPromise.then(handler, onError)
+  }
   return result
 }
 
