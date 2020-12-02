@@ -63,7 +63,7 @@ const myIndex = new DynamoIndex('my-index', {
   ...awsCreds,
 })
 
-;(async function() {
+(async function() {
   await myTable.putItem({ id: '1', name: 'George' })
   await myTable.updateItem({ id: '1' }, { age: 32 })
   console.log(
@@ -80,7 +80,7 @@ const myIndex = new DynamoIndex('my-index', {
 })()
 ```
 
-## Build && Push Docker Images
+## Build and Push Docker Images
 ```javascript
 import { DockerImage } from 'presidium'
 
@@ -120,7 +120,7 @@ container.run().pipe(process.stdout) // foo
 ```javascript
 import { DockerSwarm, DockerService } from 'presidium'
 
-;(async function() {
+(async function() {
   const swarm = new DockerSwarm({
     availability: 'drain',
     advertiseAddr: 'my-docker-host:2377',
