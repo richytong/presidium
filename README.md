@@ -84,7 +84,7 @@ const myIndex = new DynamoIndex('my-index', {
 ```javascript
 import { DockerImage } from 'presidium'
 
-const myImage = new DockerImage('my-app:latest', `
+const myImage = new DockerImage('my-app:1.0.0', `
 FROM node:15-alpine
 WORKDIR /opt
 COPY . .
@@ -120,16 +120,23 @@ container.run().pipe(process.stdout) // foo
 ```javascript
 import { DockerSwarm, DockerService } from 'presidium'
 
-const mySwarm = new DockerSwarm({
-  availability: 'drain',
-  advertiseAddr: 'my-docker-host:2377',
-})
+const mySwarm = new DockerSwarm('my-docker-host.com:2377')
 const myService = new DockerService('my-service')
 
 (async function() {
   await mySwarm.join(process.env.SWARM_MANAGER_TOKEN)
+
+  await myService.create({
+    image: 'my-app:1.0.0',
+    replicas: 1,
+    env: { FOO: 'foo', BAR: 'bar' },
+    publish: { 8080: 3000 },
+    restart: 'on-failure',
+    healthCmd: ['curl', 'localhost:3000'],
+    cmd: ['npm', 'start'],
+  })
   await myService.update({
-    image: 'my-app:latest',
+    image: 'my-app:1.0.1',
     replicas: 5,
   })
 })()
