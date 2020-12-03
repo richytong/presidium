@@ -30,7 +30,8 @@ const Stdout = {
 }
 
 module.exports = Test('DockerContainer', DockerContainer)
-  .case('node:15-alpine', {
+  .case('test-alpine-1', {
+    image: 'node:15-alpine',
     env: { FOO: 'foo', BAR: 'bar' },
     cmd: [
       'node',
@@ -54,15 +55,21 @@ http.createServer((request, response) => {
       )
       const stopResult = await container.stop()
       assert.equal(stopResult.message, 'success')
+      const startResult = await container.start()
+      assert.equal(startResult.message, 'container is marked for removal and cannot be started')
     })
-    serverStream.on('end', () => {
-      content = Buffer.concat(content)
-      assert.deepEqual(
-        content,
-        Buffer.from([1, 0, 0, 0, 0, 0, 0, 4, charCode('f'), charCode('o'), charCode('o'), charCode('\n')]))
+    await new Promise(resolve => {
+      serverStream.on('end', () => {
+        content = Buffer.concat(content)
+        assert.deepEqual(
+          content,
+          Buffer.from([1, 0, 0, 0, 0, 0, 0, 4, charCode('f'), charCode('o'), charCode('o'), charCode('\n')]))
+        resolve()
+      })
     })
   })
-  .case('node:15-alpine', {
+  .case('test-alpine-2', {
+    image: 'node:15-alpine',
     env: { FOO: 'foo' },
     cmd: ['node', '-e', 'console.log(process.env.FOO)'],
   }, async container => {
@@ -70,4 +77,9 @@ http.createServer((request, response) => {
     assert.deepEqual(
       await passthrough(Buffer.from(''))(logStream),
       Buffer.from([1, 0, 0, 0, 0, 0, 0, 4, charCode('f'), charCode('o'), charCode('o'), charCode('\n')]))
+  })
+  .after(async function () {
+    this.docker = new Docker()
+    await this.docker.pruneContainers()
+    await this.docker.pruneImages()
   })

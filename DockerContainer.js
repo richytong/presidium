@@ -1,6 +1,7 @@
 const rubico = require('rubico')
 const isString = require('rubico/x/isString')
 const identity = require('rubico/x/identity')
+const noop = require('rubico/x/noop')
 const querystring = require('querystring')
 const stringifyJSON = require('./internal/stringifyJSON')
 const split = require('./internal/split')
@@ -83,69 +84,68 @@ const PassThroughStream = stream.PassThrough
  * }).start()
  * ```
  */
-const DockerContainer = function (image, options) {
+const DockerContainer = function (name, options) {
   if (this == null || this.constructor != DockerContainer) {
-    return new DockerContainer(image, options)
+    return new DockerContainer(name, options)
   }
   this.docker = new Docker()
-  this.image = image
   this.options = options
-  this.containerId = null
-  this.ready = this.docker.createContainer(image, {
-    rm: true, ...options,
-  }).then(pipe([
-    response => response.json(),
-    get('Id'),
-    containerId => {
-      this.containerId = containerId
-    },
-  ]))
+  this.name = name
+  this.ready = this.docker.inspectContainer(name).then(async response => {
+    switch (response.status) {
+      case 200:
+        return undefined
+      case 404:
+        return this.docker.createContainer(name, options).then(noop)
+      default:
+        throw new Error(`${response.statusText}: ${await response.text()}`)
+    }
+  })
   return this
 }
 
-
-// dockerContainer.run(cmd? Array<string>) -> mainCmdStream ReadableStream
-DockerContainer.prototype.run = function dockerContainerRun(cmd) {
-  if (this.containerId != null) {
-    return this.exec(cmd ?? this.options.cmd)
-  }
-  const result = new stream.PassThrough()
-  result.promise = new Promise((resolve, reject) => {
-    this.docker.createContainer(this.image, {
-      ...this.options,
-      ...cmd && { cmd },
-    }).then(pipe([
-      response => response.json(),
-      get('Id'),
-      async containerId => {
-        const attachResponse = await this.docker.attachContainer(containerId)
-        attachResponse.body.on('end', resolve)
-        attachResponse.body.on('error', reject)
-        attachResponse.body.pipe(result)
-        await this.docker.startContainer(containerId)
-        this.containerId = containerId
-      },
-    ]))
-  })
+// dockerContainer.run() -> mainCmdStream ReadableStream
+DockerContainer.prototype.run = function dockerContainerRun() {
+  const result = new PassThroughStream()
+  result.promise = (async () => {
+    await this.ready
+    await new Promise((resolve, reject) => {
+      this.docker.attachContainer(this.name).then(async response => {
+        response.body.on('end', resolve)
+        response.body.on('error', reject)
+        response.body.pipe(result)
+        await this.docker.startContainer(this.name)
+      })
+    })
+  })()
   return result
 }
 
 // dockerContainer.exec(cmd Array<string>) -> sideCmdStream ReadableStream
 DockerContainer.prototype.exec = function dockerContainerExec(cmd) {
   const result = new PassThroughStream()
-  result.promise = new Promise((resolve, reject) => {
-    this.docker.execContainer(this.containerId, cmd).then(response => {
-      response.body.on('end', resolve)
-      response.body.on('error', reject)
-      response.body.pipe(result)
+  result.promise = (async () => {
+    await this.ready
+    await new Promise((resolve, reject) => {
+      this.docker.execContainer(this.name, cmd).then(response => {
+        response.body.on('end', resolve)
+        response.body.on('error', reject)
+        response.body.pipe(result)
+      })
     })
-  })
+  })()
   return result
 }
 
-// dockerContainer.stop(cmd Array<string>) -> sideCmdStream ReadableStream
+// dockerContainer.start() -> sideCmdStream ReadableStream
+DockerContainer.prototype.start = function dockerContainerStart() {
+  return this.docker.startContainer(this.name)
+    .then(response => response.json())
+}
+
+// dockerContainer.stop() -> sideCmdStream ReadableStream
 DockerContainer.prototype.stop = function dockerContainerStop() {
-  return this.docker.stopContainer(this.containerId, { time: 1 })
+  return this.docker.stopContainer(this.name, { time: 1 })
     .then(always({ message: 'success' }))
 }
 
