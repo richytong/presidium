@@ -130,7 +130,7 @@ const myService = new DockerService('my-service')
     image: 'my-app:1.0.0',
     replicas: 1,
     env: { FOO: 'foo', BAR: 'bar' },
-    publish: { 8080: 3000 },
+    publish: { 8080: 3000 }, // hostPort: containerPort
     restart: 'on-failure',
     healthCmd: ['curl', 'localhost:3000'],
     cmd: ['npm', 'start'],
