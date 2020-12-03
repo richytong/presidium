@@ -120,25 +120,17 @@ container.run().pipe(process.stdout) // foo
 ```javascript
 import { DockerSwarm, DockerService } from 'presidium'
 
-(async function() {
-  const swarm = new DockerSwarm({
-    availability: 'drain',
-    advertiseAddr: 'my-docker-host:2377',
-  })
-  await swarm.join(process.env.SWARM_MANAGER_TOKEN)
+const mySwarm = new DockerSwarm({
+  availability: 'drain',
+  advertiseAddr: 'my-docker-host:2377',
+})
+const myService = new DockerService('my-service')
 
-  const myService = new DockerService('my-service', {
+(async function() {
+  await mySwarm.join(process.env.SWARM_MANAGER_TOKEN)
+  await myService.update({
     image: 'my-app:latest',
-    env: { FOO: 'foo', BAR: 'bar' },
-    cmd: ['npm', 'start'],
     replicas: 5,
-    restart: 'on-failure',
-    publish: { 3000: 3000 }, // hostPort: containerPort
-    healthCmd: ['wget', '--no-verbose', '--tries=1', '--spider', 'localhost:3000'],
-    mounts: ['my-volume:/opt/data/my-volume:readonly']
-    logDriver: 'json-file',
-    logDriverOptions: { 'max-file': '10', 'max-size': '100m' },
   })
-  await myService.update({ force: true })
 })()
 ```

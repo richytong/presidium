@@ -83,8 +83,17 @@ const DockerService = function (image, address) {
  *
  * @description
  * ```javascript
- * DockerService(image, address).create({
- *   replicas: 1,
+ * const myService = new DockerService('my-service', {
+ *   image: 'my-app:latest',
+ *   env: { FOO: 'foo', BAR: 'bar' },
+ *   cmd: ['npm', 'start'],
+ *   replicas: 5,
+ *   restart: 'on-failure',
+ *   publish: { 3000: 3000 }, // hostPort: containerPort
+ *   healthCmd: ['wget', '--no-verbose', '--tries=1', '--spider', 'localhost:3000'],
+ *   mounts: ['my-volume:/opt/data/my-volume:readonly']
+ *   logDriver: 'json-file',
+ *   logDriverOptions: { 'max-file': '10', 'max-size': '100m' },
  * })
  * ```
  */

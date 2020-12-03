@@ -2,6 +2,7 @@ const rubico = require('rubico')
 const zlib = require('zlib')
 const isString = require('rubico/x/isString')
 const identity = require('rubico/x/identity')
+const size = require('rubico/x/size')
 const flatten = require('rubico/x/flatten')
 const trace = require('rubico/x/trace')
 const Http = require('./Http')
@@ -604,10 +605,93 @@ Docker.prototype.joinSwarm = async function dockerJoinSwarm(
  * Docker().leaveSwarm(options? { force: boolean }) -> Promise<HttpResponse>
  * ```
  */
-Docker.prototype.leaveSwarm = async function dockerLeaveSwarm(options = {}) {
+Docker.prototype.leaveSwarm = function dockerLeaveSwarm(options) {
   return this.http.post(`/swarm/leave?${
-    querystring.stringify({ force: options.force ?? false })}
-  `)
+    querystring.stringify(pick(['force'])(options))
+  }`)
+}
+
+/**
+ * @name Docker.prototype.updateSwarm
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Docker().updateSwarm({
+ *   version: number, // version number of swarm object being updated
+ *   rotateWorkerToken: boolean, // whether to rotate worker token
+ *   rotateManagerToken: boolean, // whether to rotate manager token
+ *   rotateManagerUnlockKey: boolean, // whether to rotate unlock key
+ *   taskHistoryLimit: 10|number, // number of tasks revisions to retain for rollbacks
+ *   dispatcherHeartbeat: 5000000000|number, // nanoseconds delay for agent to ping dispatcher
+ *   autolock: false|true, // whether to lock managers when they stop
+ *   certExpiry: 7776000000000000|number, // validity period in nanoseconds for node certs
+ *   snapshotInterval: 10000|number, // number of log entries between raft snapshots
+ *   keepOldSnapshots: 0|number, // number of snapshots to keep beyond current snapshot
+ *   logEntriesForSlowFollowers: 500|number, // number of log entries to retain to sync up slow followers after snapshot creation
+ *   electionTick: 3|number, // number of ticks a follower will wait before starting a new election. Must be greater than heartbeatTick
+ *   heartbeatTick: 1|number, // number of ticks between heartbeats. One tick ~ one second
+ * })
+ * ```
+ *
+ * @description
+ * https://docs.docker.com/engine/api/v1.40/#operation/SwarmUpdate
+ */
+
+Docker.prototype.updateSwarm = async function dockerUpdateSwarm(options = {}) {
+  const raft = {
+    ...options.snapshotInterval && {
+      SnapshotInterval: options.snapshotInterval,
+    },
+    ...options.keepOldSnapshots && {
+      KeepOldSnapshots: options.keepOldSnapshots,
+    },
+    ...options.logEntriesForSlowFollowers && {
+      LogEntriesForSlowFollowers: options.logEntriesForSlowFollowers,
+    },
+    ...options.electionTick && {
+      ElectionTick: options.electionTick,
+    },
+    ...options.heartbeatTick && {
+      HeartbeatTick: options.heartbeatTick,
+    },
+  }
+
+  return this.http.post(`/swarm/update?${
+    querystring.stringify(pick([
+      'version',
+      'rotateWorkerToken',
+      'rotateManagerToken',
+      'rotateManagerUnlockKey',
+    ])(options))
+  }`, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+
+    body: stringifyJSON({
+      ...options.taskHistoryLimit && {
+        Orchestration: {
+          TaskHistoryRetentionLimit: options.taskHistoryLimit,
+        },
+      },
+      ...options.dispatcherHeartbeat && {
+        Dispatcher: {
+          dispatcherHeartbeat: options.dispatcherHeartbeat,
+        },
+      },
+      ...options.autolock && {
+        EncryptionConfig: {
+          AutoLockManagers: options.autolock,
+        },
+      },
+      ...options.certExpiry && {
+        CAConfig: {
+          NodeCertExpiry: options.certExpiry,
+        },
+      },
+      ...gt(size, 0)(raft) && { Raft: raft },
+    }),
+  })
 }
 
 /**
