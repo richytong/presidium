@@ -30,6 +30,11 @@ const Stdout = {
 }
 
 module.exports = Test('DockerContainer', DockerContainer)
+  .before(async function () {
+    this.docker = new Docker()
+    await this.docker.pruneContainers()
+    await this.docker.pruneImages()
+  })
   .case('test-alpine-1', {
     image: 'node:15-alpine',
     env: { FOO: 'foo', BAR: 'bar' },
@@ -79,7 +84,6 @@ http.createServer((request, response) => {
       Buffer.from([1, 0, 0, 0, 0, 0, 0, 4, charCode('f'), charCode('o'), charCode('o'), charCode('\n')]))
   })
   .after(async function () {
-    this.docker = new Docker()
     await this.docker.pruneContainers()
     await this.docker.pruneImages()
   })
