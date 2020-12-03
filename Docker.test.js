@@ -116,7 +116,8 @@ module.exports = [
   Test('Docker - container', Docker)
     .case(async function (docker) {
       {
-        const createResponse = await docker.createContainer('node:15-alpine', {
+        const createResponse = await docker.createContainer('test-alpine-3', {
+          image: 'node:15-alpine',
           cmd: ['node', '-e', 'console.log(\'heyy\')'],
           rm: true,
         })
@@ -143,7 +144,8 @@ module.exports = [
       }
 
       {
-        const createResponse = await docker.createContainer('node:15-alpine', {
+        const createResponse = await docker.createContainer('test-alpine-1', {
+          image: 'node:15-alpine',
           cmd: ['node', '-e', 'console.log(\'hey\')'],
           workdir: '/opt/heyo',
           expose: [22, 8888, '8889/udp'],
@@ -195,7 +197,8 @@ module.exports = [
       }
 
       {
-        const createResponse = await docker.createContainer('node:15-alpine', {
+        const createResponse = await docker.createContainer('test-alpine-2', {
+          image: 'node:15-alpine',
           cmd: ['node', '-e', 'http.createServer((request, response) => response.end(\'hey0\')).listen(2999)'],
           rm: true,
         })

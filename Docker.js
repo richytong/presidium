@@ -315,19 +315,17 @@ Docker.prototype.removeImage = function dockerRemoveImage(image, options) {
  */
 
 Docker.prototype.createContainer = function dockerCreateContainer(
-  image, options = {}
+  name, options = {}
 ) {
   return this.http.post(`/containers/create?${
-    querystring.stringify({
-      ...options.name && { name: options.name },
-    })
+    querystring.stringify({ name })
   }`, {
     body: stringifyJSON({
       AttachStderr: true,
       AttachStdout: true,
       AttachStdin: false,
       Tty: false,
-      Image: image,
+      Image: options.image,
 
       ...options.cmd && { Cmd: options.cmd },
       ...options.env && {
