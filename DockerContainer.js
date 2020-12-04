@@ -140,8 +140,16 @@ DockerContainer.prototype.exec = function dockerContainerExec(cmd) {
 // dockerContainer.start() -> Promise<Object>
 DockerContainer.prototype.start = async function dockerContainerStart() {
   await this.ready
-  return this.docker.startContainer(this.name)
-    .then(always({ message: 'success' }))
+  return this.docker.startContainer(this.name).then(async response => {
+    switch (response.status) {
+      case 204:
+        return { message: 'success' }
+      case 304:
+        return { message: 'container already started' }
+      default:
+        throw new Error(`${response.statusText}: ${await response.text()}`)
+    }
+  })
 }
 
 // dockerContainer.stop() -> Promise<{ message: 'success' }>
