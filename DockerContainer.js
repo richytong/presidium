@@ -91,16 +91,10 @@ const DockerContainer = function (name, options) {
   this.docker = new Docker()
   this.options = options
   this.name = name
-  this.ready = this.docker.inspectContainer(name).then(async response => {
-    switch (response.status) {
-      case 200:
-        return undefined
-      case 404:
-        return this.docker.createContainer(name, options).then(noop)
-      default:
-        throw new Error(`${response.statusText}: ${await response.text()}`)
-    }
-  })
+  this.ready = this.docker.inspectContainer(name)
+    .then(response => response.status == 404
+      ? this.docker.createContainer(name, options).then(noop)
+      : undefined)
   return this
 }
 

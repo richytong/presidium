@@ -50,6 +50,7 @@ http.createServer((request, response) => {
     ],
     rm: true
   }, async container => {
+    assert.strictEqual(await container.ready, undefined)
     const serverStream = container.run()
     let content = []
     serverStream.on('data', async chunk => {
@@ -60,6 +61,9 @@ http.createServer((request, response) => {
       )
       const stopResult = await container.stop()
       assert.equal(stopResult.message, 'success')
+      assert.rejects(
+        () => container.start(),
+        { name: 'Error' })
     })
     await new Promise(resolve => {
       serverStream.on('end', () => {
@@ -80,10 +84,10 @@ http.createServer((request, response) => {
     assert.deepEqual(
       await passthrough(Buffer.from(''))(logStream),
       Buffer.from([1, 0, 0, 0, 0, 0, 0, 4, charCode('f'), charCode('o'), charCode('o'), charCode('\n')]))
-    let startResponse = await container.start()
-    assert.equal(startResponse.message, 'success')
-    startResponse = await container.start()
-    assert.equal(startResponse.message, 'container already started')
+    let startResult = await container.start()
+    assert.equal(startResult.message, 'success')
+    startResult = await container.start()
+    assert.equal(startResult.message, 'container already started')
   })
   .after(async function () {
     await this.docker.pruneContainers()
