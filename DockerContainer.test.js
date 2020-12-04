@@ -80,6 +80,8 @@ http.createServer((request, response) => {
     assert.deepEqual(
       await passthrough(Buffer.from(''))(logStream),
       Buffer.from([1, 0, 0, 0, 0, 0, 0, 4, charCode('f'), charCode('o'), charCode('o'), charCode('\n')]))
+    const startResponse = await container.start() // should noop on docker side
+    assert.equal(startResponse.message, 'success')
   })
   .after(async function () {
     await this.docker.pruneContainers()

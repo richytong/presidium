@@ -137,8 +137,16 @@ DockerContainer.prototype.exec = function dockerContainerExec(cmd) {
   return result
 }
 
+// dockerContainer.start() -> Promise<Object>
+DockerContainer.prototype.start = async function dockerContainerStart() {
+  await this.ready
+  return this.docker.startContainer(this.name)
+    .then(always({ message: 'success' }))
+}
+
 // dockerContainer.stop() -> Promise<{ message: 'success' }>
-DockerContainer.prototype.stop = function dockerContainerStop() {
+DockerContainer.prototype.stop = async function dockerContainerStop() {
+  await this.ready
   return this.docker.stopContainer(this.name, { time: 1 })
     .then(always({ message: 'success' }))
 }
