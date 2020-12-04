@@ -137,13 +137,7 @@ DockerContainer.prototype.exec = function dockerContainerExec(cmd) {
   return result
 }
 
-// dockerContainer.start() -> sideCmdStream ReadableStream
-DockerContainer.prototype.start = function dockerContainerStart() {
-  return this.docker.startContainer(this.name)
-    .then(response => response.json())
-}
-
-// dockerContainer.stop() -> sideCmdStream ReadableStream
+// dockerContainer.stop() -> Promise<{ message: 'success' }>
 DockerContainer.prototype.stop = function dockerContainerStop() {
   return this.docker.stopContainer(this.name, { time: 1 })
     .then(always({ message: 'success' }))

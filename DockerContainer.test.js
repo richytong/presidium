@@ -60,8 +60,6 @@ http.createServer((request, response) => {
       )
       const stopResult = await container.stop()
       assert.equal(stopResult.message, 'success')
-      const startResult = await container.start()
-      assert.equal(startResult.message, 'container is marked for removal and cannot be started')
     })
     await new Promise(resolve => {
       serverStream.on('end', () => {
