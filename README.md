@@ -81,6 +81,7 @@ const myIndex = new DynamoIndex('my-index', {
 ```
 
 ## Build and Push Docker Images
+> Stop using --build-arg for that npm token
 ```javascript
 import { DockerImage } from 'presidium'
 
