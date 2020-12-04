@@ -9,13 +9,13 @@ A library for creating web services.
 ```javascript
 import { HttpServer, Http } from 'presidium'
 
-new HttpServer((request, response) => {
+HttpServer((request, response) => {
   response.writeHead(200, { 'Content-Type': 'application/json' })
   response.write(JSON.stringify({ greeting: 'Hello World' }))
   response.end()
 }).listen(3000)
 
-const http = new Http('http://localhost:3000/')
+const http = Http('http://localhost:3000/')
 
 http.get('/')
   .then(response => response.json())
@@ -26,14 +26,14 @@ http.get('/')
 ```javascript
 import { WebSocketServer, WebSocket } from 'presidium'
 
-new WebSocketServer(socket => {
+WebSocketServer(socket => {
   socket.on('message', message => {
     console.log(`received: ${message}`) // received: something from client
     socket.send('something from server')
   })
 }).listen(1337)
 
-const socket = new WebSocket('ws://localhost:1337/')
+const socket = WebSocket('ws://localhost:1337/')
 socket.on('open', () => {
   socket.send('something from client')
 })
@@ -52,12 +52,12 @@ const awsCreds = {
   region: process.env.AWS_REGION,
 }
 
-const myTable = new DynamoTable('my-table', {
+const myTable = DynamoTable('my-table', {
   key: [{ id: 'string' }],
   ...awsCreds,
 })
 
-const myIndex = new DynamoIndex('my-index', {
+const myIndex = DynamoIndex('my-index', {
   key: [{ name: 'string' }, { age: 'number' }],
   table: 'my-table',
   ...awsCreds,
@@ -85,7 +85,7 @@ const myIndex = new DynamoIndex('my-index', {
 ```javascript
 import { DockerImage } from 'presidium'
 
-const myImage = new DockerImage('my-app:1.0.0', `
+const myImage = DockerImage('my-app:1.0.0', `
 FROM node:15-alpine
 WORKDIR /opt
 COPY . .
@@ -109,7 +109,7 @@ buildStream.pipe(process.stdout)
 ```javascript
 import { DockerContainer } from 'presidium'
 
-const container = new DockerContainer('my-container', {
+const container = DockerContainer('my-container', {
   image: 'node:15-alpine',
   env: { FOO: 'foo' },
   cmd: ['node', '-e', 'console.log(process.env.FOO)'],
@@ -122,8 +122,8 @@ container.run().pipe(process.stdout) // foo
 ```javascript
 import { DockerSwarm, DockerService } from 'presidium'
 
-const mySwarm = new DockerSwarm('my-docker-host.com:2377')
-const myService = new DockerService('my-service')
+const mySwarm = DockerSwarm('my-docker-host.com:2377')
+const myService = DockerService('my-service')
 
 (async function() {
   await mySwarm.join(process.env.SWARM_MANAGER_TOKEN)
