@@ -108,7 +108,8 @@ buildStream.pipe(process.stdout)
 ```javascript
 import { DockerContainer } from 'presidium'
 
-const container = new DockerContainer('node:15-alpine', {
+const container = new DockerContainer('my-container', {
+  image: 'node:15-alpine',
   env: { FOO: 'foo' },
   cmd: ['node', '-e', 'console.log(process.env.FOO)'],
 })
