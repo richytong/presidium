@@ -856,20 +856,19 @@ Docker.prototype.createService = function dockerCreateService(service, options) 
   })
 }
 
-// property string => value any => boolean|any
+/**
+ * property string => value any => boolean|any
 const has = property => value => {
-
-  /*
   if (value == null) {
     return false
   }
   if (typeof value.has == 'function') {
     return value.has(property)
   }
-  */
-
   return isObject(value) && property in value
-}
+} */
+
+const has = property => value => isObject(value) && property in value
 
 /**
  * @name Docker.prototype.updateService
