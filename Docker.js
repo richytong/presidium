@@ -858,6 +858,7 @@ Docker.prototype.createService = function dockerCreateService(service, options) 
 
 // property string => value any => boolean|any
 const has = property => value => {
+
   /*
   if (value == null) {
     return false
@@ -866,6 +867,7 @@ const has = property => value => {
     return value.has(property)
   }
   */
+
   return isObject(value) && property in value
 }
 
