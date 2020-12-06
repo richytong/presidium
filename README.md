@@ -123,23 +123,17 @@ container.run().pipe(process.stdout) // foo
 import { DockerSwarm, DockerService } from 'presidium'
 
 const mySwarm = DockerSwarm('my-docker-host.com:2377')
-const myService = DockerService('my-service')
+
+const myService = DockerService('my-service', {
+  image: 'nginx:1.19',
+  publish: { 80: 8080 },
+  healthCheck: ['curl', '0.0.0.0:8080'],
+  replicas: 1,
+})
 
 (async function() {
   await mySwarm.join(process.env.SWARM_MANAGER_TOKEN)
 
-  await myService.create({
-    image: 'my-app:1.0.0',
-    replicas: 1,
-    env: { FOO: 'foo', BAR: 'bar' },
-    publish: { 8080: 3000 }, // hostPort: containerPort
-    restart: 'on-failure',
-    healthCmd: ['curl', 'localhost:3000'],
-    cmd: ['npm', 'start'],
-  })
-  await myService.update({
-    image: 'my-app:1.0.1',
-    replicas: 5,
-  })
+  await myService.update({ replicas: 5 })
 })()
 ```

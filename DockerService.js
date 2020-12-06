@@ -1,3 +1,4 @@
+const assert = require('assert')
 const rubico = require('rubico')
 const Docker = require('./Docker')
 const stringifyJSON = require('./internal/stringifyJSON')
@@ -24,7 +25,7 @@ const {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * new DockerService(image string, address string) -> DockerService
+ * new DockerService(name string) -> DockerService
  * ```
  *
  * @description
@@ -34,15 +35,39 @@ const {
  * DockerService('my-image:latest', '[::1]:2377')
  * ```
  */
-const DockerService = function (image, address) {
+const DockerService = function (name, options) {
   if (this == null || this.constructor != DockerService) {
-    return new DockerService(image, address)
+    return new DockerService(name, options)
   }
+  this.name = name
   this.docker = new Docker()
-  this.http = this.docker.http
-  this.image = image
-  this.address = address
+  this.version = null
+  this.spec = null
+  this.ready = this.docker.inspectService(this.name).then(switchCase([
+    eq(404, get('status')),
+    async () => {
+      const create = await this.docker.createService(this.name, options)
+      await this.synchronize()
+    },
+    async response => {
+      const body = await response.json()
+      this.version = body.Version.Index
+      this.spec = body.Spec
+    },
+  ]))
   return this
+}
+
+// new DockerService().synchronize() -> Promise<>
+DockerService.prototype.synchronize = function dockerServiceSynchronize() {
+  return this.docker.inspectService(this.name).then(pipe([
+    tap(response => assert(response.ok, response.statusText)),
+    response => response.json(),
+    body => {
+      this.version = body.Version.Index
+      this.spec = body.Spec
+    },
+  ]))
 }
 
 /**
@@ -50,7 +75,7 @@ const DockerService = function (image, address) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DockerService(image, address).create({
+ * DockerService(name).create({
  *   replicas: 1|number,
  *   restart: 'no'|'on-failure[:<max-retries>]'|'always'|'unless-stopped',
  *   restartDelay: 10e9|number, // nanoseconds to delay between restarts
@@ -78,7 +103,7 @@ const DockerService = function (image, address) {
  *     PATH: string, // $PATH
  *     ...(moreEnvOptions Object<string>),
  *   }, // ENV; environment variables exposed to container during run time
- * }) -> Promise<HttpResponse>
+ * }) -> {}
  * ```
  *
  * @description
@@ -97,112 +122,37 @@ const DockerService = function (image, address) {
  * })
  * ```
  */
+DockerService.prototype.create = async function dockerServiceCreate(options) {
+  await this.ready
+  return this.docker.createService(this.name, options)
+    .then(response => response.json())
+}
 
-DockerService.prototype.create = function dockerServiceCreate(options) {
-  return this.http.post('/services/create', {
-    body: stringifyJSON({
-      ...options.name && { Name: options.name },
-      TaskTemplate: {
-        ContainerSpec: {
-          Image: this.image,
-          ...options.cmd && { Command: options.cmd },
-          ...options.env && {
-            Env: Object.entries(options.env)
-              .map(([key, value]) => `${key}=${value}`),
-          },
-          ...options.workdir && {
-            Dir: options.workdir,
-          },
+/**
+ * @name DockerService.prototype.update
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * DockerService(name)
+ * ```
+ */
 
-          ...options.mounts && {
-            Mounts: options.mounts.map(pipe([
-              switchCase([
-                isString,
-                pipe([
-                  split(':'),
-                  fork({ target: get(0), source: get(1), readonly: get(2) }),
-                ]),
-                identity,
-              ]),
-              fork({
-                Target: get('target'),
-                Source: get('source'),
-                Type: get('type', 'volume'),
-                ReadOnly: get('readonly', false),
-              }),
-            ]))
-          },
-
-          ...options.healthCmd && {
-            HealthCheck: {
-              Test: ['CMD', ...options.healthCmd],
-              ...fork({
-                Interval: get('healthInterval', 10e9),
-                Timeout: get('healthTimeout', 20e9),
-                Retries: get('healthRetries', 5),
-                StartPeriod: get('healthStartPeriod', 1e6),
-              })(options),
-            },
-          },
-        },
-
-        ...options.restart && {
-          RestartPolicy: fork({
-            Delay: always(options.restartDelay ?? 10e9),
-            Condition: get(0, 'on-failure'),
-            MaxAttempts: pipe([get(1, 10), Number]),
-          })(options.restart.split(':')),
-        },
-        ...options.memory && {
-          Resources: {
-            Limits: { MemoryBytes: Number(options.memory) }, // bytes
-          },
-        },
-        ...options.logDriver && {
-          LogDriver: {
-            Name: options.logDriver,
-            Options: { ...options.logDriverOptions },
-          },
-        },
-      },
-
-      Mode: {
-        Replicated: { Replicas: options.replicas ?? 1 }
-      },
-      UpdateConfig: fork({
-        Parallelism: get('updateParallelism', 2),
-        Delay: get('updateDelay', 1e9),
-        FailureAction: get('updateFailureAction', 'pause'),
-        Monitor: get('updateMonitor', 15e9),
-        MaxFailureRatio: get('updateMaxFailureRatio', 0.15),
-      })(options),
-      RollbackConfig: fork({
-        Parallelism: get('rollbackParallelism', 1),
-        Delay: get('rollbackDelay', 1e9),
-        FailureAction: get('rollbackFailureAction', 'pause'),
-        Monitor: get('rollbackMonitor', 15e9),
-        MaxFailureRatio: get('rollbackMaxFailureRatio', 0.15),
-      })(options),
-
-      ...options.publish && {
-        EndpointSpec: {
-          Ports: Object.entries(options.publish).map(pipe([
-            map(String),
-            fork({
-              Protocol: ([hostPort, containerPort]) => {
-                const hostProtocol = hostPort.split('/')[1],
-                  containerProtocol = containerPort.split('/')[1]
-                return hostProtocol ?? containerProtocol ?? 'tcp'
-              },
-              TargetPort: pipe([get(1), split('/'), get(0), Number]),
-              PublishedPort: pipe([get(0), split('/'), get(0), Number]),
-              PublishMode: always('ingress'),
-            }),
-          ])),
-        },
-      },
-    }),
+DockerService.prototype.update = async function dockerServiceUpdate(options) {
+  await this.ready
+  return this.docker.updateService(this.name, {
+    ...options,
+    spec: this.spec,
+    version: this.version,
+  }).then(response => {
+    this.ready = this.synchronize()
+    return response.json()
   })
+}
+
+DockerService.prototype.inspect = async function dockerServiceInspect() {
+  await this.ready
+  return this.docker.inspectService(this.name)
+    .then(response => response.json())
 }
 
 /* {

@@ -4,7 +4,9 @@ const isString = require('rubico/x/isString')
 const identity = require('rubico/x/identity')
 const size = require('rubico/x/size')
 const flatten = require('rubico/x/flatten')
+const defaultsDeep = require('rubico/x/defaultsDeep')
 const trace = require('rubico/x/trace')
+const isObject = require('rubico/x/isObject')
 const Http = require('./Http')
 const HttpAgent = require('./HttpAgent')
 const Archive = require('./Archive')
@@ -201,8 +203,10 @@ Docker.prototype.pushImage = function (image, repository, options = {}) {
       imagename, search,
     }) => this.http.post(`/images/${imagename}/push?${search}`, {
       headers: {
-        'X-Registry-Auth': stringifyJSON(
-          options.authorization ?? { identitytoken: '' }),
+        'X-Registry-Auth': get(
+          'authorization',
+          stringifyJSON({ identitytoken: '' }),
+        )(options),
       },
     }),
   ])(image)
@@ -718,6 +722,18 @@ Docker.prototype.updateSwarm = async function dockerUpdateSwarm(options = {}) {
  *     readonly: boolean,
  *   }>|Array<string>, // '<source>:<target>[:readonly]'
  *
+ *   updateParallelism: 2|number, // maximum number of tasks updated simultaneously
+ *   updateDelay: 1e9|number, // ns delay between updates
+ *   updateFailureAction: 'pause'|'continue'|'rollback',
+ *   updateMonitor: 15e9|number, // ns after each task update to monitor for failure
+ *   updateMaxFailureRatio: 0.15|number, // failure rate to tolerate during an update
+ *
+ *   rollbackParallelism: 2|number, // maximum number of tasks rolledback simultaneously
+ *   rollbackDelay: 1e9|number, // ns delay between task rollbacks
+ *   rollbackFailureAction: 'pause'|'continue',
+ *   rollbackMonitor: 15e9|number, // ns after each task rollback to monitor for failure
+ *   rollbackMaxFailureRatio: 0.15|number, // failure rate to tolerate during a rollback
+ *
  *   cmd: Array<string|number>, // CMD
  *   workdir: path string, // WORKDIR
  *   env: {
@@ -834,6 +850,205 @@ Docker.prototype.createService = function dockerCreateService(service, options) 
         },
       },
     }),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+// property string => value any => boolean|any
+const has = property => value => {
+  if (value == null) {
+    return false
+  }
+  if (typeof value.has == 'function') {
+    return value.has(property)
+  }
+  return isObject(value) && property in value
+}
+
+/**
+ * @name Docker.prototype.updateService
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Docker().updateService(service string, options {
+ *   version: number, // current version of service
+ *   registryAuthFrom: 'spec'|'previous-spec', // where to look for auth if no X-Registry-Auth
+ *   rollback: 'previous', // roll service back to previous version
+ *
+ *   image: string,
+ *   replicas: 1|number,
+ *   restart: 'no'|'on-failure[:<max-retries>]'|'always'|'unless-stopped',
+ *   restartDelay: 10e9|number, // nanoseconds to delay between restarts
+ *   logDriver: 'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'none',
+ *   logDriverOptions: Object<string>,
+ *   publish: Object<(hostPort string)=>(containerPort string)>,
+ *   healthCmd: Array<string>, // healthcheck command. See description
+ *   healthInterval: 10e9|>1e6, // nanoseconds to wait between healthchecks; 0 means inherit
+ *   healthTimeout: 20e9|>1e6, // nanoseconds to wait before healthcheck fails
+ *   healthRetries: 5|number, // number of retries before unhealhty
+ *   healthStartPeriod: >=1e6, // nanoseconds to wait on container init before starting first healthcheck
+ *   mounts: Array<{
+ *     source: string, // name of volume
+ *     target: string, // mounted path inside container
+ *     readonly: boolean,
+ *   }>|Array<string>, // '<source>:<target>[:readonly]'
+ *
+ *   cmd: Array<string|number>, // CMD
+ *   workdir: path string, // WORKDIR
+ *   env: {
+ *     HOME: string,
+ *     HOSTNAME: string,
+ *     PATH: string, // $PATH
+ *     ...(moreEnvOptions Object<string>),
+ *   }, // ENV; environment variables exposed to container during run time
+ * }) -> Promise<HttpResponse>
+ * ```
+ */
+
+Docker.prototype.updateService = function dockerUpdateService(service, options) {
+  return this.http.post(`/services/${service}/update?${
+    querystring.stringify(pick([
+      'version',
+      'registryAuthFrom',
+      'rollback',
+    ])(options))
+  }`, {
+
+    body: stringifyJSON(defaultsDeep(get('spec', {})(options))({
+      Name: service,
+      TaskTemplate: {
+        ContainerSpec: {
+          ...options.image && { Image: options.image },
+          ...options.cmd && { Command: options.cmd },
+          ...options.env && {
+            Env: Object.entries(options.env)
+              .map(([key, value]) => `${key}=${value}`),
+          },
+          ...options.workdir && { Dir: options.workdir },
+
+          ...options.mounts && {
+            Mounts: options.mounts.map(pipe([
+              switchCase([
+                isString,
+                pipe([
+                  split(':'),
+                  fork({ target: get(0), source: get(1), readonly: get(2) }),
+                ]),
+                identity,
+              ]),
+              fork({
+                Target: get('target'),
+                Source: get('source'),
+                Type: get('type', 'volume'),
+                ReadOnly: get('readonly', false),
+              }),
+            ])),
+          },
+
+          ...or([
+            has('healthCmd'),
+            has('healthInterval'),
+            has('healthTimeout'),
+            has('healthRetries'),
+            has('healthStartPeriod'),
+          ])(options) && {
+            HealthCheck: {
+              ...options.healthCmd && { Test: ['CMD', ...options.healthCmd] },
+              ...options.healthInterval && { Interval: options.healthInterval },
+              ...options.healthTimeout && { Timeout: options.healthTimeout },
+              ...options.healthRetries && { Retries: options.healthRetries },
+              ...options.healthStartPeriod && { StartPeriod: options.healthStartPeriod },
+            },
+          },
+        },
+
+        ...or([has('restart'), has('restartDelay')])(options) && {
+          RestartPolicy: {
+            ...options.restart && fork({
+              Condition: get(0),
+              MaxAttempts: pipe([get(1, 0), Number]),
+            })(options.restart.split(':')),
+            ...options.restartDelay && { Delay: Number(options.restartDelay) },
+          },
+        },
+        ...options.memory && {
+          Resources: {
+            Limits: { MemoryBytes: Number(options.memory) }, // bytes
+          },
+        },
+        ...or([has('logDriver'), has('logDriverOptions')])(options) && {
+          LogDriver: {
+            ...options.logDriver && { Name: options.logDriver },
+            ...options.logDriverOptions && { Options: options.logDriverOptions },
+          },
+        },
+      },
+
+      ...options.replicas && {
+        Mode: {
+          Replicated: { Replicas: Number(options.replicas) },
+        },
+      },
+
+      ...or([
+        has('updateParallelism'),
+        has('updateDelay'),
+        has('updateFailureAction'),
+        has('updateMonitor'),
+        has('updateMaxFailureRatio'),
+      ])(options) && {
+        UpdateConfig: {
+          ...options.updateParallelism && { Parallelism: options.updateParallelism },
+          ...options.updateDelay && { Delay: options.updateDelay }, // ns
+          ...options.updateFailureAction && { FailureAction: options.updateFailureAction },
+          ...options.updateMonitor && { Monitor: options.updateMonitor }, // ns
+          ...options.updateMaxFailureRatio && { MaxFailureRatio: options.updateMaxFailureRatio },
+        },
+      },
+
+      ...or([
+        has('rollbackParallelism'),
+        has('rollbackDelay'),
+        has('rollbackFailureAction'),
+        has('rollbackMonitor'),
+        has('rollbackMaxFailureRatio'),
+      ])(options) && {
+        RollbackConfig: {
+          ...options.rollbackParallelism && { Parallelism: options.rollbackParallelism },
+          ...options.rollbackDelay && { Delay: options.rollbackDelay },
+          ...options.rollbackFailureAction && { FailureAction: options.rollbackFailureAction },
+          ...options.rollbackMonitor && { Monitor: options.rollbackMonitor },
+          ...options.rollbackMaxFailureRatio && { MaxFailureRatio: options.rollbackMaxFailureRatio },
+        },
+      },
+
+      ...options.publish && {
+        EndpointSpec: {
+          Ports: Object.entries(options.publish).map(pipe([
+            map(String),
+            fork({
+              Protocol: ([hostPort, containerPort]) => {
+                const hostProtocol = hostPort.split('/')[1],
+                  containerProtocol = containerPort.split('/')[1]
+                return hostProtocol ?? containerProtocol ?? 'tcp'
+              },
+              TargetPort: pipe([get(1), split('/'), get(0), Number]),
+              PublishedPort: pipe([get(0), split('/'), get(0), Number]),
+              PublishMode: always('ingress'),
+            }),
+          ])),
+        },
+      },
+    })),
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Registry-Auth': get(
+        'authorization',
+        stringifyJSON({ identitytoken: '' }),
+      )(options),
+    },
   })
 }
 

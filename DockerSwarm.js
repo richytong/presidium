@@ -47,19 +47,21 @@ const DockerSwarm = function () {
   }
   this.docker = new Docker()
   this.version = null
-  this.synchronizing = this.synchronize()
+  this.ready = this.synchronize()
   return this
 }
 
 // new DockerSwarm().synchronize() -> Promise<>
-DockerSwarm.prototype.synchronize = function () {
-  this.synchronizing = this.docker.inspectSwarm().then(pipe([
+DockerSwarm.prototype.synchronize = function DockerSwarmSynchronize() {
+  return this.docker.inspectSwarm().then(pipe([
     response => response.json(),
     ({ Version }) => {
       this.version = Version.Index
     },
   ]))
 }
+
+DockerSwarm.prototype.join = function (token) {}
 
 /**
  * @name DockerSwarm.prototype.update
@@ -87,7 +89,7 @@ DockerSwarm.prototype.synchronize = function () {
  * https://docs.docker.com/engine/reference/commandline/swarm_update/
  */
 DockerSwarm.prototype.update = async function dockerSwarmUpdate(options) {
-  await this.synchronizing
+  await this.ready
   return this.docker.updateSwarm({ version: this.version, ...options })
     .then(pipe([
       response => response.json(),
