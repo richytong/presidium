@@ -360,19 +360,25 @@ module.exports = [
         assert.equal(response.status, 200)
       }
 
-      await Promise.all([
-        docker.joinSwarm('[::1]:2377', this.workerJoinToken).then(async response => {
-          console.log('hey1', await response.text())
-          assert.equal(response.status, 503)
-        }),
-        docker.joinSwarm('[::1]:2377', this.workerJoinToken, {
-          advertiseAddr: '[::1]:2377',
-          listenAddr: '0.0.0.0:2377',
-          dataPathAddr: '127.0.0.1',
-        }).then(async response => {
-          console.log('hey2', await response.text())
-          assert.equal(response.status, 503)
-        }),
-      ])
+      {
+        await Promise.all([ // TODO figure out a real test for join. Checking for the 503 is ok but is both slow and not a 200
+          docker.joinSwarm('[::1]:2377', this.workerJoinToken, {
+            listenAddr: 'hey',
+          }).then(async response => {
+            console.log('hey1', await response.text())
+            // assert.equal(response.status, 503)
+            assert.equal(response.status, 400)
+          }),
+          docker.joinSwarm('[::1]:2377', this.workerJoinToken, {
+            advertiseAddr: '[::1]:2377',
+            listenAddr: 'hey',
+            dataPathAddr: '127.0.0.1',
+          }).then(async response => {
+            console.log('hey2', await response.text())
+            // assert.equal(response.status, 503)
+            assert.equal(response.status, 400)
+          }),
+        ])
+      }
     }),
 ]
