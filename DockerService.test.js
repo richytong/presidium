@@ -51,15 +51,14 @@ module.exports = Test('DockerService', DockerService)
           source: 'other-volume',
           target: '/opt/other-volume',
         }],
-        publish: { 8080: 8080 },
-        healthCmd: ['curl', '0.0.0.0:8080'],
+        publish: { 8080: 80 },
+        healthCmd: ['curl', '0.0.0.0:80'],
         restart: 'on-failure:5',
         memory: 512e6, // bytes
       })
     }
     {
       const info = await myService.inspect()
-      console.log(inspect(info, { depth: Infinity }))
       assert.equal(info.ID, this.serviceId)
       assert.equal(info.Spec.UpdateConfig.Parallelism, 3)
       assert.equal(info.Spec.UpdateConfig.Delay, 2e9)
@@ -77,7 +76,7 @@ module.exports = Test('DockerService', DockerService)
       assert.equal(info.Spec.TaskTemplate.ContainerSpec.Dir, '/opt')
       assert.deepEqual(
         info.Spec.TaskTemplate.ContainerSpec.Healthcheck.Test,
-        ['CMD', 'curl', '0.0.0.0:8080'])
+        ['CMD', 'curl', '0.0.0.0:80'])
       assert.deepEqual(
         info.Spec.TaskTemplate.ContainerSpec.Mounts,
         [{ Type: 'volume', Source: 'other-volume', Target: '/opt/other-volume' }])
