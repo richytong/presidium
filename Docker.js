@@ -877,8 +877,14 @@ const has = property => value => isObject(value) && property in value
  * ```coffeescript [specscript]
  * Docker().updateService(service string, options {
  *   version: number, // current version of service
- *   registryAuthFrom: 'spec'|'previous-spec', // where to look for auth if no X-Registry-Auth
+ *   registryAuthFrom: 'spec'|'previous-spec', // where to look for auth if no authorization
  *   rollback: 'previous', // roll service back to previous version
+ *   authorization: {
+ *     username: string,
+ *     password: string,
+ *     email: string,
+ *     serveraddress: string,
+ *   }|{ identitytoken: string },
  *
  *   image: string,
  *   replicas: 1|number,

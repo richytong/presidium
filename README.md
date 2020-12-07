@@ -122,17 +122,20 @@ container.run().pipe(process.stdout) // foo
 ```javascript
 import { DockerSwarm, DockerService } from 'presidium'
 
-const mySwarm = DockerSwarm('my-docker-host.com:2377')
-
-const myService = DockerService('my-service', {
-  image: 'nginx:1.19',
-  publish: { 80: 8080 },
-  healthCheck: ['curl', '0.0.0.0:8080'],
-  replicas: 1,
-})
-
 (async function() {
+  const mySwarm = DockerSwarm('my-swarm', {
+    advertiseAddr: '192.168.99.121:2377',
+    availability: 'pause',
+  })
+
   await mySwarm.join(process.env.SWARM_MANAGER_TOKEN)
+
+  const myService = DockerService('my-service', {
+    image: 'nginx:1.19',
+    publish: { 80: 8080 },
+    healthCheck: ['curl', '0.0.0.0:8080'],
+    replicas: 1,
+  })
 
   await myService.update({ replicas: 5 })
 })()
