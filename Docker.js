@@ -576,7 +576,7 @@ Docker.prototype.initSwarm = async function dockerInitSwarm(address, options) {
  *   address string,
  *   token string,
  *   options? {
- *     remoteAddrs: Array<string>, // addresses of manager nodes already participating in the swarm
+ *     advertiseAddr: string, // <ip|interface>:<port> to advertise to other nodes
  *     listenAddr: '0.0.0.0:2377'|string, // listen for inbound swarm manager traffic on this address <ip|interface>:<port>
  *     dataPathAddr: string, // address or interface for data path traffic <ip|interface>; use to separate data traffic from management traffic
  *   },
@@ -590,8 +590,8 @@ Docker.prototype.joinSwarm = async function dockerJoinSwarm(
     body: stringifyJSON({
       JoinToken: token,
       RemoteAddrs: [address],
-      ...options.advertiseAddr && { AdvertiseAddr: options.advertiseAddr },
-      ...options.listenAddr && { ListenAddr: options.listenAddr },
+      AdvertiseAddr: get('advertiseAddr', address)(options),
+      ListenAddr: get('listenAddr', '0.0.0.0:2377')(options),
       ...options.dataPathAddr && { DataPathAddr: options.dataPathAddr },
     }),
   })

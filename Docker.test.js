@@ -359,17 +359,20 @@ module.exports = [
         const response = await docker.leaveSwarm({ force: true })
         assert.equal(response.status, 200)
       }
-      {
-        const response = await docker.joinSwarm('localhost:2377', this.workerJoinToken)
-        assert.equal(response.status, 400)
-      }
-      {
-        const response = await docker.joinSwarm('localhost:2377', this.workerJoinToken, {
+
+      await Promise.all([
+        docker.joinSwarm('[::1]:2377', this.workerJoinToken).then(async response => {
+          console.log('hey1', await response.text())
+          assert.equal(response.status, 503)
+        }),
+        docker.joinSwarm('[::1]:2377', this.workerJoinToken, {
           advertiseAddr: '[::1]:2377',
           listenAddr: '0.0.0.0:2377',
-          dataPathAddr: '[::1]:2377',
-        })
-        assert.equal(response.status, 400)
-      }
+          dataPathAddr: '127.0.0.1',
+        }).then(async response => {
+          console.log('hey2', await response.text())
+          assert.equal(response.status, 503)
+        }),
+      ])
     }),
 ]
