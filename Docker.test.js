@@ -363,5 +363,13 @@ module.exports = [
         const response = await docker.joinSwarm('localhost:2377', this.workerJoinToken)
         assert.equal(response.status, 400)
       }
+      {
+        const response = await docker.joinSwarm('localhost:2377', this.workerJoinToken, {
+          advertiseAddr: '[::1]:2377',
+          listenAddr: '0.0.0.0:2377',
+          dataPathAddr: '[::1]:2377',
+        })
+        assert.equal(response.status, 400)
+      }
     }),
 ]
