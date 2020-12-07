@@ -586,13 +586,11 @@ Docker.prototype.initSwarm = async function dockerInitSwarm(address, options) {
 Docker.prototype.joinSwarm = async function dockerJoinSwarm(
   address, token, options = {}
 ) {
-  const port = options.address ? options.address.split(':')[1] : '2377'
   return this.http.post('/swarm/join', {
     body: stringifyJSON({
-      AdvertiseAddr: address,
-      ListenAddr: options.listenAddr ?? `0.0.0.0:${port}`,
       JoinToken: token,
-      ...options.remoteAddrs && { RemoteAddrs: options.remoteAddrs },
+      RemoteAddrs: [address],
+      ...options.advertiseAddr && { AdvertiseAddr: options.advertiseAddr },
       ...options.listenAddr && { ListenAddr: options.listenAddr },
       ...options.dataPathAddr && { DataPathAddr: options.dataPathAddr },
     }),

@@ -319,12 +319,6 @@ module.exports = [
         this.serviceId = body.ID
       }
 
-      /*
-      {
-        const response = await docker.updateService('hey1', { replicas: 3 })
-      }
-      */
-
       {
         const response = await docker.createService('hey2', {
           image: 'node:15-alpine',

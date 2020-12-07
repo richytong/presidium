@@ -123,10 +123,7 @@ container.run().pipe(process.stdout) // foo
 import { DockerSwarm, DockerService } from 'presidium'
 
 (async function() {
-  const mySwarm = DockerSwarm('my-swarm', {
-    advertiseAddr: '192.168.99.121:2377',
-    availability: 'pause',
-  })
+  const mySwarm = DockerSwarm('192.168.99.121:2377')
 
   await mySwarm.join(process.env.SWARM_MANAGER_TOKEN)
 
