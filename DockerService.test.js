@@ -13,7 +13,8 @@ module.exports = Test('DockerService', DockerService)
     await this.docker.pruneImages()
     await this.docker.initSwarm('[::1]:2377')
   })
-  .case('my-service', {
+  .case({
+    name: 'my-service',
     image: 'nginx:1.19',
     replicas: 1,
   }, async function (myService) {

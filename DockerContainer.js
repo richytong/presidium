@@ -99,23 +99,19 @@ const DockerContainer = function (options) {
         const response = await this.docker.createContainer(options),
           body = await response.json()
         this.containerId = body.Id
-        console.log('this.containerId', this.containerId)
       },
       pipe([
         response => response.json(),
         body => {
           this.containerId = body.Id
-          console.log('this.containerId', this.containerId)
         },
       ]),
     ]))
   } else {
-    console.log('yo', options)
     this.ready = this.docker.createContainer(options).then(pipe([
       response => response.json(),
       body => {
         this.containerId = body.Id
-        console.log('this.containerId', this.containerId)
       },
     ]))
   }

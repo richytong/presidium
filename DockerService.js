@@ -35,11 +35,11 @@ const {
  * DockerService('my-image:latest', '[::1]:2377')
  * ```
  */
-const DockerService = function (name, options) {
+const DockerService = function (options) {
   if (this == null || this.constructor != DockerService) {
-    return new DockerService(name, options)
+    return new DockerService(options)
   }
-  this.name = name
+  this.name = options.name
   this.docker = new Docker()
   this.version = null
   this.spec = null

@@ -92,6 +92,21 @@ http.createServer((request, response) => {
     assert.equal(startResult.message, 'container already started')
   })
   .case({
+    name: 'test-alpine-2',
+    image: 'node:15-alpine',
+    env: { FOO: 'foo' },
+    cmd: ['node', '-e', 'console.log(process.env.FOO)'],
+  }, async container => {
+    const logStream = container.run()
+    assert.deepEqual(
+      await passthrough(Buffer.from(''))(logStream),
+      Buffer.from([1, 0, 0, 0, 0, 0, 0, 4, charCode('f'), charCode('o'), charCode('o'), charCode('\n')]))
+    let startResult = await container.start()
+    assert.equal(startResult.message, 'success')
+    startResult = await container.start()
+    assert.equal(startResult.message, 'container already started')
+  })
+  .case({
     image: 'node:15-alpine',
     env: { BAR: 'bar' },
     cmd: ['node', '-e', 'console.log(process.env.BAR)'],
@@ -108,4 +123,4 @@ http.createServer((request, response) => {
   .after(async function () {
     await this.docker.pruneContainers()
     await this.docker.pruneImages()
-  })()
+  })
