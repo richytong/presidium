@@ -85,7 +85,12 @@ const myIndex = DynamoIndex('my-index', {
 ```javascript
 import { DockerImage } from 'presidium'
 
-const myImage = DockerImage(`
+const myImage = DockerImage('my-app:1.0.0')
+
+const buildStream = myImage.build(__dirname, {
+  ignore: ['.github', 'node_modules'],
+  archive: {
+    Dockerfile: `
 FROM node:15-alpine
 WORKDIR /opt
 COPY . .
@@ -93,12 +98,11 @@ RUN echo //registry.npmjs.org/:_authToken=${myNpmToken} > $HOME/.npmrc \
   && npm i \
   && rm $HOME/.npmrc
 EXPOSE 8080
-CMD ["npm", "start"]`)
-
-const buildStream = myImage.build(__dirname, {
-  tags: ['my-app:1.0.0'],
-  ignore: ['.github', 'node_modules'],
+CMD ["npm", "start"]
+    `,
+  },
 })
+
 buildStream.on('end', () => {
   const pushStream = myImage.push('my-registry.io')
   pushStream.pipe(process.stdout)
