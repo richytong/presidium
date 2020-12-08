@@ -125,7 +125,7 @@ import { DockerSwarm, DockerService } from 'presidium'
 (async function() {
   const mySwarm = DockerSwarm('192.168.99.121:2377')
 
-  await mySwarm.join(process.env.SWARM_MANAGER_TOKEN)
+  await mySwarm.ready
 
   const myService = DockerService('my-service', {
     image: 'nginx:1.19',
