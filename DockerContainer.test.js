@@ -35,7 +35,8 @@ module.exports = Test('DockerContainer', DockerContainer)
     await this.docker.pruneContainers()
     await this.docker.pruneImages()
   })
-  .case('test-alpine-1', {
+  .case({
+    name: 'test-alpine-1',
     image: 'node:15-alpine',
     env: { FOO: 'foo', BAR: 'bar' },
     cmd: [
@@ -75,7 +76,8 @@ http.createServer((request, response) => {
       })
     })
   })
-  .case('test-alpine-2', {
+  .case({
+    name: 'test-alpine-2',
     image: 'node:15-alpine',
     env: { FOO: 'foo' },
     cmd: ['node', '-e', 'console.log(process.env.FOO)'],
@@ -89,7 +91,21 @@ http.createServer((request, response) => {
     startResult = await container.start()
     assert.equal(startResult.message, 'container already started')
   })
+  .case({
+    image: 'node:15-alpine',
+    env: { BAR: 'bar' },
+    cmd: ['node', '-e', 'console.log(process.env.BAR)'],
+  }, async container => {
+    const logStream = container.run()
+    assert.deepEqual(
+      await passthrough(Buffer.from(''))(logStream),
+      Buffer.from([1, 0, 0, 0, 0, 0, 0, 4, charCode('b'), charCode('a'), charCode('r'), charCode('\n')]))
+    let startResult = await container.start()
+    assert.equal(startResult.message, 'success')
+    startResult = await container.start()
+    assert.equal(startResult.message, 'container already started')
+  })
   .after(async function () {
     await this.docker.pruneContainers()
     await this.docker.pruneImages()
-  })
+  })()

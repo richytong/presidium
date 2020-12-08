@@ -6,7 +6,6 @@ const size = require('rubico/x/size')
 const flatten = require('rubico/x/flatten')
 const defaultsDeep = require('rubico/x/defaultsDeep')
 const trace = require('rubico/x/trace')
-const isObject = require('rubico/x/isObject')
 const Http = require('./Http')
 const HttpAgent = require('./HttpAgent')
 const Archive = require('./Archive')
@@ -16,6 +15,7 @@ const split = require('./internal/split')
 const join = require('./internal/join')
 const isArray = require('./internal/isArray')
 const pathJoin = require('./internal/pathJoin')
+const has = require('./internal/has')
 
 const {
   pipe, tap,
@@ -319,10 +319,12 @@ Docker.prototype.removeImage = function dockerRemoveImage(image, options) {
  */
 
 Docker.prototype.createContainer = function dockerCreateContainer(
-  name, options = {}
+  options = {}
 ) {
   return this.http.post(`/containers/create?${
-    querystring.stringify({ name })
+    querystring.stringify({
+      ...options.name && { name: options.name },
+    })
   }`, {
     body: stringifyJSON({
       AttachStderr: true,
@@ -856,8 +858,6 @@ const has = property => value => {
   }
   return isObject(value) && property in value
 } */
-
-const has = property => value => isObject(value) && property in value
 
 /**
  * @name Docker.prototype.updateService

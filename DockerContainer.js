@@ -6,6 +6,7 @@ const querystring = require('querystring')
 const stringifyJSON = require('./internal/stringifyJSON')
 const split = require('./internal/split')
 const join = require('./internal/join')
+const has = require('./internal/has')
 const Docker = require('./Docker')
 const stream = require('stream')
 
@@ -84,17 +85,40 @@ const PassThroughStream = stream.PassThrough
  * }).start()
  * ```
  */
-const DockerContainer = function (name, options) {
+const DockerContainer = function (options) {
   if (this == null || this.constructor != DockerContainer) {
-    return new DockerContainer(name, options)
+    return new DockerContainer(options)
   }
   this.docker = new Docker()
   this.options = options
-  this.name = name
-  this.ready = this.docker.inspectContainer(name)
-    .then(response => response.status == 404
-      ? this.docker.createContainer(name, options).then(noop)
-      : undefined)
+  this.containerId = null
+  if (has('name')(options)) {
+    this.ready = this.docker.inspectContainer(options.name).then(switchCase([
+      eq(404, get('status')),
+      async () => {
+        const response = await this.docker.createContainer(options),
+          body = await response.json()
+        this.containerId = body.Id
+        console.log('this.containerId', this.containerId)
+      },
+      pipe([
+        response => response.json(),
+        body => {
+          this.containerId = body.Id
+          console.log('this.containerId', this.containerId)
+        },
+      ]),
+    ]))
+  } else {
+    console.log('yo', options)
+    this.ready = this.docker.createContainer(options).then(pipe([
+      response => response.json(),
+      body => {
+        this.containerId = body.Id
+        console.log('this.containerId', this.containerId)
+      },
+    ]))
+  }
   return this
 }
 
@@ -104,11 +128,11 @@ DockerContainer.prototype.run = function dockerContainerRun() {
   result.promise = (async () => {
     await this.ready
     await new Promise((resolve, reject) => {
-      this.docker.attachContainer(this.name).then(async response => {
+      this.docker.attachContainer(this.containerId).then(async response => {
         response.body.on('end', resolve)
         response.body.on('error', reject)
         response.body.pipe(result)
-        await this.docker.startContainer(this.name)
+        await this.docker.startContainer(this.containerId)
       })
     })
   })()
@@ -121,7 +145,7 @@ DockerContainer.prototype.exec = function dockerContainerExec(cmd) {
   result.promise = (async () => {
     await this.ready
     await new Promise((resolve, reject) => {
-      this.docker.execContainer(this.name, cmd).then(response => {
+      this.docker.execContainer(this.containerId, cmd).then(response => {
         response.body.on('end', resolve)
         response.body.on('error', reject)
         response.body.pipe(result)
@@ -134,7 +158,7 @@ DockerContainer.prototype.exec = function dockerContainerExec(cmd) {
 // dockerContainer.start() -> Promise<Object>
 DockerContainer.prototype.start = async function dockerContainerStart() {
   await this.ready
-  return this.docker.startContainer(this.name).then(async response => {
+  return this.docker.startContainer(this.containerId).then(async response => {
     switch (response.status) {
       case 204:
         return { message: 'success' }
@@ -149,7 +173,7 @@ DockerContainer.prototype.start = async function dockerContainerStart() {
 // dockerContainer.stop() -> Promise<{ message: 'success' }>
 DockerContainer.prototype.stop = async function dockerContainerStop() {
   await this.ready
-  return this.docker.stopContainer(this.name, { time: 1 })
+  return this.docker.stopContainer(this.containerId, { time: 1 })
     .then(always({ message: 'success' }))
 }
 
