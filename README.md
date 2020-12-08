@@ -118,6 +118,7 @@ const container = DockerContainer({
   image: 'node:15-alpine',
   env: { FOO: 'foo' },
   cmd: ['node', '-e', 'console.log(process.env.FOO)'],
+  rm: true,
 })
 
 container.run().pipe(process.stdout) // foo
@@ -131,6 +132,8 @@ import { DockerSwarm, DockerService } from 'presidium'
   const mySwarm = DockerSwarm('192.168.99.121:2377')
 
   await mySwarm.ready
+
+  const myService = DockerService('my-service')
 
   const myService = DockerService({
     name: 'my-service',
