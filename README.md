@@ -85,7 +85,7 @@ const myIndex = DynamoIndex('my-index', {
 ```javascript
 import { DockerImage } from 'presidium'
 
-const myImage = DockerImage('my-app:1.0.0', `
+const myImage = DockerImage(`
 FROM node:15-alpine
 WORKDIR /opt
 COPY . .
@@ -96,6 +96,7 @@ EXPOSE 8080
 CMD ["npm", "start"]`)
 
 const buildStream = myImage.build(__dirname, {
+  tags: ['my-app:1.0.0'],
   ignore: ['.github', 'node_modules'],
 })
 buildStream.on('end', () => {
@@ -109,7 +110,7 @@ buildStream.pipe(process.stdout)
 ```javascript
 import { DockerContainer } from 'presidium'
 
-const container = DockerContainer('my-container', {
+const container = DockerContainer({
   image: 'node:15-alpine',
   env: { FOO: 'foo' },
   cmd: ['node', '-e', 'console.log(process.env.FOO)'],
@@ -127,7 +128,8 @@ import { DockerSwarm, DockerService } from 'presidium'
 
   await mySwarm.ready
 
-  const myService = DockerService('my-service', {
+  const myService = DockerService({
+    name: 'my-service',
     image: 'nginx:1.19',
     publish: { 8080: 80 },
     healthCheck: ['curl', '0.0.0.0:80'],
