@@ -52,12 +52,14 @@ const awsCreds = {
   region: process.env.AWS_REGION,
 }
 
-const myTable = DynamoTable('my-table', {
+const myTable = DynamoTable({
+  name: 'my-table',
   key: [{ id: 'string' }],
   ...awsCreds,
 })
 
-const myIndex = DynamoIndex('my-index', {
+const myIndex = DynamoIndex({
+  name: 'my-index',
   key: [{ name: 'string' }, { age: 'number' }],
   table: 'my-table',
   ...awsCreds,
