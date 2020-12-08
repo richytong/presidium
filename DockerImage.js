@@ -65,12 +65,11 @@ const PassThroughStream = stream.PassThrough
  *   |"<command> ...<parameter>" # shell form
  * ```
  */
-const DockerImage = function (image, dockerfile) {
+const DockerImage = function (name) {
   if (this == null || this.constructor != DockerImage) {
-    return new DockerImage(image, dockerfile)
+    return new DockerImage(name)
   }
-  this.image = image
-  this.dockerfile = dockerfile
+  this.name = name
   this.docker = new Docker()
   return this
 }
@@ -80,7 +79,7 @@ const DockerImage = function (image, dockerfile) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DockerImage(image, dockerfile).build(
+ * DockerImage(name, dockerfile).build(
  *   path string,
  *   options? {
  *     ignore: Array<string>, // paths or names to ignore in build context tarball
@@ -92,11 +91,11 @@ const DockerImage = function (image, dockerfile) {
 DockerImage.prototype.build = function (path, options = {}) {
   const result = new PassThroughStream()
   result.promise = new Promise((resolve, reject) => {
-    this.docker.buildImage(this.image, path, defaultsDeep({
-      archive: {
-        Dockerfile: this.dockerfile,
-      },
-    })(pick(['ignore', 'archive'])(options))).then(response => {
+    this.docker.buildImage(
+      this.name,
+      path,
+      pick(['ignore', 'archive'])(options),
+    ).then(response => {
       response.body.on('end', resolve)
       response.body.on('error', reject)
       response.body.pipe(result)
@@ -110,7 +109,7 @@ DockerImage.prototype.build = function (path, options = {}) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DockerImage(image, dockerfile).push(repository string, options {
+ * DockerImage(name, dockerfile).push(repository string, options {
  *   authorization: {
  *     username: string,
  *     password: string,
@@ -125,12 +124,12 @@ DockerImage.prototype.build = function (path, options = {}) {
 DockerImage.prototype.push = function (repository, options) {
   const result = new PassThroughStream()
   result.promise = new Promise((resolve, reject) => {
-    this.docker.tagImage(this.image, {
-      tag: this.image.split(':')[1],
-      repo: pathJoin(repository, this.image.split(':')[0]),
+    this.docker.tagImage(this.name, {
+      tag: this.name.split(':')[1],
+      repo: pathJoin(repository, this.name.split(':')[0]),
     }).then(pipe([
       () => this.docker.pushImage(
-        this.image, repository, pick(['authorization'])(options)),
+        this.name, repository, pick(['authorization'])(options)),
       response => {
         response.body.on('end', thunkify(resolve, result))
         response.body.on('error', reject)
@@ -146,11 +145,11 @@ DockerImage.prototype.push = function (repository, options) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DockerImage(image, dockerfile).inspect() -> {}
+ * DockerImage(name, dockerfile).inspect() -> {}
  * ```
  */
 DockerImage.prototype.inspect = function () {
-  return this.docker.inspectImage(this.image).then(pipe([
+  return this.docker.inspectImage(this.name).then(pipe([
     get('body'),
     passthrough(''),
     parseJSON,
