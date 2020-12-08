@@ -1,67 +1,81 @@
+const assert = require('assert')
+const rubico = require('rubico')
 const Docker = require('./Docker')
+
+const {
+  pipe, tap,
+  switchCase, tryCatch,
+  fork, assign, get, pick, omit,
+  map, filter, reduce, transform, flatMap,
+  and, or, not, any, all,
+  eq, gt, lt, gte, lte,
+  thunkify, always,
+  curry, __,
+} = rubico
 
 /**
  * @name DockerSwarm
  *
  * @synopsis
  * ```coffeescript [specscript]
- * new DockerSwarm({
- *   advertiseAddr: string, // externally reachable address
- *   listenAddr: string, // address for inter-manager communication
- *   availability: 'active'|'pause'|'drain',
- *   subnetSize: number,
- *   dataPathAddr: advertiseAddr|string, // address for data path traffic
- *   dataPathPort: 4789|number, // port for data path traffic
- *   defaultAddrPool: Array<string>,
- *   forceNewCluster: boolean, // force create a new cluster from current state
- * })
+ * new DockerSwarm(address string) -> DockerSwarm
  * ```
  *
  * @description
- * ```json
- * {
- *   "ListenAddr": "0.0.0.0:2377",
- *   "AdvertiseAddr": "192.168.1.1:2377",
- *   "DataPathPort": 4789,
- *   "DefaultAddrPool": [
- *     "10.10.0.0/8",
- *     "20.20.0.0/8"
- *   ],
- *   "SubnetSize": 24,
- *   "ForceNewCluster": false,
- *   "Spec": {
- *     "Orchestration": {},
- *     "Raft": {},
- *     "Dispatcher": {},
- *     "CAConfig": {},
- *     "EncryptionConfig": {
- *       "AutoLockManagers": false
- *     }
- *   }
- * }
- * ```
+ * `address` is either the advertise address (`.init`) or the advertise address of an existing host (`.join`)
  */
-const DockerSwarm = function () {
+const DockerSwarm = function (address, token) {
   if (this == null || this.constructor != DockerSwarm) {
-    return new DockerSwarm()
+    return new DockerSwarm(address)
   }
+  this.address = address
   this.docker = new Docker()
   this.version = null
-  this.ready = this.synchronize()
+  this.spec = null
+  this.ready = this.docker.inspectSwarm().then(switchCase([
+    or([
+      eq(404, get('status')),
+      eq(503, get('status')),
+    ]),
+    token == null ? async () => {
+      await this.docker.initSwarm(address)
+      await this.synchronize()
+    } : async () => {
+      await this.docker.joinSwarm(address, token)
+      await this.synchronize()
+    },
+    async response => {
+      const body = await response.json()
+      this.version = body.Version.Index
+      this.spec = body.Spec
+    },
+  ]))
+  this.version = null
   return this
 }
 
 // new DockerSwarm().synchronize() -> Promise<>
-DockerSwarm.prototype.synchronize = function DockerSwarmSynchronize() {
+DockerSwarm.prototype.synchronize = function dockerServiceSynchronize() {
   return this.docker.inspectSwarm().then(pipe([
+    tap(response => assert(response.ok, response.statusText)),
     response => response.json(),
-    ({ Version }) => {
-      this.version = Version.Index
+    body => {
+      this.version = body.Version.Index
+      this.spec = body.Spec
     },
   ]))
 }
 
-DockerSwarm.prototype.join = function (token) {}
+// DockerSwarm(address).inspect() -> Promise<Object>
+DockerSwarm.prototype.inspect = function dockerSwarmInspect() {
+  return this.docker.inspectSwarm().then(response => response.json())
+}
+
+// DockerSwarm(address).leave(options? { force: boolean }) -> Promise<Object>
+DockerSwarm.prototype.leave = function dockerSwarmLeave(options) {
+  return this.docker.leaveSwarm(options)
+    .then(fork({ message: response => response.text() }))
+}
 
 /**
  * @name DockerSwarm.prototype.update
@@ -90,9 +104,16 @@ DockerSwarm.prototype.join = function (token) {}
  */
 DockerSwarm.prototype.update = async function dockerSwarmUpdate(options) {
   await this.ready
-  return this.docker.updateSwarm({ version: this.version, ...options })
-    .then(pipe([
-      response => response.json(),
-      tap(console.log),
-    ]))
+  return this.docker.updateSwarm({
+    version: this.version,
+    spec: this.spec,
+    ...options,
+  }).then(pipe.sync([
+    tap.sync(() => {
+      this.ready = this.synchronize()
+    }),
+    always(this.spec),
+  ]))
 }
+
+module.exports = DockerSwarm

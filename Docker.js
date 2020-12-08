@@ -546,23 +546,14 @@ Docker.prototype.inspectSwarm = function dockerInspectSwarm() {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * Docker().initSwarm(address string, options? {
- *   ListenAddr: string, // Listen address for inter-manager communication <address|interface>:<port>
- *   DataPathAddr: string, // address or interface for data traffic
- *   DataPathPort: 4789|number, // port number for data traffic
- *   DefaultAddrPool: Array<string>, // specify default subnet pools for global scope networks
- *   ForceNewCluster: boolean, // force create new swarm
- *   SubnetSize: number, // subnet size of networks created from default subnet pool
- *   Spec: SwarmSpec,
- * }) -> Promise<HttpResponse>
+ * Docker().initSwarm(address string) -> Promise<HttpResponse>
  * ```
  */
-Docker.prototype.initSwarm = async function dockerInitSwarm(address, options) {
+Docker.prototype.initSwarm = async function dockerInitSwarm(address) {
   return this.http.post('/swarm/init', {
     body: stringifyJSON({
       AdvertiseAddr: address,
       ListenAddr: address,
-      ...options,
     }),
   })
 }
@@ -622,13 +613,13 @@ Docker.prototype.leaveSwarm = function dockerLeaveSwarm(options) {
  *   rotateManagerToken: boolean, // whether to rotate manager token
  *   rotateManagerUnlockKey: boolean, // whether to rotate unlock key
  *   taskHistoryLimit: 10|number, // number of tasks revisions to retain for rollbacks
- *   dispatcherHeartbeat: 5000000000|number, // nanoseconds delay for agent to ping dispatcher
+ *   dispatcherHeartbeat: 5e9|number, // nanoseconds delay for agent to ping dispatcher
  *   autolock: false|true, // whether to lock managers when they stop
  *   certExpiry: 7776000000000000|number, // validity period in nanoseconds for node certs
  *   snapshotInterval: 10000|number, // number of log entries between raft snapshots
  *   keepOldSnapshots: 0|number, // number of snapshots to keep beyond current snapshot
  *   logEntriesForSlowFollowers: 500|number, // number of log entries to retain to sync up slow followers after snapshot creation
- *   electionTick: 3|number, // number of ticks a follower will wait before starting a new election. Must be greater than heartbeatTick
+ *   electionTick: 10|number, // number of ticks a follower will wait before starting a new election. Must be greater than heartbeatTick
  *   heartbeatTick: 1|number, // number of ticks between heartbeats. One tick ~ one second
  * })
  * ```
@@ -668,7 +659,7 @@ Docker.prototype.updateSwarm = async function dockerUpdateSwarm(options = {}) {
       'Content-Type': 'application/json',
     },
 
-    body: stringifyJSON({
+    body: stringifyJSON(defaultsDeep(get('spec', {})(options))({
       ...options.taskHistoryLimit && {
         Orchestration: {
           TaskHistoryRetentionLimit: options.taskHistoryLimit,
@@ -690,7 +681,7 @@ Docker.prototype.updateSwarm = async function dockerUpdateSwarm(options = {}) {
         },
       },
       ...gt(size, 0)(raft) && { Raft: raft },
-    }),
+    })),
   })
 }
 
