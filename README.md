@@ -135,8 +135,7 @@ import { DockerSwarm, DockerService } from 'presidium'
 
   const myService = DockerService('my-service')
 
-  const myService = DockerService({
-    name: 'my-service',
+  await myService.create({
     image: 'nginx:1.19',
     publish: { 8080: 80 },
     healthCheck: ['curl', '0.0.0.0:80'],
