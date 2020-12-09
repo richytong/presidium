@@ -1,3 +1,4 @@
+const assert = require('assert')
 const Test = require('thunk-test')
 const Dynamo = require('./Dynamo')
 
@@ -35,6 +36,34 @@ module.exports = [
     .case('N', 'N')
     .case('binary', 'B')
     .case('B', 'B')
-    .throws('?', new TypeError('unknown type for ?'))
+    .throws('?', new TypeError('unknown type for ?')),
+
+  Test('Dynamo', Dynamo)
+    .case('http://localhost:8000', async function (dynamo) {
+      await dynamo.deleteTable('test-1').catch(() => {})
+      await dynamo.waitFor('test-1', 'tableNotExists')
+      await dynamo.deleteTable('test-2').catch(() => {})
+      await dynamo.waitFor('test-2', 'tableNotExists')
+      {
+        const response = await dynamo.createTable('test-1', [{ a: 'string' }, { b: 'number' }])
+        assert.strictEqual(response.TableDescription.TableName, 'test-1')
+      }
+      {
+        const response = await dynamo.createTable('test-2', [{ a: 'string' }, { b: 'number' }], {
+          BillingMode: 'PAY_PER_REQUEST',
+        })
+        assert.strictEqual(response.TableDescription.TableName, 'test-2')
+        assert.strictEqual(response.TableDescription.BillingModeSummary.BillingMode, 'PAY_PER_REQUEST')
+      }
+      await dynamo.deleteTable('test-1').catch(() => {})
+      await dynamo.waitFor('test-1', 'tableNotExists')
+      await dynamo.deleteTable('test-2').catch(() => {})
+      await dynamo.waitFor('test-2', 'tableNotExists')
+    })
+    .case({
+      endpoint: 'http://localhost:8000',
+    }, async function (dynamo) {
+      assert.strictEqual(dynamo.connection.config.endpoint, 'http://localhost:8000')
+    }),
 ]
 
