@@ -20,11 +20,15 @@ module.exports = Test('DynamoIndex', DynamoIndex)
   })
   .before(async function () {
 
-    this.testTable = new DynamoTable('test-tablename', {
+    this.testTable = new DynamoTable({
+      name: 'test-tablename',
       endpoint: 'http://localhost:8000/',
+      // TODO key: [...],
     })
-    this.testTable2 = new DynamoTable('test-tablename-2', {
+    this.testTable2 = new DynamoTable({
+      name: 'test-tablename-2',
       endpoint: 'http://localhost:8000/',
+      // TODO key: [...],
     })
 
     for (const table of [this.testTable, this.testTable2]) {
@@ -61,13 +65,14 @@ module.exports = Test('DynamoIndex', DynamoIndex)
     }
 
   })
-  .case('status-createTime-index', {
+  .case({
+    name: 'status-createTime-index',
     table: 'test-tablename',
     key: [{ status: 'string' }, { createTime: 'number' }],
     endpoint: 'http://localhost:8000/',
   }, async index => {
     assert(index.table == 'test-tablename')
-    assert(index.index == 'status-createTime-index')
+    assert(index.name == 'status-createTime-index')
 
     assert.deepEqual(
       await index.query('status = :status AND createTime > :createTime', {
@@ -320,13 +325,14 @@ module.exports = Test('DynamoIndex', DynamoIndex)
         ScannedCount: 0
       })
   })
-  .case('status-name-index', {
+  .case({
+    name: 'status-name-index',
     table: 'test-tablename-2',
     key: [{ status: 'string' }, { name: 'string' }],
     endpoint: 'http://localhost:8000/',
   }, async index => {
     assert(index.table == 'test-tablename-2')
-    assert(index.index == 'status-name-index')
+    assert(index.name == 'status-name-index')
     assert.deepEqual(
       await index.query('status = :status AND begins_with(name, :name)', {
         status: 'waitlist',

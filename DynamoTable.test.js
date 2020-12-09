@@ -20,7 +20,8 @@ module.exports = Test('DynamoTable', DynamoTable)
     await this.dynamo.waitFor('test-tablename', 'tableExists')
   })
 
-  .case('test-tablename', {
+  .case({
+    name: 'test-tablename',
     endpoint: 'http://localhost:8000/',
   }, async function (testTable) {
     // .case('http://localhost:8000/', 'test-tablename', async function (testTable) {
@@ -74,7 +75,8 @@ module.exports = Test('DynamoTable', DynamoTable)
       new Error('Item not found for {"id":"1"}'))
   })
 
-  .case('test-table', {
+  .case({
+    name: 'test-table',
     accessKeyId: 'my-access-key-id',
     secretAccessKey: 'my-secret-key',
     region: 'x-x-x',

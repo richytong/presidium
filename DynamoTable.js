@@ -7,6 +7,7 @@ const isPromise = require('./internal/isPromise')
 const hashJSON = require('./internal/hashJSON')
 const stringifyJSON = require('./internal/stringifyJSON')
 const join = require('./internal/join')
+const has = require('./internal/has')
 
 const {
   pipe, tap,
@@ -28,7 +29,8 @@ const {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DynamoTable(table string, options {
+ * DynamoTable(options {
+ *   name: string,
  *   key: [
  *     { [hashKey string]: 'S'|'string'|'N'|'number'|'B'|'binary' },
  *     { [sortKey string]: 'S'|'string'|'N'|'number'|'B'|'binary' },
@@ -44,25 +46,30 @@ const {
  * Creates a DynamoDB table. [aws-sdk DynamoDB](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html)
  *
  * ```javascript
- * DynamoTable('http://localhost:8000/', 'my-local-table') // -> DynamoTable
+ * DynamoTable({
+ *   name: 'my-local-table',
+ *   endpoint: 'http://localhost:8000/',
+ * })
  *
  * DynamoTable({
+ *   name: my-aws-table',
  *   accessKeyId: 'my-access-key-id',
  *   secretAccessKey: 'my-secret-access-key',
  *   region: 'my-region',
- * }, 'my-aws-table') // -> DynamoTable
+ * }
  * ```
  */
-const DynamoTable = function (table, options) {
+const DynamoTable = function (options) {
   if (this == null || this.constructor != DynamoTable) {
-    return new DynamoTable(table, options)
+    return new DynamoTable(options)
   }
-  this.table = table
-  this.connection = options.endpoint
-    ? new Dynamo(options.endpoint).connection
-    : new Dynamo(pick([
-      'accessKeyId', 'secretAccessKey', 'region',
-    ])(options)).connection
+  this.name = options.name
+  this.connection = new Dynamo(pick([
+    'accessKeyId',
+    'secretAccessKey',
+    'region',
+    'endpoint',
+  ])(options)).connection
   return this
 }
 
@@ -71,7 +78,7 @@ const DynamoTable = function (table, options) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DynamoTable(connection string|object, table string).putItem(
+ * DynamoTable(options).putItem(
  *   item Object,
  *   options? {
  *     returnConsumedCapacity?: 'INDEXES'|'TOTAL'|'NONE',
@@ -87,6 +94,11 @@ const DynamoTable = function (table, options) {
  * ```javascript
  * const localUsersTable = DynamoTable('http://localhost:8000/', 'my-local-table')
  *
+ * const localUsersTable = DynamoTable({
+ *   name: 'my-local-table',
+ *   endpoint: 'http://localhost:8000/',
+ * })
+ *
  * await localUsersTable.ready
  *
  * await localUsersTable.putItem({ _id: '1', name: 'Geor' })
@@ -94,7 +106,7 @@ const DynamoTable = function (table, options) {
  */
 DynamoTable.prototype.putItem = function putItem(item, options) {
   return this.connection.putItem({
-    TableName: this.table,
+    TableName: this.name,
     Item: map(Dynamo.AttributeValue)(item),
     ...options,
   }).promise()
@@ -105,18 +117,19 @@ DynamoTable.prototype.putItem = function putItem(item, options) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DynamoTable(dynamo).getItem(key Object) -> Promise<{ Item: DynamoAttributeValue }>
+ * DynamoTable(options).getItem(key Object) -> Promise<{ Item: DynamoAttributeValue }>
  * ```
  */
 DynamoTable.prototype.getItem = function getItem(key) {
   return this.connection.getItem({
-    TableName: this.table,
+    TableName: this.name,
     Key: map(Dynamo.AttributeValue)(key),
-  }).promise().then(tap(result => {
+  }).promise().then(result => {
     if (result.Item == null) {
       throw new Error(`Item not found for ${stringifyJSON(key)}`)
     }
-  }))
+    return result
+  })
 }
 
 /**
@@ -124,7 +137,7 @@ DynamoTable.prototype.getItem = function getItem(key) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DynamoTable(connection string|object, table string).updateItem(
+ * DynamoTable(options).updateItem(
  *   key Object,
  *   updates Object,
  *   options? {
@@ -139,7 +152,10 @@ DynamoTable.prototype.getItem = function getItem(key) {
  * `AWS.DynamoDB.prototype.updateItem` for JavaScript Objects. [aws-sdk DynamoDB updateItem](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#updateItem-property)
  *
  * ```javascript
- * const localUsersTable = DynamoTable('http://localhost:8000/', 'my-local-table')
+ * const localUsersTable = DynamoTable({
+ *   name: 'my-local-table',
+ *   endpoint: 'http://localhost:8000/',
+ * })
  *
  * await localUsersTable.ready
  *
@@ -152,7 +168,7 @@ DynamoTable.prototype.getItem = function getItem(key) {
  */
 DynamoTable.prototype.updateItem = function updateItem(key, updates, options) {
   return this.connection.updateItem({
-    TableName: this.table,
+    TableName: this.name,
     Key: map(Dynamo.AttributeValue)(key),
     UpdateExpression: pipe([
       Object.entries,
@@ -175,7 +191,7 @@ DynamoTable.prototype.updateItem = function updateItem(key, updates, options) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DynamoTable(connection, table).deleteItem(
+ * DynamoTable(options).deleteItem(
  *   key Object,
  *   options? {
  *     ReturnConsumedCapacity?: 'INDEXES'|'TOTAL'|'NONE',
@@ -187,7 +203,7 @@ DynamoTable.prototype.updateItem = function updateItem(key, updates, options) {
  */
 DynamoTable.prototype.deleteItem = function deleteItem(key, options) {
   return this.connection.deleteItem({
-    TableName: this.table,
+    TableName: this.name,
     Key: map(Dynamo.AttributeValue)(key),
     ...options,
   }).promise()

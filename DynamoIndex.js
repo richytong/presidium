@@ -21,7 +21,8 @@ const {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DynamoIndex(index, options|{
+ * DynamoIndex(options {
+ *   name: string,
  *   key: [
  *     { [hashKey string]: 'S'|'string'|'N'|'number'|'B'|'binary' },
  *     { [sortKey string]: 'S'|'string'|'N'|'number'|'B'|'binary' },
@@ -34,17 +35,18 @@ const {
  * }) -> DynamoIndex
  * ```
  */
-const DynamoIndex = function (index, options) {
+const DynamoIndex = function (options) {
   if (this == null || this.constructor != DynamoIndex) {
-    return new DynamoIndex(index, options)
+    return new DynamoIndex(options)
   }
-  this.index = index
+  this.name = options.name
   this.table = options.table
-  this.connection = options.endpoint
-    ? new Dynamo(options.endpoint).connection
-    : new Dynamo(pick([
-      'accessKeyId', 'secretAccessKey', 'region',
-    ])(options)).connection
+  this.connection = new Dynamo(pick([
+    'accessKeyId',
+    'secretAccessKey',
+    'region',
+    'endpoint',
+  ])(options)).connection
   return this
 }
 
@@ -53,7 +55,7 @@ const DynamoIndex = function (index, options) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DynamoIndex(index, options).query(
+ * DynamoIndex(options).query(
  *   filterStatement string, // hashKey = :a AND sortKey < :b
  *   values {
  *     [hashKey]: string|number|Buffer|TypedArray,
@@ -75,11 +77,11 @@ const DynamoIndex = function (index, options) {
  * @description
  * Query a DynamoDB Index.
  *
- * Note: avoid these reserved words for field names
- * https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html
+ * Note: use of reserved words is fine due to hashing of field names done by this function
  *
  * ```javascript
- * new DynamoIndex('name-age-index', {
+ * new DynamoIndex({
+ *   name: 'name-age-index',
  *   table: 'my-table',
  *   key: [{ name: 'string' }, { age: 'number' }],
  *   endpoint: 'http://localhost:5000',
@@ -101,7 +103,7 @@ DynamoIndex.prototype.query = function query(filterStatement, values, options = 
 
   return this.connection.query({
     TableName: this.table,
-    IndexName: this.index,
+    IndexName: this.name,
     KeyConditionExpression: statements.map(statement => {
       if (statement.startsWith('begins_with')) {
         const [field, prefix] = statement // 'begins_with(name, :prefix)'
@@ -144,10 +146,7 @@ DynamoIndex.prototype.query = function query(filterStatement, values, options = 
         .split(',').map(field => `#${hashJSON(field)}`).join(','),
     },
     ...options.select && { Select: options.select },
-  }).promise().then(dynamoResponse => 'LastEvaluatedKey' in dynamoResponse ? ({
-    ...dynamoResponse,
-    LastEvaluatedKey: dynamoResponse.LastEvaluatedKey,
-  }) : dynamoResponse)
+  }).promise()
 }
 
 module.exports = DynamoIndex

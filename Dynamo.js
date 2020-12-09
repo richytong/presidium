@@ -26,28 +26,29 @@ const throwTypeError = function throwTypeError(message) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * Dynamo(connection string|AWSDynamo|{
+ * Dynamo(options {
  *   accessKeyId: string,
  *   secretAccessKey: string,
  *   region: string,
+ *   endpoint: string,
  * }) -> DynamoTable
+ *
+ * Dynamo(endpoint string) -> DynamoTable
  * ```
  */
-const Dynamo = function (connection) {
+const Dynamo = function (options) {
   if (this == null || this.constructor != Dynamo) {
-    return new Dynamo(connection)
+    return new Dynamo(options)
   }
-  if (typeof connection == 'string') {
+  if (typeof options == 'string') {
     this.connection = new AWSDynamo({
       apiVersion: '2012-08-10',
       accessKeyId: 'accessKeyId-placeholder',
       secretAccessKey: 'secretAccessKey-placeholder',
       region: 'region-placeholder',
-      endpoint: connection,
+      endpoint: options,
       httpOptions: { agent: HttpAgent() },
     })
-  } else if (connection.constructor == Dynamo) {
-    this.connection = connection.connection
   } else {
     this.connection = new AWSDynamo({
       apiVersion: '2012-08-10',
@@ -55,7 +56,7 @@ const Dynamo = function (connection) {
       secretAccessKey: 'secretAccessKey-placeholder',
       region: 'region-placeholder',
       httpOptions: { agent: HttpAgent() },
-      ...connection,
+      ...options,
     })
   }
   return this
@@ -68,7 +69,7 @@ const Dynamo = function (connection) {
  * ```coffeescript [specscript]
  * DynamoAttributeType = 'S'|'N'|'B'|'string'|'number'|'binary'
  *
- * Dynamo(connection).createTable(
+ * Dynamo(options).createTable(
  *   tablename string,
  *   primaryKey [Object<DynamoAttributeType>, Object<DynamoAttributeType>?],
  *   options? {
@@ -90,9 +91,9 @@ const Dynamo = function (connection) {
  *  * `'B'` - binary
  *
  * ```javascript
- * Dynamo(connection).createTable('my-table', [{ id: 'string' }])
+ * Dynamo(options).createTable('my-table', [{ id: 'string' }])
  *
- * Dynamo(connection).createTable('my-table', [{ id: 'string' }, { createTime: 'number' }])
+ * Dynamo(options).createTable('my-table', [{ id: 'string' }, { createTime: 'number' }])
  * ```
  */
 Dynamo.prototype.createTable = function createTable(
@@ -118,7 +119,7 @@ Dynamo.prototype.createTable = function createTable(
  *
  * @synopsis
  * ```coffeescript [specscript]
- * Dynamo(connection).deleteTable(tablename string) -> Promise<DynamoResponse>
+ * Dynamo(options).deleteTable(tablename string) -> Promise<DynamoResponse>
  * ```
  */
 Dynamo.prototype.deleteTable = async function deleteTable(tablename) {
@@ -132,7 +133,7 @@ Dynamo.prototype.deleteTable = async function deleteTable(tablename) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * Dynamo(connection).waitFor(
+ * Dynamo(options).waitFor(
  *   tablename string,
  *   status 'tableExists'|'tableNotExists',
  * ) -> Promise<{
@@ -200,7 +201,7 @@ Dynamo.prototype.waitFor = async function waitFor(tablename, status) {
  * ```coffeescript [specscript]
  * DynamoAttributeType = 'S'|'N'|'B'|'string'|'number'|'binary'
  *
- * Dynamo(connection).createIndex(
+ * Dynamo(options).createIndex(
  *   tablename string,
  *   index [Object<DynamoAttributeType>, Object<DynamoAttributeType>?],
  *   options? {
@@ -218,7 +219,7 @@ Dynamo.prototype.waitFor = async function waitFor(tablename, status) {
  *
  * @description
  * ```javascript
- * Dynamo(connection).createIndex('test-tablename', [{ status: 'string', createTime: 'number' }])
+ * Dynamo('localhost:8000').createIndex('test-tablename', [{ status: 'string', createTime: 'number' }])
  * ```
  *
  * @reference
