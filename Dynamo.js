@@ -63,6 +63,18 @@ const Dynamo = function (options) {
 }
 
 /**
+ * @name Dynamo.prototype.describeTable
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Dynamo(options).describeTable(tablename string) -> Promise<Object>
+ * ```
+ */
+Dynamo.prototype.describeTable = function (tablename) {
+  return this.connection.describeTable({ TableName: tablename }).promise()
+}
+
+/**
  * @name Dynamo.prototype.createTable
  *
  * @synopsis

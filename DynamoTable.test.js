@@ -10,19 +10,11 @@ module.exports = Test('DynamoTable', DynamoTable)
   .before(async function () {
     this.dynamo = Dynamo('http://localhost:8000/')
     await this.dynamo.deleteTable('test-tablename')
-    await this.dynamo.deleteTable('test-tablename-2')
   })
-  .before(async function () {
-    await this.dynamo.createTable('test-tablename', [{ id: 'string' }])
-    await this.dynamo.createTable('test-tablename-2', [{ id: 'string' }], {
-      BillingMode: 'PAY_PER_REQUEST',
-    })
-    await this.dynamo.waitFor('test-tablename', 'tableExists')
-  })
-
   .case({
     name: 'test-tablename',
     endpoint: 'http://localhost:8000/',
+    key: [{ id: 'string' }],
   }, async function (testTable) {
     // .case('http://localhost:8000/', 'test-tablename', async function (testTable) {
     await testTable.putItem({ id: '1', name: 'george' })
@@ -70,23 +62,14 @@ module.exports = Test('DynamoTable', DynamoTable)
       })
 
     await testTable.deleteItem({ id: '1' })
+    const shouldReject = testTable.getItem({ id: '1' })
     assert.rejects(
-      () => testTable.getItem({ id: '1' }),
+      () => shouldReject,
       new Error('Item not found for {"id":"1"}'))
-  })
+    await shouldReject.catch(() => {})
 
-  .case({
-    name: 'test-table',
-    accessKeyId: 'my-access-key-id',
-    secretAccessKey: 'my-secret-key',
-    region: 'x-x-x',
-  }, async function (testTable) {
-    assert(testTable.constructor == DynamoTable)
-    assert(testTable.connection !== dynamo.connection)
-  })
-
-  .after(async function () {
-    await this.dynamo.deleteTable('test-tablename')
-    await this.dynamo.deleteTable('test-tablename-2')
-    await this.dynamo.waitFor('test-tablename', 'tableNotExists')
+    {
+      const response = await testTable.delete()
+      assert.deepEqual(response, {})
+    }
   })

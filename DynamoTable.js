@@ -64,13 +64,46 @@ const DynamoTable = function (options) {
     return new DynamoTable(options)
   }
   this.name = options.name
-  this.connection = new Dynamo(pick([
+  this.key = options.key
+  this.dynamo = new Dynamo(pick([
     'accessKeyId',
     'secretAccessKey',
     'region',
     'endpoint',
-  ])(options)).connection
+  ])(options))
+  this.connection = this.dynamo.connection
+  this.ready = this.inspect().then(async () => {
+    await this.dynamo.waitFor(this.name, 'tableExists')
+  }).catch(async () => {
+    await this.dynamo.createTable(this.name, options.key)
+    await this.dynamo.waitFor(this.name, 'tableExists')
+  })
   return this
+}
+
+/**
+ * @name DynamoTable.prototype.inspect
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * DynamoTable(options).inspect() -> Promise<Object>
+ * ```
+ */
+DynamoTable.prototype.inspect = function dynamoTableInspect() {
+  return this.dynamo.describeTable(this.name)
+}
+
+/**
+ * @name DynamoTable.prototype.delete
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * DynamoTable(options).delete() -> Promise<Object>
+ * ```
+ */
+DynamoTable.prototype.delete = async function dynamoTableDelete() {
+  await this.dynamo.deleteTable(this.name)
+  return this.dynamo.waitFor(this.name, 'tableNotExists')
 }
 
 /**
@@ -104,7 +137,8 @@ const DynamoTable = function (options) {
  * await localUsersTable.putItem({ _id: '1', name: 'Geor' })
  * ```
  */
-DynamoTable.prototype.putItem = function putItem(item, options) {
+DynamoTable.prototype.putItem = async function dynamoTablePutItem(item, options) {
+  await this.ready
   return this.connection.putItem({
     TableName: this.name,
     Item: map(Dynamo.AttributeValue)(item),
@@ -120,7 +154,8 @@ DynamoTable.prototype.putItem = function putItem(item, options) {
  * DynamoTable(options).getItem(key Object) -> Promise<{ Item: DynamoAttributeValue }>
  * ```
  */
-DynamoTable.prototype.getItem = function getItem(key) {
+DynamoTable.prototype.getItem = async function dynamoTableGetItem(key) {
+  await this.ready
   return this.connection.getItem({
     TableName: this.name,
     Key: map(Dynamo.AttributeValue)(key),
@@ -166,7 +201,10 @@ DynamoTable.prototype.getItem = function getItem(key) {
  * })
  * ```
  */
-DynamoTable.prototype.updateItem = function updateItem(key, updates, options) {
+DynamoTable.prototype.updateItem = async function dynamoTableUpdateItem(
+  key, updates, options,
+) {
+  await this.ready
   return this.connection.updateItem({
     TableName: this.name,
     Key: map(Dynamo.AttributeValue)(key),
@@ -201,7 +239,8 @@ DynamoTable.prototype.updateItem = function updateItem(key, updates, options) {
  * ) -> Promise<{ Item: Object<DynamoAttributeValue> }>
  * ```
  */
-DynamoTable.prototype.deleteItem = function deleteItem(key, options) {
+DynamoTable.prototype.deleteItem = async function dynamoTableDeleteItem(key, options) {
+  await this.ready
   return this.connection.deleteItem({
     TableName: this.name,
     Key: map(Dynamo.AttributeValue)(key),
