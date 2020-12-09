@@ -59,13 +59,15 @@ const myTable = DynamoTable({
 })
 
 const myIndex = DynamoIndex({
-  name: 'my-index',
-  key: [{ name: 'string' }, { age: 'number' }],
   table: 'my-table',
+  key: [{ name: 'string' }, { age: 'number' }],
   ...awsCreds,
 })
 
 (async function() {
+  await myTable.ready
+  await myIndex.ready
+
   await myTable.putItem({ id: '1', name: 'George' })
   await myTable.updateItem({ id: '1' }, { age: 32 })
   console.log(
@@ -79,6 +81,37 @@ const myIndex = DynamoIndex({
     }),
   ) // [{ Items: [{ id: { S: '1' }, ... }, ...] }]
   await myTable.deleteItem({ id: '1' })
+})()
+```
+
+## Command Redis
+```javascript
+import { Redis, RedisString, RedisSortedSet } from 'presidium'
+
+const myString = RedisString('my-string', {
+  address: 'localhost:6379',
+  database: 0,
+})
+
+const myString = RedisString({
+  key: 'my-string',
+  address: 'localhost:6379',
+  database: 0,
+})
+
+RedisString('redis://localhost:6379', 'your:key')
+
+RedisString('my:string')
+
+;(async function () {
+  const redis = new Redis('redis://localhost:6379')
+
+  await redis.ready
+
+  const myString = redis.String('my:string')
+  await myString.set('hey')
+
+  const mySortedSet = redis.SortedSet('my:sortedSet')
 })()
 ```
 
@@ -130,7 +163,7 @@ container.run().pipe(process.stdout) // foo
 ```javascript
 import { DockerSwarm, DockerService } from 'presidium'
 
-(async function() {
+;(async function() {
   const mySwarm = DockerSwarm('192.168.99.121:2377')
 
   await mySwarm.ready

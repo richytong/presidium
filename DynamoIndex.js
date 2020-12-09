@@ -1,6 +1,9 @@
 const rubico = require('rubico')
 const uniq = require('rubico/x/uniq')
+const find = require('rubico/x/find')
 const flatten = require('rubico/x/flatten')
+const isDeepEqual = require('rubico/x/isDeepEqual')
+const forEach = require('rubico/x/forEach')
 const Dynamo = require('./Dynamo')
 const hashJSON = require('./internal/hashJSON')
 const trim = require('./internal/trim')
@@ -35,19 +38,53 @@ const {
  * }) -> DynamoIndex
  * ```
  */
+
 const DynamoIndex = function (options) {
   if (this == null || this.constructor != DynamoIndex) {
     return new DynamoIndex(options)
   }
-  this.name = options.name
   this.table = options.table
-  this.connection = new Dynamo(pick([
+  this.key = options.key
+  this.name = Dynamo.Indexname(this.key)
+  this.dynamo = new Dynamo(pick([
     'accessKeyId',
     'secretAccessKey',
     'region',
     'endpoint',
-  ])(options)).connection
+  ])(options))
+  this.connection = this.dynamo.connection
+
+  this.ready = this.inspect().then(pipe([
+    indexData => indexData ?? this.dynamo.createIndex(this.table, this.key)
+      .then(pipe([
+        get('TableDescription.GlobalSecondaryIndexes'),
+        find(item => isDeepEqual(item.IndexName, this.name)),
+      ])),
+    async indexData => {
+      let isIndexActive = indexData.IndexStatus == 'ACTIVE'
+      while (!isIndexActive) {
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        isIndexActive = await this.inspect().then(eq('ACTIVE', get('IndexStatus')))
+      }
+    },
+  ]))
   return this
+}
+
+/**
+ * @name DynamoIndex.prototype.inspect
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * DynamoIndex(options).inspect() -> Promise<Object>
+ * ```
+ */
+DynamoIndex.prototype.inspect = function dynamoIndexInspect() {
+  return this.dynamo.describeTable(this.table)
+    .then(pipe([
+      get('Table.GlobalSecondaryIndexes'),
+      find(eq(this.name, get('IndexName'))),
+    ]))
 }
 
 /**
@@ -92,7 +129,8 @@ const DynamoIndex = function (options) {
  * ```
  */
 
-DynamoIndex.prototype.query = function query(filterStatement, values, options = {}) {
+DynamoIndex.prototype.query = async function dynamoIndexQuery(filterStatement, values, options = {}) {
+  await this.ready
   const statements = filterStatement.trim().split(/\s+AND\s+/)
   let statementsIndex = -1
   while (++statementsIndex < statements.length) {
