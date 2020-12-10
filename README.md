@@ -99,7 +99,7 @@ const redis = Redis('redis://localhost:6379')
     await redis.get('my:string'),
   ) // hello
 
-  await pipeline.zadd('my:sortedSet', 1, 'one', 2, 'two', 3, 'three')
+  await redis.zadd('my:sortedSet', 1, 'one', 2, 'two', 3, 'three')
 
   console.log(
     await redis.zrange('my:sortedSet', 0, 2, 'WITHSCORES')
