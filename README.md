@@ -64,7 +64,7 @@ const myIndex = DynamoIndex({
   ...awsCreds,
 })
 
-(async function() {
+;(async function() {
   await myTable.ready
   await myIndex.ready
 
@@ -88,30 +88,21 @@ const myIndex = DynamoIndex({
 ```javascript
 import { Redis, RedisString, RedisSortedSet } from 'presidium'
 
-const myString = RedisString('my-string', {
-  address: 'localhost:6379',
-  database: 0,
-})
+const localRedis = Redis('redis://localhost:6379')
 
 const myString = RedisString({
-  key: 'my-string',
-  address: 'localhost:6379',
-  database: 0,
+  key: 'my:string',
+  redis: localRedis,
 })
 
-RedisString('redis://localhost:6379', 'your:key')
-
-RedisString('my:string')
-
 ;(async function () {
-  const redis = new Redis('redis://localhost:6379')
-
+  const redis = Redis('redis://localhost:6379/0')
   await redis.ready
 
-  const myString = redis.String('my:string')
+  const myString = RedisString('my:string', { redis })
   await myString.set('hey')
 
-  const mySortedSet = redis.SortedSet('my:sortedSet')
+  const mySortedSet = RedisSortedSet('my:sortedSet', { redis })
 })()
 ```
 
