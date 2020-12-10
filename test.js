@@ -19,12 +19,19 @@ map.series(pipe([
   map(require),
   map.series(switchCase([
     isArray,
-    forEach(test => test()),
-    test => test(),
+    pipe([
+      forEach(() => {
+        numTests += 1
+      }),
+      map.series(test => test()),
+    ]),
+    pipe([
+      () => {
+        numTests += 1
+      },
+      test => test(),
+    ]),
   ])),
-  forEach(() => {
-    numTests += 1
-  })
 ]))(['*.test.js', 'internal/*.test.js']).then(() => {
   console.log(`-- ✅ ${numTests} passing`)
 })
