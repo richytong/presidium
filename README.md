@@ -86,23 +86,24 @@ const myIndex = DynamoIndex({
 
 ## Command Redis
 ```javascript
-import { Redis, RedisString, RedisSortedSet } from 'presidium'
+import { Redis } from 'presidium'
 
-const localRedis = Redis('redis://localhost:6379')
-
-const myString = RedisString({
-  key: 'my:string',
-  redis: localRedis,
-})
+const redis = Redis('redis://localhost:6379')
 
 ;(async function () {
-  const redis = Redis('redis://localhost:6379/0')
   await redis.ready
 
-  const myString = RedisString('my:string', { redis })
-  await myString.set('hey')
+  await redis.set('my:string', 'hello')
 
-  const mySortedSet = RedisSortedSet('my:sortedSet', { redis })
+  console.log(
+    await redis.get('my:string'),
+  ) // hello
+
+  await pipeline.zadd('my:sortedSet', 1, 'one', 2, 'two', 3, 'three')
+
+  console.log(
+    await redis.zrange('my:sortedSet', 0, 2, 'WITHSCORES')
+  ) // ['one', '1', 'two', '2', 'three', '3']
 })()
 ```
 
