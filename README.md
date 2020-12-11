@@ -78,19 +78,18 @@ const awsCreds = {
   region: process.env.AWS_REGION,
 }
 
-const myTable = DynamoTable({
-  name: 'my-table',
-  key: [{ id: 'string' }],
-  ...awsCreds,
-})
-
-const myIndex = DynamoIndex({
-  table: 'my-table',
-  key: [{ name: 'string' }, { age: 'number' }],
-  ...awsCreds,
-})
-
 ;(async function() {
+  const myTable = DynamoTable({
+    name: 'my-table',
+    key: [{ id: 'string' }],
+    ...awsCreds,
+  })
+  const myIndex = DynamoIndex({
+    table: 'my-table',
+    key: [{ name: 'string' }, { age: 'number' }],
+    ...awsCreds,
+  })
+
   await myTable.ready
   await myIndex.ready
 
