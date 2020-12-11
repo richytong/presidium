@@ -21,6 +21,7 @@ const Redshift = require('./Redshift')
 const RedshiftTable = require('./RedshiftTable')
 const Kinesis = require('./Kinesis')
 const KinesisStream = require('./KinesisStream')
+const KinesisVideoStream = require('./KinesisVideoStream')
 const Lambda = require('./Lambda')
 const LambdaFunction = require('./LambdaFunction')
 const Mongo = require('./Mongo')
@@ -40,11 +41,11 @@ const Presidium = {
   Dynamo, DynamoTable, DynamoIndex, DynamoStream,
   Docker, DockerImage, DockerContainer, DockerSwarm, DockerService,
   ElasticTranscoder, ElasticTranscoderPipeline,
+  Kinesis, KinesisStream, KinesisVideoStream,
   CloudFront, CloudFrontDistribution,
   Elasticsearch, ElasticsearchIndex,
   PostgreSQL, PostgreSQLTable,
   Redshift, RedshiftTable,
-  Kinesis, KinesisStream,
   Lambda, LambdaFunction,
   Mongo, MongoCollection,
   MySQL, MySQLTable,
