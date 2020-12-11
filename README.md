@@ -84,6 +84,34 @@ const myIndex = DynamoIndex({
 })()
 ```
 
+## Upload to S3
+```javascript
+import { S3Bucket } from 'presidium'
+
+const awsCreds = {
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  region: process.env.AWS_REGION,
+}
+
+const myBucket = S3Bucket({
+  name: 'my-bucket',
+  ...awsCreds,
+})
+
+;(async function () {
+  await myBucket.ready
+
+  await myBucket.putObject('some-key', '{"hello":"world"}', {
+    'Content-Type': 'application/json',
+  })
+
+  console.log(
+    await myBucket.getObject('some-key'),
+  ) // { Etag: ..., Body: '{"hello":"world"}', ContentType: 'application/json' }
+})()
+```
+
 ## Command Redis
 ```javascript
 import { Redis } from 'presidium'
