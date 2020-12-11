@@ -17,6 +17,7 @@ const S3 = function (connection, options) {
   if (this == null || this.constructor != S3) {
     return new S3(s3)
   }
+
   if (typeof connection == 'string') {
     this.s3 = new AWSS3({
       apiVersion: '2006-03-01',
@@ -29,10 +30,6 @@ const S3 = function (connection, options) {
       signatureVersion: 'v4',
       ...options,
     })
-  } else if (connection.constructor == S3) {
-    this.s3 = connection.s3
-  } else if (connection.constructor == AWSS3) {
-    this.s3 = connection
   } else {
     this.s3 = new AWSS3({
       apiVersion: '2006-03-01',
