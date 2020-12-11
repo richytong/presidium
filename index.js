@@ -45,8 +45,6 @@ const Presidium = {
   Http, HttpServer,
   WebSocket, WebSocketServer,
   Dynamo, DynamoTable, DynamoIndex, DynamoStream,
-  Redis, RedisString, RedisList, RedisSet, RedisHash,
-    RedisSortedSet, RedisBitmap, RedisHyperLogLog, RedisStream,
   Docker, DockerImage, DockerContainer, DockerSwarm, DockerService,
   ElasticTranscoder, ElasticTranscoderPipeline,
   CloudFront, CloudFrontDistribution,
@@ -55,11 +53,12 @@ const Presidium = {
   Redshift, RedshiftTable,
   Kinesis, KinesisStream,
   Lambda, LambdaFunction,
-  Gremlin, GremlinGraph,
   MySQL, MySQLTable,
   Mongo, MongoTable,
   EC2, EC2Image,
   S3, S3Bucket,
+  Gremlin,
+  Redis,
 }
 
 module.exports = Presidium
