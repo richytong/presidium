@@ -20,4 +20,4 @@ module.exports = Test('MongoCollection', MongoCollection)
     return () => {
       collection.mongo.close()
     }
-  })()
+  })
