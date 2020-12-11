@@ -103,7 +103,7 @@ const myBucket = S3Bucket({
   await myBucket.ready
 
   await myBucket.putObject('some-key', '{"hello":"world"}', {
-    'Content-Type': 'application/json',
+    ContentType: 'application/json',
   })
 
   console.log(
