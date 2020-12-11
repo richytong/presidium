@@ -2,24 +2,15 @@ const Http = require('./Http')
 const HttpServer = require('./HttpServer')
 const WebSocket = require('./WebSocket')
 const WebSocketServer = require('./WebSocketServer')
-const Docker = require('./Docker')
-const DockerContainer = require('./DockerContainer')
-const DockerService = require('./DockerService')
-const Redis = require('./Redis')
-const RedisString = require('./RedisString')
-const RedisList = require('./RedisList')
-const RedisSet = require('./RedisSet')
-const RedisHash = require('./RedisHash')
-const RedisSortedSet = require('./RedisSortedSet')
-const RedisBitmap = require('./RedisBitmap')
-const RedisHyperLogLog = require('./RedisHyperLogLog')
-const RedisStream = require('./RedisStream')
 const Dynamo = require('./Dynamo')
 const DynamoTable = require('./DynamoTable')
 const DynamoIndex = require('./DynamoIndex')
 const DynamoStream = require('./DynamoStream')
-const ElasticTranscoder = require('./ElasticTranscoder')
-const ElasticTranscoderPipeline = require('./ElasticTranscoderPipeline')
+const Docker = require('./Docker')
+const DockerImage = require('./DockerImage')
+const DockerContainer = require('./DockerContainer')
+const DockerSwarm = require('./DockerSwarm')
+const DockerService = require('./DockerService')
 const CloudFront = require('./CloudFront')
 const CloudFrontDistribution = require('./CloudFrontDistribution')
 const Elasticsearch = require('./Elasticsearch')
@@ -32,14 +23,16 @@ const Kinesis = require('./Kinesis')
 const KinesisStream = require('./KinesisStream')
 const Lambda = require('./Lambda')
 const LambdaFunction = require('./LambdaFunction')
-const Gremlin = require('./Gremlin')
-const GremlinGraph = require('./GremlinGraph')
 const Mongo = require('./Mongo')
-const MongoTable = require('./MongoTable')
+const MongoCollection = require('./MongoCollection')
+const MySQL = require('./MySQL')
+const MySQLTable = require('./MySQLTable')
 const EC2 = require('./EC2')
 const EC2Image = require('./EC2Image')
 const S3 = require('./S3')
 const S3Bucket = require('./S3Bucket')
+const Gremlin = require('./Gremlin')
+const Redis = require('./Redis')
 
 const Presidium = {
   Http, HttpServer,
@@ -53,8 +46,8 @@ const Presidium = {
   Redshift, RedshiftTable,
   Kinesis, KinesisStream,
   Lambda, LambdaFunction,
+  Mongo, MongoCollection,
   MySQL, MySQLTable,
-  Mongo, MongoTable,
   EC2, EC2Image,
   S3, S3Bucket,
   Gremlin,
