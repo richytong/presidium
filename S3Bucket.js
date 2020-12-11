@@ -20,6 +20,7 @@ const S3Bucket = function (s3, bucketname) {
   }
   this.s3 = new S3(s3).s3
   this.bucketname = bucketname
+  // TODO this.ready
   return this
 }
 
