@@ -62,7 +62,7 @@ const myCollection = MongoCollection({
   await myCollection.updateOne({ _id: '1' }, { age: 32 })
 
   console.log(
-    await myCollection.find({ _id: '1' }),
+    await myCollection.findOne({ _id: '1' }),
   ) // { _id: '1', name: 'George', age: 32 }
   await myCollection.deleteOne({ _id: '1' })
 })()
