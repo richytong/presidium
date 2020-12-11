@@ -84,7 +84,16 @@ module.exports = Test('DockerService', DockerService)
       assert.equal(info.Spec.TaskTemplate.RestartPolicy.Condition, 'on-failure')
       assert.equal(info.Spec.TaskTemplate.RestartPolicy.MaxAttempts, 5)
       assert.equal(info.Spec.TaskTemplate.Resources.Limits.MemoryBytes, 512e6)
+      this.myServiceSpec = myService.spec
     }
+  })
+  .case({
+    name: 'my-service',
+    image: 'nginx:1.19',
+    replicas: 1,
+  }, async function (myService) {
+    await myService.ready
+    assert.deepEqual(myService.spec, this.myServiceSpec)
   })
   .after(async function () {
     await this.docker.pruneContainers()

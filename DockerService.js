@@ -43,16 +43,14 @@ const DockerService = function (options) {
   this.docker = new Docker()
   this.version = null
   this.spec = null
-  this.ready = this.docker.inspectService(this.name).then(switchCase([
-    eq(404, get('status')),
+  this.ready = this.docker.inspectService(this.name).then(pipe([
+    tap.if(
+      eq(404, get('status')),
+      async () => {
+        await this.docker.createService(this.name, options)
+      }),
     async () => {
-      await this.docker.createService(this.name, options)
       await this.synchronize()
-    },
-    async response => {
-      const body = await response.json()
-      this.version = body.Version.Index
-      this.spec = body.Spec
     },
   ]))
   return this
