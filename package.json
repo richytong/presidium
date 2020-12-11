@@ -25,6 +25,7 @@
   "dependencies": {
     "aws-sdk": "^2.787.0",
     "ioredis": "^4.19.0",
+    "mongodb": "^3.6.3",
     "rubico": "latest",
     "tar-stream": "^2.1.4",
     "thunk-test": "latest",
