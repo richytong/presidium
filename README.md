@@ -46,21 +46,19 @@ socket.on('message', data => {
 ```javascript
 import { MongoCollection } from 'presidium'
 
-const myCollection = MongoCollection({
-  name: 'my-collection',
-  uri: 'mongodb+srv://my-user:my-password@my-host.com/my-db',
-})
-
 ;(async function () {
+  const myCollection = MongoCollection({
+    name: 'my-collection',
+    uri: 'mongodb+srv://my-user:my-password@my-host.com/my-db',
+  })
+
   await myCollection.ready
 
   await myCollection.insertOne({
     _id: '1',
     name: 'George',
   })
-
   await myCollection.updateOne({ _id: '1' }, { age: 32 })
-
   console.log(
     await myCollection.findOne({ _id: '1' }),
   ) // { _id: '1', name: 'George', age: 32 }
@@ -98,7 +96,6 @@ const awsCreds = {
   console.log(
     await myTable.getItem({ id: '1' }),
   ) // { Item: { id: { S: '1' }, ... } }
-
   console.log(
     await myIndex.query('name = :name AND age < :age', {
       name: 'George',
@@ -130,7 +127,6 @@ const myBucket = S3Bucket({
   await myBucket.putObject('some-key', '{"hello":"world"}', {
     ContentType: 'application/json',
   })
-
   console.log(
     await myBucket.getObject('some-key'),
   ) // { Etag: ..., Body: '{"hello":"world"}', ContentType: 'application/json' }
@@ -141,19 +137,16 @@ const myBucket = S3Bucket({
 ```javascript
 import { Redis } from 'presidium'
 
-const redis = Redis('redis://localhost:6379')
-
 ;(async function () {
+  const redis = Redis('redis://localhost:6379')
+
   await redis.ready
 
   await redis.set('my:string', 'hello')
-
   console.log(
     await redis.get('my:string'),
   ) // hello
-
   await redis.zadd('my:sortedSet', 1, 'one', 2, 'two', 3, 'three')
-
   console.log(
     await redis.zrange('my:sortedSet', 0, 2, 'WITHSCORES')
   ) // ['one', '1', 'two', '2', 'three', '3']
