@@ -48,7 +48,7 @@ import { MongoCollection } from 'presidium'
 
 const myCollection = MongoCollection({
   name: 'my-collection',
-  uri: 'mongodb+srv://<user>:<password>@<cluster-url>/<db>',
+  uri: 'mongodb+srv://my-user:my-password@my-host.com/my-db',
 })
 
 ;(async function () {
