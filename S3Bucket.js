@@ -1,5 +1,7 @@
 const S3 = require('./S3')
 const fork = require('rubico/fork')
+const pick = require('rubico/pick')
+const get = require('rubico/get')
 const identity = require('rubico/x/identity')
 
 /**
@@ -7,20 +9,33 @@ const identity = require('rubico/x/identity')
  *
  * @synopsis
  * ```coffeescript [specscript]
- * S3(s3 string|AWSS3|{
+ * S3(options {
+ *   name string,
  *   accessKeyId: string,
  *   secretAccessKey: string,
  *   region: string,
- * }, bucketname string) -> S3Bucket
+ *   endpoint: string,
+ * })
  * ```
  */
-const S3Bucket = function (s3, bucketname) {
+const S3Bucket = function (options) {
   if (this == null || this.constructor != S3Bucket) {
-    return new S3Bucket(s3, bucketname)
+    return new S3Bucket(options)
   }
-  this.s3 = new S3(s3).s3
-  this.bucketname = bucketname
-  // TODO this.ready
+  this.name = options.name
+  this.s3 = new S3(pick([
+    'accessKeyId',
+    'secretAccessKey',
+    'region',
+    'endpoint',
+  ])(options))
+  this.ready = this.s3.getBucketLocation(this.name).catch(async error => {
+    if (error.name == 'NoSuchBucket') {
+      await this.s3.createBucket(this.name) // TODO handle create options here
+    } else {
+      throw error
+    }
+  })
   return this
 }
 
@@ -74,13 +89,11 @@ const S3Bucket = function (s3, bucketname) {
  * }>
  * ```
  */
-S3Bucket.prototype.putObject = function putObject(key, body, options) {
-  return this.s3.putObject({
-    Bucket: this.bucketname,
-    Key: key,
-    Body: body,
-    ...options,
-  }).promise()
+S3Bucket.prototype.putObject = async function s3BucketPutObject(
+  key, body, options,
+) {
+  await this.ready
+  return this.s3.putObject(this.name, key, body, options)
 }
 
 /**
@@ -97,12 +110,11 @@ S3Bucket.prototype.putObject = function putObject(key, body, options) {
  * }) -> Promise
  * ```
  */
-S3Bucket.prototype.deleteObject = function deleteObject(key, options) {
-  return this.s3.deleteObject({
-    Bucket: this.bucketname,
-    Key: key,
-    ...options,
-  }).promise()
+S3Bucket.prototype.deleteObject = async function s3BucketDeleteObject(
+  key, options,
+) {
+  await this.ready
+  return this.s3.deleteObject(this.name, key, options)
 }
 
 /**
@@ -110,7 +122,7 @@ S3Bucket.prototype.deleteObject = function deleteObject(key, options) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * S3Bucket(s3).deleteObjects(key string, options? {
+ * S3Bucket(s3).deleteObjects(keys Array<string>, options? {
  *   Quiet?: boolean,
  *   BypassGovernanceRetention?: boolean,
  *   ExpectedBucketOwner?: string,
@@ -131,16 +143,32 @@ S3Bucket.prototype.deleteObject = function deleteObject(key, options) {
  * }>
  * ```
  */
-S3Bucket.prototype.deleteObjects = function deleteObjects(keys, options) {
-  const { Quiet = false, ...optionsRest } = options == null ? {} : options
-  return this.s3.deleteObjects({
-    Bucket: this.bucketname,
-    Delete: {
-      Objects: keys.map(fork({ Key: identity })),
-      Quiet,
-    },
-    ...optionsRest,
-  }).promise()
+S3Bucket.prototype.deleteObjects = async function s3BucketDeleteObjects(
+  keys, options,
+) {
+  await this.ready
+  return this.s3.deleteObjects(this.name, keys, options)
+}
+
+/**
+ * @name S3Bucket.prototype.deleteAllObjects
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * S3Bucket(options).deleteAllObjects(opts {
+ *   MaxKeys: number, // batch size
+ * }) -> Promise<>
+ * ```
+ */
+S3Bucket.prototype.deleteAllObjects = async function s3BucketDeleteAllObjects(
+  options,
+) {
+  const opts = pick(['MaxKeys'])(options)
+  let contents = await this.listObjects(opts).then(get('Contents'))
+  while (contents.length > 0) {
+    await this.deleteObjects(contents.map(get('Key')))
+    contents = await this.listObjects(opts).then(get('Contents'))
+  }
 }
 
 /**
@@ -204,12 +232,9 @@ S3Bucket.prototype.deleteObjects = function deleteObjects(keys, options) {
  * }>
  * ```
  */
-S3Bucket.prototype.getObject = function getObject(key, options) {
-  return this.s3.getObject({
-    Bucket: this.bucketname,
-    Key: key,
-    ...options,
-  }).promise()
+S3Bucket.prototype.getObject = async function sBucketGetObject(key, options) {
+  await this.ready
+  return this.s3.getObject(this.name, key, options)
 }
 
 /**
@@ -253,11 +278,9 @@ S3Bucket.prototype.getObject = function getObject(key, options) {
  * }>
  * ```
  */
-S3Bucket.prototype.listObjects = function listObjectsV2(options) {
-  return this.s3.listObjectsV2({
-    Bucket: this.bucketname,
-    ...options,
-  }).promise()
+S3Bucket.prototype.listObjects = async function s3BucketListObjectsV2(options) {
+  await this.ready
+  return this.s3.listObjectsV2(this.name, options)
 }
 
 module.exports = S3Bucket

@@ -8,13 +8,26 @@ module.exports = Test('S3Bucket', S3Bucket)
   .before(async function () {
     this.s3 = new S3('http://localhost:9000/')
     try {
-      await new S3Bucket(this.s3, 'test-bucket').deleteObjects(['a', 'b', 'c'])
-      await new S3Bucket(this.s3, 'test-bucket').deleteObject(['binary'])
+      await new S3Bucket({
+        name: 'test-bucket',
+        endpoint: 'http://localhost:9000',
+      }).deleteObjects(['a', 'b', 'c'])
+      await new S3Bucket({
+        name: 'test-bucket',
+        endpoint: 'http://localhost:9000',
+      }).deleteObject('binary')
     } catch {}
     await this.s3.deleteBucket('test-bucket')
-    await this.s3.createBucket('test-bucket')
   })
-  .case('http://localhost:9000/', 'test-bucket', async function (testBucket) {
+  .case({
+    name: 'test-bucket',
+    endpoint: 'http://localhost:9000/',
+  }, async function (testBucket) {
+    await testBucket.ready
+
+    await testBucket.deleteObjects(['a', 'b', 'c'])
+    await testBucket.deleteObject('binary')
+
     await testBucket.putObject('a', JSON.stringify({ id: 'a' }), {
       ContentType: 'application/json',
     })
@@ -33,8 +46,8 @@ module.exports = Test('S3Bucket', S3Bucket)
     const binary = await testBucket.getObject('binary')
     assert(binary.ContentType == 'application/octet-stream')
     assert.deepEqual(binary.Body, Buffer.from('binary'))
-    await testBucket.deleteObjects(['a', 'b', 'c'])
-    await testBucket.deleteObject('binary')
+
+    await testBucket.deleteAllObjects({ MaxKeys: 1 })
   })
   .after(async function () {
     await this.s3.deleteBucket('test-bucket')
