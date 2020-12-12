@@ -271,7 +271,7 @@ Docker.prototype.removeImage = function dockerRemoveImage(image, options) {
  * ```coffeescript [specscript]
  * new Docker().createContainer(name string, options? {
  *   image: string, // image to run in the container
- *   rm: boolean, // automatically remove the container when it exits TODO
+ *   rm: boolean, // automatically remove the container when it exits
  *   restart: 'no'|'on-failure[:<max-retries>]'|'always'|'unless-stopped',
  *   logDriver: 'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'none',
  *   logDriverOptions: Object<string>,

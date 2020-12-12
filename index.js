@@ -28,12 +28,12 @@ const Mongo = require('./Mongo')
 const MongoCollection = require('./MongoCollection')
 const MySQL = require('./MySQL')
 const MySQLTable = require('./MySQLTable')
-const EC2 = require('./EC2')
-const EC2Image = require('./EC2Image')
 const S3 = require('./S3')
 const S3Bucket = require('./S3Bucket')
 const Gremlin = require('./Gremlin')
 const Redis = require('./Redis')
+const EC2 = require('./EC2')
+const EC2Fleet = require('./EC2Fleet')
 
 const Presidium = {
   Http, HttpServer,
@@ -49,7 +49,7 @@ const Presidium = {
   Lambda, LambdaFunction,
   Mongo, MongoCollection,
   MySQL, MySQLTable,
-  EC2, EC2Image,
+  EC2, EC2Fleet,
   S3, S3Bucket,
   Gremlin,
   Redis,

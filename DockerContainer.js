@@ -33,14 +33,10 @@ const PassThroughStream = stream.PassThrough
  * new DockerContainer(image string) -> DockerContainer
  * ```
  *
- * @TODO
- * Refactor all Docker functionality to Docker
- * Use og docker to implement APIs
- *
  * ```javascript
  * new DockerContainer('node:15-alpine', options? {
  *   name: string, // specific name for the container
- *   rm: boolean, // automatically remove the container when it exits TODO
+ *   rm: boolean, // automatically remove the container when it exits
  *   restart: 'no'|'on-failure[:<max-retries>]'|'always'|'unless-stopped',
  *   logDriver: 'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'none',
  *   logDriverOptions: Object<string>,

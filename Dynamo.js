@@ -344,9 +344,6 @@ Dynamo.Indexname = function DynamoIndexname(index) {
  *
  * Dynamo.AttributeType(value TypedArray) -> 'B'
  * ```
- *
- * @TODO
- * use single line inspect
  */
 Dynamo.AttributeType = function DynamoAttributeType(value) {
   switch (value) {
