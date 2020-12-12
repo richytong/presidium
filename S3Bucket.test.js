@@ -48,6 +48,7 @@ module.exports = Test('S3Bucket', S3Bucket)
     assert.deepEqual(binary.Body, Buffer.from('binary'))
 
     await testBucket.deleteAllObjects({ MaxKeys: 1 })
+    const deleted = await testBucket.delete()
   })
   .after(async function () {
     await this.s3.deleteBucket('test-bucket')

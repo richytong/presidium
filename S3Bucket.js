@@ -172,6 +172,18 @@ S3Bucket.prototype.deleteAllObjects = async function s3BucketDeleteAllObjects(
 }
 
 /**
+ * @name S3Bucket.prototype.delete
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * S3Bucket(options).delete() -> Promise<>
+ * ```
+ */
+S3Bucket.prototype.delete = async function s3BucketDelete() {
+  return this.s3.deleteBucket(this.name)
+}
+
+/**
  * @name S3Bucket.prototype.getObject
  *
  * @synopsis
