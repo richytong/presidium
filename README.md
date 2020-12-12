@@ -130,6 +130,8 @@ const myBucket = S3Bucket({
   console.log(
     await myBucket.getObject('some-key'),
   ) // { Etag: ..., Body: '{"hello":"world"}', ContentType: 'application/json' }
+  await myBucket.deleteAllObjects()
+  await myBucket.delete()
 })()
 ```
 
