@@ -53,13 +53,10 @@ Archive.prototype.tar = function archiveTar(path, options) {
     reduce(async (pack, filePath) => {
       pack.entry({
         name: filePath.replace(pathWithSlash, ''),
-        ...pick([
-          'size',
-          'mode',
-          'mtime',
-          'uid',
-          'gid',
-        ])(await fs.stat(filePath)),
+        ...pipe([
+          fs.stat,
+          pick(['size', 'mode', 'mtime', 'uid', 'gid']),
+        ])(filePath),
       }, await fs.readFile(filePath))
       return pack
     }, pack),
