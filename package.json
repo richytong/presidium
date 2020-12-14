@@ -23,6 +23,7 @@
     "elasticsearch"
   ],
   "dependencies": {
+    "@elastic/elasticsearch": "^7.10.0",
     "aws-sdk": "^2.787.0",
     "ioredis": "^4.19.0",
     "mongodb": "^3.6.3",
