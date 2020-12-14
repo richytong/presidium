@@ -24,11 +24,6 @@ const __ = require('rubico/__')
 const Elasticsearch = function (node) {
   const elasticsearch = new Client({ node })
   elasticsearch.ready = elasticsearch.cat.health()
-    .catch(async function retry(error, retries = 0) {
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      await elasticsearch.cat.health()
-        .catch(curry.arity(2, retry, __, retries + 1))
-    })
   return elasticsearch
 }
 
