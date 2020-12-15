@@ -12,15 +12,21 @@
   "homepage": "https://github.com/richytong/presidium",
   "keywords": [
     "web",
-    "micro",
     "service",
     "microservice",
+    "aws",
+    "aws-sdk",
     "toolkit",
+    "framework",
+    "http",
+    "request",
+    "websocket",
     "dynamo",
     "dynamodb",
-    "mongo",
-    "redis",
-    "elasticsearch"
+    "docker",
+    "kinesis",
+    "lambda",
+    "types"
   ],
   "dependencies": {
     "@elastic/elasticsearch": "^7.10.0",
