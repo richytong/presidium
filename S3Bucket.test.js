@@ -16,8 +16,8 @@ module.exports = Test('S3Bucket', S3Bucket)
         name: 'test-bucket',
         endpoint: 'http://localhost:9000',
       }).deleteObject('binary')
+      await this.s3.deleteBucket('test-bucket')
     } catch {}
-    await this.s3.deleteBucket('test-bucket')
   })
   .case({
     name: 'test-bucket',
@@ -49,7 +49,4 @@ module.exports = Test('S3Bucket', S3Bucket)
 
     await testBucket.deleteAllObjects({ MaxKeys: 1 })
     const deleted = await testBucket.delete()
-  })
-  .after(async function () {
-    await this.s3.deleteBucket('test-bucket')
   })
