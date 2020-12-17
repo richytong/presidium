@@ -109,12 +109,7 @@ S3.prototype.createBucket = function createBucket(bucketname, options) {
 S3.prototype.deleteBucket = function deleteBucket(bucketname) {
   return this.s3.deleteBucket({
     Bucket: bucketname,
-  }).promise().catch(error => {
-    if (error.name == 'NoSuchBucket') {
-      return {}
-    }
-    throw error
-  })
+  }).promise().catch(() => ({}))
 }
 
 /**
