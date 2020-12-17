@@ -15,11 +15,10 @@ module.exports = Test('DynamoIndex', DynamoIndex)
   .before(async function () {
     await this.dynamo.createTable('test-tablename', [{ id: 'string' }])
     // await this.dynamo.createIndex('test-tablename', [{ status: 'string' }, { createTime: 'number' }])
-    await this.dynamo.createTable('test-tablename-2', [{ id: 'string' }])
+    // await this.dynamo.createTable('test-tablename-2', [{ id: 'string' }])
     // await this.dynamo.createIndex('test-tablename-2', [{ status: 'string' }, { name: 'string' }])
   })
   .before(async function () {
-
     this.testTable = DynamoTable({
       name: 'test-tablename',
       endpoint: 'http://localhost:8000/',

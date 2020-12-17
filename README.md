@@ -87,22 +87,31 @@ const awsCreds = {
     key: [{ name: 'string' }, { age: 'number' }],
     ...awsCreds,
   })
+  const myStream = DynamoStream({
+    table: 'my-table',
+    ...awsCreds,
+  })
 
   await myTable.ready
   await myIndex.ready
+  await myStream.ready
 
   await myTable.putItem({ id: '1', name: 'George' })
   await myTable.updateItem({ id: '1' }, { age: 32 })
   console.log(
     await myTable.getItem({ id: '1' }),
   ) // { Item: { id: { S: '1' }, ... } }
+
   console.log(
     await myIndex.query('name = :name AND age < :age', {
       name: 'George',
       age: 33,
     }),
   ) // [{ Items: [{ id: { S: '1' }, ... }, ...] }]
-  await myTable.deleteItem({ id: '1' })
+
+  for await (const record of myStream) {
+    console.log(record) // { dynamodb: { NewImage: {...}, OldImage: {...} }, ... }
+  }
 })()
 ```
 

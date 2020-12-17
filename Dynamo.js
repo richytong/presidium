@@ -75,6 +75,29 @@ Dynamo.prototype.describeTable = function (tablename) {
 }
 
 /**
+ * @name Dynamo.prototype.enableStreams
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Dynamo(options).enableStreams(
+ *   tablename string,
+ *   options {
+ *     viewType: 'NEW_IMAGE'|'OLD_IMAGE'|'NEW_AND_OLD_IMAGES'|'KEYS_ONLY',
+ *   },
+ * ) -> Promise<Object>
+ * ```
+ */
+Dynamo.prototype.enableStreams = function (tablename, options) {
+  return this.connection.updateTable({
+    TableName: tablename,
+    StreamSpecification: {
+      StreamEnabled: true,
+      StreamViewType: options.viewType,
+    },
+  }).promise()
+}
+
+/**
  * @name Dynamo.prototype.createTable
  *
  * @synopsis
