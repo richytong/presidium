@@ -155,7 +155,7 @@ Docker.prototype.listContainers = function dockerListContainers() {
  */
 
 Docker.prototype.buildImage = async function (image, path, options = {}) {
-  const archive = new Archive(options?.archive)
+  const archive = new Archive(options.archive)
   return this.http.post(`/build?${querystring.stringify({
     dockerfile: options.archiveDockerfile ?? 'Dockerfile',
     t: image,
