@@ -10,6 +10,7 @@ const Presidium = {
   Lambda, LambdaFunction,
   Mongo, MongoCollection,
   Elasticsearch,
+  SNS, SNSTopic,
   S3, S3Bucket,
   Redshift,
   Gremlin,
