@@ -52,10 +52,9 @@ const DynamoStream = function (options) {
   this.sequenceNumber = get('sequenceNumber', null)(options)
   this.dynamodbstreams = new DynamoDBStreams({
     apiVersion: '2012-08-10',
-    accessKeyId: 'accessKeyId-placeholder',
-    secretAccessKey: 'secretAccessKey-placeholder',
-    region: 'region-placeholder',
-    httpOptions: { agent: HttpAgent() },
+    accessKeyId: 'id',
+    secretAccessKey: 'secret',
+    region: 'x-x-x',
     ...awsCreds,
   })
 
