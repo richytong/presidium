@@ -35,6 +35,9 @@ const throwTypeError = function throwTypeError(message) {
  *
  * Dynamo(endpoint string) -> DynamoTable
  * ```
+ *
+ * @description
+ * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#constructor-property
  */
 const Dynamo = function (options) {
   if (this == null || this.constructor != Dynamo) {
@@ -42,6 +45,8 @@ const Dynamo = function (options) {
   }
   this.connection = new AWSDynamo({
     apiVersion: '2012-08-10',
+    accessKeyId: 'id',
+    secretAccessKey: 'secret',
     region: 'x-x-x',
     ...options,
   })
