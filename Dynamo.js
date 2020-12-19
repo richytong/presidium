@@ -42,9 +42,7 @@ const Dynamo = function (options) {
   }
   this.connection = new AWSDynamo({
     apiVersion: '2012-08-10',
-    accessKeyId: 'accessKeyId-placeholder',
-    secretAccessKey: 'secretAccessKey-placeholder',
-    region: 'region-placeholder',
+    region: 'x-x-x',
     ...options,
   })
   return this
