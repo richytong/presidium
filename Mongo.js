@@ -1,4 +1,5 @@
 const { MongoClient, ObjectID } = require('mongodb')
+const omit = require('rubico/omit')
 
 /**
  * @name Mongo
@@ -22,10 +23,11 @@ const { MongoClient, ObjectID } = require('mongodb')
  * How to create a database
  * https://stackoverflow.com/questions/35758008/create-database-node-js-with-mongodb
  */
-const Mongo = function (uri) {
-  const mongo = new MongoClient(uri, {
+const Mongo = function (options) {
+  const mongo = new MongoClient(options.uri, {
     useUnifiedTopology: true,
     keepAlive: true,
+    ...omit(['uri'])(options),
   })
   mongo.ready = mongo.connect()
   return mongo

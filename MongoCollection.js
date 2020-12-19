@@ -15,7 +15,7 @@ const Mongo = require('./Mongo')
  * https://docs.mongodb.com/manual/reference/method/db.createCollection/
  */
 const MongoCollection = function (options) {
-  const mongo = Mongo(options.uri),
+  const mongo = Mongo(options),
     collection = mongo.db(mongo.s.options.dbName).collection(options.name)
   collection.name = options.name
   collection.mongo = mongo
