@@ -40,25 +40,13 @@ const Dynamo = function (options) {
   if (this == null || this.constructor != Dynamo) {
     return new Dynamo(options)
   }
-  if (typeof options == 'string') {
-    this.connection = new AWSDynamo({
-      apiVersion: '2012-08-10',
-      accessKeyId: 'accessKeyId-placeholder',
-      secretAccessKey: 'secretAccessKey-placeholder',
-      region: 'region-placeholder',
-      endpoint: options,
-      httpOptions: { agent: HttpAgent() },
-    })
-  } else {
-    this.connection = new AWSDynamo({
-      apiVersion: '2012-08-10',
-      accessKeyId: 'accessKeyId-placeholder',
-      secretAccessKey: 'secretAccessKey-placeholder',
-      region: 'region-placeholder',
-      httpOptions: { agent: HttpAgent() },
-      ...options,
-    })
-  }
+  this.connection = new AWSDynamo({
+    apiVersion: '2012-08-10',
+    accessKeyId: 'accessKeyId-placeholder',
+    secretAccessKey: 'secretAccessKey-placeholder',
+    region: 'region-placeholder',
+    ...options,
+  })
   return this
 }
 

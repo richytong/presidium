@@ -8,7 +8,7 @@ const dynamo = Dynamo('http://localhost:8000/')
 
 module.exports = Test('DynamoTable', DynamoTable)
   .before(async function () {
-    this.dynamo = Dynamo('http://localhost:8000/')
+    this.dynamo = Dynamo({ endpoint: 'http://localhost:8000/' })
     await this.dynamo.deleteTable('test-tablename')
   })
   .case({

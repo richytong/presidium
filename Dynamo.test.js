@@ -39,7 +39,7 @@ module.exports = [
     .throws('?', new TypeError('unknown type for ?')),
 
   Test('Dynamo', Dynamo)
-    .case('http://localhost:8000', async function (dynamo) {
+    .case({ endpoint: 'http://localhost:8000' }, async function (dynamo) {
       await dynamo.deleteTable('test-1').catch(() => {})
       await dynamo.waitFor('test-1', 'tableNotExists')
       await dynamo.deleteTable('test-2').catch(() => {})
