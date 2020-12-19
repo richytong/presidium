@@ -27,7 +27,7 @@ const Mongo = function (options) {
   const mongo = new MongoClient(options.uri, {
     useUnifiedTopology: true,
     keepAlive: true,
-    ...omit(['uri'])(options),
+    ...omit(['name', 'uri'])(options),
   })
   mongo.ready = mongo.connect()
   return mongo
