@@ -50,7 +50,7 @@ const DynamoStream = function (options) {
   this.table = options.table
   this.shardIteratorType = get('shardIteratorType', 'TRIM_HORIZON')(options)
   this.sequenceNumber = get('sequenceNumber', null)(options)
-  this.dynamodbstreams = new DynamoDBStreams({
+  this.client = new DynamoDBStreams({
     apiVersion: '2012-08-10',
     accessKeyId: 'id',
     secretAccessKey: 'secret',
@@ -69,129 +69,21 @@ const DynamoStream = function (options) {
 }
 
 /**
- * @name DynamoStream.prototype.getHeaders
+ * @name DynamoStream.prototype._listStreams
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DynamoStream(options).getHeaders(opts? {
+ * DynamoStream(options).listStreams(headers {
  *   exclusiveStartStreamArn: string,
- * }) -> Promise<{
- *   Streams: Array<{
- *     StreamArn: string,
- *     StreamLabel: <date>,
- *     TableName: string,
- *   }>,
- *   LastEvaluatedStreamArn?: string,
- * }>
+ * })
  * ```
  */
-DynamoStream.prototype.getHeaders = async function getHeaders(options = {}) {
-  await this.ready
-  return this.dynamodbstreams.listStreams({
+DynamoStream.prototype._listStreams = function listStreams(headers) {
+  return this.client.listStreams({
     TableName: this.table,
-    ...options.exclusiveStartStreamArn && {
+    ...headers?.exclusiveStartStreamArn && {
       ExclusiveStartStreamArn: options.exclusiveStartStreamArn,
     },
-  }).promise()
-}
-
-/**
- * @name DynamoStream.prototype.getShardsFromHeader
- *
- * @synopsis
- * ```coffeescript [specscript]
- * DynamoStream(options).getShardsFromHeader(streamHeader {
- *   StreamArn: string,
- * }, options? {
- *   limit: number,
- *   exclusiveStartShardId: string,
- * }) -> Promise<{
- *   Shards: Array<{
- *     ShardId: string,
- *     ParentShardId: string,
- *     SequenceNumberRange: {
- *       StartingSequenceNumber: string,
- *       EndingSequenceNumber: string,
- *     },
- *     StreamArn: string,
- *   }>,
- *   LastEvaluatedShardId?: string,
- * }>
- * ```
- */
-DynamoStream.prototype.getShardsFromHeader = async function (streamHeader, options = {}) {
-  await this.ready
-  return this.dynamodbstreams.describeStream({
-    StreamArn: streamHeader.StreamArn,
-    Limit: get('limit', 100)(options),
-    ...options.exclusiveStartShardId && {
-      ExclusiveStartShardId: options.exclusiveStartShardId,
-    },
-  }).promise().then(fork({
-    Shards: pipe([
-      get('StreamDescription.Shards'),
-      map(assign({
-        StreamArn: always(streamHeader.StreamArn),
-      })),
-    ]),
-    LastEvaluatedShardId: get('StreamDescription.LastEvaluatedShardId'),
-  }))
-}
-
-/**
- * @name DynamoStream.prototype.getShardIterator
- *
- * @synopsis
- * ```coffeescript [specscript]
- * DynamoStream(options).getShardIterator(streamShard {
- *   ShardId: string,
- *   StreamArn: string,
- * }) -> Promise<string>
- * ```
- */
-DynamoStream.prototype.getShardIterator = async function getShardIterator(streamShard) {
-  await this.ready
-  return this.dynamodbstreams.getShardIterator({
-    ShardId: streamShard.ShardId,
-    ShardIteratorType: this.shardIteratorType,
-    StreamArn: streamShard.StreamArn,
-  }).promise().then(get('ShardIterator'))
-}
-
-/**
- * @name DynamoStream.prototype.getRecords
- *
- * @synopsis
- * ```coffeescript [specscript]
- * DynamoStream(options).getRecords(
- *   shardIterator string,
- *   opts {
- *     limit: 1000|number,
- *   },
- * ) -> Promise<{
- *   Records: {
- *     eventID: string,
- *     eventName: 'INSERT'|'MODIFY'|'REMOVE',
- *     eventVersion: string,
- *     eventSource: 'aws:dynamodb',
- *     awsRegion: string,
- *     dynamodb: Array<{
- *       Keys: Object,
- *       NewImage: Object,
- *       OldImage: Object,
- *       SequenceNumber: string,
- *       SizeBytes: number,
- *       StreamViewType: 'NEW_AND_OLD_IMAGES'|'NEW_IMAGE'|'OLD_IMAGE'|'KEYS_ONLY',
- *     }>,
- *   },
- *   NextShardIterator?: string,
- * }>
- * ```
- */
-DynamoStream.prototype.getRecords = function getRecords(shardIterator, options = {}) {
-  return this.dynamodbstreams.getRecords({
-    ShardIterator: shardIterator,
-    Limit: get('limit', 1000)(options),
   }).promise()
 }
 
@@ -201,21 +93,40 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* asyncGenerator() 
     records = null
   await this.ready
   do {
-    headers = await this.getHeaders({
-      exclusiveStartStreamArn: get('LastEvaluatedStreamArn')(headers),
-    })
+    headers = await this.client.listStreams({
+      TableName: this.table,
+      ...headers?.LastEvaluatedStreamArn && {
+        ExclusiveStartStreamArn: headers.LastEvaluatedStreamArn,
+      },
+    }).promise()
+
     do {
       for (const streamHeader of headers.Streams) {
-        shards = await this.getShardsFromHeader(streamHeader, {
-          exclusiveStartShardId: get('LastEvaluatedShardId')(shards),
-        })
+        shards = await this.client.describeStream({
+          StreamArn: streamHeader.StreamArn,
+          Limit: 100,
+          ...shards?.LastEvaluatedShardId && {
+            ExclusiveStartShardId: shards.LastEvaluatedShardId,
+          },
+        }).promise().then(get('StreamDescription'))
 
         for (const shard of shards.Shards) {
-          const startingShardIterator = await this.getShardIterator(shard)
-          records = await this.getRecords(startingShardIterator) // TODO coverage here
+          const startingShardIterator = await this.client.getShardIterator({
+            ShardId: shard.ShardId,
+            ShardIteratorType: this.shardIteratorType,
+            StreamArn: streamHeader.StreamArn,
+          }).promise().then(get('ShardIterator'))
+          records = await this.client.getRecords({
+            ShardIterator: startingShardIterator,
+            Limit: 1000,
+          }).promise()
+
           yield* records.Records
           while (records.NextShardIterator != null) {
-            records = await this.getRecords(records.NextShardIterator)
+            records = await this.client.getRecords({
+              ShardIterator: records.NextShardIterator,
+              Limit: 1000,
+            }).promise()
             if (records.Records.length == 0) {
               break
             } else {
