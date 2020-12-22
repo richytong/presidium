@@ -150,26 +150,6 @@ const myBucket = S3Bucket({
 })()
 ```
 
-## Command Redis
-```javascript
-import { Redis } from 'presidium'
-
-;(async function () {
-  const redis = Redis('redis://localhost:6379')
-
-  await redis.ready
-
-  await redis.set('my:string', 'hello')
-  console.log(
-    await redis.get('my:string'),
-  ) // hello
-  await redis.zadd('my:sortedSet', 1, 'one', 2, 'two', 3, 'three')
-  console.log(
-    await redis.zrange('my:sortedSet', 0, 2, 'WITHSCORES')
-  ) // ['one', '1', 'two', '2', 'three', '3']
-})()
-```
-
 ## Build and Push Docker Images
 > Stop using --build-arg for that npm token
 ```javascript
