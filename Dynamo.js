@@ -73,7 +73,7 @@ Dynamo.prototype.describeTable = function (tablename) {
  * Dynamo(options).enableStreams(
  *   tablename string,
  *   options {
- *     viewType: 'NEW_IMAGE'|'OLD_IMAGE'|'NEW_AND_OLD_IMAGES'|'KEYS_ONLY',
+ *     streamViewType: 'NEW_IMAGE'|'OLD_IMAGE'|'NEW_AND_OLD_IMAGES'|'KEYS_ONLY',
  *   },
  * ) -> Promise<Object>
  * ```
@@ -83,7 +83,7 @@ Dynamo.prototype.enableStreams = function (tablename, options) {
     TableName: tablename,
     StreamSpecification: {
       StreamEnabled: true,
-      StreamViewType: options.viewType,
+      StreamViewType: options.streamViewType,
     },
   }).promise()
 }

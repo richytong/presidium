@@ -26,7 +26,7 @@ const {
  *   secretAccessKey: string,
  *   region: string,
  *   endpoint: string,
- *   viewType?: 'NEW_AND_OLD_IMAGES'|'NEW_IMAGE'|'OLD_IMAGE'|'KEYS_ONLY',
+ *   streamViewType?: 'NEW_AND_OLD_IMAGES'|'NEW_IMAGE'|'OLD_IMAGE'|'KEYS_ONLY',
  *   shardIteratorType?: 'TRIM_HORIZON'|'LATEST'|'AT_SEQUENCE_NUMBER'|'AFTER_SEQUENCE_NUMBER',
  * })
  * ```
@@ -48,8 +48,9 @@ const DynamoStream = function (options) {
     'endpoint',
   ])(options)
   this.table = options.table
-  this.shardIteratorType = get('shardIteratorType', 'TRIM_HORIZON')(options)
-  this.sequenceNumber = get('sequenceNumber', null)(options)
+  this.getRecordsLimit = options.getRecordsLimit ?? 1000
+  this.shardIteratorType = options.shardIteratorType ?? 'TRIM_HORIZON'
+  this.sequenceNumber = options.sequenceNumber
   this.client = new DynamoDBStreams({
     apiVersion: '2012-08-10',
     accessKeyId: 'id',
@@ -62,10 +63,15 @@ const DynamoStream = function (options) {
   this.ready = this.dynamo.describeTable(this.table).then(pipe([
     get('Table.StreamSpecification'),
     streamSpec => streamSpec == null ? this.dynamo.enableStreams(this.table, {
-      viewType: get('viewType', 'NEW_AND_OLD_IMAGES')(options)
+      streamViewType: get('streamViewType', 'NEW_AND_OLD_IMAGES')(options)
     }) : {},
   ]))
   return this
+}
+
+// () => ()
+DynamoStream.prototype.close = function close() {
+  this.closed = true
 }
 
 DynamoStream.prototype[Symbol.asyncIterator] = async function* asyncGenerator() {
@@ -94,22 +100,23 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* asyncGenerator() 
         for (const shard of shards.Shards) {
           const startingShardIterator = await this.client.getShardIterator({
             ShardId: shard.ShardId,
-            ShardIteratorType: this.shardIteratorType,
             StreamArn: streamHeader.StreamArn,
+            ShardIteratorType: this.shardIteratorType,
+            ...this.sequenceNumber && { SequenceNumber: this.sequenceNumber },
           }).promise().then(get('ShardIterator'))
           records = await this.client.getRecords({
             ShardIterator: startingShardIterator,
-            Limit: 1000,
+            Limit: this.getRecordsLimit
           }).promise()
 
           yield* records.Records
-          while (records.NextShardIterator != null) {
+          while (!this.closed && records.NextShardIterator != null) {
             records = await this.client.getRecords({
               ShardIterator: records.NextShardIterator,
-              Limit: 1000,
+              Limit: this.getRecordsLimit
             }).promise()
             if (records.Records.length == 0) {
-              break
+              await new Promise(resolve => setTimeout(resolve, 1000))
             } else {
               yield* records.Records
             }
