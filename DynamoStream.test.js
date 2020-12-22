@@ -67,4 +67,4 @@ module.exports = Test('DynamoStream', DynamoStream)
     for (const record of records) {
       assert(record.dynamodb)
     }
-  })()
+  })
