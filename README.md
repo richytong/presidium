@@ -42,30 +42,6 @@ socket.on('message', data => {
 })
 ```
 
-## CRUD and Query Mongo
-```javascript
-import { MongoCollection } from 'presidium'
-
-;(async function () {
-  const myCollection = MongoCollection({
-    name: 'my-collection',
-    uri: 'mongodb+srv://my-user:my-password@my-host.com/my-db',
-  })
-
-  await myCollection.ready
-
-  await myCollection.insertOne({
-    _id: '1',
-    name: 'George',
-  })
-  await myCollection.updateOne({ _id: '1' }, { age: 32 })
-  console.log(
-    await myCollection.findOne({ _id: '1' }),
-  ) // { _id: '1', name: 'George', age: 32 }
-  await myCollection.deleteOne({ _id: '1' })
-})()
-```
-
 ## CRUD and Query DynamoDB
 ```javascript
 import { DynamoTable, DynamoIndex } from 'presidium'
