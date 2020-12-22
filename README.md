@@ -92,6 +92,7 @@ const awsCreds = {
 ```
 
 ## Consume Kinesis Streams
+```javascript
 import { KinesisStream } from 'presidium'
 
 const awsCreds = {
@@ -118,6 +119,7 @@ const myStream = KinesisStream({
                       // hey
   }
 })
+```
 
 ## Upload to S3
 ```javascript
