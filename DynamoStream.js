@@ -68,25 +68,6 @@ const DynamoStream = function (options) {
   return this
 }
 
-/**
- * @name DynamoStream.prototype._listStreams
- *
- * @synopsis
- * ```coffeescript [specscript]
- * DynamoStream(options).listStreams(headers {
- *   exclusiveStartStreamArn: string,
- * })
- * ```
- */
-DynamoStream.prototype._listStreams = function listStreams(headers) {
-  return this.client.listStreams({
-    TableName: this.table,
-    ...headers?.exclusiveStartStreamArn && {
-      ExclusiveStartStreamArn: options.exclusiveStartStreamArn,
-    },
-  }).promise()
-}
-
 DynamoStream.prototype[Symbol.asyncIterator] = async function* asyncGenerator() {
   let headers = null,
     shards = null,
