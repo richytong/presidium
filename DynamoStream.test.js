@@ -157,7 +157,7 @@ module.exports = Test('DynamoStream', DynamoStream)
   }, async function (myStream) {
     await myStream.ready
 
-    // there shouldn't be any more records, so latestRecordPromise should never resolve
+    // there shouldn't be any more records, so this should hang
     const latestRecordPromise = asyncIterableTake(1)(myStream)
     const raceResult = await Promise.race([
       latestRecordPromise,
