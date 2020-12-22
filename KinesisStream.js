@@ -85,7 +85,7 @@ KinesisStream.prototype.delete = function deleteStream() {
 
 /**
  * @name KinesisStream.prototype.putRecord
- * 
+ *
  * @synopsis
  * ```coffeescript [specscript]
  * KinesisStream(options).putRecord(

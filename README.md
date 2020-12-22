@@ -115,6 +115,34 @@ const awsCreds = {
 })()
 ```
 
+## Consume Kinesis Streams
+import { KinesisStream } from 'presidium'
+
+const awsCreds = {
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  region: process.env.AWS_REGION,
+}
+
+const myStream = KinesisStream({
+  name: 'my-stream',
+  ...awsCreds,
+})
+
+;(async function() {
+  await myStream.ready
+
+  await myStream.putRecord('hey')
+  await myStream.putRecord('hey')
+  await myStream.putRecord('hey')
+
+  for await (const item of myStream) {
+    console.log(item) // hey
+                      // hey
+                      // hey
+  }
+})
+
 ## Upload to S3
 ```javascript
 import { S3Bucket } from 'presidium'
