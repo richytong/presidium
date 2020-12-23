@@ -96,6 +96,49 @@ Docker.prototype.listContainers = function dockerListContainers() {
 }
 
 /**
+ * @name Docker.prototype.pullImage
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Docker().pullImage(
+ *   name string,
+ *   options {
+ *     repo: string, // additional path prefix saved on this machine
+ *     tag?: string, // if not in name
+ *     message?: string, // commit message for image
+ *     platform?: ''|'<os>[/arch[/variant]]'
+ *     username: string,
+ *     password: string,
+ *     email?: string,
+ *     serveraddress?: string,
+ *     identitytoken?: string,
+ *   },
+ * )
+ * ```
+ */
+Docker.prototype.pullImage = function dockerCreateImage(name, options = {}) {
+  return this.http.post(`/images/create?${querystring.stringify({
+    fromImage: name,
+    ...pick(['repo', 'tag', 'message', 'platform'])(options),
+  })}`, {
+    headers: {
+      'X-Registry-Auth': pipe([
+        pick([
+          'username',
+          'password',
+          'email',
+          'serveraddress',
+          'identitytoken',
+        ]),
+        stringifyJSON,
+        Buffer.from,
+        buffer => buffer.toString('base64'),
+      ])(options),
+    },
+  })
+}
+
+/**
  * @name Docker.prototype.buildImage
  *
  * @synopsis
@@ -203,10 +246,18 @@ Docker.prototype.pushImage = function (image, repository, options = {}) {
       imagename, search,
     }) => this.http.post(`/images/${imagename}/push?${search}`, {
       headers: {
-        'X-Registry-Auth': get(
-          'authorization',
-          stringifyJSON({ identitytoken: '' }),
-        )(options),
+        'X-Registry-Auth': pipe([
+          pick([
+            'username',
+            'password',
+            'email',
+            'serveraddress',
+            'identitytoken',
+          ]),
+          stringifyJSON,
+          Buffer.from,
+          buffer => buffer.toString('base64'),
+        ])(options),
       },
     }),
   ])(image)

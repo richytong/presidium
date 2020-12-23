@@ -23,6 +23,18 @@ const passthrough = target => transform(map(identity), target)
 const charCode = string => string.charCodeAt(0)
 
 module.exports = Test('DockerImage', DockerImage)
+  .case('node:15-alpine', async function (alpineImage) {
+    {
+      const pullStream = alpineImage.pull()
+      pullStream.pipe(process.stdout)
+      await new Promise(resolve => pullStream.on('end', resolve))
+    }
+    {
+      const pullStream = alpineImage.pull({ identitytoken: '' })
+      pullStream.pipe(process.stdout)
+      await new Promise(resolve => pullStream.on('end', resolve))
+    }
+  })
   .case('my-image:hello', async function (myImage) {
     const buildStream = myImage.build(__dirname, {
       archive: {

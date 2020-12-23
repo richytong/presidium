@@ -75,6 +75,39 @@ const DockerImage = function (name) {
 }
 
 /**
+ * @name DockerImage.prototype.pull
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * DockerImage(name).pull(options {
+ *   repo: string, // additional path prefix saved on this machine
+ *   tag?: string, // if not in name
+ *   message?: string, // commit message for image
+ *   platform?: ''|'<os>[/arch[/variant]]'
+ *   username: string,
+ *   password: string,
+ *   email?: string,
+ *   serveraddress?: string,
+ *   identitytoken?: string,
+ * }) -> ReadableStream
+ * ```
+ */
+DockerImage.prototype.pull = function (options) {
+  const result = new PassThroughStream()
+  result.promise = new Promise((resolve, reject) => {
+    this.docker.pullImage(this.name, pick([
+      'repo', 'tag', 'message', 'platform',
+      'username', 'password', 'email', 'serveraddress', 'identitytoken',
+    ])(options)).then(response => {
+      response.body.on('end', resolve)
+      response.body.on('error', reject)
+      response.body.pipe(result)
+    })
+  })
+  return result
+}
+
+/**
  * @name DockerImage.prototype.build
  *
  * @synopsis
@@ -128,8 +161,13 @@ DockerImage.prototype.push = function (repository, options) {
       tag: this.name.split(':')[1],
       repo: pathJoin(repository, this.name.split(':')[0]),
     }).then(pipe([
-      () => this.docker.pushImage(
-        this.name, repository, pick(['authorization'])(options)),
+      () => this.docker.pushImage(this.name, repository, pick([
+        'username',
+        'password',
+        'email',
+        'serveraddress',
+        'identitytoken',
+      ])(options)),
       response => {
         response.body.on('end', thunkify(resolve, result))
         response.body.on('error', reject)
