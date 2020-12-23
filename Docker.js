@@ -116,7 +116,7 @@ Docker.prototype.listContainers = function dockerListContainers() {
  * )
  * ```
  */
-Docker.prototype.pullImage = function dockerCreateImage(name, options = {}) {
+Docker.prototype.pullImage = function dockerPullImage(name, options = {}) {
   return this.http.post(`/images/create?${querystring.stringify({
     fromImage: name,
     ...pick(['repo', 'tag', 'message', 'platform'])(options),
