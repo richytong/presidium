@@ -751,13 +751,11 @@ Docker.prototype.updateSwarm = async function dockerUpdateSwarm(options = {}) {
  *   logDriver: 'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'none',
  *   logDriverOptions: Object<string>,
  *   publish: Object<(hostPort string)=>(containerPort string)>,
- *   healthcheck: {
- *     test: Array<string>, // healthcheck command configuration. See description
- *     interval?: 10e9|>1e6, // nanoseconds to wait between healthchecks; 0 means inherit
- *     timeout?: 20e9|>1e6, // nanoseconds to wait before healthcheck fails
- *     retries?: 5|number, // number of retries before unhealhty
- *     startPeriod?: >=1e6, // nanoseconds to wait on container init before starting first healthcheck
- *   },
+ *   healthCmd: Array<string>, // healthcheck command. See description
+ *   healthInterval: 10e9|>1e6, // nanoseconds to wait between healthchecks; 0 means inherit
+ *   healthTimeout: 20e9|>1e6, // nanoseconds to wait before healthcheck fails
+ *   healthRetries: 5|number, // number of retries before unhealhty
+ *   healthStartPeriod: >=1e6, // nanoseconds to wait on container init before starting first healthcheck
  *   mounts: Array<{
  *     source: string, // name of volume
  *     target: string, // mounted path inside container
