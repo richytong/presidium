@@ -203,15 +203,14 @@ import { DockerSwarm, DockerService } from 'presidium'
 
   await mySwarm.ready
 
-  const myService = DockerService('my-service')
-
-  await myService.create({
+  const myService = DockerService({
+    name: 'my-service',
     image: 'nginx:1.19',
     publish: { 8080: 80 },
     healthCheck: ['curl', '0.0.0.0:80'],
-    replicas: 1,
+    replicas: 5,
   })
 
-  await myService.update({ replicas: 5 })
+  await myService.ready // service now has 5 replicas at 192.168.99.121
 })()
 ```
