@@ -23,11 +23,19 @@ const passthrough = target => transform(map(identity), target)
 const charCode = string => string.charCodeAt(0)
 
 module.exports = Test('DockerImage', DockerImage)
+  .case('doesnot:exist', async function (dneImage) {
+    const data = await dneImage.inspect()
+    assert(data.message.startsWith('no such image'))
+  })
   .case('node:15-alpine', async function (alpineImage) {
     {
       const pullStream = alpineImage.pull()
       pullStream.pipe(process.stdout)
       await new Promise(resolve => pullStream.on('end', resolve))
+    }
+    {
+      const data = await alpineImage.inspect()
+      assert(data.RepoTags.includes('node:15-alpine'))
     }
     {
       const pullStream = alpineImage.pull({ identitytoken: '' })

@@ -32,7 +32,7 @@ const PassThroughStream = stream.PassThrough
  *
  * @synopsis
  * ```coffeescript [specscript]
- * new DockerImage(image name, dockerfile string) -> DockerImage
+ * DockerImage(name string) -> DockerImage
  * ```
  *
  * @synopsis
