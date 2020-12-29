@@ -6,7 +6,7 @@ const inspect = require('./internal/inspect')
 
 module.exports = Test('S3Bucket', S3Bucket)
   .before(async function () {
-    this.s3 = new S3('http://localhost:9000/')
+    this.s3 = new S3({ endpoint: 'http://localhost:9000/' })
     try {
       await new S3Bucket({
         name: 'test-bucket',

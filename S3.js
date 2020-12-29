@@ -1,6 +1,5 @@
 const rubico = require('rubico')
 const AWSS3 = require('aws-sdk/clients/s3')
-const HttpAgent = require('./HttpAgent')
 const identity = require('rubico/x/identity')
 
 const {
@@ -19,42 +18,27 @@ const {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * S3(connection string|AWSS3|{
+ * S3(connection {
  *   accessKeyId: string,
  *   secretAccessKey: string,
  *   region: string,
+ *   endpoint: string,
  * }) -> S3
  * ```
  */
-const S3 = function (connection, options) {
+const S3 = function (options) {
   if (this == null || this.constructor != S3) {
-    return new S3(connection, options)
+    return new S3(options)
   }
-
-  if (typeof connection == 'string') {
-    this.s3 = new AWSS3({
-      apiVersion: '2006-03-01',
-      accessKeyId: 'accessKey',
-      secretAccessKey: 'secretKey',
-      region: 'x-x-x',
-      httpOptions: { agent: HttpAgent() },
-      endpoint: connection,
-      s3ForcePathStyle: true,
-      signatureVersion: 'v4',
-      ...options,
-    })
-  } else {
-    this.s3 = new AWSS3({
-      apiVersion: '2006-03-01',
-      accessKeyId: 'accessKey',
-      secretAccessKey: 'secretKey',
-      region: 'x-x-x',
-      httpOptions: { agent: HttpAgent() },
-      s3ForcePathStyle: true,
-      signatureVersion: 'v4',
-      ...connection,
-    })
-  }
+  this.s3 = new AWSS3({
+    apiVersion: '2006-03-01',
+    accessKeyId: 'id',
+    secretAccessKey: 'secret',
+    region: 'x-x-x',
+    s3ForcePathStyle: true,
+    signatureVersion: 'v4',
+    ...options,
+  })
   return this
 }
 
