@@ -32,8 +32,8 @@ const S3 = function (options) {
   }
   this.s3 = new AWSS3({
     apiVersion: '2006-03-01',
-    // accessKeyId: 'id',
-    // secretAccessKey: 'secret',
+    accessKeyId: '',
+    secretAccessKey: '',
     region: 'x-x-x',
     s3ForcePathStyle: true,
     signatureVersion: 'v4',
