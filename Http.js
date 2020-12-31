@@ -10,7 +10,7 @@ const pathJoin = nodePath.join
  *
  * @synopsis
  * ```coffeescript [specscript]
- * Http(urlstr string) -> http
+ * Http(url string|URL) -> http
  * ```
  *
  * @description
@@ -20,11 +20,11 @@ const pathJoin = nodePath.join
  * CONNECT method Http.prototype.connect
  * https://stackoverflow.com/questions/11697943/when-should-one-use-connect-and-get-http-methods-at-http-proxy-server/40329026
  */
-const Http = function (urlstr, httpOptions) {
+const Http = function (url, httpOptions) {
   if (this == null || this.constructor != Http) {
-    return new Http(urlstr)
+    return new Http(url)
   }
-  const url = new URL(urlstr)
+  const url = new URL(url)
   this.url = url
   this.httpOptions = httpOptions
   return this
