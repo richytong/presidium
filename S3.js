@@ -25,6 +25,9 @@ const {
  *   endpoint: string,
  * }) -> S3
  * ```
+ *
+ * @description
+ * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html
  */
 const S3 = function (options) {
   if (this == null || this.constructor != S3) {
@@ -32,8 +35,8 @@ const S3 = function (options) {
   }
   this.s3 = new AWSS3({
     apiVersion: '2006-03-01',
-    accessKeyId: '',
-    secretAccessKey: '',
+    accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
+    secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
     region: 'x-x-x',
     s3ForcePathStyle: true,
     signatureVersion: 'v4',
