@@ -24,8 +24,7 @@ const Http = function (url, httpOptions) {
   if (this == null || this.constructor != Http) {
     return new Http(url)
   }
-  const url = new URL(url)
-  this.url = url
+  this.url = new URL(url)
   this.httpOptions = httpOptions
   return this
 }
