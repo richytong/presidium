@@ -9,7 +9,7 @@ const pathJoin = nodePath.join
  *
  * @synopsis
  * ```coffeescript [specscript]
- * Http(connection string) -> http
+ * Http(urlstr string) -> http
  * ```
  *
  * @description
@@ -19,14 +19,13 @@ const pathJoin = nodePath.join
  * CONNECT method Http.prototype.connect
  * https://stackoverflow.com/questions/11697943/when-should-one-use-connect-and-get-http-methods-at-http-proxy-server/40329026
  */
-const Http = function (connection, options) {
+const Http = function (urlstr, httpOptions) {
   if (this == null || this.constructor != Http) {
-    return new Http(connection, options)
+    return new Http(urlstr)
   }
-  const url = new URL(connection)
-  this.origin = get('origin')(url)
-  this.basePath = get('pathname')(url)
-  this.httpOptions = options
+  const url = new URL(urlstr)
+  this.url = url
+  this.httpOptions = httpOptions
   return this
 }
 
@@ -55,14 +54,18 @@ const Http = function (connection, options) {
  * [Response reference](https://developer.mozilla.org/en-US/docs/Web/API/Response).
  */
 Http.prototype.get = function httpGet(path, options) {
-  return fetch(new URL(pathJoin(this.basePath, path), this.origin), {
+  const url = new URL(this.url)
+  url.pathname = pathJoin(url.pathname, path)
+  return fetch(url, {
     ...this.httpOptions,
     ...options,
   })
 }
 
 Http.prototype.head = function httpHead(path, options) {
-  return fetch(new URL(pathJoin(this.basePath, path), this.origin), {
+  const url = new URL(this.url)
+  url.pathname = pathJoin(url.pathname, path)
+  return fetch(url, {
     ...this.httpOptions,
     ...options,
     method: 'HEAD',
@@ -70,7 +73,9 @@ Http.prototype.head = function httpHead(path, options) {
 }
 
 Http.prototype.post = function httpPost(path, options) {
-  return fetch(new URL(pathJoin(this.basePath, path), this.origin), {
+  const url = new URL(this.url)
+  url.pathname = pathJoin(url.pathname, path)
+  return fetch(url, {
     ...this.httpOptions,
     ...options,
     method: 'POST',
@@ -78,7 +83,9 @@ Http.prototype.post = function httpPost(path, options) {
 }
 
 Http.prototype.put = function httpPut(path, options) {
-  return fetch(new URL(pathJoin(this.basePath, path), this.origin), {
+  const url = new URL(this.url)
+  url.pathname = pathJoin(url.pathname, path)
+  return fetch(url, {
     ...this.httpOptions,
     ...options,
     method: 'PUT',
@@ -86,7 +93,9 @@ Http.prototype.put = function httpPut(path, options) {
 }
 
 Http.prototype.delete = function httpDelete(path, options) {
-  return fetch(new URL(pathJoin(this.basePath, path), this.origin), {
+  const url = new URL(this.url)
+  url.pathname = pathJoin(url.pathname, path)
+  return fetch(url, {
     ...this.httpOptions,
     ...options,
     method: 'DELETE',
@@ -94,7 +103,9 @@ Http.prototype.delete = function httpDelete(path, options) {
 }
 
 Http.prototype.options = function httpOptions(path, options) {
-  return fetch(new URL(pathJoin(this.basePath, path), this.origin), {
+  const url = new URL(this.url)
+  url.pathname = pathJoin(url.pathname, path)
+  return fetch(url, {
     ...this.httpOptions,
     ...options,
     method: 'OPTIONS',
@@ -102,7 +113,9 @@ Http.prototype.options = function httpOptions(path, options) {
 }
 
 Http.prototype.trace = function httpTrace(path, options) {
-  return fetch(new URL(pathJoin(this.basePath, path), this.origin), {
+  const url = new URL(this.url)
+  url.pathname = pathJoin(url.pathname, path)
+  return fetch(url, {
     ...this.httpOptions,
     ...options,
     method: 'TRACE',
@@ -110,7 +123,9 @@ Http.prototype.trace = function httpTrace(path, options) {
 }
 
 Http.prototype.patch = function httpPatch(path, options) {
-  return fetch(new URL(pathJoin(this.basePath, path), this.origin), {
+  const url = new URL(this.url)
+  url.pathname = pathJoin(url.pathname, path)
+  return fetch(url, {
     ...this.httpOptions,
     ...options,
     method: 'PATCH',
