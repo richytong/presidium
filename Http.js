@@ -1,6 +1,7 @@
 const fetch = require('node-fetch')
 const nodePath = require('path')
 const get = require('rubico/get')
+const curry = require('rubico/curry')
 
 const pathJoin = nodePath.join
 
@@ -54,82 +55,51 @@ const Http = function (urlstr, httpOptions) {
  * [Response reference](https://developer.mozilla.org/en-US/docs/Web/API/Response).
  */
 Http.prototype.get = function httpGet(path, options) {
-  const url = new URL(this.url)
-  url.pathname = pathJoin(url.pathname, path)
+  const url = new URL(this.url),
+    pathUrl = new URL(`http://throwaway/${path}`)
+  url.pathname = pathJoin(url.pathname, pathUrl.pathname)
+  url.search = pathUrl.search
   return fetch(url, {
     ...this.httpOptions,
     ...options,
   })
 }
 
-Http.prototype.head = function httpHead(path, options) {
-  const url = new URL(this.url)
-  url.pathname = pathJoin(url.pathname, path)
-  return fetch(url, {
-    ...this.httpOptions,
-    ...options,
-    method: 'HEAD',
-  })
+// (method string, path string, options object) => Promise<HttpResponse>
+const httpRequest = function httpRequest(method, path, options) {
+  const url = new URL(this.url),
+    pathUrl = new URL(`http://throwaway/${path}`)
+  url.pathname = pathJoin(url.pathname, pathUrl.pathname)
+  url.search = pathUrl.search
+  return fetch(url, { ...this.httpOptions, ...options, method })
 }
 
-Http.prototype.post = function httpPost(path, options) {
-  const url = new URL(this.url)
-  url.pathname = pathJoin(url.pathname, path)
-  return fetch(url, {
-    ...this.httpOptions,
-    ...options,
-    method: 'POST',
-  })
+Http.prototype.head = function head(path, options) {
+  return httpRequest.call(this, 'HEAD', path, options)
 }
 
-Http.prototype.put = function httpPut(path, options) {
-  const url = new URL(this.url)
-  url.pathname = pathJoin(url.pathname, path)
-  return fetch(url, {
-    ...this.httpOptions,
-    ...options,
-    method: 'PUT',
-  })
+Http.prototype.post = function post(path, options) {
+  return httpRequest.call(this, 'POST', path, options)
 }
 
-Http.prototype.delete = function httpDelete(path, options) {
-  const url = new URL(this.url)
-  url.pathname = pathJoin(url.pathname, path)
-  return fetch(url, {
-    ...this.httpOptions,
-    ...options,
-    method: 'DELETE',
-  })
+Http.prototype.put = function put(path, options) {
+  return httpRequest.call(this, 'PUT', path, options)
 }
 
-Http.prototype.options = function httpOptions(path, options) {
-  const url = new URL(this.url)
-  url.pathname = pathJoin(url.pathname, path)
-  return fetch(url, {
-    ...this.httpOptions,
-    ...options,
-    method: 'OPTIONS',
-  })
+Http.prototype.delete = function del(path, options) {
+  return httpRequest.call(this, 'DELETE', path, options)
 }
 
-Http.prototype.trace = function httpTrace(path, options) {
-  const url = new URL(this.url)
-  url.pathname = pathJoin(url.pathname, path)
-  return fetch(url, {
-    ...this.httpOptions,
-    ...options,
-    method: 'TRACE',
-  })
+Http.prototype.options = function opts(path, options) {
+  return httpRequest.call(this, 'OPTIONS', path, options)
 }
 
-Http.prototype.patch = function httpPatch(path, options) {
-  const url = new URL(this.url)
-  url.pathname = pathJoin(url.pathname, path)
-  return fetch(url, {
-    ...this.httpOptions,
-    ...options,
-    method: 'PATCH',
-  })
+Http.prototype.trace = function trace(path, options) {
+  return httpRequest.call(this, 'TRACE', path, options)
+}
+
+Http.prototype.patch = function patch(path, options) {
+  return httpRequest.call(this, 'PATCH', path, options)
 }
 
 module.exports = Http
