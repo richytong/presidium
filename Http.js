@@ -22,7 +22,7 @@ const pathJoin = nodePath.join
  */
 const Http = function (url, httpOptions) {
   if (this == null || this.constructor != Http) {
-    return new Http(url)
+    return new Http(url, httpOptions)
   }
   this.url = new URL(url)
   this.httpOptions = httpOptions
