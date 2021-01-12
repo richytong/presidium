@@ -114,9 +114,24 @@ const myStream = KinesisStream({
   await myStream.putRecord('hey')
 
   for await (const item of myStream) {
-    console.log(item) // hey
-                      // hey
-                      // hey
+    console.log(item) /*
+    {
+      SequenceNumber: '49614...',
+      ApproximateArrivalTimestamp: 2021-01-12T16:01:24.432Z,
+      Data: <Buffer ...>, // hey
+    }
+    {
+      SequenceNumber: '...',
+      SequenceNumber: '49614...',
+      ApproximateArrivalTimestamp: 2021-01-12T16:01:24.432Z,
+      Data: <Buffer ...>, // hey
+    }
+    {
+      SequenceNumber: '49614...',
+      ApproximateArrivalTimestamp: 2021-01-12T16:01:24.432Z,
+      Data: <Buffer ...>, // hey
+    }
+    */
   }
 })
 ```
