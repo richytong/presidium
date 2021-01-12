@@ -119,17 +119,20 @@ const myStream = KinesisStream({
       SequenceNumber: '49614...',
       ApproximateArrivalTimestamp: 2021-01-12T16:01:24.432Z,
       Data: <Buffer ...>, // hey
+      PartitionKey: 'hey',
     }
     {
       SequenceNumber: '...',
       SequenceNumber: '49614...',
       ApproximateArrivalTimestamp: 2021-01-12T16:01:24.432Z,
       Data: <Buffer ...>, // hey
+      PartitionKey: 'hey',
     }
     {
       SequenceNumber: '49614...',
       ApproximateArrivalTimestamp: 2021-01-12T16:01:24.432Z,
       Data: <Buffer ...>, // hey
+      PartitionKey: 'hey',
     }
     */
   }
