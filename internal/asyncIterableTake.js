@@ -3,12 +3,14 @@ const asyncIterableTake = amount => async function takingFromAsyncIterable(
   source,
 ) {
   const result = []
-  let taken = 0
-  for await (const item of source) {
-    result.push(item)
-    if (++taken == amount) {
+  const asyncIterator = source[Symbol.asyncIterator]()
+  let index = -1
+  while (++index < amount) {
+    const iteration = await asyncIterator.next()
+    if (iteration.done) {
       return result
     }
+    result.push(iteration.value)
   }
   return result
 }

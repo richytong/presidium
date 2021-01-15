@@ -48,6 +48,7 @@ const KinesisStream = function (options) {
   this.listShardsLimit = options.lstShardsLimit ?? 10000
   this.getRecordsLimit = options.getRecordsLimit ?? 10000
   this.kinesis = new Kinesis(omit(['name'])(options))
+  this.cancelToken = new Promise((_, reject) => (this.canceller = reject))
 
   this.ready = this.kinesis.client.describeStream({
     StreamName: this.name,
@@ -142,12 +143,16 @@ KinesisStream.prototype.updateShardCount = async function updateShardCount(count
 
 // () => ()
 KinesisStream.prototype.close = function close() {
+  console.log('calling close')
   this.closed = true
+  const error = new Error('closed')
+  error.reason = 'cancelled'
+  this.canceller(error)
+  return this
 }
 
 KinesisStream.prototype[Symbol.asyncIterator] = async function* asyncIterator() {
-  let shards = null,
-    records = null
+  let shards = null
   await this.ready
   do {
     shards = await this.kinesis.client.listShards({
@@ -170,6 +175,61 @@ KinesisStream.prototype[Symbol.asyncIterator] = async function* asyncIterator() 
       },
     }).promise()
 
+      /*
+    const streamName = this.name,
+      shardIteratorType = this.shardIteratorType,
+      shardIteratorTimestamp = this.shardIteratorTimestamp
+      cancelToken = this.cancelToken,
+      kinesisClient = this.kinesis.client,
+      getRecordsLimit = this.getRecordsLimit,
+      isStreamClosed = () => this.closed,
+      getCancelToken = () => this.cancelToken
+    let records = null
+    const yielding = await flatMap(async function* (shard) {
+      const startingShardIterator = await kinesisClient.getShardIterator({
+        ShardId: shard.ShardId,
+        StreamName: streamName,
+        ShardIteratorType: shardIteratorType,
+        ...shardIteratorTimestamp && {
+          Timestamp: shardIteratorTimestamp,
+        },
+      }).promise().then(get('ShardIterator'))
+      records = await kinesisClient.getRecords({
+        ShardIterator: startingShardIterator,
+        Limit: getRecordsLimit,
+      }).promise()
+
+      yield* records.Records
+      while (!isStreamClosed() && records.NextShardIterator != null) {
+        console.log('kinesis stream not done', records, cancelToken)
+        try {
+          records = await Promise.race([
+            cancelToken,
+            kinesisClient.getRecords({
+              ShardIterator: records.NextShardIterator,
+              Limit: getRecordsLimit,
+            }).promise(),
+          ])
+        } catch (error) {
+          console.log('got error', error)
+          if (error.reason == 'cancelled') {
+            return
+          }
+          throw error
+        }
+        yield* records.Records
+        if (records.MillisBehindLatest == 0) {
+          await new Promise(resolve => setTimeout(resolve, 1000))
+        }
+      }
+    })(shards.Shards)
+
+    console.log('got here')
+
+    yield* yielding
+      */
+
+    let records = null
     for (const shard of shards.Shards) {
       const startingShardIterator = await this.kinesis.client.getShardIterator({
         ShardId: shard.ShardId,
@@ -185,11 +245,22 @@ KinesisStream.prototype[Symbol.asyncIterator] = async function* asyncIterator() 
       }).promise()
 
       yield* records.Records
-      while (!this.closed && records.NextShardIterator != null) {
-        records = await this.kinesis.client.getRecords({
-          ShardIterator: records.NextShardIterator,
-          Limit: this.getRecordsLimit,
-        }).promise()
+      while (records.NextShardIterator != null) {
+        // console.log('kinesis stream not done', records)
+        try {
+          records = await Promise.race([
+            this.cancelToken,
+            this.kinesis.client.getRecords({
+              ShardIterator: records.NextShardIterator,
+              Limit: this.getRecordsLimit,
+            }).promise(),
+          ])
+        } catch (error) {
+          if (error.reason == 'cancelled') {
+            return
+          }
+          throw error
+        }
         if (records.MillisBehindLatest == 0) {
           await new Promise(resolve => setTimeout(resolve, 1000))
         } else {
