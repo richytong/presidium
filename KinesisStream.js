@@ -1,6 +1,8 @@
 const Kinesis = require('./Kinesis')
 const rubico = require('rubico')
 const has = require('rubico/x/has')
+const identity = require('rubico/x/identity')
+const Mux = require('rubico/monad/Mux')
 
 const {
   pipe, tap,
@@ -154,7 +156,7 @@ KinesisStream.prototype.close = function close() {
 KinesisStream.prototype[Symbol.asyncIterator] = async function* asyncIterator() {
   let shards = null
   await this.ready
-  do {
+  do { // TODO consider case when shards > 10_000
     shards = await this.kinesis.client.listShards({
       StreamName: this.name,
       MaxResults: this.listShardsLimit,
@@ -175,7 +177,6 @@ KinesisStream.prototype[Symbol.asyncIterator] = async function* asyncIterator() 
       },
     }).promise()
 
-      /*
     const streamName = this.name,
       shardIteratorType = this.shardIteratorType,
       shardIteratorTimestamp = this.shardIteratorTimestamp
@@ -185,7 +186,7 @@ KinesisStream.prototype[Symbol.asyncIterator] = async function* asyncIterator() 
       isStreamClosed = () => this.closed,
       getCancelToken = () => this.cancelToken
     let records = null
-    const yielding = await flatMap(async function* (shard) {
+    yield* Mux.race(shards.Shards.map(async function* (shard) {
       const startingShardIterator = await kinesisClient.getShardIterator({
         ShardId: shard.ShardId,
         StreamName: streamName,
@@ -200,8 +201,7 @@ KinesisStream.prototype[Symbol.asyncIterator] = async function* asyncIterator() 
       }).promise()
 
       yield* records.Records
-      while (!isStreamClosed() && records.NextShardIterator != null) {
-        console.log('kinesis stream not done', records, cancelToken)
+      while (records.NextShardIterator != null) {
         try {
           records = await Promise.race([
             cancelToken,
@@ -211,7 +211,6 @@ KinesisStream.prototype[Symbol.asyncIterator] = async function* asyncIterator() 
             }).promise(),
           ])
         } catch (error) {
-          console.log('got error', error)
           if (error.reason == 'cancelled') {
             return
           }
@@ -222,52 +221,7 @@ KinesisStream.prototype[Symbol.asyncIterator] = async function* asyncIterator() 
           await new Promise(resolve => setTimeout(resolve, 1000))
         }
       }
-    })(shards.Shards)
-
-    console.log('got here')
-
-    yield* yielding
-      */
-
-    let records = null
-    for (const shard of shards.Shards) {
-      const startingShardIterator = await this.kinesis.client.getShardIterator({
-        ShardId: shard.ShardId,
-        StreamName: this.name,
-        ShardIteratorType: this.shardIteratorType,
-        ...this.shardIteratorTimestamp && {
-          Timestamp: this.shardIteratorTimestamp,
-        },
-      }).promise().then(get('ShardIterator'))
-      records = await this.kinesis.client.getRecords({
-        ShardIterator: startingShardIterator,
-        Limit: this.getRecordsLimit,
-      }).promise()
-
-      yield* records.Records
-      while (records.NextShardIterator != null) {
-        // console.log('kinesis stream not done', records)
-        try {
-          records = await Promise.race([
-            this.cancelToken,
-            this.kinesis.client.getRecords({
-              ShardIterator: records.NextShardIterator,
-              Limit: this.getRecordsLimit,
-            }).promise(),
-          ])
-        } catch (error) {
-          if (error.reason == 'cancelled') {
-            return
-          }
-          throw error
-        }
-        if (records.MillisBehindLatest == 0) {
-          await new Promise(resolve => setTimeout(resolve, 1000))
-        } else {
-          yield* records.Records
-        }
-      }
-    }
+    }))
   } while (has('NextToken')(shards))
 }
 
