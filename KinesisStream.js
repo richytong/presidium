@@ -145,8 +145,6 @@ KinesisStream.prototype.updateShardCount = async function updateShardCount(count
 
 // () => ()
 KinesisStream.prototype.close = function close() {
-  console.log('calling close')
-  this.closed = true
   const error = new Error('closed')
   error.reason = 'cancelled'
   this.canceller(error)
@@ -179,13 +177,10 @@ KinesisStream.prototype[Symbol.asyncIterator] = async function* asyncIterator() 
 
     const streamName = this.name,
       shardIteratorType = this.shardIteratorType,
-      shardIteratorTimestamp = this.shardIteratorTimestamp
+      shardIteratorTimestamp = this.shardIteratorTimestamp,
       cancelToken = this.cancelToken,
       kinesisClient = this.kinesis.client,
-      getRecordsLimit = this.getRecordsLimit,
-      isStreamClosed = () => this.closed,
-      getCancelToken = () => this.cancelToken
-    let records = null
+      getRecordsLimit = this.getRecordsLimit
     yield* Mux.race(shards.Shards.map(async function* (shard) {
       const startingShardIterator = await kinesisClient.getShardIterator({
         ShardId: shard.ShardId,
@@ -195,7 +190,7 @@ KinesisStream.prototype[Symbol.asyncIterator] = async function* asyncIterator() 
           Timestamp: shardIteratorTimestamp,
         },
       }).promise().then(get('ShardIterator'))
-      records = await kinesisClient.getRecords({
+      let records = await kinesisClient.getRecords({
         ShardIterator: startingShardIterator,
         Limit: getRecordsLimit,
       }).promise()
