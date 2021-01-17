@@ -18,39 +18,44 @@ const {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * new DockerSwarm(address string) -> DockerSwarm
+ * new DockerSwarm(
+ *   advertiseAddr string, // url advertised to other nodes, e.g. 'eth0:2377'
+ *   options {
+ *     joinToken: string, // worker or manager join token
+ *     remoteAddrs: Array<string>, // urls of manager nodes already participating in the swarm
+ *   },
+ * ) -> DockerSwarm
  * ```
- *
- * @description
- * `address` is either the advertise address (`.init`) or the advertise address of an existing host (`.join`)
  */
-const DockerSwarm = function (address, token) {
+const DockerSwarm = function (advertiseAddr, options = {}) {
   if (this == null || this.constructor != DockerSwarm) {
-    return new DockerSwarm(address)
+    return new DockerSwarm(advertiseAddr, options)
   }
-  this.address = address
   this.docker = new Docker()
-  this.version = null
-  this.spec = null
   this.ready = this.docker.inspectSwarm().then(switchCase([
     or([
       eq(404, get('status')),
       eq(503, get('status')),
     ]),
-    token == null ? async () => {
-      await this.docker.initSwarm(address)
+    options.joinToken == null ? async () => {
+      await this.docker.initSwarm(advertiseAddr)
       await this.synchronize()
     } : async () => {
-      await this.docker.joinSwarm(address, token)
+      await this.docker.joinSwarm(advertiseAddr, options.joinToken, {
+        remoteAddrs: options.remoteAddrs,
+      })
       await this.synchronize()
     },
     async response => {
-      const body = await response.json()
-      this.version = body.Version.Index
-      this.spec = body.Spec
+      const data = await response.json()
+      this.version = data.Version.Index
+      this.spec = data.Spec
+      this.swarmData = data
     },
   ]))
   this.version = null
+  this.spec = null
+  this.swarmData = null
   return this
 }
 
@@ -59,9 +64,10 @@ DockerSwarm.prototype.synchronize = function dockerServiceSynchronize() {
   return this.docker.inspectSwarm().then(pipe([
     tap(response => assert(response.ok, response.statusText)),
     response => response.json(),
-    body => {
-      this.version = body.Version.Index
-      this.spec = body.Spec
+    data => {
+      this.version = data.Version.Index
+      this.spec = data.Spec
+      this.swarmData = data
     },
   ]))
 }
