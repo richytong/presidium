@@ -33,6 +33,7 @@
     "aws-sdk": "^2.787.0",
     "ioredis": "^4.19.0",
     "mongodb": "^3.6.3",
+    "node-fetch": "^2.6.1",
     "rubico": "latest",
     "tar-stream": "^2.1.4",
     "thunk-test": "latest",
@@ -45,7 +46,6 @@
   "devDependencies": {
     "eslint": "^7.13.0",
     "glob": "^7.1.6",
-    "node-fetch": "^2.6.1",
     "nyc": "^15.1.0"
   }
 }
