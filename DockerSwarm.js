@@ -41,9 +41,12 @@ const DockerSwarm = function (advertiseAddr, options = {}) {
       await this.docker.initSwarm(advertiseAddr)
       await this.synchronize()
     } : async () => {
-      await this.docker.joinSwarm(advertiseAddr, options.joinToken, {
+      const response = await this.docker.joinSwarm(advertiseAddr, options.joinToken, {
         remoteAddrs: options.remoteAddrs,
       })
+      if (!response.ok) {
+        throw new Error(await response.text())
+      }
     },
     async response => {
       const data = await response.json()
@@ -61,7 +64,11 @@ const DockerSwarm = function (advertiseAddr, options = {}) {
 // new DockerSwarm().synchronize() -> Promise<>
 DockerSwarm.prototype.synchronize = function dockerServiceSynchronize() {
   return this.docker.inspectSwarm().then(pipe([
-    tap(response => assert(response.ok, response.statusText)),
+    tap(async response => {
+      if (!response.ok) {
+        throw new Error(await response.text())
+      }
+    }),
     response => response.json(),
     data => {
       this.version = data.Version.Index
