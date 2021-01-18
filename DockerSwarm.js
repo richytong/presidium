@@ -44,7 +44,6 @@ const DockerSwarm = function (advertiseAddr, options = {}) {
       await this.docker.joinSwarm(advertiseAddr, options.joinToken, {
         remoteAddrs: options.remoteAddrs,
       })
-      await this.synchronize()
     },
     async response => {
       const data = await response.json()
