@@ -782,6 +782,13 @@ Docker.prototype.updateSwarm = async function dockerUpdateSwarm(options = {}) {
  *     PATH: string, // $PATH
  *     ...(moreEnvOptions Object<string>),
  *   }, // ENV; environment variables exposed to container during run time
+ *
+ *   // auth options
+ *   username: string,
+ *   password: string,
+ *   email?: string,
+ *   serveraddress?: string,
+ *   identitytoken?: string,
  * }) -> Promise<HttpResponse>
  * ```
  */
@@ -892,6 +899,18 @@ Docker.prototype.createService = function dockerCreateService(service, options) 
     }),
     headers: {
       'Content-Type': 'application/json',
+      'X-Registry-Auth': pipe([
+        pick([
+          'username',
+          'password',
+          'email',
+          'serveraddress',
+          'identitytoken',
+        ]),
+        stringifyJSON,
+        Buffer.from,
+        buffer => buffer.toString('base64'),
+      ])(options),
     },
   })
 }
@@ -950,6 +969,13 @@ const has = property => value => {
  *     PATH: string, // $PATH
  *     ...(moreEnvOptions Object<string>),
  *   }, // ENV; environment variables exposed to container during run time
+ *
+ *   // auth options
+ *   username: string,
+ *   password: string,
+ *   email?: string,
+ *   serveraddress?: string,
+ *   identitytoken?: string,
  * }) -> Promise<HttpResponse>
  * ```
  */
@@ -1091,10 +1117,18 @@ Docker.prototype.updateService = function dockerUpdateService(service, options) 
     })),
     headers: {
       'Content-Type': 'application/json',
-      'X-Registry-Auth': get(
-        'authorization',
-        stringifyJSON({ identitytoken: '' }),
-      )(options),
+      'X-Registry-Auth': pipe([
+        pick([
+          'username',
+          'password',
+          'email',
+          'serveraddress',
+          'identitytoken',
+        ]),
+        stringifyJSON,
+        Buffer.from,
+        buffer => buffer.toString('base64'),
+      ])(options),
     },
   })
 }

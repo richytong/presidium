@@ -30,6 +30,7 @@ const dockerServiceOptions = [
   'updateFailureAction', 'updateMonitor', 'updateMaxFailureRatio',
   'rollbackParallelism', 'rollbackDelay',
   'rollbackFailureAction', 'rollbackMonitor', 'rollbackMaxFailureRatio',
+  'username', 'password', 'email', 'serveraddress', 'identitytoken',
 ]
 
 /**
@@ -77,6 +78,13 @@ const dockerServiceOptions = [
  *     PATH: string, // $PATH
  *     ...(moreEnvOptions Object<string>),
  *   }, // ENV; environment variables exposed to container during run time
+ *
+ *   // auth options
+ *   username: string,
+ *   password: string,
+ *   email?: string,
+ *   serveraddress?: string,
+ *   identitytoken?: string,
  * }) -> DockerService
  * ```
  *
