@@ -172,7 +172,6 @@ DockerService.prototype.synchronize = function dockerServiceSynchronize() {
  */
 
 DockerService.prototype.update = async function dockerServiceUpdate(options) {
-  await this.ready
   return this.docker.updateService(this.name, {
     ...options,
     spec: this.spec,
