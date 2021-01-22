@@ -90,9 +90,10 @@ module.exports = Test('DockerService', DockerService)
   .case({
     name: 'my-service',
     image: 'nginx:1.19',
-    replicas: 1,
+    replicas: 2,
   }, async function (myService) {
     await myService.ready
+    // TODO test for update on construction
     assert.deepEqual(myService.spec, this.myServiceSpec)
   })
   .after(async function () {
