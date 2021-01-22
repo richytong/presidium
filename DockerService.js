@@ -111,9 +111,7 @@ const DockerService = function (options) {
         pick(dockerServiceOptions)(options)),
       pipe([
         tap(() => this.synchronize()),
-        () => this.docker.updateService(
-          this.name,
-          pick(dockerServiceOptions)(options)),
+        () => this.update(pick(dockerServiceOptions)(options)),
       ]),
     ]),
     tap(() => this.synchronize()),
