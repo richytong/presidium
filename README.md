@@ -9,13 +9,13 @@ A library for creating web services.
 ```javascript
 import { HttpServer, Http } from 'presidium'
 
-HttpServer((request, response) => {
+new HttpServer((request, response) => {
   response.writeHead(200, { 'Content-Type': 'application/json' })
   response.write(JSON.stringify({ greeting: 'Hello World' }))
   response.end()
 }).listen(3000)
 
-const http = Http('http://localhost:3000/')
+const http = new Http('http://localhost:3000/')
 
 http.get('/')
   .then(response => response.json())
@@ -26,14 +26,14 @@ http.get('/')
 ```javascript
 import { WebSocketServer, WebSocket } from 'presidium'
 
-WebSocketServer(socket => {
+new WebSocketServer(socket => {
   socket.on('message', message => {
     console.log(`received: ${message}`) // received: something from client
     socket.send('something from server')
   })
 }).listen(1337)
 
-const socket = WebSocket('ws://localhost:1337/')
+const socket = new WebSocket('ws://localhost:1337/')
 socket.on('open', () => {
   socket.send('something from client')
 })
@@ -53,17 +53,17 @@ const awsCreds = {
 }
 
 ;(async function() {
-  const myTable = DynamoTable({
+  const myTable = new DynamoTable({
     name: 'my-table',
     key: [{ id: 'string' }],
     ...awsCreds,
   })
-  const myIndex = DynamoIndex({
+  const myIndex = new DynamoIndex({
     table: 'my-table',
     key: [{ name: 'string' }, { age: 'number' }],
     ...awsCreds,
   })
-  const myStream = DynamoStream({
+  const myStream = new DynamoStream({
     table: 'my-table',
     ...awsCreds,
   })
@@ -101,7 +101,7 @@ const awsCreds = {
   region: process.env.AWS_REGION,
 }
 
-const myStream = KinesisStream({
+const myStream = new KinesisStream({
   name: 'my-stream',
   ...awsCreds,
 })
@@ -149,7 +149,7 @@ const awsCreds = {
   region: process.env.AWS_REGION,
 }
 
-const myBucket = S3Bucket({
+const myBucket = new S3Bucket({
   name: 'my-bucket',
   ...awsCreds,
 })
@@ -173,7 +173,7 @@ const myBucket = S3Bucket({
 ```javascript
 import { DockerImage } from 'presidium'
 
-const myImage = DockerImage('my-app:1.0.0')
+const myImage = new DockerImage('my-app:1.0.0')
 
 const buildStream = myImage.build(__dirname, {
   ignore: ['.github', 'node_modules'],
@@ -202,7 +202,7 @@ buildStream.pipe(process.stdout)
 ```javascript
 import { DockerContainer } from 'presidium'
 
-const container = DockerContainer({
+const container = new DockerContainer({
   image: 'node:15-alpine',
   env: { FOO: 'foo' },
   cmd: ['node', '-e', 'console.log(process.env.FOO)'],
@@ -217,10 +217,10 @@ container.run().pipe(process.stdout) // foo
 import { DockerSwarm, DockerService } from 'presidium'
 
 ;(async function() {
-  const mySwarm = DockerSwarm('eth0:2377')
+  const mySwarm = new DockerSwarm('eth0:2377')
   await mySwarm.ready // initiated new docker swarm
 
-  const myService = DockerService({
+  const myService = new DockerService({
     name: 'my-service',
     image: 'nginx:1.19',
     publish: { 80: 8080 },
