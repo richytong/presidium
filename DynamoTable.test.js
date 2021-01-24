@@ -18,6 +18,8 @@ module.exports = Test('DynamoTable', DynamoTable)
   }, async function (testTable) {
     // .case('http://localhost:8000/', 'test-tablename', async function (testTable) {
     await testTable.putItem({ id: '1', name: 'george' })
+    await testTable.putItem({ id: '2', name: 'henry' })
+    await testTable.putItem({ id: '3', name: 'jude' })
     assert.deepEqual(
       await testTable.getItem({ id: '1' }),
       { Item: map(Dynamo.AttributeValue)({ id: '1', name: 'george' }) })
@@ -60,6 +62,15 @@ module.exports = Test('DynamoTable', DynamoTable)
           ruleEnd: null,
         })
       })
+
+    {
+      const scanResult1 = await testTable.scan({ limit: 1 })
+      const scanResult2 = await testTable.scan({ limit: 2, exclusiveStartKey: scanResult1.LastEvaluatedKey })
+      const scanResult3 = await testTable.scan({ limit: 2, exclusiveStartKey: scanResult2.LastEvaluatedKey })
+      assert.strictEqual(scanResult1.Items.length, 1)
+      assert.strictEqual(scanResult2.Items.length, 2)
+      assert.strictEqual(scanResult3.Items.length, 0)
+    }
 
     await testTable.deleteItem({ id: '1' })
     const shouldReject = testTable.getItem({ id: '1' })

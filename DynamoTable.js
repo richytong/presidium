@@ -72,7 +72,7 @@ const DynamoTable = function (options) {
     'region',
     'endpoint',
   ])(options))
-  this.connection = this.dynamo.connection
+  this.client = this.dynamo.connection
   this.ready = this.inspect().then(async () => {
     await this.dynamo.waitFor(this.name, 'tableExists')
   }).catch(async () => {
@@ -140,7 +140,7 @@ DynamoTable.prototype.delete = async function dynamoTableDelete() {
  */
 DynamoTable.prototype.putItem = async function dynamoTablePutItem(item, options) {
   await this.ready
-  return this.connection.putItem({
+  return this.client.putItem({
     TableName: this.name,
     Item: map(Dynamo.AttributeValue)(item),
     ...options,
@@ -157,7 +157,7 @@ DynamoTable.prototype.putItem = async function dynamoTablePutItem(item, options)
  */
 DynamoTable.prototype.getItem = async function dynamoTableGetItem(key) {
   await this.ready
-  return this.connection.getItem({
+  return this.client.getItem({
     TableName: this.name,
     Key: map(Dynamo.AttributeValue)(key),
   }).promise().then(result => {
@@ -206,7 +206,7 @@ DynamoTable.prototype.updateItem = async function dynamoTableUpdateItem(
   key, updates, options,
 ) {
   await this.ready
-  return this.connection.updateItem({
+  return this.client.updateItem({
     TableName: this.name,
     Key: map(Dynamo.AttributeValue)(key),
     UpdateExpression: pipe([
@@ -242,10 +242,34 @@ DynamoTable.prototype.updateItem = async function dynamoTableUpdateItem(
  */
 DynamoTable.prototype.deleteItem = async function dynamoTableDeleteItem(key, options) {
   await this.ready
-  return this.connection.deleteItem({
+  return this.client.deleteItem({
     TableName: this.name,
     Key: map(Dynamo.AttributeValue)(key),
     ...options,
+  }).promise()
+}
+
+/**
+ * @name DynamoTable.prototype.scan
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * DynamoTable(options).scan(options {
+ *   limit: number,
+ *   exclusiveStartKey: Object<string=>DynamoAttributeValue>
+ * }) -> Promise<{
+ *   Items: Array<Object<string=>DynamoAttributeValue>>
+ * }>
+ * ```
+ */
+DynamoTable.prototype.scan = async function scan(options) {
+  await this.ready
+  return this.client.scan({
+    TableName: this.name,
+    Limit: options.limit ?? 100,
+    ...options.exclusiveStartKey && {
+      ExclusiveStartKey: options.exclusiveStartKey,
+    },
   }).promise()
 }
 

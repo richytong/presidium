@@ -100,10 +100,7 @@ DynamoIndex.prototype.inspect = function dynamoIndexInspect() {
  *   },
  *   options? {
  *     limit: number,
- *     exclusiveStartKey: {
- *       [hashKey]: string|number|Buffer|TypedArray,
- *       [sortKey]: string|number|Buffer|TypedArray,
- *     }, // cursor
+ *     exclusiveStartKey: Object<string=>DynamoAttributeValue>
  *     scanIndexForward: boolean, // default true for ASC
  *     projectionExpression: string, // 'fieldA,fieldB,fieldC'
  *     select: 'ALL_ATTRIBUTES'|'ALL_PROJECTED_ATTRIBUTES'|'COUNT'|'SPECIFIC_ATTRIBUTES',
