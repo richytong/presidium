@@ -217,18 +217,16 @@ container.run().pipe(process.stdout) // foo
 import { DockerSwarm, DockerService } from 'presidium'
 
 ;(async function() {
-  const mySwarm = DockerSwarm('192.168.99.121:2377')
-
-  await mySwarm.ready
+  const mySwarm = DockerSwarm('eth0:2377')
+  await mySwarm.ready // initiated new docker swarm
 
   const myService = DockerService({
     name: 'my-service',
     image: 'nginx:1.19',
-    publish: { 8080: 80 },
-    healthCheck: ['curl', '0.0.0.0:80'],
+    publish: { 80: 8080 },
+    healthCheck: ['curl', '[::1]:8080'],
     replicas: 5,
   })
-
-  await myService.ready // service now has 5 replicas at 192.168.99.121
+  await myService.ready // new service is running, possibly still updating replicas
 })()
 ```
