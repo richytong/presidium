@@ -223,10 +223,10 @@ import { DockerSwarm, DockerService } from 'presidium'
   const myService = new DockerService({
     name: 'my-service',
     image: 'nginx:1.19',
-    publish: { 80: 8080 },
-    healthCheck: ['curl', '[::1]:8080'],
+    publish: { 80: 80 },
+    healthCheck: ['curl', '[::1]'],
     replicas: 5,
   })
-  await myService.ready // new service is running, possibly still updating replicas
+  await myService.ready // new nginx service is up running
 })()
 ```
