@@ -26,6 +26,9 @@ const {
  *   secretAccessKey: string,
  *   region: string,
  *   endpoint: string,
+ *   shardIteratorType: 'AT_SEQUENCE_NUMBER'|'AFTER_SEQUENCE_NUMBER'|'TRIM_HORIZON'|'LATEST'|'AT_TIMESTAMP',
+ *   timestamp: Date|string|number, // find events at date (requires shardIteratorType 'AT_TIMESTAMP')
+ *   startingSequenceNumber: string, // find events at data record (requires shardIteratorType 'AT_SEQUENCE_NUMBER' or 'AFTER_SEQUENCE_NUMBER')
  *   shardFilterType: 'AFTER_SHARD_ID'|'AT_TRIM_HORIZON'|'FROM_TRIM_HORIZON'|'AT_LATEST'|'AT_TIMESTAMP'|'FROM_TIMESTAMP',
  *   shardFilterShardId: string,
  *   shardFilterTimestamp: Date|string|number,
@@ -41,7 +44,7 @@ const KinesisStream = function (options) {
     return new KinesisStream(options)
   }
   this.name = options.name
-  this.shardIteratorType = options.shardIteratorType ?? 'TRIM_HORIZON'
+  this.shardIteratorType = options.shardIteratorType ?? 'LATEST'
   this.shardIteratorTimestamp = options.shardIteratorTimestamp
   this.shardFilterType = options.shardFilterType
   this.shardFilterShardId = options.shardFilterShardId
@@ -49,6 +52,8 @@ const KinesisStream = function (options) {
   this.streamCreationTimestamp = options.streamCreationTimestamp
   this.listShardsLimit = options.lstShardsLimit ?? 10000
   this.getRecordsLimit = options.getRecordsLimit ?? 10000
+  this.timestamp = options.timestamp
+  this.startingSequenceNumber = options.startingSequenceNumber
   this.kinesis = new Kinesis(omit(['name'])(options))
   this.cancelToken = new Promise((_, reject) => (this.canceller = reject))
 
