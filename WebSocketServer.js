@@ -1,6 +1,3 @@
-const curry = require('rubico/curry')
-const __ = require('rubico/__')
-const EventEmitter = require('events')
 const HttpServer = require('./HttpServer')
 const WebSocket = require('ws')
 
