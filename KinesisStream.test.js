@@ -13,6 +13,7 @@ module.exports = Test('KinesisStream', KinesisStream)
   .case({
     name: 'my-stream',
     endpoint: 'http://localhost:4567',
+    shardIteratorType: 'TRIM_HORIZON',
   }, async function (myStream) {
     await myStream.ready
     await myStream.putRecord('hey')
@@ -27,7 +28,6 @@ module.exports = Test('KinesisStream', KinesisStream)
   .case({
     name: 'my-stream',
     endpoint: 'http://localhost:4567',
-    shardIteratorType: 'LATEST',
   }, async function (myStream) {
     await myStream.ready
     await myStream.putRecord('hey')
