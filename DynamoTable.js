@@ -262,7 +262,7 @@ DynamoTable.prototype.deleteItem = async function dynamoTableDeleteItem(key, opt
  * }>
  * ```
  */
-DynamoTable.prototype.scan = async function scan(options) {
+DynamoTable.prototype.scan = async function scan(options = {}) {
   await this.ready
   return this.client.scan({
     TableName: this.name,
