@@ -182,9 +182,10 @@ const buildStream = myImage.build(__dirname, {
 FROM node:15-alpine
 WORKDIR /opt
 COPY . .
-RUN echo //registry.npmjs.org/:_authToken=${myNpmToken} > $HOME/.npmrc \
+RUN echo //registry.npmjs.org/:_authToken=${myNpmToken} > .npmrc \
   && npm i \
-  && rm $HOME/.npmrc
+  && rm .npmrc
+  && rm Dockerfile
 EXPOSE 8080
 CMD ["npm", "start"]
     `,
