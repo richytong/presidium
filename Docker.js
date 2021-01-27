@@ -746,7 +746,7 @@ Docker.prototype.updateSwarm = async function dockerUpdateSwarm(options = {}) {
  * Docker().createService(service string, options {
  *   image: string,
  *   replicas: 1|number,
- *   restart: 'no'|'on-failure[:<max-retries>]'|'always'|'unless-stopped',
+ *   restart: 'no'|'on-failure[:<max-retries>]'|'any',
  *   restartDelay: 10e9|number, // nanoseconds to delay between restarts
  *   logDriver: 'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'none',
  *   logDriverOptions: Object<string>,
