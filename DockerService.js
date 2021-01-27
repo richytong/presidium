@@ -106,9 +106,16 @@ const DockerService = function (options) {
   this.ready = this.docker.inspectService(this.name).then(pipe([
     switchCase([
       eq(404, get('status')),
-      () => this.docker.createService(
-        this.name,
-        pick(dockerServiceOptions)(options)),
+      pipe([
+        () => this.docker.createService(
+          this.name,
+          pick(dockerServiceOptions)(options)),
+        tap(async response => {
+          if (!response.ok) {
+            throw new Error(await response.text())
+          }
+        }),
+      ]),
       pipe([
         tap(() => this.synchronize()),
         () => this.update(pick(dockerServiceOptions)(options)),

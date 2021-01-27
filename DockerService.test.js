@@ -4,6 +4,7 @@ const Docker = require('./Docker')
 const DockerContainer = require('./DockerContainer')
 const DockerService = require('./DockerService')
 const inspect = require('util').inspect
+const always = require('rubico/always')
 
 module.exports = Test('DockerService', DockerService)
   .before(async function () {
@@ -95,6 +96,16 @@ module.exports = Test('DockerService', DockerService)
     await myService.ready
     // TODO test for update on construction
     assert.deepEqual(myService.spec, this.myServiceSpec)
+  })
+  .case({
+    name: 'bad-request',
+    image: 'nginx:1.19',
+    replicas: 2,
+    restart: 'always', // coulda fooled me
+  }, async function (errorService) {
+    assert.rejects(
+      always(errorService.ready),
+      new Error('{"message":"invalid RestartCondition: \\"always\\""}\n'))
   })
   .after(async function () {
     await this.docker.pruneContainers()
