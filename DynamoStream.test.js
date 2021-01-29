@@ -28,6 +28,7 @@ module.exports = Test('DynamoStream', DynamoStream)
   .case({
     table: 'my-table',
     endpoint: 'http://localhost:8000',
+    shardIteratorType: 'TRIM_HORIZON',
   }, async function (myStream) {
     await myStream.ready
 
@@ -70,6 +71,7 @@ module.exports = Test('DynamoStream', DynamoStream)
     table: 'my-table',
     endpoint: 'http://localhost:8000',
     getRecordsLimit: 1,
+    shardIteratorType: 'TRIM_HORIZON',
   }, async function (myStream) {
     await myStream.ready
 
@@ -112,6 +114,7 @@ module.exports = Test('DynamoStream', DynamoStream)
     table: 'my-table',
     endpoint: 'http://localhost:8000',
     getRecordsLimit: 1,
+    shardIteratorType: 'TRIM_HORIZON',
   }, async function (myStream) {
     await myStream.ready
 
@@ -153,7 +156,6 @@ module.exports = Test('DynamoStream', DynamoStream)
   .case({
     table: 'my-table',
     endpoint: 'http://localhost:8000',
-    shardIteratorType: 'LATEST',
   }, async function (myStream) {
     await myStream.ready
 
@@ -165,4 +167,4 @@ module.exports = Test('DynamoStream', DynamoStream)
     ])
     assert.equal(raceResult, 'hey')
     myStream.close()
-  })
+  })()

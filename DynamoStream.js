@@ -3,6 +3,7 @@ const rubico = require('rubico')
 const has = require('./internal/has')
 const HttpAgent = require('./HttpAgent')
 const Dynamo = require('./Dynamo')
+const Mux = require('rubico/monad/Mux')
 
 const {
   pipe, tap,
@@ -49,7 +50,7 @@ const DynamoStream = function (options) {
   ])(options)
   this.table = options.table
   this.getRecordsLimit = options.getRecordsLimit ?? 1000
-  this.shardIteratorType = options.shardIteratorType ?? 'TRIM_HORIZON'
+  this.shardIteratorType = options.shardIteratorType ?? 'LATEST'
   this.sequenceNumber = options.sequenceNumber
   this.client = new DynamoDBStreams({
     apiVersion: '2012-08-10',
@@ -76,8 +77,7 @@ DynamoStream.prototype.close = function close() {
 
 DynamoStream.prototype[Symbol.asyncIterator] = async function* asyncGenerator() {
   let headers = null,
-    shards = null,
-    records = null
+    shards = null
   await this.ready
   do {
     headers = await this.client.listStreams({
@@ -97,23 +97,23 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* asyncGenerator() 
           },
         }).promise().then(get('StreamDescription'))
 
-        for (const shard of shards.Shards) {
-          const startingShardIterator = await this.client.getShardIterator({
+        yield* Mux.race(shards.Shards.map(async function* (shard) {
+          const startingShardIterator = await self.client.getShardIterator({
             ShardId: shard.ShardId,
             StreamArn: streamHeader.StreamArn,
-            ShardIteratorType: this.shardIteratorType,
-            ...this.sequenceNumber && { SequenceNumber: this.sequenceNumber },
+            ShardIteratorType: self.shardIteratorType,
+            ...self.sequenceNumber && { SequenceNumber: self.sequenceNumber },
           }).promise().then(get('ShardIterator'))
-          records = await this.client.getRecords({
+          let records = await self.client.getRecords({
             ShardIterator: startingShardIterator,
-            Limit: this.getRecordsLimit
+            Limit: self.getRecordsLimit
           }).promise()
 
           yield* records.Records
-          while (!this.closed && records.NextShardIterator != null) {
-            records = await this.client.getRecords({
+          while (!self.closed && records.NextShardIterator != null) {
+            records = await self.client.getRecords({
               ShardIterator: records.NextShardIterator,
-              Limit: this.getRecordsLimit
+              Limit: self.getRecordsLimit
             }).promise()
             if (records.Records.length == 0) {
               await new Promise(resolve => setTimeout(resolve, 1000))
@@ -121,10 +121,10 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* asyncGenerator() 
               yield* records.Records
             }
           }
-        }
+        }))
       }
-    } while (shards?.LastEvaluatedShardId != null)
-  } while (headers?.LastEvaluatedStreamArn != null)
+    } while (has('LastEvaluatedShardId')(shards))
+  } while (has('LastEvaluatedStreamArn')(headers))
 }
 
 module.exports = DynamoStream
