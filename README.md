@@ -5,7 +5,7 @@
 
 A library for creating web services.
 
-## Serve Http
+## Handle Http
 ```javascript
 import { HttpServer, Http } from 'presidium'
 
@@ -20,26 +20,6 @@ const http = new Http('http://localhost:3000/')
 http.get('/')
   .then(response => response.json())
   .then(console.log) // { greeting: 'Hello World' }
-```
-
-## Serve WebSocket
-```javascript
-import { WebSocketServer, WebSocket } from 'presidium'
-
-new WebSocketServer(socket => {
-  socket.on('message', message => {
-    console.log(`received: ${message}`) // received: something from client
-    socket.send('something from server')
-  })
-}).listen(1337)
-
-const socket = new WebSocket('ws://localhost:1337/')
-socket.on('open', () => {
-  socket.send('something from client')
-})
-socket.on('message', data => {
-  console.log(data) // something from server
-})
 ```
 
 ## CRUD and Query DynamoDB
