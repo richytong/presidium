@@ -98,22 +98,22 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* asyncGenerator() 
         }).promise().then(get('StreamDescription'))
 
         yield* Mux.race(shards.Shards.map(async function* (shard) {
-          const startingShardIterator = await self.client.getShardIterator({
+          const startingShardIterator = await this.client.getShardIterator({
             ShardId: shard.ShardId,
             StreamArn: streamHeader.StreamArn,
-            ShardIteratorType: self.shardIteratorType,
-            ...self.sequenceNumber && { SequenceNumber: self.sequenceNumber },
+            ShardIteratorType: this.shardIteratorType,
+            ...this.sequenceNumber && { SequenceNumber: this.sequenceNumber },
           }).promise().then(get('ShardIterator'))
-          let records = await self.client.getRecords({
+          let records = await this.client.getRecords({
             ShardIterator: startingShardIterator,
-            Limit: self.getRecordsLimit
+            Limit: this.getRecordsLimit
           }).promise()
 
           yield* records.Records
-          while (!self.closed && records.NextShardIterator != null) {
-            records = await self.client.getRecords({
+          while (!this.closed && records.NextShardIterator != null) {
+            records = await this.client.getRecords({
               ShardIterator: records.NextShardIterator,
-              Limit: self.getRecordsLimit
+              Limit: this.getRecordsLimit
             }).promise()
             if (records.Records.length == 0) {
               await new Promise(resolve => setTimeout(resolve, 1000))
@@ -121,7 +121,7 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* asyncGenerator() 
               yield* records.Records
             }
           }
-        }))
+        }, this))
       }
     } while (has('LastEvaluatedShardId')(shards))
   } while (has('LastEvaluatedStreamArn')(headers))
