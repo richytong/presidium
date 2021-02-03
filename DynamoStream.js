@@ -88,6 +88,7 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* asyncGenerator() 
     }).promise()
 
     do {
+      // TODO handle shards better
       for (const streamHeader of headers.Streams) {
         shards = await this.client.describeStream({
           StreamArn: streamHeader.StreamArn,
@@ -110,7 +111,7 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* asyncGenerator() 
           }).promise()
 
           yield* records.Records
-          while (!this.closed && records.NextShardIterator != null) {
+          while (!this.closed) {
             records = await this.client.getRecords({
               ShardIterator: records.NextShardIterator,
               Limit: this.getRecordsLimit
