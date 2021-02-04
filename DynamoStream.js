@@ -110,14 +110,13 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* asyncGenerator() 
             Limit: this.getRecordsLimit
           }).promise()
 
-          let shardIterator = records.NextShardIterator
           yield* records.Records
-          while (!this.closed) {
+          // TODO reset this automatically when NextShardIterator is null for shardIteratorType LATEST
+          while (!this.closed && records.NextShardIterator != null) {
             records = await this.client.getRecords({
-              ShardIterator: shardIterator,
+              ShardIterator: records.NextShardIterator,
               Limit: this.getRecordsLimit
             }).promise()
-            shardIterator = get('NextShardIterator', shardIterator)(records)
             if (records.Records.length == 0) {
               await new Promise(resolve => setTimeout(resolve, 1000))
             } else {
