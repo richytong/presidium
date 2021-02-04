@@ -99,7 +99,7 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* asyncGenerator() 
         }).promise().then(get('StreamDescription'))
 
         yield* Mux.race(shards.Shards.map(async function* (shard) {
-          while (true) {
+          while (!this.closed) {
             const startingShardIterator = await this.client.getShardIterator({
               ShardId: shard.ShardId,
               StreamArn: streamHeader.StreamArn,
