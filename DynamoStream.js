@@ -99,28 +99,29 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* asyncGenerator() 
         }).promise().then(get('StreamDescription'))
 
         yield* Mux.race(shards.Shards.map(async function* (shard) {
-          const startingShardIterator = await this.client.getShardIterator({
-            ShardId: shard.ShardId,
-            StreamArn: streamHeader.StreamArn,
-            ShardIteratorType: this.shardIteratorType,
-            ...this.sequenceNumber && { SequenceNumber: this.sequenceNumber },
-          }).promise().then(get('ShardIterator'))
-          let records = await this.client.getRecords({
-            ShardIterator: startingShardIterator,
-            Limit: this.getRecordsLimit
-          }).promise()
-
-          yield* records.Records
-          // TODO reset this automatically when NextShardIterator is null for shardIteratorType LATEST
-          while (!this.closed && records.NextShardIterator != null) {
-            records = await this.client.getRecords({
-              ShardIterator: records.NextShardIterator,
+          while (true) {
+            const startingShardIterator = await this.client.getShardIterator({
+              ShardId: shard.ShardId,
+              StreamArn: streamHeader.StreamArn,
+              ShardIteratorType: this.shardIteratorType,
+              ...this.sequenceNumber && { SequenceNumber: this.sequenceNumber },
+            }).promise().then(get('ShardIterator'))
+            let records = await this.client.getRecords({
+              ShardIterator: startingShardIterator,
               Limit: this.getRecordsLimit
             }).promise()
-            if (records.Records.length == 0) {
-              await new Promise(resolve => setTimeout(resolve, 1000))
-            } else {
-              yield* records.Records
+
+            yield* records.Records
+            while (!this.closed && records.NextShardIterator != null) {
+              records = await this.client.getRecords({
+                ShardIterator: records.NextShardIterator,
+                Limit: this.getRecordsLimit
+              }).promise()
+              if (records.Records.length == 0) {
+                await new Promise(resolve => setTimeout(resolve, 1000))
+              } else {
+                yield* records.Records
+              }
             }
           }
         }, this))
