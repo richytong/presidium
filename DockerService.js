@@ -8,6 +8,7 @@ const trace = require('rubico/x/trace')
 const split = require('./internal/split')
 const join = require('./internal/join')
 const inspect = require('util').inspect
+const stream = require('stream')
 
 const {
   pipe, tap,
@@ -19,6 +20,10 @@ const {
   thunkify, always,
   curry, __,
 } = rubico
+
+const passthrough = target => transform(map(identity), target)
+
+const PassThroughStream = stream.PassThrough
 
 const dockerServiceOptions = [
   'name', 'image', 'replicas', 'publish', 'mounts',
@@ -178,7 +183,7 @@ DockerService.prototype.synchronize = function dockerServiceSynchronize() {
  * ```
  */
 
-DockerService.prototype.update = async function dockerServiceUpdate(options) {
+DockerService.prototype.update = async function update(options) {
   return this.docker.updateService(this.name, {
     ...options,
     spec: this.spec,
@@ -189,10 +194,44 @@ DockerService.prototype.update = async function dockerServiceUpdate(options) {
   })
 }
 
-DockerService.prototype.inspect = async function dockerServiceInspect() {
+DockerService.prototype.inspect = async function inspect() {
   await this.ready
   return this.docker.inspectService(this.name)
     .then(response => response.json())
+}
+
+/**
+ * @name DockerService.prototype.getLogs
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * new DockerService(options).getLogs(options {
+ *   stdout: boolean, // return logs from stdout, default false
+ *   stderr: boolean, // return logs from stderr, default false
+ *   follow: boolean, // keep connection after returning logs, default false
+ *   since: number, // unix timestamp, 1612543950742
+ *   timestamps: boolean, // add timestamps to every log line
+ *   tail: 'all'|number, // only return this number of log lines from the end of logs.
+ * }) -> PassThroughStream
+ * ```
+ *
+ * @description
+ * https://docs.docker.com/engine/api/v1.40/#operation/ServiceLogs
+ */
+DockerService.prototype.getLogs = async function getLogs(options) {
+  await this.ready
+  const result = new PassThroughStream()
+  result.promise = new Promise((resolve, reject) => {
+    this.docker.getServiceLogs(this.name, pick([
+      'stdout', 'stderr', 'follow',
+      'since', 'timestamps', 'tail',
+    ])(options)).then(response => {
+      response.body.on('end', resolve)
+      response.body.on('error', reject)
+      response.body.pipe(result)
+    })
+  })
+  return result
 }
 
 module.exports = DockerService

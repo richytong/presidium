@@ -1163,6 +1163,30 @@ Docker.prototype.inspectService = async function dockerInspectService(serviceId)
 }
 
 /**
+ * @name Docker.prototype.getServiceLogs
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Docker().getServiceLogs(serviceId string, options {
+ *   stdout: boolean, // return logs from stdout, default false
+ *   stderr: boolean, // return logs from stderr, default false
+ *   follow: boolean, // keep connection after returning logs, default false
+ *   since: number, // unix timestamp, 1612543950742
+ *   timestamps: boolean, // add timestamps to every log line
+ *   tail: 'all'|number, // only return this number of log lines from the end of logs.
+ * }) -> Promise<HttpResponse>
+ * ```
+ */
+Docker.prototype.getServiceLogs = async function getServiceLogs(serviceId, options) {
+  return this.http.get(`/services/${serviceId}/logs?${
+    querystring.stringify(pick([
+      'stdout', 'stderr', 'follow',
+      'since', 'timestamps', 'tail',
+    ])(options))
+  }`)
+}
+
+/**
  * @name Docker.prototype.pruneImages
  *
  * @synopsis

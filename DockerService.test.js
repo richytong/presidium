@@ -34,6 +34,7 @@ module.exports = Test('DockerService', DockerService)
       assert.equal(info.Spec.RollbackConfig.Monitor, 15e9)
       assert.equal(info.Spec.RollbackConfig.MaxFailureRatio, 0.15)
     }
+
     {
       const result = await myService.update({
         replicas: 2,
@@ -59,6 +60,7 @@ module.exports = Test('DockerService', DockerService)
         memory: 512e6, // bytes
       })
     }
+
     {
       const info = await myService.inspect()
       assert.equal(info.ID, this.serviceId)
@@ -86,6 +88,12 @@ module.exports = Test('DockerService', DockerService)
       assert.equal(info.Spec.TaskTemplate.RestartPolicy.MaxAttempts, 5)
       assert.equal(info.Spec.TaskTemplate.Resources.Limits.MemoryBytes, 512e6)
       this.myServiceSpec = myService.spec
+    }
+
+    {
+      const logResponseStream = await myService.getLogs({ stdout: true, stderr: true })
+      logResponseStream.pipe(process.stdout)
+      await new Promise(resolve => logResponseStream.on('end', resolve))
     }
   })
   .case({
