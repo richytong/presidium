@@ -100,12 +100,20 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* asyncGenerator() 
 
         yield* Mux.race(shards.Shards.map(async function* (shard) {
           while (!this.closed) {
-            const startingShardIterator = await this.client.getShardIterator({
-              ShardId: shard.ShardId,
-              StreamArn: streamHeader.StreamArn,
-              ShardIteratorType: this.shardIteratorType,
-              ...this.sequenceNumber && { SequenceNumber: this.sequenceNumber },
-            }).promise().then(get('ShardIterator'))
+            let startingShardIterator = null
+            try {
+              startingShardIterator = await this.client.getShardIterator({
+                ShardId: shard.ShardId,
+                StreamArn: streamHeader.StreamArn,
+                ShardIteratorType: this.shardIteratorType,
+                ...this.sequenceNumber && { SequenceNumber: this.sequenceNumber },
+              }).promise().then(get('ShardIterator'))
+            } catch (error) {
+              if (error.code == 'ResourceNotFoundException') {
+                return
+              }
+              throw error
+            }
             let records = await this.client.getRecords({
               ShardIterator: startingShardIterator,
               Limit: this.getRecordsLimit
