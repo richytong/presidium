@@ -197,7 +197,7 @@ Docker.prototype.pullImage = function dockerPullImage(name, options = {}) {
  * ```
  */
 
-Docker.prototype.buildImage = async function (image, path, options = {}) {
+Docker.prototype.buildImage = async function (image, path, options) {
   const archive = new Archive(options.archive)
   return this.http.post(`/build?${querystring.stringify({
     dockerfile: options.archiveDockerfile ?? 'Dockerfile',
