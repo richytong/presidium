@@ -59,6 +59,7 @@ const DynamoStream = function (options) {
     region: 'x-x-x',
     ...awsCreds,
   })
+  this.cancelToken = new Promise((resolve, reject) => (this.cancel = reject))
 
   this.dynamo = new Dynamo(awsCreds)
   this.ready = this.dynamo.describeTable(this.table).then(pipe([
@@ -71,8 +72,9 @@ const DynamoStream = function (options) {
 }
 
 // () => ()
-DynamoStream.prototype.close = function close() {
+DynamoStream.prototype.close = function close(reason) {
   this.closed = true
+  this.cancel(reason)
 }
 
 DynamoStream.prototype[Symbol.asyncIterator] = async function* asyncGenerator() {
@@ -99,38 +101,43 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* asyncGenerator() 
         }).promise().then(get('StreamDescription'))
 
         yield* Mux.race(shards.Shards.map(async function* (shard) {
-          while (!this.closed) {
-            let startingShardIterator = null
-            try {
-              startingShardIterator = await this.client.getShardIterator({
+          shard.closed = false
+          try {
+            while (!this.closed && !shard.closed) {
+              const startingShardIterator = await this.client.getShardIterator({
                 ShardId: shard.ShardId,
                 StreamArn: streamHeader.StreamArn,
                 ShardIteratorType: this.shardIteratorType,
                 ...this.sequenceNumber && { SequenceNumber: this.sequenceNumber },
               }).promise().then(get('ShardIterator'))
-            } catch (error) {
-              if (error.code == 'ResourceNotFoundException') {
-                return
-              }
-              throw error
-            }
-            let records = await this.client.getRecords({
-              ShardIterator: startingShardIterator,
-              Limit: this.getRecordsLimit
-            }).promise()
-
-            yield* records.Records
-            while (!this.closed && records.NextShardIterator != null) {
-              records = await this.client.getRecords({
-                ShardIterator: records.NextShardIterator,
+              let records = await this.client.getRecords({
+                ShardIterator: startingShardIterator,
                 Limit: this.getRecordsLimit
               }).promise()
-              if (records.Records.length == 0) {
-                await new Promise(resolve => setTimeout(resolve, 1000))
-              } else {
-                yield* records.Records
+
+              yield* records.Records
+              while (records.NextShardIterator != null) {
+                records = await Promise.race([
+                  this.cancelToken,
+                  this.client.getRecords({
+                    ShardIterator: records.NextShardIterator,
+                    Limit: this.getRecordsLimit
+                  }).promise(),
+                ])
+                if (records.Records.length == 0) {
+                  await new Promise(resolve => setTimeout(resolve, 1000))
+                } else {
+                  yield* records.Records
+                }
               }
+              await new Promise(resolve => setTimeout(resolve, 1000))
             }
+          } catch (error) {
+            if (error.code == 'ResourceNotFoundException') {
+              shard.closed = true
+              return
+            }
+            throw error
           }
         }, this))
       }
