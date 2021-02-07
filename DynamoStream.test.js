@@ -7,6 +7,12 @@ const map = require('rubico/map')
 const thunkify = require('rubico/thunkify')
 const asyncIterableTake = require('./internal/asyncIterableTake')
 
+const ResourceNotFoundException = function (message) {
+  const error = new Error(message)
+  error.code = 'ResourceNotFoundException'
+  return error
+}
+
 module.exports = Test('DynamoStream', DynamoStream)
   .before(async function () {
     const table = new DynamoTable({
@@ -66,6 +72,7 @@ module.exports = Test('DynamoStream', DynamoStream)
 
     const first5 = await asyncIterableTake(5)(myStream)
     assert.strictEqual(first5.length, 5)
+    myStream.close()
   })
   .case({
     table: 'my-table',
@@ -109,6 +116,7 @@ module.exports = Test('DynamoStream', DynamoStream)
 
     const first5 = await asyncIterableTake(5)(myStream)
     assert.strictEqual(first5.length, 5)
+    myStream.close()
   })
   .case({
     table: 'my-table',
@@ -152,6 +160,7 @@ module.exports = Test('DynamoStream', DynamoStream)
 
     const first5 = await asyncIterableTake(5)(myStream)
     assert.strictEqual(first5.length, 5)
+    myStream.close()
   })
   .case({
     table: 'my-table',
@@ -166,20 +175,5 @@ module.exports = Test('DynamoStream', DynamoStream)
       new Promise(resolve => setTimeout(thunkify(resolve, 'hey'), 3000))
     ])
     assert.equal(raceResult, 'hey')
-    myStream.close({ reason: 'cancelled' })
-  })
-  .case({
-    table: 'my-table',
-    endpoint: 'http://localhost:8000',
-  }, async function (myStream) {
-    // there shouldn't be any more records, so this should hang
-    const latestRecordPromise = asyncIterableTake(1)(myStream)
-    const raceResult = await Promise.race([
-      latestRecordPromise,
-      new Promise(resolve => setTimeout(thunkify(resolve, 'hey'), 3000))
-    ])
-    assert.equal(raceResult, 'hey')
-    const resourceNotFoundException = new Error('Resource not found')
-    resourceNotFoundException.code = 'ResourceNotFoundException'
-    myStream.close(resourceNotFoundException) // NOTE: this is a hacky test for ResourceNotFoundExceptions thrown on shards
+    myStream.close()
   })
