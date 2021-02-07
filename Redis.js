@@ -10,7 +10,7 @@ const parseRedisConnectionString = require('./internal/parseRedisConnectionStrin
  * Redis(options string|{
  *   host: string,
  *   port: number,
- *   database: number,
+ *   db: number,
  * })
  * ```
  *
