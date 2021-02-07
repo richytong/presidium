@@ -51,6 +51,7 @@ const DynamoStream = function (options) {
   this.table = options.table
   this.getRecordsLimit = options.getRecordsLimit ?? 1000
   this.shardIteratorType = options.shardIteratorType ?? 'LATEST'
+  this.listStreamsLimit = options.listStreamsLimit ?? 100
   this.client = new DynamoDBStreams({
     apiVersion: '2012-08-10',
     accessKeyId: 'id',
@@ -71,10 +72,14 @@ const DynamoStream = function (options) {
 
 // () -> AsyncGenerator<streamHeader>
 DynamoStream.prototype.getStreamHeaders = async function* getStreamHeaders() {
-  let headers = await this.client.listStreams({ TableName: this.table }).promise()
+  let headers = await this.client.listStreams({
+    Limit: this.listStreamsLimit,
+    TableName: this.table
+  }).promise()
   yield* headers.Streams
   while (!this.closed && headers.LastEvaluatedStreamArn != null) {
     headers = await this.client.listStreams({
+      Limit: this.listStreamsLimit,
       TableName: this.table,
       ExclusiveStartStreamArn: headers.LastEvaluatedStreamArn,
     }).promise()
