@@ -14,9 +14,9 @@ module.exports = Test(
 }).case('redis://127.0.0.1/9', {
   host: '127.0.0.1',
   port: 6379,
-  database: 9,
+  db: 9,
 }).case('redis://your-domain.hash.ng.0001.use1.cache.amazonaws.com:6379/0', {
   host: 'your-domain.hash.ng.0001.use1.cache.amazonaws.com',
   port: 6379,
-  database: 0,
+  db: 0,
 })
