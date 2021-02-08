@@ -78,6 +78,7 @@ module.exports = Test('DynamoStream', DynamoStream)
     table: 'my-table',
     endpoint: 'http://localhost:8000',
     getRecordsLimit: 1,
+    getRecordsInterval: 1000,
     shardIteratorType: 'TRIM_HORIZON',
   }, async function (myStream) {
     await myStream.ready
