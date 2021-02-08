@@ -127,10 +127,10 @@ DynamoStream.prototype.getRecords = async function* getRecords() {
         ShardIterator: records.NextShardIterator,
         Limit: this.getRecordsLimit
       }).promise()
-      yield* records.Records
       if (records.Records.length == 0) {
-        await new Promise(resolve => setTimeout(resolve, this.getRecordsInterval))
+        break
       }
+      yield* records.Records
     }
   }).bind(this))(this.getShards())
 }
