@@ -50,6 +50,7 @@ const DynamoStream = function (options) {
   ])(options)
   this.table = options.table
   this.getRecordsLimit = options.getRecordsLimit ?? 1000
+  this.getRecordsInterval = options.getRecordsInterval ?? 5000
   this.shardIteratorType = options.shardIteratorType ?? 'LATEST'
   this.listStreamsLimit = options.listStreamsLimit ?? 100
   this.client = new DynamoDBStreams({
@@ -128,7 +129,7 @@ DynamoStream.prototype.getRecords = async function* getRecords() {
       }).promise()
       yield* records.Records
       if (records.Records.length == 0) {
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        await new Promise(resolve => setTimeout(resolve, this.getRecordsInterval))
       }
     }
   }).bind(this))(this.getShards())
@@ -142,7 +143,7 @@ DynamoStream.prototype.close = function close() {
 DynamoStream.prototype[Symbol.asyncIterator] = async function* () {
   while (!this.closed) {
     yield* this.getRecords()
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    await new Promise(resolve => setTimeout(resolve, this.getRecordsInterval))
   }
 }
 
