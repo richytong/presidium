@@ -79,6 +79,7 @@ module.exports = Test('DynamoStream', DynamoStream)
     endpoint: 'http://localhost:8000',
     getRecordsLimit: 1,
     getRecordsInterval: 1000,
+    shardUpdatePeriod: 5000,
     shardIteratorType: 'TRIM_HORIZON',
   }, async function (myStream) {
     await myStream.ready
@@ -162,6 +163,13 @@ module.exports = Test('DynamoStream', DynamoStream)
     const first5 = await asyncIterableTake(5)(myStream)
     assert.strictEqual(first5.length, 5)
     myStream.close()
+    await table.delete()
+    this.table = new DynamoTable({
+      name: 'my-table',
+      key: [{ id: 'string' }],
+      endpoint: 'http://localhost:8000',
+    })
+    await this.table.ready
   })
   .case({
     table: 'my-table',
