@@ -69,6 +69,14 @@ module.exports = Test('DynamoIndex', DynamoIndex)
   })
   .case({
     table: 'test-tablename',
+    key: [{ name: 'string' }],
+    endpoint: 'http://localhost:8000/',
+  }, async nameIndex => {
+    const items = await nameIndex.query('name = :name', { name: 'sally' })
+    assert.strictEqual(items.Items.length, 2)
+  })
+  .case({
+    table: 'test-tablename',
     key: [{ status: 'string' }, { createTime: 'number' }],
     endpoint: 'http://localhost:8000/',
   }, async index => {
