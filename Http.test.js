@@ -36,6 +36,10 @@ module.exports = Test('Http', Http)
     assert.deepEqual(await response.json(), { greeting: 'Hello World' })
   })
   .case('http://localhost:3000/', async helloHttp => {
+    const response = await helloHttp.head('/')
+    assert.strictEqual(response.status, 200)
+  })
+  .case('http://localhost:3000/', async helloHttp => {
     const response = await helloHttp.post('/', {
       body: JSON.stringify({ a: 1 }),
       headers: { 'Content-Type': 'application/json' },
