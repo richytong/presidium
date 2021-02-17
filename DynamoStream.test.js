@@ -176,6 +176,7 @@ module.exports = Test('DynamoStream', DynamoStream)
     endpoint: 'http://localhost:8000',
     listStreamsLimit: 1,
     shardIteratorType: 'TRIM_HORIZON',
+    debug: true,
   }, async function (myStream) {
     await myStream.ready
 
