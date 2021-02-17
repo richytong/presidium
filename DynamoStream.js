@@ -118,7 +118,10 @@ DynamoStream.prototype.getShards = async function* getShards(
   if (this.debug) {
     console.log(`DynamoStream: got ${shards.Shards.length} starting shards(s)`)
   }
-  yield* shards.Shards.map(assign({ Stream: always(Stream) }))
+  yield* shards.Shards.map(assign({
+    Stream: always(Stream),
+    ShardNumber: (_, index) => index,
+  }))
   while (!this.closed && shards.LastEvaluatedShardId != null) {
     shards = await this.client.describeStream({
       StreamArn: Stream.StreamArn,
@@ -128,7 +131,10 @@ DynamoStream.prototype.getShards = async function* getShards(
     if (this.debug) {
       console.log(`DynamoStream: got ${shards.Shards.length} shards(s)`)
     }
-    yield* shards.Shards.map(assign({ Stream: always(Stream) }))
+    yield* shards.Shards.map(assign({
+      Stream: always(Stream),
+      ShardNumber: (_, index) => index,
+    }))
   }
 }
 
@@ -147,7 +153,9 @@ DynamoStream.prototype.getRecords = async function* getRecords(
     Limit: this.getRecordsLimit
   }).promise()
   if (this.debug) {
-    console.log(`DynamoStream: got ${records.Records.length} starting records(s)`)
+    console.log(
+      `DynamoStream: got ${records.Records.length} starting records(s) for Shard`,
+      Shard.ShardNumber)
   }
 
   yield* records.Records
@@ -157,7 +165,9 @@ DynamoStream.prototype.getRecords = async function* getRecords(
       Limit: this.getRecordsLimit
     }).promise()
     if (this.debug) {
-      console.log(`DynamoStream: got ${records.Records.length} records(s)`)
+      console.log(
+        `DynamoStream: got ${records.Records.length} records(s) for Shard`,
+        Shard.ShardNumber)
     }
     yield* records.Records
     await new Promise(resolve => setTimeout(resolve, this.getRecordsInterval))
