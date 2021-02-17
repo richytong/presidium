@@ -195,7 +195,9 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* () {
       if (this.debug) {
         console.log(
           'DynamoStream: updated shards',
-          JSON.stringify({ newShards, closedShards, latestShards }))
+          JSON.stringify(map(pick(['ShardId']))({
+            newShards, closedShards, latestShards,
+          })))
       }
 
       closedShards.forEach(Shard => (Shard.closed = true))
