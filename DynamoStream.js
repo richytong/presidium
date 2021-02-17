@@ -59,7 +59,7 @@ const DynamoStream = function (options) {
   this.getRecordsLimit = options.getRecordsLimit ?? 1000
   this.getRecordsInterval = options.getRecordsInterval ?? 1000
   this.shardIteratorType = options.shardIteratorType ?? 'LATEST'
-  this.shardUpdatePeriod = options.shardUpdatePeriod ?? 1000
+  this.shardUpdatePeriod = options.shardUpdatePeriod ?? 30000
   this.listStreamsLimit = options.listStreamsLimit ?? 100
   this.client = new DynamoDBStreams({
     apiVersion: '2012-08-10',
