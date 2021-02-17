@@ -91,7 +91,7 @@ DynamoStream.prototype.getStreams = async function* getStreams() {
     TableName: this.table
   }).promise()
   if (this.debug) {
-    console.log('DynamoStream: got streams', JSON.stringify(streams))
+    console.log(`DynamoStream: got ${streams.Streams.length} stream(s)`)
   }
   yield* streams.Streams
   while (!this.closed && streams.LastEvaluatedStreamArn != null) {
@@ -101,7 +101,7 @@ DynamoStream.prototype.getStreams = async function* getStreams() {
       ExclusiveStartStreamArn: streams.LastEvaluatedStreamArn,
     }).promise()
     if (this.debug) {
-      console.log('DynamoStream: got streams', JSON.stringify(streams))
+      console.log(`DynamoStream: got ${streams.Streams.length} stream(s)`)
     }
     yield* streams.Streams
   }
@@ -116,7 +116,7 @@ DynamoStream.prototype.getShards = async function* getShards(
     Limit: 100,
   }).promise().then(get('StreamDescription'))
   if (this.debug) {
-    console.log('DynamoStream: got shards', JSON.stringify(shards))
+    console.log(`DynamoStream: got ${shards.Shards.length} shards(s)`)
   }
   yield* shards.Shards.map(assign({ Stream: always(Stream) }))
   while (!this.closed && shards.LastEvaluatedShardId != null) {
@@ -126,7 +126,7 @@ DynamoStream.prototype.getShards = async function* getShards(
       ExclusiveStartShardId: shards.LastEvaluatedShardId,
     }).promise().then(get('StreamDescription'))
     if (this.debug) {
-      console.log('DynamoStream: got shards', JSON.stringify(shards))
+      console.log(`DynamoStream: got ${shards.Shards.length} shards(s)`)
     }
     yield* shards.Shards.map(assign({ Stream: always(Stream) }))
   }
@@ -147,7 +147,7 @@ DynamoStream.prototype.getRecords = async function* getRecords(
     Limit: this.getRecordsLimit
   }).promise()
   if (this.debug) {
-    console.log('DynamoStream: got records', JSON.stringify(records))
+    console.log(`DynamoStream: got ${records.Records.length} records(s)`)
   }
 
   yield* records.Records
@@ -157,7 +157,7 @@ DynamoStream.prototype.getRecords = async function* getRecords(
       Limit: this.getRecordsLimit
     }).promise()
     if (this.debug) {
-      console.log('DynamoStream: got records', JSON.stringify(records))
+      console.log(`DynamoStream: got ${records.Records.length} records(s)`)
     }
     yield* records.Records
     await new Promise(resolve => setTimeout(resolve, this.getRecordsInterval))
@@ -193,9 +193,9 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* () {
         (ShardA, ShardB) => ShardA.ShardId == ShardB.ShardId,
         shards)(latestShards)
       if (this.debug) {
-        console.log('DynamoStream: updated shards', JSON.stringify({
-          newShards, closedShards, latestShards, oldShards: shards,
-        }))
+        console.log(
+          'DynamoStream: updated shards',
+          JSON.stringify({ newShards, closedShards, latestShards }))
       }
 
       closedShards.forEach(Shard => (Shard.closed = true))
