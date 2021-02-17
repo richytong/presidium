@@ -118,10 +118,8 @@ DynamoStream.prototype.getShards = async function* getShards(
   if (this.debug) {
     console.log(`DynamoStream: got ${shards.Shards.length} starting shards(s)`)
   }
-  yield* shards.Shards.map(assign({
-    Stream: always(Stream),
-    ShardNumber: (_, index) => index,
-  }))
+  yield* shards.Shards.map(
+    (Shard, ShardNumber) => ({ ...Shard, Stream, ShardNumber }))
   while (!this.closed && shards.LastEvaluatedShardId != null) {
     shards = await this.client.describeStream({
       StreamArn: Stream.StreamArn,
@@ -131,10 +129,8 @@ DynamoStream.prototype.getShards = async function* getShards(
     if (this.debug) {
       console.log(`DynamoStream: got ${shards.Shards.length} shards(s)`)
     }
-    yield* shards.Shards.map(assign({
-      Stream: always(Stream),
-      ShardNumber: (_, index) => index,
-    }))
+    yield* shards.Shards.map(
+      (Shard, ShardNumber) => ({ ...Shard, Stream, ShardNumber }))
   }
 }
 
