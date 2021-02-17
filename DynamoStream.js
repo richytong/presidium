@@ -184,8 +184,8 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* () {
 
   while (!this.closed) {
     const iteration = await Promise.race([
-      iterationPromise,
       shardUpdatePromise,
+      iterationPromise,
     ])
     if (iteration == SymbolUpdateShards) {
       const latestShards = await pipe([
