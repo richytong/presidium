@@ -259,6 +259,9 @@ DynamoTable.prototype.deleteItem = async function dynamoTableDeleteItem(key, opt
  *   exclusiveStartKey: Object<string=>DynamoAttributeValue>
  * }) -> Promise<{
  *   Items: Array<Object<string=>DynamoAttributeValue>>
+ *   Count: number, // number of Items
+ *   ScannedCount: number, // number of items evaluated before scanFilter is applied
+ *   LastEvaluatedKey: Object<string=>DynamoAttributeValue>,
  * }>
  * ```
  */
