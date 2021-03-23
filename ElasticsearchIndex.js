@@ -275,6 +275,30 @@ ElasticsearchIndex.prototype.match = function match(matchDSL, options) {
 }
 
 /**
+ * @name ElasticsearchIndex.prototype.multiMatch
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * new ElasticsearchIndex(options).multiMatch(
+ *   multiMatchDSL {
+ *     query: string, // the querystring, e.g. 'this is a test'
+ *     fields: Array<string>, // the fields to be queried, e.g. ['subject', 'message']
+ *   },
+ *   options? {
+ *     size: number,
+ *     from: number,
+ *     to: number,
+ *   },
+ * ) -> Promise<HttpResponse>
+ * ```
+ */
+ElasticsearchIndex.prototype.multiMatch = function multiMatch(
+  multiMatchDSL, options
+) {
+  return this.query({ multi_match: multiMatchDSL }, options)
+}
+
+/**
  * @name ElasticsearchIndex.prototype.bool
  *
  * @synopsis

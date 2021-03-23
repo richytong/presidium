@@ -83,6 +83,19 @@ const test = Test('ElasticsearchIndex', async function () {
   }
 
   {
+    const response = await testIndex.multiMatch({
+      query: 'hello',
+      fields: ['text', 'slug'],
+    })
+    assert.strictEqual(response.status, 200)
+    const data = await response.json()
+    assert.strictEqual(data.hits.total.value, 2)
+    assert.strictEqual(data.hits.hits.length, 2)
+    const texts = data.hits.hits.map(get('_source.text'))
+    assert(texts.every(includes('hello')))
+  }
+
+  {
     const response = await testIndex.bool({
       must_not: [
         { term: { slug: 'goodbye-world' } },
