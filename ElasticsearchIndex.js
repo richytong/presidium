@@ -283,6 +283,13 @@ ElasticsearchIndex.prototype.match = function match(matchDSL, options) {
  *   multiMatchDSL {
  *     query: string, // the querystring, e.g. 'this is a test'
  *     fields: Array<string>, // the fields to be queried, e.g. ['subject', 'message']
+ *     type: // determines internal execution. results may vary
+ *       'best_fields' // (default) finds documents which may match any field, but uses `_score` from the best field
+ *       |'most_fields' // finds documents which may match any field and combines `_score` from each field
+ *       |'cross_fields' // treat fields with same analyzer as if they were one big field
+ *       |'phrase' // run a `match_phrase` query on each field and use the `_score` from the best field
+ *       |'phrase_prefix' // run a `match_phrase_prefix` query on each field and use the `_score` from the best field
+ *       |'bool_prefix' // create a `match_bool_prefix` query on each field and combine the `_score` from each field
  *   },
  *   options? {
  *     size: number,
@@ -291,6 +298,9 @@ ElasticsearchIndex.prototype.match = function match(matchDSL, options) {
  *   },
  * ) -> Promise<HttpResponse>
  * ```
+ *
+ * @description
+ * https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-multi-match-query.html
  */
 ElasticsearchIndex.prototype.multiMatch = function multiMatch(
   multiMatchDSL, options
