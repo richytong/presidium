@@ -1,6 +1,4 @@
 const { Client } = require('@elastic/elasticsearch')
-const curry = require('rubico/curry')
-const __ = require('rubico/__')
 
 /**
  * @name Elasticsearch
@@ -11,9 +9,10 @@ const __ = require('rubico/__')
  * ```
  *
  * @description
+ * https://www.elastic.co/guide/en/elasticsearch/reference/current/rest-apis.html
+ *
  * https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/7.x/introduction.html
  * https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/7.x/api-reference.html
- * https://www.elastic.co/guide/en/elasticsearch/reference/current/rest-apis.html
  * https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/current/index.html
  * https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html
  *
