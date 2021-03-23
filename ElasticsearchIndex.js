@@ -211,14 +211,14 @@ ElasticsearchIndex.prototype.getDocument = function getDocument(
  * })
  *
  * myIndex.match(
- *   { myField: 'this is a test' }, 
+ *   { myField: 'this is a test' },
  *   { size: 100 },
  * )
  * ```
  */
 
 ElasticsearchIndex.prototype.match = function match(matchDSL, options) {
-  return this.http.post(`/_search`, {
+  return this.http.post('/_search', {
     headers: {
       'Content-Type': 'application/json',
     },
