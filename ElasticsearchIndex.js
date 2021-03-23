@@ -301,6 +301,8 @@ ElasticsearchIndex.prototype.match = function match(matchDSL, options) {
  *
  * @description
  * https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-multi-match-query.html
+ *
+ * TODO https://www.elastic.co/guide/en/elasticsearch/reference/7.x/query-dsl-match-bool-prefix-query.html
  */
 ElasticsearchIndex.prototype.multiMatch = function multiMatch(
   multiMatchDSL, options
