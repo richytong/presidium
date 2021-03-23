@@ -23,7 +23,7 @@ const Lambda = require('./Lambda')
 const LambdaFunction = require('./LambdaFunction')
 const Mongo = require('./Mongo')
 const MongoCollection = require('./MongoCollection')
-const Elasticsearch = require('./Elasticsearch')
+const ElasticsearchIndex = require('./ElasticsearchIndex')
 // const SNS = require('./SNS')
 // const SNSTopic = require('./SNSTopic')
 const S3 = require('./S3')
@@ -43,7 +43,7 @@ const Presidium = {
   Kinesis, KinesisStream,
   Lambda, LambdaFunction,
   Mongo, MongoCollection,
-  Elasticsearch,
+  ElasticsearchIndex,
   // SNS, SNSTopic,
   S3, S3Bucket,
   // Redshift,
