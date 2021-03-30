@@ -15,6 +15,7 @@ const identity = require('rubico/x/identity')
  *   secretAccessKey: string,
  *   region: string,
  *   endpoint: string,
+ *   signatureVersion: string, // 'v2'
  * })
  * ```
  */
@@ -28,6 +29,7 @@ const S3Bucket = function (options) {
     'secretAccessKey',
     'region',
     'endpoint',
+    'signatureVersion',
   ])(options))
   this.ready = this.s3.getBucketLocation(this.name).catch(async error => {
     if (error.name == 'NoSuchBucket') {
