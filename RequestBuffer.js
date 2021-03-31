@@ -13,7 +13,7 @@ const RequestBuffer = function (request) {
       binaryArray.push(chunk)
     })
     request.on('end', () => {
-      resolve(Buffer.from(binaryArray))
+      resolve(Buffer.concat(binaryArray))
     })
   })
 }
