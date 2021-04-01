@@ -177,6 +177,7 @@ DynamoTable.prototype.getItem = async function dynamoTableGetItem(key) {
  *   key Object,
  *   updates Object,
  *   options? {
+ *     ConditionExpression: string, // 'attribute_exists(username)'
  *     ReturnConsumedCapacity?: 'INDEXES'|'TOTAL'|'NONE',
  *     ReturnItemCollectionMetrics?: 'SIZE'|'NONE',
  *     ReturnValues?: 'NONE'|'ALL_OLD'|'UPDATED_OLD'|'ALL_NEW'|'UPDATED_NEW',
