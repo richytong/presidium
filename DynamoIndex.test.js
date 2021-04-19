@@ -6,7 +6,7 @@ const DynamoTable = require('./DynamoTable')
 const DynamoIndex = require('./DynamoIndex')
 const inspect = require('./internal/inspect')
 
-module.exports = Test('DynamoIndex', DynamoIndex)
+const test = new Test('DynamoIndex', DynamoIndex)
   .before(async function () {
     this.dynamo = Dynamo({ endpoint: 'http://localhost:8000/' })
     await this.dynamo.deleteTable('test-tablename')
@@ -138,6 +138,27 @@ module.exports = Test('DynamoIndex', DynamoIndex)
         ScannedCount: 3
       })
 
+    assert.deepEqual(
+      await index.query('status = :status AND createTime BETWEEN :lower AND :upper', {
+        status: 'waitlist',
+        lower: 999,
+        upper: 2000,
+        name: 'George',
+      }, {
+        filterExpression: 'name = :name',
+      }),
+      {
+        Items: [
+          {
+            createTime: { N: '1000' },
+            id: { S: '1' },
+            status: { S: 'waitlist' },
+            name: { S: 'George' },
+          },
+        ],
+        Count: 1,
+        ScannedCount: 3
+      })
 
     assert.deepEqual(
       await index.query('status = :status AND createTime >= :createTime', {
@@ -388,3 +409,9 @@ module.exports = Test('DynamoIndex', DynamoIndex)
     await this.dynamo.deleteTable('test-tablename')
     await this.dynamo.deleteTable('test-tablename-2')
   })
+
+if (process.argv[1] == __filename) {
+  test()
+}
+
+module.exports = test
