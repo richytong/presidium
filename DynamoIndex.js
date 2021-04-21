@@ -141,7 +141,7 @@ DynamoIndex.prototype.query = async function dynamoIndexQuery(
     }
   }
 
-  let filterExpressionStatements =
+  const filterExpressionStatements =
     options.filterExpression == null ? []
     : options.filterExpression.trim().split(/\s+AND\s+/)
   statementsIndex = -1
