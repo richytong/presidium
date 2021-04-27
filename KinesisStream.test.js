@@ -14,6 +14,8 @@ const test = new Test('KinesisStream', KinesisStream)
   name: 'my-stream',
   endpoint: 'http://localhost:4567',
   shardIteratorType: 'TRIM_HORIZON',
+  getRecordsLimit: 1,
+  listShardsLimit: 1,
 }, async function (myStream) {
   await myStream.ready
   await myStream.putRecord('hey')

@@ -45,6 +45,8 @@ const KinesisStream = function (options) {
     return new KinesisStream(options)
   }
   this.name = options.name
+  this.listShardsLimit = options.listShardsLimit ?? 1000
+  this.getRecordsLimit = options.getRecordsLimit ?? 1000
   this.shardIteratorType = options.shardIteratorType ?? 'LATEST'
   this.shardIteratorTimestamp = options.shardIteratorTimestamp
   this.shardFilterType = options.shardFilterType
@@ -153,13 +155,13 @@ KinesisStream.prototype.close = function close() {
 KinesisStream.prototype.listShards = async function* listShards() {
   let shards = await this.kinesis.client.listShards({
     StreamName: this.name,
-    MaxResults: 1000,
+    MaxResults: this.listShardsLimit,
   }).promise()
   yield* shards.Shards
   while (!this.closed && shards.NextToken != null) {
     shards = await this.kinesis.client.listShards({
       StreamName: this.name,
-      MaxResults: 1000,
+      MaxResults: this.listShardsLimit,
       NextToken: shards.NextToken,
     })
     yield* shards.Shards
@@ -178,13 +180,13 @@ KinesisStream.prototype.getRecords = async function* getRecords(Shard) {
   }).promise().then(get('ShardIterator'))
   let records = await this.kinesis.client.getRecords({
     ShardIterator: startingShardIterator,
-    Limit: 1000,
+    Limit: this.getRecordsLimit,
   }).promise()
   yield* records.Records
   while (!this.closed && records.NextShardIterator != null) {
     records = await this.kinesis.client.getRecords({
       ShardIterator: records.NextShardIterator,
-      Limit: 1000,
+      Limit: this.getRecordsLimit,
     }).promise()
     yield* records.Records
   }
