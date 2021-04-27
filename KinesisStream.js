@@ -39,6 +39,9 @@ const {
  *
  * @description
  * Creates a Kinesis stream. https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Kinesis.html
+ *
+ * Sizes, limits, quotas
+ * https://docs.aws.amazon.com/streams/latest/dev/service-sizes-and-limits.html
  */
 const KinesisStream = function (options) {
   if (this == null || this.constructor != KinesisStream) {
@@ -47,6 +50,7 @@ const KinesisStream = function (options) {
   this.name = options.name
   this.listShardsLimit = options.listShardsLimit ?? 1000
   this.getRecordsLimit = options.getRecordsLimit ?? 1000
+  this.shardUpdatePeriod = options.shardUpdatePeriod ?? 10000
   this.shardIteratorType = options.shardIteratorType ?? 'LATEST'
   this.shardIteratorTimestamp = options.shardIteratorTimestamp
   this.shardFilterType = options.shardFilterType
