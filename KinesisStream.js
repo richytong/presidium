@@ -3,6 +3,7 @@ const rubico = require('rubico')
 const has = require('rubico/x/has')
 const identity = require('rubico/x/identity')
 const Mux = require('rubico/monad/Mux')
+const differenceWith = require('rubico/x/differenceWith')
 
 const {
   pipe, tap,
@@ -50,8 +51,6 @@ const KinesisStream = function (options) {
   this.shardFilterShardId = options.shardFilterShardId
   this.shardFilterTimestamp = options.shardFilterTimestamp
   this.streamCreationTimestamp = options.streamCreationTimestamp
-  this.listShardsLimit = options.lstShardsLimit ?? 10000
-  this.getRecordsLimit = options.getRecordsLimit ?? 10000
   this.timestamp = options.timestamp
   this.startingSequenceNumber = options.startingSequenceNumber
   this.kinesis = new Kinesis(omit(['name'])(options))
@@ -124,10 +123,6 @@ KinesisStream.prototype.putRecord = async function putRecord(data, options = {})
   }).promise()
 }
 
-// TODO KinesisStream.prototype.putRecords = async function putRecords() {}
-
-// TODO KinesisStream.prototype.splitShard = async function splitShard() {}
-
 /**
  * @name KinesisStream.prototype.updateShardCount
  *
@@ -150,79 +145,102 @@ KinesisStream.prototype.updateShardCount = async function updateShardCount(count
 
 // () => ()
 KinesisStream.prototype.close = function close() {
-  const error = new Error('closed')
-  error.reason = 'cancelled'
-  this.canceller(error)
+  this.closed = true
   return this
 }
 
-KinesisStream.prototype[Symbol.asyncIterator] = async function* asyncIterator() {
-  let shards = null
-  await this.ready
-  do { // TODO consider case when shards > 10_000
+// () -> AsyncGenerator<Shard>
+KinesisStream.prototype.listShards = async function* listShards() {
+  let shards = await this.kinesis.client.listShards({
+    StreamName: this.name,
+    MaxResults: 1000,
+  }).promise()
+  yield* shards.Shards
+  while (!this.closed && shards.NextToken != null) {
     shards = await this.kinesis.client.listShards({
       StreamName: this.name,
-      MaxResults: this.listShardsLimit,
-      ...shards?.NextToken ? {
-        NextToken: shards.NextToken,
-      } : {
-        ...this.shardFilterType && {
-          ShardFilter: {
-            Type: this.shardFilterType,
-            ...this.shardFilterShardId && {
-              ShardId: this.shardFilterShardId,
-            },
-            ...this.shardFilterTimestamp && {
-              Timestamp: this.shardFilterTimestamp,
-            },
-          },
-        },
-      },
+      MaxResults: 1000,
+      NextToken: shards.NextToken,
+    })
+    yield* shards.Shards
+  }
+}
+
+// Shard -> AsyncGenerator<Record>
+KinesisStream.prototype.getRecords = async function* getRecords(Shard) {
+  const startingShardIterator = await this.kinesis.client.getShardIterator({
+    ShardId: Shard.ShardId,
+    StreamName: this.name,
+    ShardIteratorType: this.shardIteratorType,
+    ...this.shardIteratorTimestamp && {
+      Timestamp: this.shardIteratorTimestamp,
+    },
+  }).promise().then(get('ShardIterator'))
+  let records = await this.kinesis.client.getRecords({
+    ShardIterator: startingShardIterator,
+    Limit: 1000,
+  }).promise()
+  yield* records.Records
+  while (!this.closed && records.NextShardIterator != null) {
+    records = await this.kinesis.client.getRecords({
+      ShardIterator: records.NextShardIterator,
+      Limit: 1000,
     }).promise()
+    yield* records.Records
+  }
+}
 
-    const streamName = this.name,
-      shardIteratorType = this.shardIteratorType,
-      shardIteratorTimestamp = this.shardIteratorTimestamp,
-      cancelToken = this.cancelToken,
-      kinesisClient = this.kinesis.client,
-      getRecordsLimit = this.getRecordsLimit
-    yield* Mux.race(shards.Shards.map(async function* (shard) {
-      const startingShardIterator = await kinesisClient.getShardIterator({
-        ShardId: shard.ShardId,
-        StreamName: streamName,
-        ShardIteratorType: shardIteratorType,
-        ...shardIteratorTimestamp && {
-          Timestamp: shardIteratorTimestamp,
-        },
-      }).promise().then(get('ShardIterator'))
-      let records = await kinesisClient.getRecords({
-        ShardIterator: startingShardIterator,
-        Limit: getRecordsLimit,
-      }).promise()
+const SymbolUpdateShards = Symbol('UpdateShards')
 
-      yield* records.Records
-      while (records.NextShardIterator != null) {
-        try {
-          records = await Promise.race([
-            cancelToken,
-            kinesisClient.getRecords({
-              ShardIterator: records.NextShardIterator,
-              Limit: getRecordsLimit,
-            }).promise(),
-          ])
-        } catch (error) {
-          if (error.reason == 'cancelled') {
-            return
-          }
-          throw error
-        }
-        yield* records.Records
-        if (records.MillisBehindLatest == 0) {
-          await new Promise(resolve => setTimeout(resolve, 1000))
-        }
+KinesisStream.prototype[Symbol.asyncIterator] = async function* generateRecords() {
+  let shards = await transform(map(identity), [])(this.listShards())
+  let muxAsyncIterator = Mux.race(shards.map(Shard => this.getRecords(Shard)))
+  let iterationPromise = muxAsyncIterator.next()
+  let shardUpdatePromise = new Promise(resolve => setTimeout(
+    thunkify(resolve, SymbolUpdateShards),
+    this.shardUpdatePeriod,
+  ))
+
+  while (!this.closed) {
+    const iteration = await Promise.race([
+      shardUpdatePromise,
+      iterationPromise,
+    ])
+    if (iteration == SymbolUpdateShards) {
+      const latestShards = await transform(map(identity), [])(this.listShards())
+      const newShards = differenceWith(
+        (ShardA, ShardB) => ShardA.ShardId == ShardB.ShardId,
+        latestShards,
+      )(shards)
+      const closedShards = differenceWith(
+        (ShardA, ShardB) => ShardA.ShardId == ShardB.ShardId,
+        shards,
+      )(latestShards)
+      if (this.debug) {
+        console.log(
+          'KinesisStream: updated shards',
+          JSON.stringify(map(map(pick(['ShardId'])))({
+            newShards, closedShards, latestShards,
+          })),
+        )
       }
-    }))
-  } while (has('NextToken')(shards))
+
+      closedShards.forEach(Shard => (Shard.closed = true))
+      shards = latestShards
+      muxAsyncIterator = newShards.length == 0 ? muxAsyncIterator : Mux.race([
+        ...newShards.map(Shard => this.getRecords(Shard)),
+        muxAsyncIterator,
+      ])
+      shardUpdatePromise = new Promise(resolve => setTimeout(
+        thunkify(resolve, SymbolUpdateShards), this.shardUpdatePeriod))
+    } else if (iteration.done) {
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      iterationPromise = muxAsyncIterator.next()
+    } else {
+      yield iteration.value
+      iterationPromise = muxAsyncIterator.next()
+    }
+  }
 }
 
 module.exports = KinesisStream
