@@ -7,23 +7,23 @@ const inspect = require('./internal/inspect')
 const test = new Test('S3Bucket', S3Bucket)
 .before(async function () {
   this.s3 = new S3({
-    accessKeyId: 'AKIARMTQKGLFIIYQIS44',
-    secretAccessKey: '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',
+    accessKeyId: 'minioadmin',
+    secretAccessKey: 'minioadmin',
     endpoint: 'http://localhost:9000',
     region: 'us-west-1',
   })
   try {
     await new S3Bucket({
       name: 'test-bucket',
-      accessKeyId: 'AKIARMTQKGLFIIYQIS44',
-      secretAccessKey: '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',
+      accessKeyId: 'minioadmin',
+      secretAccessKey: 'minioadmin',
       endpoint: 'http://localhost:9000',
       region: 'us-west-1',
     }).deleteObjects(['a', 'b', 'c'])
     await new S3Bucket({
       name: 'test-bucket',
-      accessKeyId: 'AKIARMTQKGLFIIYQIS44',
-      secretAccessKey: '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',
+      accessKeyId: 'minioadmin',
+      secretAccessKey: 'minioadmin',
       endpoint: 'http://localhost:9000',
       region: 'us-west-1',
     }).deleteObject('binary')
@@ -32,8 +32,8 @@ const test = new Test('S3Bucket', S3Bucket)
 })
 .case({
   name: 'test-bucket',
-  accessKeyId: 'AKIARMTQKGLFIIYQIS44',
-  secretAccessKey: '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',
+  accessKeyId: 'minioadmin',
+  secretAccessKey: 'minioadmin',
   endpoint: 'http://localhost:9000/',
   region: 'us-west-1',
 }, async function (testBucket) {

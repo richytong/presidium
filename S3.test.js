@@ -5,9 +5,9 @@ const S3 = require('./S3')
 module.exports = Test('S3', S3)
 .case({
   endpoint: 'http://localhost:9000',
-  accessKeyId: 'AKIARMTQKGLFIIYQIS44',
+  accessKeyId: 'minioadmin',
   region: 'us-west-1',
-  secretAccessKey: 'fSvJD+/Z5/lhxgOiVBlj3Fv40JnSnz13XAfBGK5K',
+  secretAccessKey: 'minioadmin',
 }, s3 => {
   assert(typeof s3 == 'object')
 })
