@@ -62,7 +62,6 @@ const KinesisStream = function (options) {
   this.startingSequenceNumber = options.startingSequenceNumber
   this.kinesis = new Kinesis(omit(['name'])(options))
   this.cancelToken = new Promise((_, reject) => (this.canceller = reject))
-  this.debug = options.debug
 
   this.ready = this.kinesis.client.describeStream({
     StreamName: this.name,
@@ -189,12 +188,6 @@ KinesisStream.prototype.getRecords = async function* getRecords(Shard) {
     Limit: this.getRecordsLimit,
   }).promise()
   await new Promise(resolve => setTimeout(resolve, this.getRecordsInterval))
-  if (this.debug) {
-    console.log(
-      `KinesisStream: got ${records.Records.length} starting records(s) for Shard`,
-      Shard.ShardId
-    )
-  }
   yield* records.Records
   while (!this.closed && records.NextShardIterator != null) {
     records = await this.kinesis.client.getRecords({
@@ -202,12 +195,6 @@ KinesisStream.prototype.getRecords = async function* getRecords(Shard) {
       Limit: this.getRecordsLimit,
     }).promise()
     await new Promise(resolve => setTimeout(resolve, this.getRecordsInterval))
-    if (this.debug) {
-      console.log(
-        `KinesisStream: got ${records.Records.length} records(s) for Shard`,
-        Shard.ShardId
-      )
-    }
     yield* records.Records
   }
 }
@@ -238,14 +225,6 @@ KinesisStream.prototype[Symbol.asyncIterator] = async function* generateRecords(
         (ShardA, ShardB) => ShardA.ShardId == ShardB.ShardId,
         shards,
       )(latestShards)
-      if (this.debug) {
-        console.log(
-          'KinesisStream: updated shards',
-          JSON.stringify(map(map(pick(['ShardId'])))({
-            newShards, closedShards, latestShards,
-          })),
-        )
-      }
 
       closedShards.forEach(Shard => (Shard.closed = true))
       shards = latestShards
