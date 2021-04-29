@@ -50,7 +50,8 @@ const KinesisStream = function (options) {
   this.name = options.name
   this.listShardsLimit = options.listShardsLimit ?? 1000
   this.getRecordsLimit = options.getRecordsLimit ?? 1000
-  this.shardUpdatePeriod = options.shardUpdatePeriod ?? 10000
+  this.shardUpdateInterval = options.shardUpdateInterval ?? 10000
+  this.getRecordsInterval = options.getRecordsInterval ?? 1000
   this.shardIteratorType = options.shardIteratorType ?? 'LATEST'
   this.shardIteratorTimestamp = options.shardIteratorTimestamp
   this.shardFilterType = options.shardFilterType
@@ -61,6 +62,7 @@ const KinesisStream = function (options) {
   this.startingSequenceNumber = options.startingSequenceNumber
   this.kinesis = new Kinesis(omit(['name'])(options))
   this.cancelToken = new Promise((_, reject) => (this.canceller = reject))
+  this.debug = options.debug
 
   this.ready = this.kinesis.client.describeStream({
     StreamName: this.name,
@@ -186,12 +188,26 @@ KinesisStream.prototype.getRecords = async function* getRecords(Shard) {
     ShardIterator: startingShardIterator,
     Limit: this.getRecordsLimit,
   }).promise()
+  await new Promise(resolve => setTimeout(resolve, this.getRecordsInterval))
+  if (this.debug) {
+    console.log(
+      `KinesisStream: got ${records.Records.length} starting records(s) for Shard`,
+      Shard.ShardId
+    )
+  }
   yield* records.Records
   while (!this.closed && records.NextShardIterator != null) {
     records = await this.kinesis.client.getRecords({
       ShardIterator: records.NextShardIterator,
       Limit: this.getRecordsLimit,
     }).promise()
+    await new Promise(resolve => setTimeout(resolve, this.getRecordsInterval))
+    if (this.debug) {
+      console.log(
+        `KinesisStream: got ${records.Records.length} records(s) for Shard`,
+        Shard.ShardId
+      )
+    }
     yield* records.Records
   }
 }
@@ -204,7 +220,7 @@ KinesisStream.prototype[Symbol.asyncIterator] = async function* generateRecords(
   let iterationPromise = muxAsyncIterator.next()
   let shardUpdatePromise = new Promise(resolve => setTimeout(
     thunkify(resolve, SymbolUpdateShards),
-    this.shardUpdatePeriod,
+    this.shardUpdateInterval,
   ))
 
   while (!this.closed) {
@@ -238,7 +254,7 @@ KinesisStream.prototype[Symbol.asyncIterator] = async function* generateRecords(
         muxAsyncIterator,
       ])
       shardUpdatePromise = new Promise(resolve => setTimeout(
-        thunkify(resolve, SymbolUpdateShards), this.shardUpdatePeriod))
+        thunkify(resolve, SymbolUpdateShards), this.shardUpdateInterval))
     } else if (iteration.done) {
       await new Promise(resolve => setTimeout(resolve, 1000))
       iterationPromise = muxAsyncIterator.next()
