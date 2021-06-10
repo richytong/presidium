@@ -182,7 +182,7 @@ DynamoTable.prototype.getItem = async function dynamoTableGetItem(key) {
  *     ReturnItemCollectionMetrics?: 'SIZE'|'NONE',
  *     ReturnValues?: 'NONE'|'ALL_OLD'|'UPDATED_OLD'|'ALL_NEW'|'UPDATED_NEW',
  *   },
- * )
+ * ) -> Promise<{ Attributes?: object }>
  * ```
  *
  * @description
@@ -212,7 +212,7 @@ DynamoTable.prototype.updateItem = async function dynamoTableUpdateItem(
     Key: map(Dynamo.AttributeValue)(key),
     UpdateExpression: pipe([
       Object.entries,
-      map(([key, value]) => [`#${hashJSON(key)} = :${hashJSON(value)}`]),
+      map(([key, value]) => `#${hashJSON(key)} = :${hashJSON(value)}`),
       join(', '),
       expression => `set ${expression}`,
     ])(updates),
@@ -222,6 +222,46 @@ DynamoTable.prototype.updateItem = async function dynamoTableUpdateItem(
     ExpressionAttributeValues: map.entries(
       ([key, value]) => [`:${hashJSON(value)}`, Dynamo.AttributeValue(value)],
     )(updates),
+    ...options,
+  }).promise()
+}
+
+/**
+ * @name DynamoTable.prototype.incrementItem
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * DynamoTable.prototype.incrementItem(
+ *   key Object,
+ *   incrementUpdates Object,
+ *   options? {
+ *     ConditionExpression: string, // 'attribute_exists(username)'
+ *     ReturnConsumedCapacity?: 'INDEXES'|'TOTAL'|'NONE',
+ *     ReturnItemCollectionMetrics?: 'SIZE'|'NONE',
+ *     ReturnValues?: 'NONE'|'ALL_OLD'|'UPDATED_OLD'|'ALL_NEW'|'UPDATED_NEW',
+ *   },
+ * ) -> Promise<{ Attributes?: object }>
+ * ```
+ */
+DynamoTable.prototype.incrementItem = async function incrementItem(
+  key, incrementUpdates, options,
+) {
+  await this.ready
+  return this.client.updateItem({
+    TableName: this.name,
+    Key: map(Dynamo.AttributeValue)(key),
+    UpdateExpression: pipe([
+      Object.entries,
+      map(([key, value]) => `#${hashJSON(key)} :${hashJSON(value)}`),
+      join(', '),
+      expression => `add ${expression}`,
+    ])(incrementUpdates),
+    ExpressionAttributeNames: map.entries(
+      ([key, value]) => [`#${hashJSON(key)}`, key],
+    )(incrementUpdates),
+    ExpressionAttributeValues: map.entries(
+      ([key, value]) => [`:${hashJSON(value)}`, Dynamo.AttributeValue(value)],
+    )(incrementUpdates),
     ...options,
   }).promise()
 }

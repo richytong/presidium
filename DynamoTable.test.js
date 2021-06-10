@@ -6,7 +6,7 @@ const DynamoTable = require('./DynamoTable')
 
 const dynamo = Dynamo('http://localhost:8000/')
 
-module.exports = Test('DynamoTable', DynamoTable)
+const test = new Test('DynamoTable', DynamoTable)
   .before(async function () {
     this.dynamo = Dynamo({ endpoint: 'http://localhost:8000/' })
     await this.dynamo.deleteTable('test-tablename')
@@ -64,6 +64,46 @@ module.exports = Test('DynamoTable', DynamoTable)
       })
 
     {
+      const data = await testTable.incrementItem(
+        { id: '1' },
+        { ruleStart: 1, newNumberField: 5, negativeNewNumberField: -1 },
+        { ReturnValues: 'UPDATED_NEW' },
+      )
+      assert.deepEqual(data, {
+        Attributes: {
+          newNumberField: { N: '5' },
+          negativeNewNumberField: { N: '-1' },
+          ruleStart: { N: '1821' },
+        }
+      })
+    }
+
+    assert.deepEqual(
+      await testTable.getItem({ id: '1' }),
+      {
+        Item: map(Dynamo.AttributeValue)({
+          id: '1',
+          name: 'George III',
+          isKing: true,
+          ruleStart: 1821,
+          ruleEnd: null,
+          newNumberField: 5,
+          negativeNewNumberField: -1,
+        })
+      })
+
+    assert.rejects(
+      () => testTable.incrementItem(
+        { id: '1' },
+        { ruleEnd: 10 },
+      ),
+      {
+        name: 'ValidationException',
+        message: 'An operand in the update expression has an incorrect data type'
+      },
+    )
+
+    {
       const scanResult1 = await testTable.scan({ limit: 1 })
       const scanResult2 = await testTable.scan({ limit: 2, exclusiveStartKey: scanResult1.LastEvaluatedKey })
       const scanResult3 = await testTable.scan({ limit: 2, exclusiveStartKey: scanResult2.LastEvaluatedKey })
@@ -84,3 +124,9 @@ module.exports = Test('DynamoTable', DynamoTable)
       assert.deepEqual(response, {})
     }
   })
+
+if (process.argv[1] == __filename) {
+  test()
+}
+
+module.exports = test
