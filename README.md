@@ -7,7 +7,7 @@ A library for creating web services.
 
 ## Handle Http
 ```javascript
-import { HttpServer, Http } from 'presidium'
+const { HttpServer, Http } = require('presidium')
 
 new HttpServer((request, response) => {
   response.writeHead(200, { 'Content-Type': 'application/json' })
@@ -22,9 +22,32 @@ http.get('/')
   .then(console.log) // { greeting: 'Hello World' }
 ```
 
+## Handle WebSocket
+```javascript
+const { WebSocketServer, WebSocket } = require('presidium')
+
+new WebSocketServer(socket => {
+  socket.on('message', message => {
+    console.log('Got message:', message)
+  })
+  socket.on('close', () => {
+    console.log('Socket closed')
+  })
+}).listen(1337)
+
+
+const socket = new WebSocket('http://localhost:1337')
+socket.addEventListener('open', function (event) {
+  socket.send('Hello Server!')
+})
+socket.addEventListener('data', function (event) {
+  console.log('Message from server:', event.data)
+})
+```
+
 ## CRUD and Query DynamoDB
 ```javascript
-import { DynamoTable, DynamoIndex } from 'presidium'
+const { DynamoTable, DynamoIndex } = require('presidium')
 
 const awsCreds = {
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -73,7 +96,7 @@ const awsCreds = {
 
 ## Consume Kinesis Streams
 ```javascript
-import { KinesisStream } from 'presidium'
+const { KinesisStream } = require('presidium')
 
 const awsCreds = {
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -121,7 +144,7 @@ const myStream = new KinesisStream({
 
 ## Upload to S3
 ```javascript
-import { S3Bucket } from 'presidium'
+const { S3Bucket } = require('presidium')
 
 const awsCreds = {
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -151,7 +174,7 @@ const myBucket = new S3Bucket({
 ## Build and Push Docker Images
 > Stop using --build-arg for that npm token
 ```javascript
-import { DockerImage } from 'presidium'
+const { DockerImage } = require('presidium')
 
 const myImage = new DockerImage('my-app:1.0.0')
 
@@ -181,7 +204,7 @@ buildStream.pipe(process.stdout)
 
 ## Execute Docker Containers
 ```javascript
-import { DockerContainer } from 'presidium'
+const { DockerContainer } = require('presidium')
 
 const container = new DockerContainer({
   image: 'node:15-alpine',
@@ -195,7 +218,7 @@ container.run().pipe(process.stdout) // foo
 
 ## Deploy Docker Swarm Services
 ```javascript
-import { DockerSwarm, DockerService } from 'presidium'
+const { DockerSwarm, DockerService } = require('presidium')
 
 ;(async function() {
   const mySwarm = new DockerSwarm('eth0:2377')
