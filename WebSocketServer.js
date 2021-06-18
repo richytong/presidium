@@ -2,6 +2,24 @@ const HttpServer = require('./HttpServer')
 const WebSocket = require('ws')
 
 /**
+ * @name healthyHttpHandler
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * healthyHttpHandler(
+ *   request IncomingMessage,
+ *   response ServerResponse,
+ * )=>Promise<>|(),
+ * ```
+ */
+const healthyHttpHandler = function (request, response) {
+  response.writeHead(200, {
+    'Content-Type': 'text/plain',
+  })
+  response.end('ok')
+}
+
+/**
  * @name WebSocketServer
  *
  * @synopsis
@@ -15,49 +33,24 @@ const WebSocket = require('ws')
  * Creates a WebSocketServer. Sockets are [engine.Socket](https://github.com/socketio/engine.io/blob/master/lib/socket.js)
  *
  * ```javascript
- * WebSocketServer(async socket => {
- *   socket.on('message', message => {})
- *   socket.on('close', () => {})
+ * new WebSocketServer(socket => {
+ *   socket.on('message', message => {
+ *     console.log('Got message:', message)
+ *   })
+ *   socket.on('close', () => {
+ *     console.log('Socket closed')
+ *   })
  * })
  * ```
  */
 
-const WebSocketServer = function (socketHandler) {
-  if (this == null || this.constructor != WebSocketServer) {
-    return new WebSocketServer(socketHandler)
-  }
-  const httpServer = new HttpServer(),
-    webSocketServer = new WebSocket.Server({ server: httpServer })
+const WebSocketServer = function (
+  socketHandler, httpHandler = healthyHttpHandler
+) {
+  const httpServer = new HttpServer(httpHandler)
+  const webSocketServer = new WebSocket.Server({ server: httpServer })
   webSocketServer.on('connection', socketHandler)
-  this.httpServer = httpServer
-  this.webSocketServer = webSocketServer
-  return this
-}
-
-/**
- * @name WebSocketServer.prototype.listen
- *
- * @synopsis
- * ```coffeescript [specscript]
- * WebSocketServer(socketHandler).listen(port number, callback function) -> WebSocketServer
- * ```
- */
-WebSocketServer.prototype.listen = function listen(port, callback) {
-  this.httpServer.listen(port, callback)
-  return this
-}
-
-/**
- * @name WebSocketServer.prototype.close
- *
- * @synopsis
- * ```coffeescript [specscript]
- * WebSocketServer(socketHandler).close(callback function) -> WebSocketServer
- * ```
- */
-WebSocketServer.prototype.close = function close(callback) {
-  this.httpServer.close(callback)
-  return this
+  return httpServer
 }
 
 module.exports = WebSocketServer
