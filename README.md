@@ -36,7 +36,7 @@ new WebSocketServer(socket => {
 }).listen(1337)
 
 
-const socket = new WebSocket('http://localhost:1337')
+const socket = new WebSocket('ws://localhost:1337/')
 socket.addEventListener('open', function (event) {
   socket.send('Hello Server!')
 })
