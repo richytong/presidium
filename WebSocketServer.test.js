@@ -58,7 +58,7 @@ const test = Test('WebSocketServer', function (socketHandler, httpHandler) {
   let didOpen = false
   await new Promise(resolve => {
     server.listen(1337, async () => {
-      const websocket = WebSocket('ws://localhost:1337/')
+      const websocket = new WebSocket('ws://localhost:1337/')
       websocket.on('open', () => {
         didOpen = true
       })
