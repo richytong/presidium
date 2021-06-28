@@ -130,26 +130,6 @@ KinesisStream.prototype.putRecord = async function putRecord(data, options = {})
   }).promise()
 }
 
-/**
- * @name KinesisStream.prototype.updateShardCount
- *
- * @synopsis
- * ```coffeescript [specscript]
- * KinesisStream(options).updateShardCount(count number) -> Promise<{
- *   StreamName: string,
- *   CurrentShardCount: number,
- *   TargetShardCount: number,
- * }>
- * ```
- */
-KinesisStream.prototype.updateShardCount = async function updateShardCount(count) {
-  return this.kinesis.client.updateShardCount({
-    ScalingType: 'UNIFORM_SCALING',
-    StreamName: this.name,
-    TargetShardCount: count,
-  }).promise()
-}
-
 // () => ()
 KinesisStream.prototype.close = function close() {
   this.closed = true
