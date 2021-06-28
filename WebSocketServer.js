@@ -52,7 +52,9 @@ const WebSocketServer = function (
 ) {
   const httpServer = new HttpServer(httpHandler)
   const webSocketServer = new WebSocket.Server({ server: httpServer })
-  webSocketServer.on('connection', socketHandler.bind(webSocketServer))
+  if (socketHandler != null) {
+    webSocketServer.on('connection', socketHandler.bind(webSocketServer))
+  }
   webSocketServer.on('close', function closeHttpServer() {
     httpServer.close()
   })

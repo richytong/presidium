@@ -32,6 +32,16 @@ const test = Test('WebSocketServer', function (socketHandler, httpHandler) {
     server.close()
   })
 })
+.case(async function testSocketServerNoConstructorHandler(server) {
+  server.on('connection', function emptyHandler() {
+  })
+  server.listen(7359, async () => {
+    const response = await fetch('http://localhost:7357/')
+    assert.equal(response.status, 200)
+    assert.equal(await response.text(), 'ok')
+    server.close()
+  })
+})
 .case(function saveServerMessagesAndCloseHandler(websocket) {
   websocket.on('message', message => {
     this.serverMessages.push(message)
