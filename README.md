@@ -40,7 +40,7 @@ const socket = new WebSocket('http://localhost:1337')
 socket.addEventListener('open', function (event) {
   socket.send('Hello Server!')
 })
-socket.addEventListener('data', function (event) {
+socket.addEventListener('message', function (event) {
   console.log('Message from server:', event.data)
 })
 ```
