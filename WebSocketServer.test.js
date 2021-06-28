@@ -9,7 +9,7 @@ const test = Test('WebSocketServer', function (socketHandler, httpHandler) {
   this.serverMessages = []
   return WebSocketServer(socketHandler, httpHandler)
 })
-.case(function emptyHandler(socket) {
+.case(function emptyHandler(websocket) {
 }, async function testSocketServerHealthyHttp(server) {
   server.listen(7357, async () => {
     const response = await fetch('http://localhost:7357/')
@@ -18,7 +18,7 @@ const test = Test('WebSocketServer', function (socketHandler, httpHandler) {
     server.close()
   })
 })
-.case(function emptyHandler(socket) {
+.case(function emptyHandler(websocket) {
 }, function customHttpHandler(request, response) {
   response.writeHead(201, {
     'Content-Type': 'text/plain',
@@ -32,35 +32,38 @@ const test = Test('WebSocketServer', function (socketHandler, httpHandler) {
     server.close()
   })
 })
-.case(function saveServerMessagesAndCloseHandler(socket) {
-  socket.on('message', message => {
+.case(function saveServerMessagesAndCloseHandler(websocket) {
+  websocket.on('message', message => {
     this.serverMessages.push(message)
-    socket.send(message)
+    websocket.send(message)
   })
-  socket.on('close', () => {
+  websocket.on('close', async () => {
     this.server.close()
   })
   // START
-  socket.send('hello')
+  websocket.send('hello')
 }, async function testSocketServerWebSocket(server) {
+  server.detectAndCloseBrokenConnections({ pingInterval: 50 })
   this.server = server
   let didOpen = false
   await new Promise(resolve => {
     server.listen(1337, async () => {
-      const socket = WebSocket('ws://localhost:1337/')
-      socket.on('open', () => {
+      const websocket = WebSocket('ws://localhost:1337/')
+      websocket.on('open', () => {
         didOpen = true
       })
-      socket.on('message', message => {
+      websocket.on('message', async message => {
         this.clientMessages.push(message)
         if (this.clientMessages.length == 5) {
-          socket.close()
+          await new Promise(resolve => setTimeout(resolve, 100)) // wait for a round of detectAndCloseBrokenConnections
+          websocket.pong = function noop() {} // overwrite pong to simulate disconnect
+          await new Promise(resolve => setTimeout(resolve, 100)) // wait for server to close
         } else {
-          socket.send('world')
+          websocket.send('world')
         }
       })
       // END
-      socket.on('close', resolve)
+      websocket.on('close', resolve)
     })
   })
   assert(didOpen)
