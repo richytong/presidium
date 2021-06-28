@@ -1,4 +1,4 @@
-const _WebSocket = require('ws')
+const WebSocket = require('ws')
 
 /**
  * @name WebSocket
@@ -23,8 +23,4 @@ const _WebSocket = require('ws')
  * })
  * ```
  */
-const WebSocket = function (url, protocols) {
-  return new _WebSocket(url, protocols)
-}
-
 module.exports = WebSocket
