@@ -64,7 +64,7 @@ module.exports = [
   COPY . .
   EXPOSE 8888`,
           },
-          platform: 'linux/x86-64',
+          platform: 'linux/x86_64',
         })
         assert.equal(response.status, 200)
         response.body.pipe(process.stdout)

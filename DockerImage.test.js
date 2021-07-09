@@ -74,7 +74,7 @@ COPY . .
 EXPOSE 8081
         `,
       },
-      platform: 'linux/x86-64',
+      platform: 'linux/x86_64',
     })
     buildStream.pipe(process.stdout)
     await buildStream.promise

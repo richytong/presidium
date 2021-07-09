@@ -150,7 +150,7 @@ Docker.prototype.pullImage = function dockerPullImage(name, options = {}) {
  *     ignore: Array<string>, // paths or names to ignore in build context tarball
  *     archive: Object<path string)=>(content string)>, // object representation of the base archive for build context
  *     archiveDockerfile: string, // path to Dockerfile in archive
- *     platform: string, // e.g. linux/x86-64
+ *     platform: string, // e.g. linux/x86_64
  *   },
  * ) -> Promise<HttpResponse>
  * ```
