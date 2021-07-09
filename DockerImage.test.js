@@ -22,7 +22,7 @@ const passthrough = target => transform(map(identity), target)
 
 const charCode = string => string.charCodeAt(0)
 
-module.exports = Test('DockerImage', DockerImage)
+const test = new Test('DockerImage', DockerImage)
   .case('doesnot:exist', async function (dneImage) {
     const data = await dneImage.inspect()
     assert(data.message.startsWith('no such image'))
@@ -74,6 +74,7 @@ COPY . .
 EXPOSE 8081
         `,
       },
+      platform: 'linux/x86-64',
     })
     buildStream.pipe(process.stdout)
     await buildStream.promise
@@ -89,3 +90,9 @@ EXPOSE 8081
   await this.docker.pruneContainers()
   await this.docker.pruneImages()
 })
+
+if (process.argv[1] == __filename) {
+  test()
+}
+
+module.exports = test

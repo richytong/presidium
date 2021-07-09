@@ -150,6 +150,7 @@ Docker.prototype.pullImage = function dockerPullImage(name, options = {}) {
  *     ignore: Array<string>, // paths or names to ignore in build context tarball
  *     archive: Object<path string)=>(content string)>, // object representation of the base archive for build context
  *     archiveDockerfile: string, // path to Dockerfile in archive
+ *     platform: string, // e.g. linux/x86-64
  *   },
  * ) -> Promise<HttpResponse>
  * ```
@@ -203,6 +204,7 @@ Docker.prototype.buildImage = async function (image, path, options) {
     dockerfile: options.archiveDockerfile ?? 'Dockerfile',
     t: image,
     forcerm: true,
+    platform: options.platform ?? '',
   })}`, {
     body: archive.tar(path, {
       ignore: options.ignore ?? ['node_modules', '.git', '.nyc_output'],

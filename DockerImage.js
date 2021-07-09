@@ -117,6 +117,7 @@ DockerImage.prototype.pull = function (options) {
  *   options? {
  *     ignore: Array<string>, // paths or names to ignore in build context tarball
  *     archive: Object<path string)=>(content string)>, // object representation of the base archive for build context
+ *     platform: string, // e.g. linux/x86-64
  *   },
  * ) -> ReadableStream
  * ```
@@ -127,7 +128,7 @@ DockerImage.prototype.build = function (path, options = {}) {
     this.docker.buildImage(
       this.name,
       path,
-      pick(['ignore', 'archive'])(options),
+      pick(['ignore', 'archive', 'platform'])(options),
     ).then(response => {
       response.body.on('end', resolve)
       response.body.on('error', reject)
