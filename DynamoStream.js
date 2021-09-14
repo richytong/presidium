@@ -129,7 +129,12 @@ DynamoStream.prototype.getRecords = async function* getRecords(
     ShardId: Shard.ShardId,
     StreamArn: Shard.Stream.StreamArn,
     ShardIteratorType: this.shardIteratorType,
-    // TODO somehow incorporate sequenceNumber specification for each shard into options
+    ...(
+      this.shardIteratorType == 'AFTER_SEQUENCE_NUMBER'
+      || this.shardIteratorType == 'AT_SEQUENCE_NUMBER'
+    ) ? {
+      SequenceNumber: Shard.SequenceNumberRange.StartingSequenceNumber,
+    } : {},
   }).promise().then(get('ShardIterator'))
   let records = await this.client.getRecords({
     ShardIterator: startingShardIterator,
