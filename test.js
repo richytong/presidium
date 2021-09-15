@@ -1,11 +1,18 @@
-const pipe = require('rubico/pipe')
-const tap = require('rubico/tap')
-const map = require('rubico/map')
-const get = require('rubico/get')
-const switchCase = require('rubico/switchCase')
+const rubico = require('rubico')
 const forEach = require('rubico/x/forEach')
 const glob = require('glob')
 const promisify = require('util').promisify
+
+const {
+  pipe, tap,
+  switchCase, tryCatch,
+  fork, assign, get, set, pick, omit,
+  map, filter, reduce, transform, flatMap,
+  and, or, not, any, all,
+  eq, gt, lt, gte, lte,
+  thunkify, always,
+  curry, __,
+} = rubico
 
 const isArray = Array.isArray
 
@@ -15,8 +22,8 @@ let numTests = 0
 
 map.series(pipe([
   promisify(glob),
-  map(pathResolve),
-  map(require),
+  map(curry.arity(1, pathResolve)),
+  map(curry.arity(1, require)),
   map.series(switchCase([
     isArray,
     pipe([
