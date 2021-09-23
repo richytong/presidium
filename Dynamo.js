@@ -255,7 +255,7 @@ Dynamo.prototype.waitFor = async function waitFor(tablename, status) {
 
 Dynamo.prototype.createIndex = async function createIndex(tablename, index, options = {}) {
   const { Table } = await this.describeTable(tablename)
-  const { BillingMode } = Table.BillingModeSummary
+  const BillingMode = Table.BillingModeSummary?.BillingMode ?? 'PROVISIONED'
   const params = {
     IndexName: Dynamo.Indexname(index),
     KeySchema: Dynamo.KeySchema(index),
