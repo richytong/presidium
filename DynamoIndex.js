@@ -79,12 +79,9 @@ const DynamoIndex = function (options) {
  * DynamoIndex(options).inspect() -> Promise<Object>
  * ```
  */
-DynamoIndex.prototype.inspect = function dynamoIndexInspect() {
-  return this.dynamo.describeTable(this.table)
-    .then(pipe([
-      get('Table.GlobalSecondaryIndexes'),
-      find(eq(this.name, get('IndexName'))),
-    ]))
+DynamoIndex.prototype.inspect = async function dynamoIndexInspect() {
+  const { Table } = await this.dynamo.describeTable(this.table)
+  return Table.GlobalSecondaryIndexes?.find(eq(this.name, get('IndexName')))
 }
 
 /**

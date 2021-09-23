@@ -2,7 +2,7 @@ const assert = require('assert')
 const Test = require('thunk-test')
 const Dynamo = require('./Dynamo')
 
-module.exports = [
+const combinedTest = Test.all([
   Test('Dynamo.AttributeValue', Dynamo.AttributeValue)
     .case('hey', { S: 'hey' })
     .case('', { S: '' })
@@ -65,5 +65,10 @@ module.exports = [
     }, async function (dynamo) {
       assert.strictEqual(dynamo.connection.config.endpoint, 'http://localhost:8000')
     }),
-]
+])
 
+if (process.argv[1] == __filename) {
+  combinedTest()
+}
+
+module.exports = combinedTest

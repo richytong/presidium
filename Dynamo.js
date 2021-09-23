@@ -254,6 +254,8 @@ Dynamo.prototype.waitFor = async function waitFor(tablename, status) {
  */
 
 Dynamo.prototype.createIndex = async function createIndex(tablename, index, options = {}) {
+  const { Table } = await this.describeTable(tablename)
+  const { BillingMode } = Table.BillingModeSummary
   const params = {
     IndexName: Dynamo.Indexname(index),
     KeySchema: Dynamo.KeySchema(index),
@@ -261,10 +263,12 @@ Dynamo.prototype.createIndex = async function createIndex(tablename, index, opti
       Projection: {
         ProjectionType: 'ALL',
       },
-      ProvisionedThroughput: {
-        ReadCapacityUnits: 5,
-        WriteCapacityUnits: 5,
-      },
+      ...BillingMode == 'PROVISIONED' ? {
+        ProvisionedThroughput: {
+          ReadCapacityUnits: 5,
+          WriteCapacityUnits: 5,
+        },
+      } : {}
     })(options),
   }
 
