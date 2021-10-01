@@ -142,7 +142,7 @@ DynamoStream.prototype.getRecords = async function* getRecords(
   }).promise()
 
   yield* records.Records
-  while (!this.closed && !Shard.closed && records.NextShardIterator != null) {
+  while (!this.closed && records.NextShardIterator != null) {
     records = await this.client.getRecords({
       ShardIterator: records.NextShardIterator,
       Limit: this.getRecordsLimit
@@ -177,11 +177,7 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* () {
       const newShards = differenceWith(
         (ShardA, ShardB) => ShardA.ShardId == ShardB.ShardId,
         latestShards)(shards)
-      const closedShards = differenceWith(
-        (ShardA, ShardB) => ShardA.ShardId == ShardB.ShardId,
-        shards)(latestShards)
 
-      closedShards.forEach(Shard => (Shard.closed = true))
       shards = latestShards
       muxAsyncIterator = newShards.length == 0 ? muxAsyncIterator : Mux.race([
         ...newShards.map(Shard => this.getRecords(Shard)),
