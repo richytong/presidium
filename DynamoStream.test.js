@@ -272,6 +272,7 @@ const test = Test('DynamoStream', DynamoStream)
 .case({
   table: 'my-table',
   endpoint: 'http://localhost:8000',
+  shardUpdatePeriod: 500,
 }, async function (myStream) {
   await myStream.ready
 
@@ -282,6 +283,8 @@ const test = Test('DynamoStream', DynamoStream)
     new Promise(resolve => setTimeout(thunkify(resolve, 'hey'), 3000))
   ])
   assert.equal(raceResult, 'hey')
+  // wait a second for shard update
+  await new Promise(resolve => setTimeout(thunkify(resolve, 'hey'), 1000))
   myStream.close()
 })
 
