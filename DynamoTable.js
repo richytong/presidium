@@ -76,7 +76,10 @@ const DynamoTable = function (options) {
   this.ready = this.inspect().then(async () => {
     await this.dynamo.waitFor(this.name, 'tableExists')
   }).catch(async () => {
-    await this.dynamo.createTable(this.name, options.key)
+    await this.dynamo.createTable(this.name, options.key).catch(error => {
+      error.tableName = this.name
+      throw error
+    })
     await this.dynamo.waitFor(this.name, 'tableExists')
   })
   return this
@@ -144,7 +147,10 @@ DynamoTable.prototype.putItem = async function dynamoTablePutItem(item, options)
     TableName: this.name,
     Item: map(Dynamo.AttributeValue)(item),
     ...options,
-  }).promise()
+  }).promise().catch(error => {
+    error.tableName = this.name
+    throw error
+  })
 }
 
 /**
@@ -162,9 +168,14 @@ DynamoTable.prototype.getItem = async function dynamoTableGetItem(key) {
     Key: map(Dynamo.AttributeValue)(key),
   }).promise().then(result => {
     if (result.Item == null) {
-      throw new Error(`Item not found for ${stringifyJSON(key)}`)
+      const error = new Error(`Item not found for ${stringifyJSON(key)}`)
+      error.tableName = this.name
+      throw error
     }
     return result
+  }).catch(error => {
+    error.tableName = this.name
+    throw error
   })
 }
 
@@ -223,7 +234,10 @@ DynamoTable.prototype.updateItem = async function dynamoTableUpdateItem(
       ([key, value]) => [`:${hashJSON(value)}`, Dynamo.AttributeValue(value)],
     )(updates),
     ...options,
-  }).promise()
+  }).promise().catch(error => {
+    error.tableName = this.name
+    throw error
+  })
 }
 
 /**
@@ -263,7 +277,10 @@ DynamoTable.prototype.incrementItem = async function incrementItem(
       ([key, value]) => [`:${hashJSON(value)}`, Dynamo.AttributeValue(value)],
     )(incrementUpdates),
     ...options,
-  }).promise()
+  }).promise().catch(error => {
+    error.tableName = this.name
+    throw error
+  })
 }
 
 /**
@@ -287,7 +304,10 @@ DynamoTable.prototype.deleteItem = async function dynamoTableDeleteItem(key, opt
     TableName: this.name,
     Key: map(Dynamo.AttributeValue)(key),
     ...options,
-  }).promise()
+  }).promise().catch(error => {
+    error.tableName = this.name
+    throw error
+  })
 }
 
 /**
@@ -314,7 +334,10 @@ DynamoTable.prototype.scan = async function scan(options = {}) {
     ...options.exclusiveStartKey && {
       ExclusiveStartKey: options.exclusiveStartKey,
     },
-  }).promise()
+  }).promise().catch(error => {
+    error.tableName = this.name
+    throw error
+  })
 }
 
 module.exports = DynamoTable
