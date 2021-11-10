@@ -76,10 +76,7 @@ const DynamoTable = function (options) {
   this.ready = this.inspect().then(async () => {
     await this.dynamo.waitFor(this.name, 'tableExists')
   }).catch(async () => {
-    await this.dynamo.createTable(this.name, options.key).catch(error => {
-      error.tableName = this.name
-      throw error
-    })
+    await this.dynamo.createTable(this.name, options.key)
     await this.dynamo.waitFor(this.name, 'tableExists')
   })
   return this
@@ -318,6 +315,7 @@ DynamoTable.prototype.deleteItem = async function dynamoTableDeleteItem(key, opt
  * DynamoTable(options).scan(options {
  *   limit: number,
  *   exclusiveStartKey: Object<string=>DynamoAttributeValue>
+ *   forceTableName?: string, // a test parameter
  * }) -> Promise<{
  *   Items: Array<Object<string=>DynamoAttributeValue>>
  *   Count: number, // number of Items
@@ -327,9 +325,10 @@ DynamoTable.prototype.deleteItem = async function dynamoTableDeleteItem(key, opt
  * ```
  */
 DynamoTable.prototype.scan = async function scan(options = {}) {
+  const { forceTableName } = options
   await this.ready
   return this.client.scan({
-    TableName: this.name,
+    TableName: forceTableName ?? this.name,
     Limit: options.limit ?? 100,
     ...options.exclusiveStartKey && {
       ExclusiveStartKey: options.exclusiveStartKey,

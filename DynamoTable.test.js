@@ -16,13 +16,38 @@ const test = new Test('DynamoTable', DynamoTable)
     endpoint: 'http://localhost:8000/',
     key: [{ id: 'string' }],
   }, async function (testTable) {
+    await testTable.ready
+    { // if we created another instance of testTable it shouldn't have to create now
+      await new DynamoTable({
+        name: 'test-tablename',
+        endpoint: 'http://localhost:8000/',
+        key: [{ id: 'string' }],
+      }).ready
+    }
+
     // .case('http://localhost:8000/', 'test-tablename', async function (testTable) {
     await testTable.putItem({ id: '1', name: 'george' })
     await testTable.putItem({ id: '2', name: 'henry' })
     await testTable.putItem({ id: '3', name: 'jude' })
+    assert.rejects(
+      testTable.putItem({ somekey: 'hey' }),
+      {
+        name: 'ValidationException',
+        message: 'One of the required keys was not given a value',
+        tableName: 'test-tablename',
+      },
+    )
     assert.deepEqual(
       await testTable.getItem({ id: '1' }),
       { Item: map(Dynamo.AttributeValue)({ id: '1', name: 'george' }) })
+    assert.rejects(
+      testTable.getItem({ id: 'not-exists' }),
+      {
+        name: 'Error',
+        message: 'Item not found for {"id":"not-exists"}',
+        tableName: 'test-tablename',
+      },
+    )
     assert.deepEqual(
       await testTable.putItem({ id: '1', name: 'george' }, {
         ReturnValues: 'ALL_OLD',
@@ -49,6 +74,17 @@ const test = new Test('DynamoTable', DynamoTable)
           ruleEnd: { NULL: true },
         },
       },
+    )
+
+    assert.rejects(
+      testTable.updateItem({ id: 'not-exists' }, { a: 1 }, {
+        ConditionExpression: 'attribute_exists(id)',
+      }),
+      {
+        name: 'ConditionalCheckFailedException',
+        message: 'The conditional request failed',
+        tableName: 'test-tablename',
+      }
     )
 
     assert.deepEqual(
@@ -99,20 +135,51 @@ const test = new Test('DynamoTable', DynamoTable)
       ),
       {
         name: 'ValidationException',
-        message: 'An operand in the update expression has an incorrect data type'
+        message: 'An operand in the update expression has an incorrect data type',
+        tableName: 'test-tablename',
       },
+    )
+
+    assert.rejects(
+      testTable.incrementItem({ id: 'not-exists' }, { a: 1 }, {
+        ConditionExpression: 'attribute_exists(id)',
+      }),
+      {
+        name: 'ConditionalCheckFailedException',
+        message: 'The conditional request failed',
+        tableName: 'test-tablename',
+      }
     )
 
     {
       const scanResult1 = await testTable.scan({ limit: 1 })
       const scanResult2 = await testTable.scan({ limit: 2, exclusiveStartKey: scanResult1.LastEvaluatedKey })
-      const scanResult3 = await testTable.scan({ limit: 2, exclusiveStartKey: scanResult2.LastEvaluatedKey })
+      const scanResult3 = await testTable.scan({ exclusiveStartKey: scanResult2.LastEvaluatedKey })
+      const bareScanResult = await testTable.scan()
       assert.strictEqual(scanResult1.Items.length, 1)
       assert.strictEqual(scanResult2.Items.length, 2)
       assert.strictEqual(scanResult3.Items.length, 0)
+      assert.strictEqual(bareScanResult.Items.length, 3)
+
+      assert.rejects(
+        testTable.scan({ forceTableName: 'nonexistent-table-name' }),
+        {
+          name: 'ResourceNotFoundException',
+          message: 'Cannot do operations on a non-existent table',
+          tableName: 'test-tablename',
+        },
+      )
     }
 
     await testTable.deleteItem({ id: '1' })
+    assert.rejects(
+      testTable.deleteItem({ somekey: 'a' }),
+      {
+        name: 'ValidationException',
+        message: 'One of the required keys was not given a value',
+        tableName: 'test-tablename',
+      }
+    )
     const shouldReject = testTable.getItem({ id: '1' })
     assert.rejects(
       () => shouldReject,
