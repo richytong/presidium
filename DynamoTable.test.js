@@ -17,13 +17,12 @@ const test = new Test('DynamoTable', DynamoTable)
     key: [{ id: 'string' }],
   }, async function (testTable) {
     await testTable.ready
-    { // if we created another instance of testTable it shouldn't have to create now
-      await new DynamoTable({
-        name: 'test-tablename',
-        endpoint: 'http://localhost:8000/',
-        key: [{ id: 'string' }],
-      }).ready
-    }
+    // if we created another instance of testTable it shouldn't have to create now
+    await new DynamoTable({
+      name: 'test-tablename',
+      endpoint: 'http://localhost:8000/',
+      key: [{ id: 'string' }],
+    }).ready
 
     // .case('http://localhost:8000/', 'test-tablename', async function (testTable) {
     await testTable.putItem({ id: '1', name: 'george' })
