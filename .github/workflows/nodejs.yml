@@ -37,4 +37,7 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     - run: npm i && npx nyc --reporter=lcovonly npm test && npx codecov --token=3586c688-30cd-46be-a6c4-79a6e0f7fe80 --file=coverage/lcov.info && npm run lint
