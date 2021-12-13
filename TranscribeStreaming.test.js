@@ -1,4 +1,3 @@
-const WebSocketServer = require('presidium/WebSocketServer')
 const Twilio = require('@claimyr_hq/twilio/Twilio')
 const fs = require('fs')
 const readline = require('readline')
@@ -69,6 +68,7 @@ const test = new Test('TranscribeStreaming', async function () {
 
   /*
   // fill media-stream-fixture-aws-keynote.txt
+  const WebSocketServer = require('./WebSocketServer')
   const testPort = 7538
   const mediaStreamFixtureAwsKeynote =
     fs.createWriteStream('./media-stream-fixture-aws-keynote.txt', { flags: 'a' })
