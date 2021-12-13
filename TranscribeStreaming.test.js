@@ -1,4 +1,3 @@
-const Twilio = require('@claimyr_hq/twilio/Twilio')
 const fs = require('fs')
 const readline = require('readline')
 const WaveFile = require('wavefile').WaveFile
@@ -68,6 +67,7 @@ const test = new Test('TranscribeStreaming', async function () {
 
   /*
   // fill media-stream-fixture-aws-keynote.txt
+  const Twilio = require('@claimyr_hq/twilio/Twilio')
   const WebSocketServer = require('./WebSocketServer')
   const testPort = 7538
   const mediaStreamFixtureAwsKeynote =
