@@ -4,7 +4,6 @@ const WaveFile = require('wavefile').WaveFile
 const Test = require('thunk-test')
 const assert = require('assert')
 const rubico = require('rubico')
-const ngrok = require('ngrok')
 const TranscribeStreaming = require('./TranscribeStreaming')
 const AwsCredentials = require('./internal/AwsCredentials')
 
@@ -68,6 +67,7 @@ const test = new Test('TranscribeStreaming', async function () {
   /*
   // fill media-stream-fixture-aws-keynote.txt
   const Twilio = require('@claimyr_hq/twilio/Twilio')
+  const ngrok = require('ngrok')
   const WebSocketServer = require('./WebSocketServer')
   const testPort = 7538
   const mediaStreamFixtureAwsKeynote =
