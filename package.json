@@ -46,6 +46,7 @@
   "devDependencies": {
     "eslint": "^7.13.0",
     "glob": "^7.1.6",
-    "nyc": "^15.1.0"
+    "nyc": "^15.1.0",
+    "wavefile": "^11.0.0"
   }
 }
