@@ -90,8 +90,8 @@ const test = new Test('TranscribeStreaming', async function () {
   console.log('exposing', testPort, 'at', exposedUrl)
 
   const twilio = new Twilio({
-    accountSid: 'AC437bfe093bc08b7c0e971c080618c83e', // Toll Free accountSid
-    authToken: 'cc49ec2511ced213d5375f9971ac853a', // Toll Free authToken
+    accountSid: 'redacted', // Toll Free accountSid
+    authToken: 'redacted', // Toll Free authToken
   })
   await twilio.createCall({
     from: '+18557821665', // test tollfree numbers makes real calls
