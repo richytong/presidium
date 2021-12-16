@@ -40,7 +40,7 @@ const test = new Test('TranscribeStreaming', async function () {
   })
   await testTranscribeStreaming.ready
 
-  const mediaStreamFixtureAwsKeynote = 
+  const mediaStreamFixtureAwsKeynote =
     fs.createReadStream('./media-stream-fixture-aws-keynote.txt')
   const rl = readline.createInterface({
     input: mediaStreamFixtureAwsKeynote,

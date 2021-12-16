@@ -193,7 +193,7 @@ module.exports = {
                 'allowForLoopAfterthoughts': true
             }
         ],
-        'no-process-env': 'error',
+        'no-process-env': 'off',
         'no-process-exit': 'error',
         'no-promise-executor-return': 'off',
         'no-proto': 'error',
