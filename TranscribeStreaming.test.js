@@ -23,7 +23,6 @@ const test = new Test('TranscribeStreaming', async function () {
     if (error.code == 'ENOENT') {
       const accessKeyId = process.env.AWS_ACCESS_KEY_ID
       const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY
-      console.log(process.env)
       if (accessKeyId == null || secretAccessKey == null) {
         throw new Error('No AWS credential file or environment variables')
       }
