@@ -60,6 +60,7 @@ const DynamoStream = function (options) {
   this.shardIteratorType = options.shardIteratorType ?? 'LATEST'
   this.shardUpdatePeriod = options.shardUpdatePeriod ?? 30000
   this.listStreamsLimit = options.listStreamsLimit ?? 100
+  this.debug = options.debug ?? false
   this.client = new DynamoDBStreams({
     apiVersion: '2012-08-10',
     accessKeyId: 'id',
@@ -191,6 +192,10 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* () {
           ShardIteratorType: always('TRIM_HORIZON'),
         })),
       ])()
+
+      if (this.debug) {
+        console.log('Latest shards:', latestShards)
+      }
 
       shards = latestShards
       muxAsyncIterator = newShards.length == 0 ? muxAsyncIterator : Mux.race([
