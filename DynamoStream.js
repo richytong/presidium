@@ -171,6 +171,10 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* () {
   let shardUpdatePromise = new Promise(resolve => setTimeout(
     thunkify(resolve, SymbolUpdateShards), this.shardUpdatePeriod))
 
+  if (this.debug) {
+    console.log('Starting shards:', shards.map(get('ShardId')))
+  }
+
   while (!this.closed) {
     const iteration = await Promise.race([
       shardUpdatePromise,
@@ -194,7 +198,7 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* () {
       ])()
 
       if (this.debug) {
-        console.log('Latest shards:', latestShards)
+        console.log('Latest shards:', latestShards.map(get('ShardId')))
       }
 
       shards = latestShards
