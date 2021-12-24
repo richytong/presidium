@@ -129,12 +129,14 @@ DynamoStream.prototype.getRecords = async function* getRecords(
     ShardId: Shard.ShardId,
     StreamArn: Shard.Stream.StreamArn,
     ShardIteratorType: Shard.ShardIteratorType,
+
+    /*
     ...(
-      this.shardIteratorType == 'AFTER_SEQUENCE_NUMBER'
-      || this.shardIteratorType == 'AT_SEQUENCE_NUMBER'
-    ) ? {
-      SequenceNumber: Shard.SequenceNumberRange.StartingSequenceNumber,
-    } : {},
+      Shard.ShardIteratorType == 'AFTER_SEQUENCE_NUMBER'
+      || Shard.ShardIteratorType == 'AT_SEQUENCE_NUMBER'
+    ) ? { SequenceNumber: Shard.SequenceNumber } : {},
+    */
+
   }).promise().then(get('ShardIterator'))
   let records = await this.client.getRecords({
     ShardIterator: startingShardIterator,
@@ -156,10 +158,13 @@ const SymbolUpdateShards = Symbol('UpdateShards')
 
 DynamoStream.prototype[Symbol.asyncIterator] = async function* () {
   let shards = await pipe([
-    transform(map(identity), []),
+    always(this.getStreams()),
     flatMap(Stream => this.getShards(Stream)),
-    map(assign({ ShardIteratorType: always(this.shardIteratorType) })),
-  ])(this.getStreams())
+    map(assign({
+      ShardIteratorType: always(this.shardIteratorType),
+    })),
+    transform(map(identity), []),
+  ])()
   let muxAsyncIterator = Mux.race(shards.map(Shard => this.getRecords(Shard)))
   let iterationPromise = muxAsyncIterator.next()
   let shardUpdatePromise = new Promise(resolve => setTimeout(
@@ -172,16 +177,20 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* () {
     ])
     if (iteration == SymbolUpdateShards) {
       const latestShards = await pipe([
-        transform(map(identity), []),
+        always(this.getStreams()),
         flatMap(Stream => this.getShards(Stream)),
-      ])(this.getStreams())
+        transform(map(identity), []),
+      ])()
       const newShards = pipe([
+        always(shards),
         differenceWith(
           (ShardA, ShardB) => ShardA.ShardId == ShardB.ShardId,
           latestShards,
         ),
-        map(assign({ ShardIteratorType: always('TRIM_HORIZON') })),
-      ])(shards)
+        map(assign({
+          ShardIteratorType: always('TRIM_HORIZON'),
+        })),
+      ])()
 
       shards = latestShards
       muxAsyncIterator = newShards.length == 0 ? muxAsyncIterator : Mux.race([

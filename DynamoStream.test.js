@@ -226,52 +226,6 @@ const test = Test('DynamoStream', DynamoStream)
 .case({
   table: 'my-table',
   endpoint: 'http://localhost:8000',
-  listStreamsLimit: 1,
-  shardIteratorType: 'AFTER_SEQUENCE_NUMBER',
-  debug: true,
-}, async function (myStream) {
-  await myStream.ready
-
-  const table = this.table
-  await table.putItem({
-    id: '1',
-    status: 'waitlist',
-    createTime: 1000,
-    name: 'George',
-  })
-  await table.putItem({
-    id: '2',
-    status: 'waitlist',
-    createTime: 1001,
-    name: 'geo',
-  })
-  await table.putItem({
-    id: '3',
-    status: 'waitlist',
-    createTime: 1002,
-    name: 'john',
-  })
-  await table.putItem({
-    id: '4',
-    status: 'approved',
-    createTime: 1003,
-    name: 'sally',
-  })
-  await table.putItem({
-    id: '5',
-    status: 'approved',
-    createTime: 1004,
-    name: 'sally',
-  })
-
-  const first5 = await asyncIterableTake(5)(myStream)
-  assert.strictEqual(first5.length, 5)
-  myStream.close()
-})
-
-.case({
-  table: 'my-table',
-  endpoint: 'http://localhost:8000',
   shardUpdatePeriod: 500,
 }, async function (myStream) {
   await myStream.ready
