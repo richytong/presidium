@@ -214,9 +214,6 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* () {
 
       shards = latestShards
       if (newShards.length > 0) {
-        newShards.forEach(Shard => {
-          console.log('New shard:', Shard.ShardId, new Date().toLocaleString())
-        })
         muxAsyncIterator = Mux.race([
           ...newShards.map(Shard => this.getRecords(Shard)),
           muxAsyncIterator,
