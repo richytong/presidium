@@ -58,9 +58,8 @@ const DynamoStream = function (options) {
   this.getRecordsLimit = options.getRecordsLimit ?? 1000
   this.getRecordsInterval = options.getRecordsInterval ?? 1000
   this.shardIteratorType = options.shardIteratorType ?? 'LATEST'
-  this.shardUpdatePeriod = options.shardUpdatePeriod ?? 30000
+  this.shardUpdatePeriod = options.shardUpdatePeriod ?? 15000
   this.listStreamsLimit = options.listStreamsLimit ?? 100
-  this.debug = options.debug ?? false
   this.client = new DynamoDBStreams({
     apiVersion: '2012-08-10',
     accessKeyId: 'id',
@@ -90,14 +89,18 @@ DynamoStream.prototype.getStreams = async function* getStreams() {
     Limit: this.listStreamsLimit,
     TableName: this.table
   }).promise()
-  yield* streams.Streams
+  if (streams.Streams.length > 0) {
+    yield* streams.Streams
+  }
   while (!this.closed && streams.LastEvaluatedStreamArn != null) {
     streams = await this.client.listStreams({
       Limit: this.listStreamsLimit,
       TableName: this.table,
       ExclusiveStartStreamArn: streams.LastEvaluatedStreamArn,
     }).promise()
-    yield* streams.Streams
+    if (streams.Streams.length > 0) {
+      yield* streams.Streams
+    }
   }
 }
 
@@ -109,16 +112,18 @@ DynamoStream.prototype.getShards = async function* getShards(
     StreamArn: Stream.StreamArn,
     Limit: 100,
   }).promise().then(get('StreamDescription'))
-  yield* shards.Shards.map(
-    (Shard, ShardNumber) => ({ ...Shard, Stream, ShardNumber }))
+  if (shards.Shards.length > 0) {
+    yield* shards.Shards.map(assign({ Stream: always(Stream) }))
+  }
   while (!this.closed && shards.LastEvaluatedShardId != null) {
     shards = await this.client.describeStream({
       StreamArn: Stream.StreamArn,
       Limit: 100,
       ExclusiveStartShardId: shards.LastEvaluatedShardId,
     }).promise().then(get('StreamDescription'))
-    yield* shards.Shards.map(
-      (Shard, ShardNumber) => ({ ...Shard, Stream, ShardNumber }))
+    if (shards.Shards.length > 0) {
+      yield* shards.Shards.map(assign({ Stream: always(Stream) }))
+    }
   }
 }
 
@@ -144,13 +149,23 @@ DynamoStream.prototype.getRecords = async function* getRecords(
     Limit: this.getRecordsLimit
   }).promise()
 
-  yield* records.Records
+  if (records.Records.length > 0) {
+    yield* records.Records.map(assign({
+      table: always(this.table),
+      shardId: always(Shard.ShardId),
+    }))
+  }
   while (!this.closed && records.NextShardIterator != null) {
     records = await this.client.getRecords({
       ShardIterator: records.NextShardIterator,
       Limit: this.getRecordsLimit
     }).promise()
-    yield* records.Records
+    if (records.Records.length > 0) {
+      yield* records.Records.map(assign({
+        table: always(this.table),
+        shardId: always(Shard.ShardId),
+      }))
+    }
     await new Promise(resolve => setTimeout(resolve, this.getRecordsInterval))
   }
 }
@@ -166,21 +181,21 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* () {
     })),
     transform(map(identity), []),
   ])()
-  let muxAsyncIterator = Mux.race(shards.map(Shard => this.getRecords(Shard)))
-  let iterationPromise = muxAsyncIterator.next()
-  let shardUpdatePromise = new Promise(resolve => setTimeout(
-    thunkify(resolve, SymbolUpdateShards), this.shardUpdatePeriod))
-
-  if (this.debug) {
-    console.log('Starting shards:', shards.map(get('ShardId')))
-  }
+  let muxAsyncIterator = Mux.race([
+    ...shards.map(Shard => this.getRecords(Shard)),
+    (async function* UpdateShardsGenerator() {
+      while (true) {
+        await new Promise(resolve => {
+          setTimeout(resolve, this.shardUpdatePeriod)
+        })
+        yield SymbolUpdateShards
+      }
+    }).call(this),
+  ])
 
   while (!this.closed) {
-    const iteration = await Promise.race([
-      shardUpdatePromise,
-      iterationPromise,
-    ])
-    if (iteration == SymbolUpdateShards) {
+    const { value, done } = await muxAsyncIterator.next()
+    if (value == SymbolUpdateShards) {
       const latestShards = await pipe([
         always(this.getStreams()),
         flatMap(Stream => this.getShards(Stream)),
@@ -197,23 +212,20 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* () {
         })),
       ])()
 
-      if (this.debug) {
-        console.log('Latest shards:', latestShards.map(get('ShardId')))
-      }
-
       shards = latestShards
-      muxAsyncIterator = newShards.length == 0 ? muxAsyncIterator : Mux.race([
-        ...newShards.map(Shard => this.getRecords(Shard)),
-        muxAsyncIterator,
-      ])
-      shardUpdatePromise = new Promise(resolve => setTimeout(
-        thunkify(resolve, SymbolUpdateShards), this.shardUpdatePeriod))
-    } else if (iteration.done) {
+      if (newShards.length > 0) {
+        newShards.forEach(Shard => {
+          console.log('New shard:', Shard.ShardId, new Date().toLocaleString())
+        })
+        muxAsyncIterator = Mux.race([
+          ...newShards.map(Shard => this.getRecords(Shard)),
+          muxAsyncIterator,
+        ])
+      }
+    } else if (done) {
       await new Promise(resolve => setTimeout(resolve, 1000))
-      iterationPromise = muxAsyncIterator.next()
     } else {
-      yield iteration.value
-      iterationPromise = muxAsyncIterator.next()
+      yield value
     }
   }
 }
