@@ -4,7 +4,7 @@ const WaveFile = require('wavefile').WaveFile
 const Test = require('thunk-test')
 const assert = require('assert')
 const rubico = require('rubico')
-const TranscribeStreaming = require('./TranscribeStreaming')
+const TranscribeStream = require('./TranscribeStream')
 const AwsCredentials = require('./internal/AwsCredentials')
 
 const {
@@ -18,7 +18,7 @@ const {
   curry, __,
 } = rubico
 
-const test = new Test('TranscribeStreaming', async function () {
+const test = new Test('TranscribeStream', async function () {
   const awsCreds = await AwsCredentials('default').catch(error => {
     if (error.code == 'ENOENT') {
       const accessKeyId = process.env.AWS_ACCESS_KEY_ID
@@ -32,13 +32,13 @@ const test = new Test('TranscribeStreaming', async function () {
   })
   awsCreds.region = 'us-east-1' // only valid region for transcribe
 
-  const testTranscribeStreaming = new TranscribeStreaming({
+  const testTranscribeStream = new TranscribeStream({
     languageCode: 'en-US',
     mediaEncoding: 'pcm',
     sampleRate: 8000,
     ...awsCreds,
   })
-  await testTranscribeStreaming.ready
+  await testTranscribeStream.ready
 
   const mediaStreamFixtureAwsKeynote =
     fs.createReadStream('./media-stream-fixture-aws-keynote.txt')
@@ -51,14 +51,14 @@ const test = new Test('TranscribeStreaming', async function () {
       const wav = new WaveFile()
       wav.fromScratch(1, 8000, '8', Buffer.from(event.media.payload, 'base64'))
       wav.fromMuLaw()
-      testTranscribeStreaming.sendAudioChunk(Buffer.from(wav.data.samples))
+      testTranscribeStream.sendAudioChunk(Buffer.from(wav.data.samples))
     } else if (event.event == 'stop') {
-      testTranscribeStreaming.websocket.close()
+      testTranscribeStream.websocket.close()
     }
   })
 
   const testTranscription = await new Promise(resolve => {
-    testTranscribeStreaming.on('transcription', transcription => {
+    testTranscribeStream.on('transcription', transcription => {
       resolve(transcription.Alternatives[0].Transcript)
     })
   })

@@ -29,11 +29,11 @@ const CHECKSUM_LENGTH = 4
 const MINIMUM_MESSAGE_LENGTH = PRELUDE_LENGTH + CHECKSUM_LENGTH * 2
 
 /**
- * @name TranscribeStreaming
+ * @name TranscribeStream
  *
  * @synopsis
  * ```coffeescript [specscript]
- * const myTranscribeStream = new TranscribeStreaming(options {
+ * const myTranscribeStream = new TranscribeStream(options {
  *   accessKeyId: string,
  *   secretAccessKey: string,
  *   region: string,
@@ -59,7 +59,7 @@ const MINIMUM_MESSAGE_LENGTH = PRELUDE_LENGTH + CHECKSUM_LENGTH * 2
  *
  * `vocabularyName` - The name of the vocabulary to use when processing the transcription job, if any.
  */
-const TranscribeStreaming = function (options) {
+const TranscribeStream = function (options) {
   const {
     accessKeyId,
     secretAccessKey,
@@ -109,10 +109,10 @@ const TranscribeStreaming = function (options) {
   return this
 }
 
-TranscribeStreaming.prototype = EventEmitter.prototype
+TranscribeStream.prototype = EventEmitter.prototype
 
 /**
- * @name TranscribeStreaming.prototype.sendAudioChunk
+ * @name TranscribeStream.prototype.sendAudioChunk
  *
  * @synopsis
  * ```coffeescript [specscript]
@@ -125,7 +125,7 @@ TranscribeStreaming.prototype = EventEmitter.prototype
  * https://docs.aws.amazon.com/transcribe/latest/dg/event-stream.html
  * https://github.com/aws-samples/amazon-transcribe-comprehend-medical-twilio/blob/main/lib/transcribe-service.js
  */
-TranscribeStreaming.prototype.sendAudioChunk = function (chunk) {
+TranscribeStream.prototype.sendAudioChunk = function (chunk) {
   const headersBytes = marshalHeaders({
     ':message-type': {
       type: 'string',
@@ -273,4 +273,4 @@ const unmarshalHeaders = function (headersView) {
   return headers
 }
 
-module.exports = TranscribeStreaming
+module.exports = TranscribeStream
