@@ -183,43 +183,44 @@ const SymbolUpdateShards = Symbol('UpdateShards')
 
 KinesisStream.prototype[Symbol.asyncIterator] = async function* generateRecords() {
   let shards = await transform(map(identity), [])(this.listShards())
-  let muxAsyncIterator = Mux.race(shards.map(Shard => this.getRecords(Shard)))
-  let iterationPromise = muxAsyncIterator.next()
-  let shardUpdatePromise = new Promise(resolve => setTimeout(
-    thunkify(resolve, SymbolUpdateShards),
-    this.shardUpdateInterval,
-  ))
+  let muxAsyncIterator = Mux.race([
+    ...shards.map(Shard => this.getRecords(Shard)),
+    (async function* UpdateShardsGenerator() {
+      while (true) {
+        await new Promise(resolve => {
+          setTimeout(resolve, this.shardUpdatePeriod)
+        })
+        yield SymbolUpdateShards
+      }
+    }).call(this),
+  ])
 
   while (!this.closed) {
-    const iteration = await Promise.race([
-      shardUpdatePromise,
-      iterationPromise,
-    ])
-    if (iteration == SymbolUpdateShards) {
+    const { value, done } = await muxAsyncIterator.next()
+    if (value == SymbolUpdateShards) {
       const latestShards = await transform(map(identity), [])(this.listShards())
-      const newShards = differenceWith(
-        (ShardA, ShardB) => ShardA.ShardId == ShardB.ShardId,
-        latestShards,
-      )(shards)
-      const closedShards = differenceWith(
-        (ShardA, ShardB) => ShardA.ShardId == ShardB.ShardId,
-        shards,
-      )(latestShards)
+      const newShards = pipe([
+        always(shards),
+        differenceWith(
+          (ShardA, ShardB) => ShardA.ShardId == ShardB.ShardId,
+          latestShards,
+        ),
+        map(assign({
+          ShardIteratorType: always('TRIM_HORIZON'),
+        })),
+      ])()
 
-      closedShards.forEach(Shard => (Shard.closed = true))
       shards = latestShards
-      muxAsyncIterator = newShards.length == 0 ? muxAsyncIterator : Mux.race([
-        ...newShards.map(Shard => this.getRecords(Shard)),
-        muxAsyncIterator,
-      ])
-      shardUpdatePromise = new Promise(resolve => setTimeout(
-        thunkify(resolve, SymbolUpdateShards), this.shardUpdateInterval))
-    } else if (iteration.done) {
+      if (newShards.length > 0) {
+        muxAsyncIterator = Mux.race([
+          ...newShards.map(Shard => this.getRecords(Shard)),
+          muxAsyncIterator,
+        ])
+      }
+    } else if (done) {
       await new Promise(resolve => setTimeout(resolve, 1000))
-      iterationPromise = muxAsyncIterator.next()
     } else {
-      yield iteration.value
-      iterationPromise = muxAsyncIterator.next()
+      yield value
     }
   }
 }
