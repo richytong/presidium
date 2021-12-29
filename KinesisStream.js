@@ -163,19 +163,24 @@ KinesisStream.prototype.getRecords = async function* getRecords(Shard) {
       Timestamp: this.shardIteratorTimestamp,
     },
   }).promise().then(get('ShardIterator'))
+
   let records = await this.kinesis.client.getRecords({
     ShardIterator: startingShardIterator,
     Limit: this.getRecordsLimit,
   }).promise()
-  await new Promise(resolve => setTimeout(resolve, this.getRecordsInterval))
-  yield* records.Records
+  if (records.Records.length > 0) {
+    yield* records.Records
+  }
+
   while (!this.closed && records.NextShardIterator != null) {
+    await new Promise(resolve => setTimeout(resolve, this.getRecordsInterval))
     records = await this.kinesis.client.getRecords({
       ShardIterator: records.NextShardIterator,
       Limit: this.getRecordsLimit,
     }).promise()
-    await new Promise(resolve => setTimeout(resolve, this.getRecordsInterval))
-    yield* records.Records
+    if (records.Records.length > 0) {
+      yield* records.Records
+    }
   }
 }
 

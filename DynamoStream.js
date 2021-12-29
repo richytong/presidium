@@ -155,7 +155,9 @@ DynamoStream.prototype.getRecords = async function* getRecords(
       shardId: always(Shard.ShardId),
     }))
   }
+
   while (!this.closed && records.NextShardIterator != null) {
+    await new Promise(resolve => setTimeout(resolve, this.getRecordsInterval))
     records = await this.client.getRecords({
       ShardIterator: records.NextShardIterator,
       Limit: this.getRecordsLimit
@@ -166,7 +168,6 @@ DynamoStream.prototype.getRecords = async function* getRecords(
         shardId: always(Shard.ShardId),
       }))
     }
-    await new Promise(resolve => setTimeout(resolve, this.getRecordsInterval))
   }
 }
 
