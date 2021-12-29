@@ -65,6 +65,8 @@ const test = new Test('KinesisStream', KinesisStream)
   // wait a second for shard update
   await new Promise(resolve => setTimeout(thunkify(resolve, 'hey'), 1000))
   myStream.close()
+  // ensure shards don't update after close
+  await new Promise(resolve => setTimeout(resolve, 1000))
 })
 
 .after(async function() {

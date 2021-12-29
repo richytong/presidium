@@ -195,11 +195,13 @@ KinesisStream.prototype[Symbol.asyncIterator] = async function* generateRecords(
   let muxAsyncIterator = Mux.race([
     ...shards.map(Shard => this.getRecords(Shard)),
     (async function* UpdateShardsGenerator() {
-      while (true) {
+      while (!this.closed) {
         await new Promise(resolve => {
           setTimeout(resolve, this.shardUpdatePeriod)
         })
-        yield SymbolUpdateShards
+        if (!this.closed) {
+          yield SymbolUpdateShards
+        }
       }
     }).call(this),
   ])
