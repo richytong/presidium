@@ -116,7 +116,6 @@ KinesisStream.prototype.delete = function deleteStream() {
  * ```
  */
 KinesisStream.prototype.putRecord = async function putRecord(data, options = {}) {
-  await this.ready
   return this.kinesis.client.putRecord({
     StreamName: this.name,
     Data: data,
@@ -142,14 +141,19 @@ KinesisStream.prototype.listShards = async function* listShards() {
     StreamName: this.name,
     MaxResults: this.listShardsLimit,
   }).promise()
-  yield* shards.Shards
+  if (shards.Shards.length > 0) {
+    yield* shards.Shards
+  }
+
   while (!this.closed && shards.NextToken != null) {
     shards = await this.kinesis.client.listShards({
       StreamName: this.name,
       MaxResults: this.listShardsLimit,
       NextToken: shards.NextToken,
     })
-    yield* shards.Shards
+    if (shards.Shards.length > 0) {
+      yield* shards.Shards
+    }
   }
 }
 
