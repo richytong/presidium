@@ -44,6 +44,24 @@ const MINIMUM_MESSAGE_LENGTH = PRELUDE_LENGTH + CHECKSUM_LENGTH * 2
  *   sessionId?: string,
  *   vocabularyName?: string,
  * })
+ *
+ * myTranscribeStream.on('transcription', transcriptionHandler (transcription {
+ *   Alternatives: Array<{
+ *     Items: Array<{
+ *       Confidence?: number,
+ *       Content: string,
+ *       EndTime: number, // seconds
+ *       StartTime: number, // seconds
+ *       Type: 'pronunciation'|'punctuation',
+ *       VocabularyFilterMatch: boolean,
+ *     }>,
+ *     Transcript: string,
+ *   }>,
+ *   EndTime: number, // seconds
+ *   IsPartial: boolean,
+ *   ResultId: string, // uuid
+ *   StartTime: number, // seconds
+ * })=><>)
  * ```
  *
  * @description
