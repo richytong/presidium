@@ -27,6 +27,7 @@ const test = new Test('KinesisStream', KinesisStream)
   assert.deepEqual(first3, first3Again)
   this.streams.push(myStream)
 })
+
 .case({
   name: 'my-stream',
   endpoint: 'http://localhost:4567',
@@ -46,6 +47,26 @@ const test = new Test('KinesisStream', KinesisStream)
   myStream.close()
   this.streams.push(myStream)
 })
+
+.case({
+  name: 'my-stream',
+  endpoint: 'http://localhost:4567',
+  shardUpdatePeriod: 500,
+}, async function (myStream) {
+  await myStream.ready
+
+  // there shouldn't be any more records, so this should hang
+  const latestRecordPromise = asyncIterableTake(1)(myStream)
+  const raceResult = await Promise.race([
+    latestRecordPromise,
+    new Promise(resolve => setTimeout(thunkify(resolve, 'hey'), 3000))
+  ])
+  assert.equal(raceResult, 'hey')
+  // wait a second for shard update
+  await new Promise(resolve => setTimeout(thunkify(resolve, 'hey'), 1000))
+  myStream.close()
+})
+
 .after(async function() {
   await map(stream => stream.delete())(this.streams)
 })
