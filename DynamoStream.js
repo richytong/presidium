@@ -144,20 +144,20 @@ DynamoStream.prototype.getRecords = async function* getRecords(
     */
 
   }).promise().then(get('ShardIterator'))
+
   let records = await this.client.getRecords({
     ShardIterator: startingShardIterator,
     Limit: this.getRecordsLimit
   }).promise()
-
   if (records.Records.length > 0) {
     yield* records.Records.map(assign({
       table: always(this.table),
       shardId: always(Shard.ShardId),
     }))
   }
+  await new Promise(resolve => setTimeout(resolve, this.getRecordsInterval))
 
   while (!this.closed && records.NextShardIterator != null) {
-    await new Promise(resolve => setTimeout(resolve, this.getRecordsInterval))
     records = await this.client.getRecords({
       ShardIterator: records.NextShardIterator,
       Limit: this.getRecordsLimit
@@ -168,6 +168,7 @@ DynamoStream.prototype.getRecords = async function* getRecords(
         shardId: always(Shard.ShardId),
       }))
     }
+    await new Promise(resolve => setTimeout(resolve, this.getRecordsInterval))
   }
 }
 
