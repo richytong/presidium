@@ -48,6 +48,7 @@ const KinesisStream = function (options) {
   this.shardUpdatePeriod = options.shardUpdatePeriod ?? 15000
   this.getRecordsInterval = options.getRecordsInterval ?? 1000
   this.shardIteratorType = options.shardIteratorType ?? 'LATEST'
+  this.shardCount = options.shardCount ?? 1
   this.timestamp = options.timestamp
   this.kinesis = new Kinesis(omit(['name'])(options))
   this.cancelToken = new Promise((_, reject) => (this.canceller = reject))
@@ -65,7 +66,7 @@ const KinesisStream = function (options) {
   }).catch(async () => {
     await this.kinesis.client.createStream({
       StreamName: this.name,
-      ShardCount: 1,
+      ShardCount: this.shardCount,
     }).promise()
     await this.kinesis.client.waitFor('streamExists', {
       StreamName: this.name

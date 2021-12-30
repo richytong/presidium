@@ -32,6 +32,24 @@ const test = new Test('KinesisStream', KinesisStream)
 .case({
   name: 'my-stream',
   endpoint: 'http://localhost:4567',
+  shardIteratorType: 'TRIM_HORIZON',
+  getRecordsLimit: 1,
+  listShardsLimit: 1,
+  shardCount: 2,
+}, async function (myStream) {
+  await myStream.ready
+  await myStream.putRecord('hey', { partitionKey: 'a' })
+  await myStream.putRecord('ho', { partitionKey: 'a' })
+  await myStream.putRecord('hi', { partitionKey: 'a' })
+  const first3 = await asyncIterableTake(3)(myStream)
+  const first3Again = await asyncIterableTake(3)(myStream)
+  assert.deepEqual(first3, first3Again)
+  this.streams.push(myStream)
+})
+
+.case({
+  name: 'my-stream',
+  endpoint: 'http://localhost:4567',
   shardIteratorType: 'AT_TIMESTAMP',
   timestamp: new Date(Date.now() - 5000),
 }, async function (myStream) {
