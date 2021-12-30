@@ -7,9 +7,11 @@ const map = require('rubico/map')
 const thunkify = require('rubico/thunkify')
 
 const test = new Test('KinesisStream', KinesisStream)
+
 .before(function () {
   this.streams = []
 })
+
 .case({
   name: 'my-stream',
   endpoint: 'http://localhost:4567',
@@ -21,7 +23,22 @@ const test = new Test('KinesisStream', KinesisStream)
   await myStream.putRecord('hey')
   await myStream.putRecord('ho', { partitionKey: 'ho' })
   await myStream.putRecord('hi', { explicitHashKey: '127' })
+  const first3 = await asyncIterableTake(3)(myStream)
+  const first3Again = await asyncIterableTake(3)(myStream)
+  assert.deepEqual(first3, first3Again)
+  this.streams.push(myStream)
+})
 
+.case({
+  name: 'my-stream',
+  endpoint: 'http://localhost:4567',
+  shardIteratorType: 'AT_TIMESTAMP',
+  timestamp: new Date(Date.now() - 5000),
+}, async function (myStream) {
+  await myStream.ready
+  await myStream.putRecord('hey')
+  await myStream.putRecord('ho', { partitionKey: 'ho' })
+  await myStream.putRecord('hi', { explicitHashKey: '127' })
   const first3 = await asyncIterableTake(3)(myStream)
   const first3Again = await asyncIterableTake(3)(myStream)
   assert.deepEqual(first3, first3Again)

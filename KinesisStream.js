@@ -29,11 +29,6 @@ const {
  *   endpoint: string,
  *   shardIteratorType: 'AT_SEQUENCE_NUMBER'|'AFTER_SEQUENCE_NUMBER'|'TRIM_HORIZON'|'LATEST'|'AT_TIMESTAMP',
  *   timestamp: Date|string|number, // find events at date (requires shardIteratorType 'AT_TIMESTAMP')
- *   startingSequenceNumber: string, // find events at data record (requires shardIteratorType 'AT_SEQUENCE_NUMBER' or 'AFTER_SEQUENCE_NUMBER')
- *   shardFilterType: 'AFTER_SHARD_ID'|'AT_TRIM_HORIZON'|'FROM_TRIM_HORIZON'|'AT_LATEST'|'AT_TIMESTAMP'|'FROM_TIMESTAMP',
- *   shardFilterShardId: string,
- *   shardFilterTimestamp: Date|string|number,
- *   streamCreationTimestamp: Date|string|number, // distinguishes streams of same name e.g. after deleting
  * }) -> KinesisStream
  * ```
  *
@@ -53,13 +48,7 @@ const KinesisStream = function (options) {
   this.shardUpdatePeriod = options.shardUpdatePeriod ?? 15000
   this.getRecordsInterval = options.getRecordsInterval ?? 1000
   this.shardIteratorType = options.shardIteratorType ?? 'LATEST'
-  this.shardIteratorTimestamp = options.shardIteratorTimestamp
-  this.shardFilterType = options.shardFilterType
-  this.shardFilterShardId = options.shardFilterShardId
-  this.shardFilterTimestamp = options.shardFilterTimestamp
-  this.streamCreationTimestamp = options.streamCreationTimestamp
   this.timestamp = options.timestamp
-  this.startingSequenceNumber = options.startingSequenceNumber
   this.kinesis = new Kinesis(omit(['name'])(options))
   this.cancelToken = new Promise((_, reject) => (this.canceller = reject))
 
@@ -163,9 +152,7 @@ KinesisStream.prototype.getRecords = async function* getRecords(Shard) {
     ShardId: Shard.ShardId,
     StreamName: this.name,
     ShardIteratorType: this.shardIteratorType,
-    ...this.shardIteratorTimestamp && {
-      Timestamp: this.shardIteratorTimestamp,
-    },
+    ...this.timestamp == null ? {} : { Timestamp: this.timestamp },
   }).promise().then(get('ShardIterator'))
 
   let records = await this.kinesis.client.getRecords({
