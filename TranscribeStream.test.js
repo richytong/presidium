@@ -53,7 +53,7 @@ const test = new Test('TranscribeStream', async function () {
       wav.fromMuLaw()
       testTranscribeStream.sendAudioChunk(Buffer.from(wav.data.samples))
     } else if (event.event == 'stop') {
-      testTranscribeStream.websocket.close()
+      testTranscribeStream.close()
     }
   })
 

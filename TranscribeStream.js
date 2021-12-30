@@ -177,6 +177,10 @@ TranscribeStream.prototype.sendAudioChunk = function (chunk) {
   this.websocket.send(bytes)
 }
 
+TranscribeStream.prototype.close = function () {
+  this.websocket.close()
+}
+
 /**
  * @name marshalHeaders
  *
