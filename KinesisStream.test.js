@@ -50,6 +50,53 @@ const test = new Test('KinesisStream', KinesisStream)
 .case({
   name: 'my-stream',
   endpoint: 'http://localhost:4567',
+  shardIteratorType: 'TRIM_HORIZON',
+}, async function (myStream) {
+  await myStream.ready
+  await myStream.putRecords([
+    { data: 'hey' },
+    { data: 'ho', partitionKey: 'ho' },
+    { data: 'hi', explicitHashKey: '127' },
+  ])
+  const first3 = await asyncIterableTake(3)(myStream)
+  const first3Again = await asyncIterableTake(3)(myStream)
+  assert.deepEqual(first3, first3Again)
+  this.streams.push(myStream)
+})
+
+.case({
+  name: 'my-stream',
+  endpoint: 'http://localhost:4567',
+  shardIteratorType: 'TRIM_HORIZON',
+}, async function (myStream) {
+  myStream.kinesis.client.putRecords = () => ({
+    promise: async () => ({
+      Records: [
+        {
+          ErrorCode: 'ProvisionedThroughputExceededException',
+          ErrorMessage: 'Some message with accountId, stream name, and shard ID',
+        },
+        {
+          ErrorCode: 'ProvisionedThroughputExceededException',
+          ErrorMessage: 'Some message with accountId, stream name, and shard ID',
+        },
+      ],
+    }),
+  })
+  await myStream.ready
+  await assert.rejects(
+    () => myStream.putRecords([{ data: 'hey' }]),
+    new AggregateError([
+      new Error('Some message with accountId, stream name, and shard ID'),
+      new Error('Some message with accountId, stream name, and shard ID'),
+    ], 'Some records failed to process')
+  )
+  this.streams.push(myStream)
+})
+
+.case({
+  name: 'my-stream',
+  endpoint: 'http://localhost:4567',
   shardIteratorType: 'AT_TIMESTAMP',
   timestamp: new Date(Date.now() - 5000),
 }, async function (myStream) {
@@ -104,8 +151,11 @@ const test = new Test('KinesisStream', KinesisStream)
   await new Promise(resolve => setTimeout(resolve, 1000))
 })
 
-.after(async function() {
-  await map(stream => stream.delete())(this.streams)
+.after(async function () {
+  await map(async function cleanup(stream) {
+    stream.close()
+    await stream.delete()
+  })(this.streams)
 })
 
 if (process.argv[1] == __filename) {

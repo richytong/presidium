@@ -93,7 +93,7 @@ KinesisStream.prototype.delete = function deleteStream() {
  * @synopsis
  * ```coffeescript [specscript]
  * KinesisStream(options).putRecord(
- *   data string|binary,
+ *   data string|Buffer,
  *   options {
  *     partitionKey: string, // input to aws hash function to determine which shard
  *     explicitHashKey: string, // skips aws hash function to determine which shard
@@ -117,6 +117,57 @@ KinesisStream.prototype.putRecord = async function putRecord(data, options = {})
       SequenceNumberForOrdering: options.sequenceNumberForOrdering,
     },
   }).promise()
+}
+
+/**
+ * @name KinesisStream.prototype.putRecords
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * KinesisStream(options).putRecords(records Array<{
+ *   data: string|Buffer,
+ *   partitionKey: string, // input to aws hash function to determine which shard
+ *   explicitHashKey: string, // skips aws hash function to determine which shard
+ * }>) -> Promise<{
+ *   FailedRecordCount: number, // number of unsuccessfully processed records
+ *   Records: Array<{
+ *     SequenceNumber: string,
+ *     ShardId: string,
+ *     ErrorCode?: 'ProvisionedThroughputExceededException'|'InternalFailure',
+ *     ErrorMessage?: string,
+ *   }>,
+ *   EncryptionType: 'NONE'|'KMS',
+ * }>
+ * ```
+ *
+ * @description
+ * Limits/Quotas:
+ *  * 500 records max per request
+ *  * 1 MB per record max
+ *  * 5 MB per request max
+ *  * 1000 records per second per shard
+ *  * 1 MB per second per shard
+ *
+ * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Kinesis.html#putRecords-property
+ */
+KinesisStream.prototype.putRecords = async function putRecords(records) {
+  return this.kinesis.client.putRecords({
+    StreamName: this.name,
+    Records: records.map(({ data, partitionKey, explicitHashKey }) => ({
+      Data: data,
+      PartitionKey: partitionKey ?? data.slice(0, 255),
+      ...explicitHashKey && { ExplicitHashKey: explicitHashKey },
+    }))
+  }).promise().then(tap(response => {
+    if (response.Records.some(has('ErrorCode'))) {
+      const errors = response.Records.filter(has('ErrorCode')).map(Record => {
+        const error = new Error(Record.ErrorMessage)
+        error.code = Record.ErrorCode
+        return error
+      })
+      throw new AggregateError(errors, 'Some records failed to process')
+    }
+  }))
 }
 
 // () => ()
