@@ -115,7 +115,12 @@ const TranscribeStream = function (options) {
   })
   this.websocket.on('message', chunk => {
     const { headers, body } = unmarshalMessage(chunk)
-    if (body.Transcript.Results.length > 0) {
+    if (headers[':message-type'] == 'exception') {
+      const error = new Error(body.Message)
+      error.name = headers[':exception-type']
+      this.emit('error', error)
+    }
+    else if (body.Transcript.Results.length > 0) {
       if (body.Transcript.Results[0].IsPartial) {
         this.emit('partialTranscription', body.Transcript.Results[0])
       } else {

@@ -52,8 +52,6 @@ const test = new Test('TranscribeStream', async function () {
       wav.fromScratch(1, 8000, '8', Buffer.from(event.media.payload, 'base64'))
       wav.fromMuLaw()
       testTranscribeStream.sendAudioChunk(Buffer.from(wav.data.samples))
-    } else if (event.event == 'stop') {
-      testTranscribeStream.close()
     }
   })
 
@@ -63,6 +61,15 @@ const test = new Test('TranscribeStream', async function () {
     })
   })
   assert.equal(testTranscription, 'Hello, world.')
+
+  // wait for timeout error to test error handling
+  await new Promise(resolve => {
+    testTranscribeStream.on('error', error => {
+      console.error(error)
+      testTranscribeStream.close()
+      resolve()
+    })
+  })
 
   /*
   // fill media-stream-fixture-aws-keynote.txt
