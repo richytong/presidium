@@ -184,6 +184,7 @@ TranscribeStream.prototype.sendAudioChunk = function (chunk) {
 
 TranscribeStream.prototype.close = function () {
   this.websocket.close()
+  this.emit('close')
 }
 
 /**
