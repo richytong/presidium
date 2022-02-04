@@ -42,6 +42,8 @@ const {
  * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDBStreams.html
  *
  * DynamoStream -> Stream Headers -> Stream ARNs
+ *
+ * `eventName` enumeration: `INSERT`, `MODIFY`, `REMOVE`
  */
 
 const DynamoStream = function (options) {
