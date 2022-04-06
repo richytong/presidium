@@ -863,6 +863,7 @@ Docker.prototype.createService = function dockerCreateService(service, options) 
         },
       },
 
+      // TODO options.mode global
       Mode: {
         Replicated: { Replicas: options.replicas ?? 1 }
       },
