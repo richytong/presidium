@@ -146,6 +146,8 @@ DynamoTable.prototype.putItem = async function dynamoTablePutItem(item, options)
     ...options,
   }).promise().catch(error => {
     error.tableName = this.name
+    error.method = 'putItem'
+    error.item = item
     throw error
   })
 }
@@ -172,6 +174,8 @@ DynamoTable.prototype.getItem = async function dynamoTableGetItem(key) {
     return result
   }).catch(error => {
     error.tableName = this.name
+    error.method = 'getItem'
+    error.key = key
     throw error
   })
 }
@@ -233,6 +237,9 @@ DynamoTable.prototype.updateItem = async function dynamoTableUpdateItem(
     ...options,
   }).promise().catch(error => {
     error.tableName = this.name
+    error.method = 'updateItem'
+    error.key = key
+    error.updates = updates
     throw error
   })
 }
@@ -276,6 +283,9 @@ DynamoTable.prototype.incrementItem = async function incrementItem(
     ...options,
   }).promise().catch(error => {
     error.tableName = this.name
+    error.method = 'incrementItem'
+    error.key = key
+    error.incrementUpdates = incrementUpdates
     throw error
   })
 }
@@ -303,6 +313,8 @@ DynamoTable.prototype.deleteItem = async function dynamoTableDeleteItem(key, opt
     ...options,
   }).promise().catch(error => {
     error.tableName = this.name
+    error.method = 'deleteItem'
+    error.key = key
     throw error
   })
 }
@@ -335,6 +347,7 @@ DynamoTable.prototype.scan = async function scan(options = {}) {
     },
   }).promise().catch(error => {
     error.tableName = this.name
+    error.method = 'scan'
     throw error
   })
 }
