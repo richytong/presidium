@@ -310,7 +310,7 @@ EXPOSE 8888`,
         healthStartPeriod: 5e9,
 
         publish: {
-          23: 22, // hostPort -> containerPort[/protocol]
+          // 23: 22, // hostPort -> containerPort[/protocol]
           8080: 3000,
         },
 
@@ -351,6 +351,12 @@ EXPOSE 8888`,
       assert.equal(response.status, 200)
       const body = await response.json()
       assert.equal(body.length, 2)
+    }
+
+    { // listTasks
+      const response = await docker.listTasks()
+      const body = await response.json()
+      assert.equal(body.length, 4) // 2 for hey1, 2 for hey2
     }
 
     { // inspectService
