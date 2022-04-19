@@ -1202,6 +1202,23 @@ Docker.prototype.getServiceLogs = async function getServiceLogs(serviceId, optio
 }
 
 /**
+ * @name Docker.prototype.listTasks
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * new Docker().listTasks(options {
+ *   service?: string,
+ *   node?: string,
+ * }) -> Promise<HttpResponse>
+ * ```
+ */
+Docker.prototype.listTasks = async function listTasks(options) {
+  return this.http.get(`/tasks?${
+    querystring.stringify(pick(['service', 'node'])(options))
+  }`)
+}
+
+/**
  * @name Docker.prototype.pruneImages
  *
  * @synopsis
