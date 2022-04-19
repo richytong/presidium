@@ -1137,6 +1137,18 @@ Docker.prototype.updateService = function dockerUpdateService(service, options) 
 }
 
 /**
+ * @name Docker.prototype.deleteService
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * new Docker().deleteService(id string) -> Promise<HttpResponse>
+ * ```
+ */
+Docker.prototype.deleteService = function deleteService(id) {
+  return this.http.delete(`/services/${id}`)
+}
+
+/**
  * @name Docker.prototype.listServices
  *
  * @synopsis
