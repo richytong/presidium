@@ -1,6 +1,6 @@
 const rubico = require('rubico')
 const AWSEC2 = require('aws-sdk/clients/ec2')
-const AWSDescribeInstancesFilters = require('./internal/AWSDescribeInstancesFilters.js')
+const AWSEC2DescribeInstancesFilters = require('./internal/AWSEC2DescribeInstancesFilters.js')
 const filterExistsAndNotEmpty = require('./internal/filterExistsAndNotEmpty')
 
 const {
@@ -147,7 +147,7 @@ EC2.prototype.listInstances = async function (options = {}) {
     Reservations: reservations,
     NextToken: nextToken,
   } = await this.awsEc2.describeInstances(filterExistsAndNotEmpty({
-    Filters: AWSDescribeInstancesFilters(options),
+    Filters: AWSEC2DescribeInstancesFilters(options),
     MaxResults: options.limit ?? 1000,
     NextToken: options.nextToken,
   })).promise()
