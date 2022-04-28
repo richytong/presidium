@@ -52,10 +52,10 @@ const EC2 = function (options) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * import EC2FindInstancesDescribeFilterOptions from './internal/EC2FindInstancesDescribeFilterOptions.ss'
+ * import EC2ListInstancesDescribeFilterOptions from './internal/EC2ListInstancesDescribeFilterOptions.ss'
  *
  * new EC2(...).listInstances(options? {
- *   ...EC2FindInstancesDescribeFilterOptions.map(value => value|Array<value>),
+ *   ...EC2ListInstancesDescribeFilterOptions.map(value => value|Array<value>),
  *   limit?: 5-1000, // default 1000
  *   nextToken?: string, // last result's NextToken
  * }) -> Promise<{

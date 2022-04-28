@@ -20,10 +20,10 @@ const toArray = option => Array.isArray(option) ? option : [option]
  *
  * @synopsis
  * ```coffeescript [specscript]
- * import EC2FindInstancesDescribeFilterOptions from './EC2FindInstancesDescribeFilterOptions.ss'
+ * import EC2ListInstancesDescribeFilterOptions from './EC2ListInstancesDescribeFilterOptions.ss'
  *
  * AWSDescribeInstancesFilters(
- *   options EC2FindInstancesDescribeFilterOptions.map(value => value|Array<value>)
+ *   options EC2ListInstancesDescribeFilterOptions.map(value => value|Array<value>)
  * ) -> AWSDescribeInstancesFilters {}
  * ```
  */
