@@ -1,6 +1,7 @@
 const rubico = require('rubico')
 const filterExists = require('./filterExists')
 const objectFilterKeys = require('./objectFilterKeys')
+const toArray = require('./toArray')
 
 const {
   pipe, tap,
@@ -22,7 +23,7 @@ const {
  *
  * AWSEC2DescribeInstancesFilters(
  *   options EC2ListInstancesDescribeFilterOptions.map(value => value|Array<value>)
- * ) -> AWSEC2DescribeInstancesFilters {}
+ * ) -> awsEC2DescribeInstancesFilters Array<{ Name: string, Values: Array }>
  * ```
  */
 const AWSEC2DescribeInstancesFilters = pipe([
@@ -141,7 +142,7 @@ const AWSEC2DescribeInstancesFilters = pipe([
   options => {
     const filters = []
     for (const name in options) {
-      filters.push({ Name: name, Values: Array.from(options[name]) })
+      filters.push({ Name: name, Values: toArray(options[name]) })
     }
     return filters
   },
