@@ -143,7 +143,7 @@ const AWSDescribeInstancesFilters = pipe([
   options => {
     const filters = []
     for (const name in options) {
-      filters.push({ Name: name, Values: options[name] })
+      filters.push({ Name: name, Values: toArray(options[name]) })
     }
     return filters
   },
