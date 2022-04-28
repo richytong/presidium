@@ -30,7 +30,7 @@
   ],
   "dependencies": {
     "@elastic/elasticsearch": "^7.10.0",
-    "aws-sdk": "^2.787.0",
+    "aws-sdk": "^2.1123.0",
     "ioredis": "^4.19.0",
     "mongodb": "^3.6.3",
     "node-fetch": "^2.6.1",
