@@ -16,18 +16,18 @@ const {
 const toArray = option => Array.isArray(option) ? option : [option]
 
 /**
- * @name AWSDescribeInstancesFilters
+ * @name AWSEC2DescribeInstancesFilters
  *
  * @synopsis
  * ```coffeescript [specscript]
  * import EC2ListInstancesDescribeFilterOptions from './EC2ListInstancesDescribeFilterOptions.ss'
  *
- * AWSDescribeInstancesFilters(
+ * AWSEC2DescribeInstancesFilters(
  *   options EC2ListInstancesDescribeFilterOptions.map(value => value|Array<value>)
- * ) -> AWSDescribeInstancesFilters {}
+ * ) -> AWSEC2DescribeInstancesFilters {}
  * ```
  */
-const AWSDescribeInstancesFilters = pipe([
+const AWSEC2DescribeInstancesFilters = pipe([
   options => ({
     'affinity': options.affinity,
     'architecture': options.architecture,
@@ -149,4 +149,4 @@ const AWSDescribeInstancesFilters = pipe([
   },
 ])
 
-module.exports = AWSDescribeInstancesFilters
+module.exports = AWSEC2DescribeInstancesFilters
