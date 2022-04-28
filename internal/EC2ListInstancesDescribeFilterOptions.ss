@@ -1,4 +1,3 @@
-// https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/EC2.html#describeInstances-property
 EC2FindInstancesDescribeFilterOptions {
   affinity?: 'default'|'host',
   architecture?: 'i386'|'x86_64'|'arm64',
