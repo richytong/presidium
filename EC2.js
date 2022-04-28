@@ -59,12 +59,86 @@ const EC2 = function (options) {
  *   limit?: 5-1000, // default 1000
  *   nextToken?: string, // last result's NextToken
  * }) -> Promise<{
- *   Instances: Array<FindInstanceResult>,
+ *   Instances: Array<{
+ *     InstanceId: string,
+ *     AmiLaunchIndex: number, // 0
+ *     ImageId: string, // 'ami-09625adacc474a7b4'
+ *     InstanceId: 'i-04a9d2103428c73c0'
+ *     InstanceType: string, // 't2.micro'
+ *     KeyName: string, // 'solumlibs-test'
+ *     LaunchTime: Date, // 2022-04-28T17:08:41.000Z
+ *     Monitoring: {
+ *       State: string, // 'disabled'
+ *     },
+ *     Placement: {
+ *       AvailabilityZone: string, // 'us-west-1a'
+ *       GroupName: string, // ''
+ *       Tenancy: string, // 'default'
+ *     },
+ *     PrivateDnsName: string, // 'ip-172-31-31-44.us-west-1.compute.internal'
+ *     PrivateIpAddress: string, // '172.31.31.44'
+ *     ProductCodes: Array<string>,
+ *     PublicDnsName: string, // 'ec2-3-101-88-163.us-west-1.compute.amazonaws.com'
+ *     PublicIpAddress: string, // '3.101.88.163'
+ *     State: {
+ *       Code: number, // 16
+ *       Name: string, // 'running'
+ *     },
+ *     StateTransitionReason: string,
+ *     SubnetId: string, // 'subnet-916bb8f7'
+ *     VpcId: string, // 'vpc-9c42a2fa'
+ *     Architecture: string, // 'x86_64'
+ *     BlockDeviceMappings: Array<Object>,
+ *     ClientToken: string,
+ *     EbsOptimized: boolean,
+ *     EnaSupport: boolean,
+ *     Hypervisor: string, // 'xen'
+ *     ElasticGpuAssociations: Array,
+ *     ElasticInferenceAcceleratorAssociations: Array,
+ *     NetworkInterfaces: Array<Object>,
+ *     RootDeviceName: string, // '/dev/xvda'
+ *     RootDeviceType: string, // 'ebs'
+ *     SecurityGroups: Array<Object>,
+ *     SourceDestCheck: boolean,
+ *     Tags: Array<Object>,
+ *     VirtualizationType: string, // 'hvm'
+ *     CpuOptions: {
+ *       CoreCount: number, // 1
+ *       ThreadsPerCore: number, // 1
+ *     },
+ *     CapacityReservationSpecification: {
+ *       CapacityReservationPreference: string, // 'open'
+ *     },
+ *     HibernationOptions: {
+ *       Configured: boolean, // false
+ *     },
+ *     Licenses: [],
+ *     MetadataOptions: {
+ *       State: string, // 'applied'
+ *       HttpTokens: string, // 'optional'
+ *       HttpPutResponseHopLimit: number, // 1
+ *       HttpEndpoint: string, // 'enabled'
+ *     },
+ *     EnclaveOptions: {
+ *       Enabled: boolean, // false
+ *     },
+ *     AvailabilityZone: string, // 'us-west-1a'
+ *     Events: Array,
+ *     InstanceState: {
+ *       Code: number, // 16
+ *       Name: string, // 'running'
+ *     },
+ *     InstanceStatus: {
+ *       Details: Array,
+ *       Status: string, // 'ok'
+ *     },
+ *     SystemStatus: {
+ *       Details: Array,
+ *       Status: string, // 'ok'
+ *     }
+ *   }>,
  *   NextToken: string|null,
  * }>
- *
- * FindInstanceResult {
- * }
  * ```
  */
 
