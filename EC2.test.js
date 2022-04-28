@@ -39,4 +39,4 @@ if (process.argv[1] == __filename) {
   test()
 }
 
-module.exports = test()
+module.exports = test
