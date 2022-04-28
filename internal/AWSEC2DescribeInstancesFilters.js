@@ -13,8 +13,6 @@ const {
   curry, __,
 } = rubico
 
-const toArray = option => Array.isArray(option) ? option : [option]
-
 /**
  * @name AWSEC2DescribeInstancesFilters
  *
@@ -143,7 +141,7 @@ const AWSEC2DescribeInstancesFilters = pipe([
   options => {
     const filters = []
     for (const name in options) {
-      filters.push({ Name: name, Values: toArray(options[name]) })
+      filters.push({ Name: name, Values: Array.from(options[name]) })
     }
     return filters
   },
