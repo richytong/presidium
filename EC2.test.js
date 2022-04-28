@@ -25,13 +25,16 @@ const test = new Test('EC2', async function () {
 
   { // listInstances all instances
     const response = await ec2.listInstances()
-    assert.equal(response.Instances.length, 1)
+    assert(
+      response.Instances.filter(instance => instance.State.Name == 'running').length == 1,
+      'There is not a running instance, check the aws account'
+    )
     assert.equal(response.NextToken, null)
   }
 
   { // listInstances with tag
     const response = await ec2.listInstances({
-      'tag:Name': 'test',
+      'tag:Env': 'test',
     })
     assert.equal(response.Instances.length, 1)
     assert.equal(response.NextToken, null)
