@@ -21,16 +21,19 @@ const test = new Test('EC2', async function () {
     ...awsCreds,
   })
 
-  { // listInstances E2E
+  // there is one test instance in this region
+
+  { // listInstances all instances
+    const response = await ec2.listInstances()
+    assert.equal(response.Instances.length, 1)
+    assert.equal(response.NextToken, null)
+  }
+
+  { // listInstances with tag
     const response = await ec2.listInstances({
-      'tag:aws:autoscaling:groupName': [
-        'production-manager',
-        'production-hub',
-        'production-members-hub',
-        'production-moderator-hub',
-      ],
+      'tag:Name': 'test',
     })
-    assert.equal(response.Instances.length, 0)
+    assert.equal(response.Instances.length, 1)
     assert.equal(response.NextToken, null)
   }
 }).case()
