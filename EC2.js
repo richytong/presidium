@@ -161,6 +161,7 @@ EC2.prototype.listInstances = async function (options = {}) {
     const { InstanceStatuses: instanceStatuses } =
       await this.awsEc2.describeInstanceStatus({
         InstanceIds: instanceIds.slice(instanceIndex, (instanceIndex += 100)),
+        IncludeAllInstances: true,
       }).promise()
     for (const instanceStatus of instanceStatuses) {
       instanceIdStatusMap.set(instanceStatus.InstanceId, instanceStatus)
