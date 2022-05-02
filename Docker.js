@@ -1219,6 +1219,21 @@ Docker.prototype.listTasks = async function listTasks(options) {
 }
 
 /**
+ * @name Docker.prototype.listNodes
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Docker().listNodes() -> Promise<HttpResponse>
+ * ```
+ *
+ * @description
+ * See https://docs.docker.com/engine/api/v1.40/#operation/NodeList
+ */
+Docker.prototype.listNodes = async function listNodes() {
+  return this.http.get('/nodes')
+}
+
+/**
  * @name Docker.prototype.pruneImages
  *
  * @synopsis
