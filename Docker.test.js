@@ -279,6 +279,13 @@ EXPOSE 8888`,
       assert.equal(response.status, 200)
     }
 
+    { // listNodes
+      const response = await docker.listNodes()
+      assert.equal(response.status, 200)
+      const nodes = await response.json()
+      assert.equal(nodes.length, 1) // just this computer
+    }
+
     { // inspectSwarm
       const response = await docker.inspectSwarm()
       assert.equal(response.status, 200)
