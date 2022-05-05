@@ -36,6 +36,7 @@ const dockerServiceOptions = [
   'rollbackParallelism', 'rollbackDelay',
   'rollbackFailureAction', 'rollbackMonitor', 'rollbackMaxFailureRatio',
   'username', 'password', 'email', 'serveraddress', 'identitytoken',
+  'network',
 ]
 
 /**
@@ -75,6 +76,8 @@ const dockerServiceOptions = [
  *   rollbackMonitor: 15e9|number, // ns after each task rollback to monitor for failure
  *   rollbackMaxFailureRatio: 0.15|number, // failure rate to tolerate during a rollback
  *
+ *   network?: string, // name or id of network to attach service
+ *
  *   cmd: Array<string|number>, // CMD
  *   workdir: path string, // WORKDIR
  *   env: {
@@ -108,6 +111,8 @@ const DockerService = function (options) {
   this.docker = new Docker()
   this.version = null
   this.spec = null
+  this.replicas = options.replicas
+
   this.ready = this.docker.inspectService(this.name).then(pipe([
     switchCase([
       eq(404, get('status')),
