@@ -16,6 +16,7 @@ const join = require('./internal/join')
 const isArray = require('./internal/isArray')
 const pathJoin = require('./internal/pathJoin')
 const has = require('./internal/has')
+const filterExists = require('./internal/filterExists')
 
 const {
   pipe, tap,
@@ -776,6 +777,8 @@ Docker.prototype.updateSwarm = async function dockerUpdateSwarm(options = {}) {
  *   rollbackMonitor: 15e9|number, // ns after each task rollback to monitor for failure
  *   rollbackMaxFailureRatio: 0.15|number, // failure rate to tolerate during a rollback
  *
+ *   network?: string, // name or id of network to attach service
+ *
  *   cmd: Array<string|number>, // CMD
  *   workdir: path string, // WORKDIR
  *   env: {
@@ -874,6 +877,7 @@ Docker.prototype.createService = function dockerCreateService(service, options) 
         Monitor: get('updateMonitor', 15e9),
         MaxFailureRatio: get('updateMaxFailureRatio', 0.15),
       })(options),
+
       RollbackConfig: fork({
         Parallelism: get('rollbackParallelism', 1),
         Delay: get('rollbackDelay', 1e9),
@@ -881,6 +885,14 @@ Docker.prototype.createService = function dockerCreateService(service, options) 
         Monitor: get('rollbackMonitor', 15e9),
         MaxFailureRatio: get('rollbackMaxFailureRatio', 0.15),
       })(options),
+
+      ...options.network && {
+        Networks: [{
+          Target: options.network,
+          Aliases: [],
+          DriverOpts: {},
+        }],
+      },
 
       ...options.publish && {
         EndpointSpec: {
@@ -1234,6 +1246,18 @@ Docker.prototype.listNodes = async function listNodes() {
 }
 
 /**
+ * @name Docker.prototype.deleteNode
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * new Docker().deleteNode(id string) -> Promise<HttpResponse>
+ * ```
+ */
+Docker.prototype.deleteNode = function deleteNode(id) {
+  return this.http.delete(`/nodes/${id}`)
+}
+
+/**
  * @name Docker.prototype.pruneImages
  *
  * @synopsis
@@ -1267,6 +1291,30 @@ Docker.prototype.pruneContainers = function dockerPruneContainers() {
  */
 Docker.prototype.pruneVolumes = function dockerPruneVolumes() {
   return this.http.post('/volumes/prune')
+}
+
+/**
+ * @name Docker.prototype.createNetwork
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * new Docker().createNetwork(options {
+ *   name: string, // name of the network
+ *   driver?: 'bridge'|'host'|'overlay'|'ipvlan'|'macvlan', // default 'bridge'
+ * }) -> Promise<HttpResponse>
+ * ```
+ */
+Docker.prototype.createNetwork = function createNetwork(options) {
+  return this.http.post('/networks/create', {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(filterExists({
+      Name: options.name,
+      Driver: options.driver,
+      CheckDuplicate: true,
+    })),
+  })
 }
 
 /**

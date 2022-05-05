@@ -284,6 +284,13 @@ EXPOSE 8888`,
       assert.equal(response.status, 200)
       const nodes = await response.json()
       assert.equal(nodes.length, 1) // just this computer
+      this.nodeId = nodes[0].ID
+    }
+
+    { // attempt deleteNode
+      const response = await docker.deleteNode(this.nodeId)
+      assert.equal(response.status, 400)
+      console.log(await response.text())
     }
 
     { // inspectSwarm
@@ -293,6 +300,14 @@ EXPOSE 8888`,
       assert.equal(typeof body.JoinTokens.Worker, 'string')
       assert.equal(typeof body.JoinTokens.Manager, 'string')
       this.workerJoinToken = body.JoinTokens.Worker
+    }
+
+    { // create a network
+      const response = await docker.createNetwork({
+        name: 'my-network',
+        driver: 'overlay',
+      })
+      assert.equal(response.status, 201)
     }
 
     { // create a service
@@ -326,6 +341,7 @@ EXPOSE 8888`,
           'max-file': '10',
           'max-size': '100m',
         },
+        network: 'my-network',
       })
       assert.equal(response.status, 201)
       const body = await response.json()
