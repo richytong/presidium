@@ -21,8 +21,8 @@ const test = new Test('ECR', async function () {
     ...awsCreds,
   })
 
-  const data = await ecr.getAuthorizationToken()
-  assert.equal(typeof data.authorizationToken, 'string')
+  const token = await ecr.getLoginPassword()
+  assert.equal(typeof token, 'string')
 }).case()
 
 if (process.argv[1] == __filename) {
