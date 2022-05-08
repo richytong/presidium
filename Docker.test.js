@@ -55,6 +55,13 @@ const test = Test.all([
 
   Test('Docker - image', Docker)
   .case(async function (docker) {
+    { // pull node-15:alpine
+      const response = await docker.pullImage('node:15-alpine')
+      assert.equal(response.status, 200)
+      response.body.pipe(process.stdout)
+      await new Promise(resolve => response.body.on('end', resolve))
+    }
+
     {
       const response = await docker.buildImage('presidium-test:ayo', pathResolve(__dirname), {
         archive: {
