@@ -43,16 +43,17 @@ const ECR = function (options) {
 }
 
 /**
- * @name ECR.prototype.getAuthorizationToken
+ * @name ECR.prototype.getLoginPassword
  *
  * @synopsis
  * ```coffeescript [specscript]
- * new ECR(...).getAuthorizationToken() -> Promise<{
+ * new ECR(...).getLoginPassword() -> Promise<{
  * }>
  * ```
  */
-ECR.prototype.getAuthorizationToken = function getAuthorizationToken() {
-  return this.awsEcr.getAuthorizationToken().promise().then(get('authorizationData[0]'))
+ECR.prototype.getLoginPassword = function getLoginPassword() {
+  return this.awsEcr.getAuthorizationToken().promise()
+    .then(get('authorizationData[0].authorizationToken'))
 }
 
 module.exports = ECR
