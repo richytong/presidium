@@ -1,4 +1,5 @@
 const Test = require('thunk-test')
+const assert = require('assert')
 const ECR = require('./ECR')
 const AwsCredentials = require('./internal/AwsCredentials')
 
