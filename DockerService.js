@@ -26,7 +26,7 @@ const passthrough = target => transform(map(identity), target)
 const PassThroughStream = stream.PassThrough
 
 const dockerServiceOptions = [
-  'name', 'image', 'replicas', 'publish', 'mounts',
+  'name', 'image', 'replicas', 'publish', 'mounts', 'labels',
   'cmd', 'workdir', 'env', 'restart', 'restartDelay',
   'logDriver', 'logDriverOptions',
   'healthCmd', 'healthInterval',
