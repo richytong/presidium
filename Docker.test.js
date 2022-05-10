@@ -320,6 +320,7 @@ EXPOSE 8888`,
     { // create a service
       const response = await docker.createService('hey1', {
         image: 'node:15-alpine',
+        labels: { foo: 'bar' },
         replicas: 2,
         cmd: ['node', '-e', 'http.createServer((request, response) => response.end(\'hey1\')).listen(3000)'],
         workdir: '/opt/heyo',
@@ -392,6 +393,8 @@ EXPOSE 8888`,
     { // inspectService
       const response = await docker.inspectService(this.serviceId)
       assert.equal(response.status, 200)
+      const data = await response.json()
+      assert.equal(data.Spec.Labels.foo, 'bar')
     }
 
     { // deleteService

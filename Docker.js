@@ -51,7 +51,7 @@ const Docker = function () {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * Docker().auth({
+ * Docker().auth(options {
  *   username: string,
  *   password: string,
  *   email: string,
@@ -59,16 +59,16 @@ const Docker = function () {
  * }) -> Promise<HttpResponse>
  * ```
  */
-Docker.prototype.auth = function dockerAuth(authorization) {
+Docker.prototype.auth = function dockerAuth(options) {
   return this.http.post('auth', {
-    body: switchCase([
-      isString,
-      identity,
-      pipe([
-        pick(['username', 'password', 'email', 'serveraddress']),
-        stringifyJSON,
-      ]),
-    ])(authorization)
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: pipe([
+      pick(['username', 'password', 'email', 'serveraddress']),
+      stringifyJSON,
+      tap(console.log),
+    ])(options),
   })
 }
 
@@ -794,6 +794,9 @@ Docker.prototype.updateSwarm = async function dockerUpdateSwarm(options = {}) {
  *   email?: string,
  *   serveraddress?: string,
  *   identitytoken?: string,
+ *
+ *   // user-defined metadata
+ *   labels: object,
  * }) -> Promise<HttpResponse>
  * ```
  */
@@ -802,6 +805,7 @@ Docker.prototype.createService = function dockerCreateService(service, options) 
   return this.http.post('/services/create', {
     body: stringifyJSON({
       Name: service,
+      Labels: options.labels ?? {},
       TaskTemplate: {
         ContainerSpec: {
           Image: options.image,
