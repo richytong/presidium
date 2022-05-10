@@ -1317,6 +1317,9 @@ Docker.prototype.pruneVolumes = function dockerPruneVolumes() {
  * new Docker().createNetwork(options {
  *   name: string, // name of the network
  *   driver?: 'bridge'|'host'|'overlay'|'ipvlan'|'macvlan', // default 'bridge'
+ *   ingress?: boolean,
+ *   subnet?: string, // e.g. '10.0.0.0/20'
+ *   gateway?: string, // e.g. '10.0.0.1'
  * }) -> Promise<HttpResponse>
  * ```
  */
