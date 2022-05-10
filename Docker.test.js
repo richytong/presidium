@@ -309,12 +309,26 @@ EXPOSE 8888`,
       this.workerJoinToken = body.JoinTokens.Worker
     }
 
-    { // create a network
+    { // create some networks
       const response = await docker.createNetwork({
         name: 'my-network',
         driver: 'overlay',
+        subnet: '10.11.0.0/20',
+        gateway: '10.11.0.1',
       })
       assert.equal(response.status, 201)
+
+      const response2 = await docker.createNetwork({
+        name: 'my-other-network',
+        driver: 'overlay',
+      })
+      assert.equal(response2.status, 201)
+    }
+
+    { // inspect my-network
+      const response = await docker.inspectNetwork('my-network')
+      const network = await response.json()
+      assert.equal(network.IPAM.Config[0].Subnet, '10.11.0.0/20')
     }
 
     { // create a service
@@ -418,6 +432,11 @@ EXPOSE 8888`,
     { // force leaveSwarm
       const response = await docker.leaveSwarm({ force: true })
       assert.equal(response.status, 200)
+    }
+
+    { // delete the network
+      const response = await docker.deleteNetwork('my-network')
+      console.log(await response.json())
     }
 
     await Promise.all([ // TODO figure out a real test for join. Checking for the 503 is ok but is both slow and not a 200

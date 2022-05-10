@@ -1328,9 +1328,44 @@ Docker.prototype.createNetwork = function createNetwork(options) {
     body: JSON.stringify(filterExists({
       Name: options.name,
       Driver: options.driver,
+      Ingress: options.ingress,
       CheckDuplicate: true,
+      ...options.subnet == null && options.gateway == null ? {} : {
+        IPAM: {
+          Driver: 'default',
+          Config: [filterExists({
+            Subnet: options.subnet,
+            Gateway: options.gateway,
+          })],
+          Options: {},
+        },
+      },
     })),
   })
+}
+
+/**
+ * @name Docker.prototype.inspectNetwork
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * new Docker().inspectNetwork(id string) -> Promise<HttpResponse>
+ * ```
+ */
+Docker.prototype.inspectNetwork = function inspectNetwork(id) {
+  return this.http.get(`/networks/${id}`)
+}
+
+/**
+ * @name Docker.prototype.deleteNetwork
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * new Docker().deleteNetwork(id string) -> Promise<HttpResponse>
+ * ```
+ */
+Docker.prototype.deleteNetwork = function deleteNetwork(id) {
+  return this.http.delete(`/networks/${id}`)
 }
 
 /**
