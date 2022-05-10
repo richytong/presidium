@@ -1329,7 +1329,6 @@ Docker.prototype.createNetwork = function createNetwork(options) {
       Name: options.name,
       Driver: options.driver,
       CheckDuplicate: true,
-      Attachable: true,
     })),
   })
 }
