@@ -193,12 +193,20 @@ DockerService.prototype.update = async function update(options) {
     ...options,
     spec: this.spec,
     version: this.version,
-  }).then(response => {
-    this.ready = this.synchronize()
+  }).then(async response => {
+    await this.synchronize()
     return response.json()
   })
 }
 
+/**
+ * @name DockerService.prototype.inspect
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * new DockerService(...).inspect() -> Promise<{}>
+ * ```
+ */
 DockerService.prototype.inspect = async function inspect() {
   await this.ready
   return this.docker.inspectService(this.name)

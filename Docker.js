@@ -995,6 +995,9 @@ const has = property => value => {
  *   email?: string,
  *   serveraddress?: string,
  *   identitytoken?: string,
+ *
+ *   // user-defined metadata
+ *   labels: object,
  * }) -> Promise<HttpResponse>
  * ```
  */
@@ -1010,6 +1013,7 @@ Docker.prototype.updateService = function dockerUpdateService(service, options) 
 
     body: stringifyJSON(defaultsDeep(get('spec', {})(options))({
       Name: service,
+      Labels: options.labels ?? {},
       TaskTemplate: {
         ContainerSpec: {
           ...options.image && { Image: options.image },
@@ -1114,6 +1118,14 @@ Docker.prototype.updateService = function dockerUpdateService(service, options) 
           ...options.rollbackMonitor && { Monitor: options.rollbackMonitor },
           ...options.rollbackMaxFailureRatio && { MaxFailureRatio: options.rollbackMaxFailureRatio },
         },
+      },
+
+      ...options.network && {
+        Networks: [{
+          Target: options.network,
+          Aliases: [],
+          DriverOpts: {},
+        }],
       },
 
       ...options.publish && {
