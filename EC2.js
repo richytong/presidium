@@ -179,4 +179,19 @@ EC2.prototype.listInstances = async function (options = {}) {
   }
 }
 
+/**
+ * @name EC2.prototype.terminateInstances
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * new EC2(...).terminateInstances(instanceIds Array<string>)
+ *   -> Promise<{
+ *     TerminatingInstances: Array<{}>,
+ *   }>
+ * ```
+ */
+EC2.prototype.terminateInstances = async function (instanceIds) {
+  return this.awsEc2.terminateInstances({ InstanceIds: instanceIds }).promise()
+}
+
 module.exports = EC2

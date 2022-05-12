@@ -39,6 +39,15 @@ const test = new Test('EC2', async function () {
     assert.equal(response.Instances.length, 1)
     assert.equal(response.NextToken, null)
   }
+
+  // terminateInstances with nonexistent instanceId
+  await assert.rejects(
+    ec2.terminateInstances(['i-dne']),
+    {
+      message: 'Invalid id: "i-dne"',
+      name: 'InvalidInstanceID.Malformed',
+    },
+  )
 }).case()
 
 if (process.argv[1] == __filename) {
