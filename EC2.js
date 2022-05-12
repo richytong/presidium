@@ -124,15 +124,15 @@ const EC2 = function (options) {
  *     },
  *     AvailabilityZone: string, // 'us-west-1a'
  *     Events: Array,
- *     InstanceState: {
+ *     InstanceState: { // the intended state of the instance
  *       Code: number, // 16
  *       Name: string, // 'running'
  *     },
- *     InstanceStatus: {
+ *     InstanceStatus: { // reports impaired functionality that stems from issues internal to the instance, such as impaired reachability
  *       Details: Array,
  *       Status: string, // 'ok'
  *     },
- *     SystemStatus: {
+ *     SystemStatus: { // reports impaired functionality that stems from issues related to systems that support the instance, such as hardware failures and network connectivity problems
  *       Details: Array,
  *       Status: string, // 'ok'
  *     }
