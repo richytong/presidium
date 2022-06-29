@@ -29,6 +29,12 @@ const combinedTest = Test.all([
     .case({ M: { a: { N: '1' }, b: { L: [{ S: 'a' }, { BOOL: true }] } } }, { a: 1, b: ['a', true] })
     .throws(NaN, new TypeError('unknown attributeValue NaN')),
 
+  Test('Dynamo.itemResponseToJSON', Dynamo.itemResponseToJSON)
+    .case({ Item: { a: { S: 'hey' } } }, { a: 'hey' })
+    .case({ Item: { b: { S: '' } } }, { b: '' })
+    .case({ Item: { c: { N: '1' } } }, { c: 1 })
+    .case({ Item: { a: { M: { a: { N: '1' }, b: { L: [{ S: 'a' }, { BOOL: true }] } } } } }, { a: { a: 1, b: ['a', true] } }),
+
   Test('Dynamo.AttributeType', Dynamo.AttributeType)
     .case('string', 'S')
     .case('S', 'S')

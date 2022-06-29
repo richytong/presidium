@@ -442,4 +442,23 @@ Dynamo.attributeValueToJSON = function attributeValueToJSON(attributeValue) {
   }
 }
 
+/**
+ * @name Dynamo.itemResponseToJSON
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Dynamo.itemResponseToJSON(
+ *   dynamoResponse {
+ *     Item: Object<DynamoAttributeValue>
+ *   }
+ * ) -> json Object
+ * ```
+ */
+Dynamo.itemResponseToJSON = function itemResponseToJSON(dynamoResponse) {
+  return pipe(dynamoResponse, [
+    get('Item'),
+    map(Dynamo.attributeValueToJSON),
+  ])
+}
+
 module.exports = Dynamo
