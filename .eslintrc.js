@@ -269,7 +269,7 @@ module.exports = {
             'single'
         ],
         'radix': 'error',
-        'require-atomic-updates': 'error',
+        'require-atomic-updates': 'off',
         'require-await': 'off',
         'require-jsdoc': 'error',
         'require-unicode-regexp': 'off',
