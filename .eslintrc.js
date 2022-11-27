@@ -210,7 +210,7 @@ module.exports = {
         'no-sequences': 'off',
         'no-shadow': 'off',
         'no-spaced-func': 'error',
-        'no-sync': 'error',
+        'no-sync': 'off',
         'no-tabs': 'error',
         'no-template-curly-in-string': 'error',
         'no-ternary': 'off',
