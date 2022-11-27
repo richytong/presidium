@@ -5,13 +5,13 @@ const AwsCredentials = require('./AwsCredentials')
 
 const test = new Test('AwsCredentials', async function () {
   try {
-    await fs.promises.mkdir(`${__dirname}/.aws`)
+    await fs.promises.mkdir(`${__dirname}/../.aws`)
   } catch {
-    await fs.promises.rm(`${__dirname}/.aws`, { recursive: true })
-    await fs.promises.mkdir(`${__dirname}/.aws`)
+    await fs.promises.rm(`${__dirname}/../.aws`, { recursive: true })
+    await fs.promises.mkdir(`${__dirname}/../.aws`)
   }
 
-  await fs.promises.writeFile(`${__dirname}/.aws/credentials`, `
+  await fs.promises.writeFile(`${__dirname}/../.aws/credentials`, `
 [default]
 aws_access_key_id = AAA
 aws_secret_access_key = FFF
@@ -35,7 +35,7 @@ aws_secret_access_key = FFF
     assert.equal(awsCreds.secretAccessKey, 'FFF')
   }
 
-  await fs.promises.rm(`${__dirname}/.aws`, { recursive: true })
+  await fs.promises.rm(`${__dirname}/../.aws`, { recursive: true })
 }).case()
 
 if (process.argv[1] == __filename) {
