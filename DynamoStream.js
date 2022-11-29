@@ -2,6 +2,7 @@ const DynamoDBStreams = require('aws-sdk/clients/dynamodbstreams')
 const rubico = require('rubico')
 const rubicox = require('rubico/x')
 const has = require('./internal/has')
+const RetryAwsErrors = require('./internal/RetryAwsErrors')
 const HttpAgent = require('./HttpAgent')
 const Dynamo = require('./Dynamo')
 const Mux = require('rubico/monad/Mux')
@@ -70,6 +71,23 @@ const DynamoStream = function (options) {
     ...awsCreds,
   })
 
+  this.retryListStreams = RetryAwsErrors(
+    this.client.listStreams,
+    this.client,
+  )
+  this.retryDescribeStream = RetryAwsErrors(
+    this.client.describeStream,
+    this.client,
+  )
+  this.retryGetShardIterator = RetryAwsErrors(
+    this.client.getShardIterator,
+    this.client,
+  )
+  this.retryGetRecords = RetryAwsErrors(
+    this.client.getRecords,
+    this.client,
+  )
+
   const dynamo = new Dynamo(awsCreds)
   this.ready = dynamo.describeTable(this.table).then(pipe([
     get('Table.StreamSpecification'),
@@ -87,19 +105,19 @@ DynamoStream.prototype.close = function close() {
 
 // () => AsyncGenerator<Stream>
 DynamoStream.prototype.getStreams = async function* getStreams() {
-  let streams = await this.client.listStreams({
+  let streams = await this.retryListStreams({
     Limit: this.listStreamsLimit,
     TableName: this.table
-  }).promise()
+  })
   if (streams.Streams.length > 0) {
     yield* streams.Streams
   }
   while (!this.closed && streams.LastEvaluatedStreamArn != null) {
-    streams = await this.client.listStreams({
+    streams = await this.retryListStreams({
       Limit: this.listStreamsLimit,
       TableName: this.table,
       ExclusiveStartStreamArn: streams.LastEvaluatedStreamArn,
-    }).promise()
+    })
     if (streams.Streams.length > 0) {
       yield* streams.Streams
     }
@@ -110,19 +128,19 @@ DynamoStream.prototype.getStreams = async function* getStreams() {
 DynamoStream.prototype.getShards = async function* getShards(
   Stream,
 ) {
-  let shards = await this.client.describeStream({
+  let shards = await this.retryDescribeStream({
     StreamArn: Stream.StreamArn,
     Limit: 100,
-  }).promise().then(get('StreamDescription'))
+  }).then(get('StreamDescription'))
   if (shards.Shards.length > 0) {
     yield* shards.Shards.map(assign({ Stream: always(Stream) }))
   }
   while (!this.closed && shards.LastEvaluatedShardId != null) {
-    shards = await this.client.describeStream({
+    shards = await this.retryDescribeStream({
       StreamArn: Stream.StreamArn,
       Limit: 100,
       ExclusiveStartShardId: shards.LastEvaluatedShardId,
-    }).promise().then(get('StreamDescription'))
+    }).then(get('StreamDescription'))
     if (shards.Shards.length > 0) {
       yield* shards.Shards.map(assign({ Stream: always(Stream) }))
     }
@@ -133,7 +151,7 @@ DynamoStream.prototype.getShards = async function* getShards(
 DynamoStream.prototype.getRecords = async function* getRecords(
   Shard,
 ) {
-  const startingShardIterator = await this.client.getShardIterator({
+  const startingShardIterator = await this.retryGetShardIterator({
     ShardId: Shard.ShardId,
     StreamArn: Shard.Stream.StreamArn,
     ShardIteratorType: Shard.ShardIteratorType,
@@ -145,19 +163,11 @@ DynamoStream.prototype.getRecords = async function* getRecords(
     ) ? { SequenceNumber: Shard.SequenceNumber } : {},
     */
 
-  }).promise().then(get('ShardIterator'))
+  }).then(get('ShardIterator'))
 
-  let records = await this.client.getRecords({
+  let records = await this.retryGetRecords({
     ShardIterator: startingShardIterator,
     Limit: this.getRecordsLimit
-  }).promise().catch(error => {
-    if (error.retryable) {
-      return this.client.getRecords({
-        ShardIterator: startingShardIterator,
-        Limit: this.getRecordsLimit
-      }).promise()
-    }
-    throw error
   })
 
   if (records.Records.length > 0) {
@@ -169,19 +179,10 @@ DynamoStream.prototype.getRecords = async function* getRecords(
   await new Promise(resolve => setTimeout(resolve, this.getRecordsInterval))
 
   while (!this.closed && records.NextShardIterator != null) {
-    records = await this.client.getRecords({
+    records = await this.retryGetRecords({
       ShardIterator: records.NextShardIterator,
       Limit: this.getRecordsLimit
-    }).promise().catch(error => {
-      if (error.retryable) {
-        return this.client.getRecords({
-          ShardIterator: records.NextShardIterator,
-          Limit: this.getRecordsLimit
-        }).promise()
-      }
-      throw error
     })
-
     if (records.Records.length > 0) {
       yield* records.Records.map(assign({
         table: always(this.table),
