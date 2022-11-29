@@ -1,9 +1,9 @@
 const Test = require('thunk-test')
-const DynamoTable = require('presidium/DynamoTable')
-const DynamoStream = require('presidium/DynamoStream')
-const ElasticsearchIndex = require('presidium/ElasticsearchIndex')
-const S3Bucket = require('presidium/S3Bucket')
-const KinesisStream = require('presidium/KinesisStream')
+const DynamoTable = require('./DynamoTable')
+const DynamoStream = require('./DynamoStream')
+const ElasticsearchIndex = require('./ElasticsearchIndex')
+const S3Bucket = require('./S3Bucket')
+const KinesisStream = require('./KinesisStream')
 const teardown = require('./teardown')
 
 const test = new Test('teardown', async function () {
