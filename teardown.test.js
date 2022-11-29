@@ -48,6 +48,11 @@ const test = new Test('teardown', async function () {
   })
   await myKinesisStream.ready
 
+  if (myDynamoTable == null) {
+    console.log(myDynamoTable)
+    throw new Error('wtf')
+  }
+
   await teardown(null)
   await teardown(myDynamoTable)
   await teardown(myDynamoStream)
