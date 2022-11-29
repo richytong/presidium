@@ -48,6 +48,7 @@ const test = new Test('teardown', async function () {
   })
   await myKinesisStream.ready
 
+  await teardown(null)
   await teardown(myDynamoTable)
   await teardown(myDynamoStream)
   await teardown(myElasticsearchIndex)

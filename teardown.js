@@ -17,7 +17,10 @@ const KinesisStream = require('./KinesisStream')
  * ```
  */
 const teardown = async function (dependency) {
-  if (dependency.constructor == DynamoTable) {
+  if (dependency == null) {
+    // noop
+  }
+  else if (dependency.constructor == DynamoTable) {
     await dependency.delete()
   }
   else if (dependency.constructor == DynamoStream) {
