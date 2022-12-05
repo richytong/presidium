@@ -7,6 +7,8 @@ const StringStream = require('./internal/StringStream')
  * @synopsis
  * ```coffeescript [specscript]
  * Gzip(raw string) -> gzip stream
+ *
+ * Gzip() -> gzip stream
  * ```
  *
  * @description
@@ -18,6 +20,9 @@ const StringStream = require('./internal/StringStream')
  */
 
 const Gzip = function (raw) {
+  if (raw == null) {
+    return zlib.createGzip()
+  }
   return StringStream(raw).pipe(zlib.createGzip())
 }
 
