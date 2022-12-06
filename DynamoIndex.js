@@ -150,6 +150,9 @@ DynamoIndex.prototype.query = async function dynamoIndexQuery(
   }
 
   const ExpressionAttributeNames = pipe([
+    ...keyConditionStatements, ...filterExpressionStatements
+  ], [
+    filter(statement => statement.includes(':')),
     fork([
       map(
         statement => statement.trim().startsWith('begins_with')
@@ -169,22 +172,27 @@ DynamoIndex.prototype.query = async function dynamoIndexQuery(
       map(field => ({ [`#${hashJSON(field)}`]: field })),
       {},
     ),
-  ])([...keyConditionStatements, ...filterExpressionStatements])
+  ])
 
   const ExpressionAttributeValues = map.entries(
     ([placeholder, value]) => [`:${placeholder}`, Dynamo.AttributeValue(value)],
   )(values)
 
-  const KeyConditionExpression = keyConditionStatements.map(function (statement) {
-    if (statement.startsWith('begins_with')) {
-      const [field, prefix] = statement // 'begins_with(name, :prefix)'
-        .split(/[()]/)[1] // 'name, :prefix'
-        .split(',').map(trim) // ['name', ':prefix']
-      return `begins_with(#${hashJSON(field)}, ${prefix})`
-    }
-    const [field, rest] = statement.split(/ (.+)/)
-    return `#${hashJSON(field)} ${rest}`
-  }).join(' AND ')
+  const KeyConditionExpression = keyConditionStatements
+    .filter(statement => statement.includes(':'))
+    .map(statement => {
+      if (statement.startsWith('begins_with')) {
+        const [field, prefix] = statement // 'begins_with(name, :prefix)'
+          .split(/[()]/)[1] // 'name, :prefix'
+          .split(',').map(trim) // ['name', ':prefix']
+        return `begins_with(#${hashJSON(field)}, ${prefix})`
+      }
+      const [field, rest] = statement.split(/ (.+)/)
+      return `#${hashJSON(field)} ${rest}`
+    })
+    .join(' AND ')
+
+  console.log(KeyConditionExpression)
 
   const FilterExpression = filterExpressionStatements.map(function (statement) {
     if (statement.startsWith('begins_with')) {

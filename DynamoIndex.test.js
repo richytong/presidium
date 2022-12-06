@@ -108,6 +108,29 @@ const test = new Test('DynamoIndex', DynamoIndex)
       })
 
     assert.deepEqual(
+      await index.query('status = :status AND createTime > 1000', {
+        status: 'waitlist',
+      }),
+      {
+        Items: [
+          {
+            createTime: { N: '1001' },
+            id: { S: '2' },
+            status: { S: 'waitlist' },
+            name: { S: 'geo' },
+          },
+          {
+            createTime: { N: '1002' },
+            id: { S: '3' },
+            status: { S: 'waitlist' },
+            name: { S: 'john' },
+          }
+        ],
+        Count: 2,
+        ScannedCount: 2
+      })
+
+    assert.deepEqual(
       await index.query('status = :status AND createTime BETWEEN :lower AND :upper', {
         status: 'waitlist',
         lower: 999,
