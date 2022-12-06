@@ -192,8 +192,6 @@ DynamoIndex.prototype.query = async function dynamoIndexQuery(
     })
     .join(' AND ')
 
-  console.log(KeyConditionExpression)
-
   const FilterExpression = filterExpressionStatements.map(function (statement) {
     if (statement.startsWith('begins_with')) {
       const [field, prefix] = statement // 'begins_with(name, :prefix)'
