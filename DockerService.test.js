@@ -21,6 +21,8 @@ const test = new Test('DockerService', DockerService)
   image: 'nginx:1.19',
   replicas: 1,
 }, async function (myService) {
+  await myService.deploy()
+
   {
     const info = await myService.inspect()
     this.serviceId = info.ID
@@ -106,7 +108,7 @@ const test = new Test('DockerService', DockerService)
   image: 'nginx:1.19',
   replicas: 2,
 }, async function (myService) {
-  await myService.ready
+  await myService.deploy()
   // TODO test for update on construction assert.deepEqual(myService.spec, this.myServiceSpec)
 })
 
@@ -116,8 +118,8 @@ const test = new Test('DockerService', DockerService)
   replicas: 2,
   restart: 'always', // coulda fooled me
 }, async function (errorService) {
-  assert.rejects(
-    always(errorService.ready),
+  await assert.rejects(
+    errorService.deploy(),
     new Error('{"message":"invalid RestartCondition: \\"always\\""}\n'))
 })
 

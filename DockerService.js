@@ -107,33 +107,37 @@ const DockerService = function (options) {
   if (this == null || this.constructor != DockerService) {
     return new DockerService(options)
   }
+  this.serviceOptions = pick(dockerServiceOptions)(options)
   this.name = options.name
   this.docker = new Docker()
   this.version = null
   this.spec = null
   this.replicas = options.replicas
-
-  this.ready = this.docker.inspectService(this.name).then(pipe([
-    switchCase([
-      eq(404, get('status')),
-      pipe([
-        () => this.docker.createService(
-          this.name,
-          pick(dockerServiceOptions)(options)),
-        tap(async response => {
-          if (!response.ok) {
-            throw new Error(await response.text())
-          }
-        }),
-      ]),
-      pipe([
-        tap(() => this.synchronize()),
-        () => this.update(pick(dockerServiceOptions)(options)),
-      ]),
-    ]),
-    tap(() => this.synchronize()),
-  ]))
   return this
+}
+
+/**
+ * @name DockerService.prototype.deploy
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * DockerService(...).deploy()
+ * ```
+ */
+DockerService.prototype.deploy = async function deploy() {
+  const { status } = await this.docker.inspectService(this.name)
+
+  if (status == 404) {
+    const { name, serviceOptions } = this
+    const response = await this.docker.createService(name, serviceOptions)
+    if (!response.ok) {
+      throw new Error(await response.text())
+    }
+  } else {
+    await this.synchronize()
+    await this.update(this.serviceOptions)
+  }
+  await this.synchronize()
 }
 
 // new DockerService().synchronize() -> Promise<>
