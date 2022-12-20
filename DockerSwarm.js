@@ -26,7 +26,10 @@ const DockerSwarm = function (advertiseAddr) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * new DockerSwarm(...).init() -> Promise<>
+ * new DockerSwarm(...).init() -> Promise<{
+ *   workerJoinToken: string,
+ *   managerJoinToken: string,
+ * }>
  * ```
  */
 DockerSwarm.prototype.init = async function init() {
@@ -36,8 +39,10 @@ DockerSwarm.prototype.init = async function init() {
     }
   })
   const swarmData = await this.inspect()
-  this.workerJoinToken = swarmData.JoinTokens.Worker
-  this.managerJoinToken = swarmData.JoinTokens.Manager
+  return {
+    workerJoinToken: swarmData.JoinTokens.Worker,
+    managerJoinToken: swarmData.JoinTokens.Manager,
+  }
 }
 
 /**

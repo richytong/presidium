@@ -12,9 +12,9 @@ const test = Test('DockerSwarm', async function () {
   const localSwarm = new DockerSwarm(advertiseAddr)
 
   console.log('initializing swarm')
-  await localSwarm.init()
-  assert.equal(typeof localSwarm.workerJoinToken, 'string')
-  assert.equal(typeof localSwarm.managerJoinToken, 'string')
+  const { workerJoinToken, managerJoinToken } = await localSwarm.init()
+  assert.equal(typeof workerJoinToken, 'string')
+  assert.equal(typeof managerJoinToken, 'string')
 
   await localSwarm.inspect().then(console.log)
 
