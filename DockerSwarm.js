@@ -1,85 +1,63 @@
-const assert = require('assert')
-const rubico = require('rubico')
+require('rubico/global')
 const Docker = require('./Docker')
-
-const {
-  pipe, tap,
-  switchCase, tryCatch,
-  fork, assign, get, pick, omit,
-  map, filter, reduce, transform, flatMap,
-  and, or, not, any, all,
-  eq, gt, lt, gte, lte,
-  thunkify, always,
-  curry, __,
-} = rubico
 
 /**
  * @name DockerSwarm
  *
  * @synopsis
  * ```coffeescript [specscript]
- * new DockerSwarm(
- *   advertiseAddr string, // url advertised to other nodes, e.g. 'eth0:2377'
- *   options {
- *     joinToken: string, // worker or manager join token
- *     remoteAddrs: Array<string>, // urls of manager nodes already participating in the swarm
- *   },
- * ) -> DockerSwarm
+ * new DockerSwarm(advertiseAddr string) -> DockerSwarm
  * ```
  *
  * @description
- * Resources
+ * DockerSwarm interface
+ *
+ * ## Resources
  * https://boxboat.com/2016/08/17/whats-docker-swarm-advertise-addr/
  */
-const DockerSwarm = function (advertiseAddr, options = {}) {
-  if (this == null || this.constructor != DockerSwarm) {
-    return new DockerSwarm(advertiseAddr, options)
-  }
+const DockerSwarm = function (advertiseAddr) {
+  this.advertiseAddr = advertiseAddr
   this.docker = new Docker()
-  this.ready = this.docker.inspectSwarm().then(switchCase([
-    or([
-      eq(404, get('status')),
-      eq(503, get('status')),
-    ]),
-    options.joinToken == null ? async () => {
-      await this.docker.initSwarm(advertiseAddr)
-      await this.synchronize()
-    } : async () => {
-      const response = await this.docker.joinSwarm(advertiseAddr, options.joinToken, {
-        remoteAddrs: options.remoteAddrs,
-      })
-      if (!response.ok) {
-        throw new Error(await response.text())
-      }
-    },
-    async response => {
-      const data = await response.json()
-      this.version = data.Version.Index
-      this.spec = data.Spec
-      this.swarmData = data
-    },
-  ]))
-  this.version = null
-  this.spec = null
-  this.swarmData = null
   return this
 }
 
-// new DockerSwarm().synchronize() -> Promise<>
-DockerSwarm.prototype.synchronize = function dockerServiceSynchronize() {
-  return this.docker.inspectSwarm().then(pipe([
-    tap(async response => {
-      if (!response.ok) {
-        throw new Error(await response.text())
-      }
-    }),
-    response => response.json(),
-    data => {
-      this.version = data.Version.Index
-      this.spec = data.Spec
-      this.swarmData = data
-    },
-  ]))
+/**
+ * @name DockerSwarm.prototype.init
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * new DockerSwarm(...).init() -> Promise<>
+ * ```
+ */
+DockerSwarm.prototype.init = async function init() {
+  await this.docker.initSwarm(this.advertiseAddr).then(async response => {
+    if (!response.ok) {
+      throw new Error(await response.text())
+    }
+  })
+}
+
+/**
+ * @name DockerSwarm.prototype.join
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * new DockerSwarm(...).join(options {
+ *   joinToken: string, // worker or manager join token
+ *   remoteAddrs: Array<string>, // urls of manager nodes already participating in the swarm
+ * }) -> Promise<>
+ * ```
+ */
+
+DockerSwarm.prototype.join = async function join(options) {
+  const { joinToken, remoteAddrs } = options
+  await this.docker.joinSwarm(this.advertiseAddr, joinToken, {
+    remoteAddrs,
+  }).then(async response => {
+    if (!response.ok) {
+      throw new Error(await response.text())
+    }
+  })
 }
 
 // DockerSwarm(address).inspect() -> Promise<Object>
@@ -117,19 +95,15 @@ DockerSwarm.prototype.leave = function dockerSwarmLeave(options) {
  * @description
  * https://docs.docker.com/engine/api/v1.40/#operation/SwarmUpdate
  * https://docs.docker.com/engine/reference/commandline/swarm_update/
- */
+ *
+ * @deprecated
 DockerSwarm.prototype.update = async function dockerSwarmUpdate(options) {
   await this.ready
   return this.docker.updateSwarm({
     version: this.version,
     spec: this.spec,
     ...options,
-  }).then(pipe.sync([
-    tap.sync(() => {
-      this.ready = this.synchronize()
-    }),
-    always(this.spec),
-  ]))
-}
+  })
+} */
 
 module.exports = DockerSwarm
