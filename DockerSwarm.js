@@ -26,6 +26,10 @@ const {
  *   },
  * ) -> DockerSwarm
  * ```
+ *
+ * @description
+ * Resources
+ * https://boxboat.com/2016/08/17/whats-docker-swarm-advertise-addr/
  */
 const DockerSwarm = function (advertiseAddr, options = {}) {
   if (this == null || this.constructor != DockerSwarm) {
