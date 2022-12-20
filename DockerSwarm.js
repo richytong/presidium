@@ -35,6 +35,9 @@ DockerSwarm.prototype.init = async function init() {
       throw new Error(await response.text())
     }
   })
+  const swarmData = await this.inspect()
+  this.workerJoinToken = swarmData.JoinTokens.Worker
+  this.managerJoinToken = swarmData.JoinTokens.Manager
 }
 
 /**
