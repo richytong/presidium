@@ -134,10 +134,8 @@ DockerService.prototype.deploy = async function deploy() {
       throw new Error(await response.text())
     }
   } else {
-    await this.synchronize()
     await this.update(this.serviceOptions)
   }
-  await this.synchronize()
 }
 
 // new DockerService().synchronize() -> Promise<>
@@ -193,6 +191,7 @@ DockerService.prototype.synchronize = function dockerServiceSynchronize() {
  */
 
 DockerService.prototype.update = async function update(options) {
+  await this.synchronize()
   return this.docker.updateService(this.name, {
     ...options,
     spec: this.spec,

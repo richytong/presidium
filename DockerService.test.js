@@ -39,32 +39,30 @@ const test = new Test('DockerService', DockerService)
     assert.equal(info.Spec.RollbackConfig.MaxFailureRatio, 0.15)
   }
 
-  {
-    const result = await myService.update({
-      labels: { foo: 'bar' },
-      replicas: 2,
-      updateParallelism: 3,
-      updateDelay: 2e9,
-      updateFailureAction: 'continue',
-      updateMonitor: 30e9,
-      updateMaxFailureRatio: 0.3,
-      rollbackParallelism: 3,
-      rollbackDelay: 2e9,
-      rollbackFailureAction: 'continue',
-      rollbackMonitor: 30e9,
-      rollbackMaxFailureRatio: 0.3,
-      env: { FOO: 'foo' },
-      workdir: '/opt',
-      mounts: [{
-        source: 'other-volume',
-        target: '/opt/other-volume',
-      }],
-      publish: { 8080: 80 },
-      healthCmd: ['curl', '0.0.0.0:80'],
-      restart: 'on-failure:5',
-      memory: 512e6, // bytes
-    })
-  }
+  await myService.update({
+    labels: { foo: 'bar' },
+    replicas: 2,
+    updateParallelism: 3,
+    updateDelay: 2e9,
+    updateFailureAction: 'continue',
+    updateMonitor: 30e9,
+    updateMaxFailureRatio: 0.3,
+    rollbackParallelism: 3,
+    rollbackDelay: 2e9,
+    rollbackFailureAction: 'continue',
+    rollbackMonitor: 30e9,
+    rollbackMaxFailureRatio: 0.3,
+    env: { FOO: 'foo' },
+    workdir: '/opt',
+    mounts: [{
+      source: 'other-volume',
+      target: '/opt/other-volume',
+    }],
+    publish: { 8080: 80 },
+    healthCmd: ['curl', '0.0.0.0:80'],
+    restart: 'on-failure:5',
+    memory: 512e6, // bytes
+  })
 
   {
     const info = await myService.inspect()
