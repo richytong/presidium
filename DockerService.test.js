@@ -126,10 +126,8 @@ const test = new Test('DockerService', DockerService)
   image: 'nginx:1.20',
   replicas: 1,
 }, async function (service) {
-  {
-    const { message } = await service.deploy()
-    assert.equal(message, 'success')
-  }
+  const { message } = await service.deploy()
+  assert.equal(message, 'success')
 })
 
 .case({
