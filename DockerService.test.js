@@ -117,6 +117,19 @@ const test = new Test('DockerService', DockerService)
     const { message } = await myService.deploy()
     assert.equal(message, 'noop')
   }
+
+})
+
+// deploy new version of service
+.case({
+  name: 'my-service',
+  image: 'nginx:1.20',
+  replicas: 1,
+}, async function (service) {
+  {
+    const { message } = await service.deploy()
+    assert.equal(message, 'success')
+  }
 })
 
 .case({
