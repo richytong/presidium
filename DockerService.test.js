@@ -21,7 +21,13 @@ const test = new Test('DockerService', DockerService)
   image: 'nginx:1.19',
   replicas: 1,
 }, async function (myService) {
-  await myService.deploy()
+  await this.docker.inspectSwarm()
+
+  // first deploy success
+  {
+    const { message } = await myService.deploy()
+    assert.equal(message, 'success')
+  }
 
   {
     const info = await myService.inspect()
@@ -99,26 +105,54 @@ const test = new Test('DockerService', DockerService)
     logResponseStream.pipe(process.stdout)
     await new Promise(resolve => logResponseStream.on('end', resolve))
   }
-})
 
-.case({
-  name: 'my-service',
-  image: 'nginx:1.19',
-  replicas: 2,
-}, async function (myService) {
-  await myService.deploy()
-  // TODO test for update on construction assert.deepEqual(myService.spec, this.myServiceSpec)
+  // further deploys should noop
+  {
+    const { message } = await myService.deploy()
+    assert.equal(message, 'noop')
+  }
+
+  // further deploys should noop
+  {
+    const { message } = await myService.deploy()
+    assert.equal(message, 'noop')
+  }
 })
 
 .case({
   name: 'bad-request',
   image: 'nginx:1.19',
   replicas: 2,
-  restart: 'always', // coulda fooled me
+  restart: 'always',
 }, async function (errorService) {
   await assert.rejects(
     errorService.deploy(),
-    new Error('{"message":"invalid RestartCondition: \\"always\\""}\n'))
+    new Error('{"message":"invalid RestartCondition: \\"always\\""}\n')
+  )
+})
+
+.case({
+  name: 'internal-error-service',
+  image: 'nginx:1.19',
+  replicas: 1,
+}, async function (service) {
+  const originalDockerInspectService = service.docker.inspectService
+
+  service.docker.inspectService = function respondError() {
+    return {
+      status: 500,
+      async text() {
+        return 'Internal Error'
+      },
+    }
+  }
+
+  await assert.rejects(
+    service.deploy(),
+    new Error('Docker Error: Internal Error')
+  )
+
+  service.docker.inspectService = originalDockerInspectService
 })
 
 .after(async function () {

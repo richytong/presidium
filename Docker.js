@@ -607,6 +607,9 @@ Docker.prototype.inspectSwarm = function dockerInspectSwarm() {
  */
 Docker.prototype.initSwarm = async function dockerInitSwarm(address) {
   return this.http.post('/swarm/init', {
+    headers: {
+      'Content-Type': 'application/json',
+    },
     body: stringifyJSON({
       AdvertiseAddr: address,
       ListenAddr: address,
