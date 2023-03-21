@@ -113,6 +113,7 @@ const DockerService = function (options) {
   this.version = null
   this.spec = null
   this.replicas = options.replicas
+  this.image = options.image
   return this
 }
 
@@ -125,17 +126,33 @@ const DockerService = function (options) {
  * ```
  */
 DockerService.prototype.deploy = async function deploy() {
-  const { status } = await this.docker.inspectService(this.name)
+  const inspectServiceResponse = await this.docker.inspectService(this.name)
 
-  if (status == 404) {
+  // create service on not found
+  if (inspectServiceResponse.status == 404) {
     const { name, serviceOptions } = this
     const response = await this.docker.createService(name, serviceOptions)
     if (!response.ok) {
       throw new Error(await response.text())
     }
-  } else {
-    await this.update(this.serviceOptions)
+    return { message: 'success' }
   }
+
+  // service exists
+  if (inspectServiceResponse.ok) {
+    const serviceData = await inspectServiceResponse.json()
+    const deployedImage = serviceData.Spec.TaskTemplate.ContainerSpec.Image
+    if (this.image == deployedImage) {
+      return { message: 'noop' }
+    }
+    await this.update(this.serviceOptions)
+    return { message: 'success' }
+  }
+
+  // other error
+  const error = new Error(`Docker Error: ${await inspectServiceResponse.text()}`)
+  error.code = inspectServiceResponse.status
+  throw error
 }
 
 // new DockerService().synchronize() -> Promise<>
