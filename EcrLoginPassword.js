@@ -1,6 +1,6 @@
 const get = require('rubico/get')
 const callProp = require('rubico/x/callProp')
-const { exec } = require('node:child_process')
+const { exec } = require('child_process')
 const streamToString = require('./internal/streamToString')
 
 /**
