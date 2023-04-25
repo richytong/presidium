@@ -19,7 +19,10 @@ const test = new Test('SecretsManager', async function () {
 
   const secretsManager = new SecretsManager({ ...awsCreds })
 
-  const mySecret = { name: 'secret2', value: 'helloworld' }
+  const mySecret = {
+    name: `test-secret-${Math.trunc(Math.random() * 1e6)}`,
+    value: 'helloworld',
+  }
 
   let didRerunTooSoon = false
 
