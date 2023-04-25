@@ -1,58 +1,93 @@
-/*
-// Use this code snippet in your app.
-// If you need more information about configurations or implementing the sample code, visit the AWS docs:
-// https://aws.amazon.com/developers/getting-started/nodejs/
+require('rubico/global')
+const AWSSecretsManager = require('aws-sdk/clients/secretsmanager')
 
-// Load the AWS SDK
-var AWS = require('aws-sdk'),
-    region = "us-west-1",
-    secretName = "production/PAYPAL_CLIENT_ID",
-    secret,
-    decodedBinarySecret;
+/**
+ * @name SecretsManager
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * new SecretsManager(options {
+ *   accessKeyId: string,
+ *   secretAccessKey: string,
+ *   region: string,
+ * }|{
+ *   endpoint: string,
+ *   region: string,
+ * }) -> secretsManager Object
+ * ```
+ */
+const SecretsManager = function (options) {
+  this.awsSecretsManager = new AWSSecretsManager({
+    apiVersion: '2017-10-17',
+    ...pick([
+      'accessKeyId',
+      'secretAccessKey',
+      'region',
+      'endpoint',
+    ])(options),
+  })
+}
 
-// Create a Secrets Manager client
-var client = new AWS.SecretsManager({
-    region: region
-});
+/**
+ * @name SecretsManager.prototype.createSecret
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * new SecretsManager(...).createSecret(
+ *   name string,
+ *   secretString string,
+ * ) -> result Promise<{
+ *   ARN: string,
+ *   Name: string,
+ *   VersionId: string,
+ * }>
+ * ```
+ */
+SecretsManager.prototype.createSecret = function (name, secretString) {
+  return this.awsSecretsManager.createSecret({
+    Name: name,
+    SecretString: secretString,
+  }).promise()
+}
 
-// In this sample we only handle the specific exceptions for the 'GetSecretValue' API.
-// See https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
-// We rethrow the exception by default.
+/**
+ * @name SecretsManager.prototype.getSecretValue
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * new SecretsManager(...).getSecretValue(name string) -> result Promise<{
+ *   ARN: string,
+ *   CreatedDate: Date,
+ *   Name: string,
+ *   SecretString: string,
+ *   VersionId: string,
+ *   VersionStages: Array<string>,
+ * }>
+ * ```
+ */
+SecretsManager.prototype.getSecretValue = function (name) {
+  return this.awsSecretsManager.getSecretValue({
+    SecretId: name,
+  }).promise()
+}
 
-client.getSecretValue({SecretId: secretName}, function(err, data) {
-    if (err) {
-        if (err.code === 'DecryptionFailureException')
-            // Secrets Manager can't decrypt the protected secret text using the provided KMS key.
-            // Deal with the exception here, and/or rethrow at your discretion.
-            throw err;
-        else if (err.code === 'InternalServiceErrorException')
-            // An error occurred on the server side.
-            // Deal with the exception here, and/or rethrow at your discretion.
-            throw err;
-        else if (err.code === 'InvalidParameterException')
-            // You provided an invalid value for a parameter.
-            // Deal with the exception here, and/or rethrow at your discretion.
-            throw err;
-        else if (err.code === 'InvalidRequestException')
-            // You provided a parameter value that is not valid for the current state of the resource.
-            // Deal with the exception here, and/or rethrow at your discretion.
-            throw err;
-        else if (err.code === 'ResourceNotFoundException')
-            // We can't find the resource that you asked for.
-            // Deal with the exception here, and/or rethrow at your discretion.
-            throw err;
-    }
-    else {
-        // Decrypts secret using the associated KMS key.
-        // Depending on whether the secret is a string or binary, one of these fields will be populated.
-        if ('SecretString' in data) {
-            secret = data.SecretString;
-        } else {
-            let buff = new Buffer(data.SecretBinary, 'base64');
-            decodedBinarySecret = buff.toString('ascii');
-        }
-    }
+/**
+ * @name SecretsManager.prototype.deleteSecret
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * new SecretsManager(...).deleteSecret(name string) -> result Promise<{
+ *   ARN: string,
+ *   DeletionDate: Date,
+ *   Name: string,
+ * }>
+ * ```
+ */
+SecretsManager.prototype.deleteSecret = function (name) {
+  return this.awsSecretsManager.deleteSecret({
+    SecretId: name,
+    ForceDeleteWithoutRecovery: true,
+  }).promise()
+}
 
-    // Your code goes here.
-});
-*/
+module.exports = SecretsManager
