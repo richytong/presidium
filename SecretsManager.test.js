@@ -26,30 +26,26 @@ const test = new Test('SecretsManager', async function () {
 
   let didRerunTooSoon = false
 
-  {
-    try {
-      const result = await secretsManager.createSecret(mySecret.name, mySecret.value)
-      assert.equal(result.Name, mySecret.name)
-    } catch (error) {
-      if (error.message.includes('scheduled for deletion')) {
-        didRerunTooSoon = true
-      } else {
-        throw error
-      }
+  try {
+    const result = await secretsManager.createSecret(mySecret.name, mySecret.value)
+    assert.equal(result.Name, mySecret.name)
+  } catch (error) {
+    if (error.message.includes('scheduled for deletion')) {
+      didRerunTooSoon = true
+    } else {
+      throw error
     }
   }
 
-  {
-    try {
-      const result = await secretsManager.getSecretValue(mySecret.name)
-      assert.equal(result.Name, mySecret.name)
-      assert.equal(result.SecretString, mySecret.value)
-    } catch (error) {
-      if (error.message.includes('marked for deletion')) {
-        didRerunTooSoon = true
-      } else {
-        throw error
-      }
+  try {
+    const result = await secretsManager.getSecretValue(mySecret.name)
+    assert.equal(result.Name, mySecret.name)
+    assert.equal(result.SecretString, mySecret.value)
+  } catch (error) {
+    if (error.message.includes('marked for deletion')) {
+      didRerunTooSoon = true
+    } else {
+      throw error
     }
   }
 
