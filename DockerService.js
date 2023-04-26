@@ -114,6 +114,7 @@ const DockerService = function (options) {
   this.spec = null
   this.replicas = options.replicas
   this.image = options.image
+  this.env = options.env
   return this
 }
 
