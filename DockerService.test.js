@@ -106,16 +106,16 @@ const test = new Test('DockerService', DockerService)
     await new Promise(resolve => logResponseStream.on('end', resolve))
   }
 
-  // further deploys should noop
+  // further deploys should update
   {
     const { message } = await myService.deploy()
-    assert.equal(message, 'noop')
+    assert.equal(message, 'success')
   }
 
   // further deploys should noop
   {
     const { message } = await myService.deploy()
-    assert.equal(message, 'noop')
+    assert.equal(message, 'success')
   }
 
 })

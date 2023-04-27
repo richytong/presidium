@@ -141,11 +141,6 @@ DockerService.prototype.deploy = async function deploy() {
 
   // service exists
   if (inspectServiceResponse.ok) {
-    const serviceData = await inspectServiceResponse.json()
-    const deployedImage = serviceData.Spec.TaskTemplate.ContainerSpec.Image
-    if (this.image == deployedImage) {
-      return { message: 'noop' }
-    }
     await this.update(this.serviceOptions)
     return { message: 'success' }
   }
