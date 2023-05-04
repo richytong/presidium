@@ -373,7 +373,7 @@ EXPOSE 8888`,
     { // create another service
       const response = await docker.createService('hey2', {
         image: 'node:15-alpine',
-        replicas: 2,
+        replicas: 'global',
         cmd: ['node', '-e', 'http.createServer((request, response) => response.end(\'hey2\')).listen(3001)'],
         workdir: '/opt/heyo',
         env: { HEY: 'hey' },
