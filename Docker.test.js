@@ -401,7 +401,7 @@ EXPOSE 8888`,
     { // listTasks
       const response = await docker.listTasks()
       const body = await response.json()
-      assert.equal(body.length, 4) // 2 for hey1, 2 for hey2
+      assert.equal(body.length, 3) // 2 for hey1, 1 for hey2 (global)
     }
 
     { // inspectService
