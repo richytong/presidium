@@ -873,10 +873,12 @@ Docker.prototype.createService = function dockerCreateService(service, options) 
         },
       },
 
-      // TODO options.mode global
-      Mode: {
+      Mode: options.replicas == 'global' ? {
+        Global: {},
+      } : {
         Replicated: { Replicas: options.replicas ?? 1 }
       },
+
       UpdateConfig: fork({
         Parallelism: get('updateParallelism', 2),
         Delay: get('updateDelay', 1e9),

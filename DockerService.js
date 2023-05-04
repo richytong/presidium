@@ -47,7 +47,7 @@ const dockerServiceOptions = [
  * new DockerService({
  *   name: string,
  *   image: string,
- *   replicas: 1|number,
+ *   replicas: 'global'|1|number,
  *   restart: 'no'|'on-failure[:<max-retries>]'|'any',
  *   restartDelay: 10e9|number, // nanoseconds to delay between restarts
  *   logDriver: 'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'none',
@@ -174,7 +174,7 @@ DockerService.prototype.synchronize = function dockerServiceSynchronize() {
  *   rollback: 'previous', // roll service back to previous version
  *
  *   image: string,
- *   replicas: 1|number,
+ *   replicas: 'global'|number,
  *   restart: 'no'|'on-failure[:<max-retries>]'|'any',
  *   restartDelay: 10e9|number, // nanoseconds to delay between restarts
  *   logDriver: 'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'none',
