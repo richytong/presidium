@@ -345,6 +345,7 @@ EXPOSE 8888`,
           readonly: true,
         }],
         memory: 512e6, // bytes
+        cpus: 2,
         restart: 'on-failure:5',
 
         healthCmd: ['wget', '--no-verbose', '--tries=1', '--spider', 'localhost:3000'],
@@ -367,7 +368,17 @@ EXPOSE 8888`,
       })
       assert.equal(response.status, 201)
       const body = await response.json()
-      this.serviceId = body.ID
+      const serviceId = body.ID
+
+      await docker.inspectService(serviceId).then(async response => {
+        const data = await response.json()
+        assert.equal(data.Spec.Labels.foo, 'bar')
+        assert.equal(data.Spec.TaskTemplate.Resources.Reservations.NanoCPUs, 2000000000)
+        assert.equal(data.Spec.TaskTemplate.Resources.Reservations.MemoryBytes, 512000000)
+      })
+
+      this.serviceId1 = serviceId
+
     }
 
     { // create another service
@@ -382,13 +393,19 @@ EXPOSE 8888`,
           target: '/opt/other-volume',
           readonly: true,
         }],
-        memory: 512e6, // bytes
         restart: 'on-failure',
         publish: { 8081: 3001 },
 
         healthCmd: ['wget', '--no-verbose', '--tries=1', '--spider', 'localhost:3001'],
       })
       assert.equal(response.status, 201)
+      const body = await response.json()
+      const serviceId = body.ID
+
+      await docker.inspectService(serviceId).then(async response => {
+        const data = await response.json()
+        assert.equal(Object.keys(data.Spec.TaskTemplate.Resources.Reservations), 0)
+      })
     }
 
     { // listServices
@@ -404,15 +421,8 @@ EXPOSE 8888`,
       assert.equal(body.length, 3) // 2 for hey1, 1 for hey2 (global)
     }
 
-    { // inspectService
-      const response = await docker.inspectService(this.serviceId)
-      assert.equal(response.status, 200)
-      const data = await response.json()
-      assert.equal(data.Spec.Labels.foo, 'bar')
-    }
-
     { // deleteService
-      const response = await docker.deleteService(this.serviceId)
+      const response = await docker.deleteService(this.serviceId1)
       assert.equal(response.status, 200)
     }
 
