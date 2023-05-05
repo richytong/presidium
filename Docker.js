@@ -1015,6 +1015,8 @@ const has = property => value => {
  *
  *   // user-defined metadata
  *   labels: object,
+ *
+ *   force?: boolean,
  * }) -> Promise<HttpResponse>
  * ```
  */
@@ -1102,6 +1104,7 @@ Docker.prototype.updateService = function dockerUpdateService(service, options) 
             ...options.logDriverOptions && { Options: options.logDriverOptions },
           },
         },
+        ...options.force ? { ForceUpdate: 1 } : {},
       },
 
       ...options.replicas && {

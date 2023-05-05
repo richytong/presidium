@@ -69,6 +69,7 @@ const test = new Test('DockerService', DockerService)
     restart: 'on-failure:5',
     memory: 512e6, // bytes
     cpus: 2,
+    force: true,
   })
 
   {
@@ -116,7 +117,7 @@ const test = new Test('DockerService', DockerService)
 
   // further deploys should noop
   {
-    const { message } = await myService.deploy()
+    const { message } = await myService.deploy({ force: true })
     assert.equal(message, 'success')
   }
 
