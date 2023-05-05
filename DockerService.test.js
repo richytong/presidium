@@ -68,6 +68,7 @@ const test = new Test('DockerService', DockerService)
     healthCmd: ['curl', '0.0.0.0:80'],
     restart: 'on-failure:5',
     memory: 512e6, // bytes
+    cpus: 2,
   })
 
   {
@@ -96,7 +97,8 @@ const test = new Test('DockerService', DockerService)
       [{ Type: 'volume', Source: 'other-volume', Target: '/opt/other-volume' }])
     assert.equal(info.Spec.TaskTemplate.RestartPolicy.Condition, 'on-failure')
     assert.equal(info.Spec.TaskTemplate.RestartPolicy.MaxAttempts, 5)
-    assert.equal(info.Spec.TaskTemplate.Resources.Limits.MemoryBytes, 512e6)
+    assert.equal(info.Spec.TaskTemplate.Resources.Reservations.MemoryBytes, 512e6)
+    assert.equal(info.Spec.TaskTemplate.Resources.Reservations.NanoCPUs, 2e9)
     this.myServiceSpec = myService.spec
   }
 

@@ -36,7 +36,7 @@ const dockerServiceOptions = [
   'rollbackParallelism', 'rollbackDelay',
   'rollbackFailureAction', 'rollbackMonitor', 'rollbackMaxFailureRatio',
   'username', 'password', 'email', 'serveraddress', 'identitytoken',
-  'network',
+  'network', 'memory', 'cpus',
 ]
 
 /**
@@ -58,6 +58,8 @@ const dockerServiceOptions = [
  *   healthTimeout: 20e9|>1e6, // nanoseconds to wait before healthcheck fails
  *   healthRetries: 5|number, // number of retries before unhealhty
  *   healthStartPeriod: >=1e6, // nanoseconds to wait on container init before starting first healthcheck
+ *   memory: number, // memory limit in bytes
+ *   cpus: number, // number of cpus
  *   mounts: Array<{
  *     source: string, // name of volume
  *     target: string, // mounted path inside container
