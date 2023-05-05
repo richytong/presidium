@@ -37,6 +37,7 @@ const dockerServiceOptions = [
   'rollbackFailureAction', 'rollbackMonitor', 'rollbackMaxFailureRatio',
   'username', 'password', 'email', 'serveraddress', 'identitytoken',
   'network', 'memory', 'cpus',
+  'force',
 ]
 
 /**
@@ -95,6 +96,8 @@ const dockerServiceOptions = [
  *   email?: string,
  *   serveraddress?: string,
  *   identitytoken?: string,
+ *
+ *   force?: boolean,
  * }) -> DockerService
  * ```
  *
@@ -125,10 +128,12 @@ const DockerService = function (options) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DockerService(...).deploy()
+ * DockerService(...).deploy(options {
+ *   force?: boolean,
+ * }) -> Promise<>
  * ```
  */
-DockerService.prototype.deploy = async function deploy() {
+DockerService.prototype.deploy = async function deploy(options = {}) {
   const inspectServiceResponse = await this.docker.inspectService(this.name)
 
   // create service on not found
@@ -143,7 +148,10 @@ DockerService.prototype.deploy = async function deploy() {
 
   // service exists
   if (inspectServiceResponse.ok) {
-    await this.update(this.serviceOptions)
+    await this.update({
+      ...this.serviceOptions,
+      ...pick(['force'])(options),
+    })
     return { message: 'success' }
   }
 
@@ -201,6 +209,8 @@ DockerService.prototype.synchronize = function dockerServiceSynchronize() {
  *     PATH: string, // $PATH
  *     ...(moreEnvOptions Object<string>),
  *   }, // ENV; environment variables exposed to container during run time
+ *
+ *   force?: boolean,
  * }) -> Promise<Object>
  * ```
  */
