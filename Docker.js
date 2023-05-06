@@ -1104,13 +1104,14 @@ Docker.prototype.updateService = function dockerUpdateService(service, options) 
             ...options.logDriverOptions && { Options: options.logDriverOptions },
           },
         },
-        ...options.force ? { ForceUpdate: 1 } : {},
+
+        ...options.force ? { ForceUpdate: Date.now() } : {},
       },
 
-      ...options.replicas && {
-        Mode: {
-          Replicated: { Replicas: Number(options.replicas) },
-        },
+      Mode: options.replicas == 'global' ? {
+        Global: {},
+      } : {
+        Replicated: { Replicas: options.replicas ?? 1 }
       },
 
       ...or([
