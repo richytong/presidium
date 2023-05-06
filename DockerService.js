@@ -140,6 +140,9 @@ DockerService.prototype.deploy = async function deploy(options = {}) {
   if (inspectServiceResponse.status == 404) {
     const { name, serviceOptions } = this
     const response = await this.docker.createService(name, serviceOptions)
+    if (options.waitFor) {
+      await this.waitFor()
+    }
     if (!response.ok) {
       throw new Error(await response.text())
     }
@@ -152,6 +155,9 @@ DockerService.prototype.deploy = async function deploy(options = {}) {
       ...this.serviceOptions,
       ...pick(['force'])(options),
     })
+    if (options.waitFor) {
+      await this.waitFor()
+    }
     return { message: 'success' }
   }
 
@@ -159,6 +165,31 @@ DockerService.prototype.deploy = async function deploy(options = {}) {
   const error = new Error(`Docker Error: ${await inspectServiceResponse.text()}`)
   error.code = inspectServiceResponse.status
   throw error
+}
+
+// new DockerService().waitFor() -> Promise<>
+DockerService.prototype.waitFor = async function waitFor() {
+  let nextTasks = await this.docker.listTasks().then(pipe([
+    async response => {
+      if (response.ok) {
+        return response.json()
+      }
+      throw new Error(await response.text())
+    },
+    filter(not(eq('shutdown', get('DesiredState')))),
+  ]))
+  while (nextTasks.every(not(eq('running', get('Status.State'))))) {
+    await new Promise(resolve => setTimeout(resolve, 500))
+    nextTasks = await this.docker.listTasks().then(pipe([
+      async response => {
+        if (response.ok) {
+          return response.json()
+        }
+        throw new Error(await response.text())
+      },
+      filter(not(eq('shutdown', get('DesiredState')))),
+    ]))
+  }
 }
 
 // new DockerService().synchronize() -> Promise<>

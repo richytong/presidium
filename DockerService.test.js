@@ -19,19 +19,18 @@ const test = new Test('DockerService', DockerService)
 .case({
   name: 'my-service',
   image: 'nginx:1.19',
-  replicas: 1,
+  replicas: 'global',
 }, async function (myService) {
-  await this.docker.inspectSwarm()
-
   // first deploy success
   {
-    const { message } = await myService.deploy()
+    const { message } = await myService.deploy({ waitFor: true })
     assert.equal(message, 'success')
   }
 
   {
     const info = await myService.inspect()
     this.serviceId = info.ID
+    this.serviceVersion = info.Version.Index
     assert.equal(info.ID, this.serviceId)
     assert.equal(info.Spec.UpdateConfig.Parallelism, 2) // defaults
     assert.equal(info.Spec.UpdateConfig.Delay, 1e9)
@@ -43,11 +42,11 @@ const test = new Test('DockerService', DockerService)
     assert.equal(info.Spec.RollbackConfig.FailureAction, 'pause')
     assert.equal(info.Spec.RollbackConfig.Monitor, 15e9)
     assert.equal(info.Spec.RollbackConfig.MaxFailureRatio, 0.15)
+    assert(info.Spec.Mode.Global)
   }
 
   await myService.update({
     labels: { foo: 'bar' },
-    replicas: 2,
     updateParallelism: 3,
     updateDelay: 2e9,
     updateFailureAction: 'continue',
@@ -74,8 +73,9 @@ const test = new Test('DockerService', DockerService)
 
   {
     const info = await myService.inspect()
+    this.serviceVersion = info.Version.Index
     assert.equal(info.ID, this.serviceId)
-    // assert.equal(info.Spec.Labels.foo, 'bar')
+    assert.equal(info.Spec.Labels.foo, 'bar')
     assert.equal(info.Spec.UpdateConfig.Parallelism, 3)
     assert.equal(info.Spec.UpdateConfig.Delay, 2e9)
     assert.equal(info.Spec.UpdateConfig.FailureAction, 'continue')
@@ -86,7 +86,7 @@ const test = new Test('DockerService', DockerService)
     assert.equal(info.Spec.RollbackConfig.FailureAction, 'continue')
     assert.equal(info.Spec.RollbackConfig.Monitor, 30e9)
     assert.equal(info.Spec.RollbackConfig.MaxFailureRatio, 0.3)
-    assert.equal(info.Spec.Mode.Replicated.Replicas, 2)
+    assert(info.Spec.Mode.Global)
     assert.equal(info.Spec.TaskTemplate.ContainerSpec.Env.length, 1)
     assert.equal(info.Spec.TaskTemplate.ContainerSpec.Env[0], 'FOO=foo')
     assert.equal(info.Spec.TaskTemplate.ContainerSpec.Dir, '/opt')
@@ -102,6 +102,32 @@ const test = new Test('DockerService', DockerService)
     assert.equal(info.Spec.TaskTemplate.Resources.Reservations.NanoCPUs, 2e9)
     this.myServiceSpec = myService.spec
   }
+
+  await myService.update({
+    labels: { foo: 'baz' },
+    force: true,
+  })
+
+  {
+    const info = await myService.inspect()
+    assert.equal(info.ID, this.serviceId)
+    assert.equal(info.Spec.Labels.foo, 'baz')
+  }
+
+  /* TODO find out why a change to replicas will not be reflected instantly by inspect
+  // until then always remove and redeploy a service when changing from
+  // global to replicated and vice versa
+  await service.update({
+    replicas: 2,
+  })
+
+  {
+    const info = await service.inspect()
+    console.log(info)
+    assert.equal(info.ID, this.serviceId)
+    assert.equal(info.Spec.Mode.Replicated.Replicas, 2)
+  }
+  */
 
   {
     const logResponseStream = await myService.getLogs({ stdout: true, stderr: true })
@@ -129,8 +155,27 @@ const test = new Test('DockerService', DockerService)
   image: 'nginx:1.20',
   replicas: 1,
 }, async function (service) {
+  const { message } = await service.deploy({ waitFor: true })
+  assert.equal(message, 'success')
+})
+
+// deploy another service with replicas
+.case({
+  name: 'my-replicated-service',
+  image: 'nginx:1.20',
+  replicas: 1,
+}, async function (service) {
   const { message } = await service.deploy()
   assert.equal(message, 'success')
+
+  await service.update({
+    replicas: 2,
+  })
+
+  {
+    const info = await service.inspect()
+    assert.equal(info.Spec.Mode.Replicated.Replicas, 2)
+  }
 })
 
 .case({
