@@ -17,6 +17,7 @@ const isArray = require('./internal/isArray')
 const pathJoin = require('./internal/pathJoin')
 const has = require('./internal/has')
 const filterExists = require('./internal/filterExists')
+const createUpdateServiceSpec = require('./internal/createUpdateServiceSpec')
 
 const {
   pipe, tap,
@@ -1022,192 +1023,7 @@ const has = property => value => {
  */
 
 Docker.prototype.updateService = function dockerUpdateService(service, options) {
-  const body = options.spec
-  body.Name = service
-  if (options.labels != null) {
-    body.Labels = options.labels
-  }
-  if (options.image != null) {
-    body.TaskTemplate.ContainerSpec.Image = options.image
-  }
-  if (options.cmd != null) {
-    body.TaskTemplate.ContainerSpec.Command = options.cmd
-  }
-  if (options.env != null) {
-    body.TaskTemplate.ContainerSpec.Env =
-      Object.entries(options.env).map(([key, value]) => `${key}=${value}`)
-  }
-  if (options.workdir != null) {
-    body.TaskTemplate.ContainerSpec.Dir = options.workdir
-  }
-  if (options.mounts != null) {
-    body.TaskTemplate.ContainerSpec.Mounts = options.mounts.map(pipe([
-      switchCase([
-        isString,
-        pipe([
-          split(':'),
-          fork({ target: get(0), source: get(1), readonly: get(2) }),
-        ]),
-        identity,
-      ]),
-      fork({
-        Target: get('target'),
-        Source: get('source'),
-        Type: get('type', 'volume'),
-        ReadOnly: get('readonly', false),
-      }),
-    ]))
-  }
-
-  if (or([
-    has('healthCmd'),
-    has('healthInterval'),
-    has('healthTimeout'),
-    has('healthRetries'),
-    has('healthStartPeriod'),
-  ])(options)) {
-    body.TaskTemplate.ContainerSpec.HealthCheck = {}
-  }
-  if (options.healthCmd != null) {
-    body.TaskTemplate.ContainerSpec.HealthCheck.Test =
-      ['CMD', ...options.healthCmd]
-  }
-  if (options.healthInterval != null) {
-    body.TaskTemplate.ContainerSpec.HealthCheck.Interval =
-      options.healthInterval
-  }
-  if (options.healthTimeout != null) {
-    body.TaskTemplate.ContainerSpec.HealthCheck.Timeout = options.healthTimeout
-  }
-  if (options.healthRetries != null) {
-    body.TaskTemplate.ContainerSpec.HealthCheck.Retries = options.healthRetries
-  }
-  if (options.healthStartPeriod != null) {
-    body.TaskTemplate.ContainerSpec.HealthCheck.StartPeriod =
-      options.healthStartPeriod
-  }
-
-  if (or([has('restart'), has('restartDelay')])(options)) {
-    body.TaskTemplate.RestartPolicy = {}
-  }
-  if (options.restart != null) {
-    body.TaskTemplate.RestartPolicy = fork({
-      Condition: get(0),
-      MaxAttempts: pipe([get(1, 0), Number]),
-    })(options.restart.split(':'))
-  }
-  if (options.restartDelay != null) {
-    body.TaskTemplate.RestartPolicy.Delay = Number(options.restartDelay)
-  }
-  if (or([has('memory'), has('cpus')])(options)) {
-    body.TaskTemplate.Resources = {}
-    body.TaskTemplate.Resources.Reservations = {}
-  }
-  if (options.memory != null) {
-    body.TaskTemplate.Resources.Reservations.MemoryBytes =
-      Number(options.memory)
-  }
-  if (options.cpus != null) {
-    body.TaskTemplate.Resources.Reservations.NanoCPUs =
-      Number(options.cpus * 1e9)
-  }
-  if (or([has('logDriver'), has('logDriverOptions')])(options)) {
-    body.TaskTemplate.LogDriver = {}
-  }
-  if (options.logDriver != null) {
-    body.TaskTemplate.LogDriver.Name = options.logDriver
-  }
-  if (options.logDriverOptions != null) {
-    body.TaskTemplate.LogDriver.Options = options.logDriverOptions
-  }
-  if (options.force) {
-    body.TaskTemplate.ForceUpdate = Date.now()
-  }
-
-  if (options.replicas == 'global') {
-    body.Mode = { Global: {} }
-  }
-  else if (options.replicas != null) {
-    body.Mode = {
-      Replicated: { Replicas: options.replicas }
-    }
-  }
-
-  if (or([
-    has('updateParallelism'),
-    has('updateDelay'),
-    has('updateFailureAction'),
-    has('updateMonitor'),
-    has('updateMaxFailureRatio'),
-  ])(options)) {
-    body.UpdateConfig = {}
-  }
-  if (options.updateParallelism != null) {
-    body.UpdateConfig.Parallelism = options.updateParallelism
-  }
-  if (options.updateDelay != null) {
-    body.UpdateConfig.Delay = options.updateDelay
-  }
-  if (options.updateFailureAction != null) {
-    body.UpdateConfig.FailureAction = options.updateFailureAction
-  }
-  if (options.updateMonitor != null) {
-    body.UpdateConfig.Monitor = options.updateMonitor
-  }
-  if (options.updateMaxFailureRatio != null) {
-    body.UpdateConfig.MaxFailureRatio = options.updateMaxFailureRatio
-  }
-
-  if (or([
-    has('rollbackParallelism'),
-    has('rollbackDelay'),
-    has('rollbackFailureAction'),
-    has('rollbackMonitor'),
-    has('rollbackMaxFailureRatio'),
-  ])(options)) {
-    body.RollbackConfig = {}
-  }
-  if (options.rollbackParallelism != null) {
-    body.RollbackConfig.Parallelism = options.rollbackParallelism
-  }
-  if (options.rollbackDelay != null) {
-    body.RollbackConfig.Delay = options.rollbackDelay
-  }
-  if (options.rollbackFailureAction != null) {
-    body.RollbackConfig.FailureAction = options.rollbackFailureAction
-  }
-  if (options.rollbackMonitor != null) {
-    body.RollbackConfig.Monitor = options.rollbackMonitor
-  }
-  if (options.rollbackMaxFailureRatio != null) {
-    body.RollbackConfig.MaxFailureRatio = options.rollbackMaxFailureRatio
-  }
-
-  if (options.network != null) {
-    body.Networks = [{
-      Target: options.network,
-      Aliases: [],
-      DriverOpts: {},
-    }]
-  }
-
-  if (options.publish != null) {
-    body.EndpointSpec = {
-      Ports: Object.entries(options.publish).map(pipe([
-        map(String),
-        fork({
-          Protocol: ([hostPort, containerPort]) => {
-            const hostProtocol = hostPort.split('/')[1],
-              containerProtocol = containerPort.split('/')[1]
-            return hostProtocol ?? containerProtocol ?? 'tcp'
-          },
-          TargetPort: pipe([get(1), split('/'), get(0), Number]),
-          PublishedPort: pipe([get(0), split('/'), get(0), Number]),
-          PublishMode: always('ingress'),
-        }),
-      ])),
-    }
-  }
+  const updateServiceSpec = createUpdateServiceSpec({ ...options, name: service })
 
   return this.http.post(`/services/${service}/update?${
     querystring.stringify(pick([
@@ -1217,7 +1033,7 @@ Docker.prototype.updateService = function dockerUpdateService(service, options) 
     ])(options))
   }`, {
 
-    body: stringifyJSON(body),
+    body: stringifyJSON(updateServiceSpec),
     headers: {
       'Content-Type': 'application/json',
       'X-Registry-Auth': pipe([
