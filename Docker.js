@@ -1023,7 +1023,10 @@ const has = property => value => {
  */
 
 Docker.prototype.updateService = function dockerUpdateService(service, options) {
-  const updateServiceSpec = createUpdateServiceSpec({ ...options, name: service })
+  const updateServiceSpec = createUpdateServiceSpec({
+    ...options,
+    serviceName: service,
+  })
 
   return this.http.post(`/services/${service}/update?${
     querystring.stringify(pick([

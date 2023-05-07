@@ -146,19 +146,23 @@ DockerService.prototype.deploy = async function deploy(options = {}) {
     if (!response.ok) {
       throw new Error(await response.text())
     }
-    return { message: 'success' }
+    return { message: 'success', didCreate: true }
   }
 
   // service exists
   if (inspectServiceResponse.ok) {
-    await this.update({
+    const updateResponse = await this.update({
       ...this.serviceOptions,
       ...pick(['force'])(options),
     })
     if (options.waitFor) {
       await this.waitFor()
     }
-    return { message: 'success' }
+    return {
+      message: 'success',
+      didUpdate: true,
+      warnings: updateResponse.Warnings,
+    }
   }
 
   // other error
@@ -253,8 +257,10 @@ DockerService.prototype.update = async function update(options) {
     spec: this.spec,
     version: this.version,
   }).then(async response => {
-    await this.synchronize()
-    return response.json()
+    if (response.ok) {
+      return response.json()
+    }
+    throw new Error(await response.text())
   })
 }
 
