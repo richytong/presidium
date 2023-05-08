@@ -133,13 +133,18 @@ const createUpdateServiceSpec = function (options) {
   if (or([has('memory'), has('cpus')])(options)) {
     result.TaskTemplate.Resources = {}
     result.TaskTemplate.Resources.Reservations = {}
+    result.TaskTemplate.Resources.Limits = {}
   }
   if (options.memory != null) {
     result.TaskTemplate.Resources.Reservations.MemoryBytes =
       Number(options.memory)
+    result.TaskTemplate.Resources.Limits.MemoryBytes =
+      Number(options.memory)
   }
   if (options.cpus != null) {
     result.TaskTemplate.Resources.Reservations.NanoCPUs =
+      Number(options.cpus * 1e9)
+    result.TaskTemplate.Resources.Limits.NanoCPUs =
       Number(options.cpus * 1e9)
   }
   if (or([has('logDriver'), has('logDriverOptions')])(options)) {
