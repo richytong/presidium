@@ -229,6 +229,10 @@ const test = new Test('createUpdateServiceSpec', createUpdateServiceSpec)
   Name: 'my-service',
   TaskTemplate: {
     Resources: {
+      Limits: {
+        MemoryBytes: 512e6,
+        NanoCPUs: 2e9,
+      },
       Reservations: {
         MemoryBytes: 512e6,
         NanoCPUs: 2e9,
