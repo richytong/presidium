@@ -9,6 +9,7 @@ const test = Test('WebSocketServer', function (socketHandler, httpHandler) {
   this.serverMessages = []
   return WebSocketServer(socketHandler, httpHandler)
 })
+
 .case(function emptyHandler(websocket) {
 }, async function testSocketServerHealthyHttp(server) {
   server.listen(7357, async () => {
@@ -18,6 +19,7 @@ const test = Test('WebSocketServer', function (socketHandler, httpHandler) {
     server.close()
   })
 })
+
 .case(function emptyHandler(websocket) {
 }, function customHttpHandler(request, response) {
   response.writeHead(201, {
@@ -32,6 +34,7 @@ const test = Test('WebSocketServer', function (socketHandler, httpHandler) {
     server.close()
   })
 })
+
 .case(async function testSocketServerNoConstructorHandler(server) {
   server.on('connection', function emptyHandler() {
   })
@@ -42,6 +45,7 @@ const test = Test('WebSocketServer', function (socketHandler, httpHandler) {
     server.close()
   })
 })
+
 .case(function saveServerMessagesAndCloseHandler(websocket) {
   websocket.on('message', message => {
     this.serverMessages.push(message)
@@ -79,6 +83,21 @@ const test = Test('WebSocketServer', function (socketHandler, httpHandler) {
   assert(didOpen)
   assert.deepEqual(this.clientMessages, ['hello', 'world', 'world', 'world', 'world'])
   assert.deepEqual(this.serverMessages, ['world', 'world', 'world', 'world'])
+})
+
+.case(function websocketHandler(websocket) {
+}, async function testSocketServerWebSocket(server) {
+  server.detectAndCloseBrokenConnections({ pingInterval: 50 })
+  await new Promise(resolve => {
+    server.listen(1337, async () => {
+      const websocket = new WebSocket('ws://localhost:1337/')
+      websocket.on('open', resolve)
+    })
+  })
+  assert.equal(server.clients.size, 1)
+  await server.closeAllConnections()
+  assert.equal(server.clients.size, 0)
+  server.close()
 })
 
 if (process.argv[1] == __filename) {

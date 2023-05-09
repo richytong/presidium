@@ -52,13 +52,17 @@ const WebSocketServer = function (
 ) {
   const httpServer = new HttpServer(httpHandler)
   const webSocketServer = new WebSocket.Server({ server: httpServer })
+
   if (socketHandler != null) {
     webSocketServer.on('connection', socketHandler.bind(webSocketServer))
   }
+
   webSocketServer.on('close', function closeHttpServer() {
     httpServer.close()
   })
+
   webSocketServer.listen = (...args) => httpServer.listen(...args)
+
   webSocketServer.detectAndCloseBrokenConnections = (options = {}) => {
     const { pingInterval = 30000 } = options
     webSocketServer.on('connection', function (websocket) {
@@ -82,6 +86,18 @@ const WebSocketServer = function (
       clearInterval(interval)
     })
   }
+
+  webSocketServer.closeAllConnections = () => {
+    const promises = []
+    webSocketServer.clients.forEach(websocket => {
+      promises.push(new Promise(resolve => {
+        websocket.terminate()
+        websocket.on('close', resolve)
+      }))
+    })
+    return Promise.all(promises)
+  }
+
   return webSocketServer
 }
 
