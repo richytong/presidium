@@ -175,11 +175,8 @@ DockerService.prototype.deploy = async function deploy(options = {}) {
 DockerService.prototype.waitFor = async function waitFor() {
   const serviceId = await this.docker.inspectService(this.name)
     .then(async response => {
-      if (response.ok) {
-        const data = await response.json()
-        return data.ID
-      }
-      throw new Error(await response.text())
+      const data = await response.json()
+      return data.ID
     })
 
   let nextTasks = await this.docker.listTasks().then(pipe([
