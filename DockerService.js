@@ -173,6 +173,15 @@ DockerService.prototype.deploy = async function deploy(options = {}) {
 
 // new DockerService().waitFor() -> Promise<>
 DockerService.prototype.waitFor = async function waitFor() {
+  const serviceId = await this.docker.inspectService(this.name)
+    .then(async response => {
+      if (response.ok) {
+        const data = await response.json()
+        return data.ID
+      }
+      throw new Error(await response.text())
+    })
+
   let nextTasks = await this.docker.listTasks().then(pipe([
     async response => {
       if (response.ok) {
@@ -180,8 +189,12 @@ DockerService.prototype.waitFor = async function waitFor() {
       }
       throw new Error(await response.text())
     },
-    filter(not(eq('shutdown', get('DesiredState')))),
+    filter(and([
+      eq(serviceId, get('ServiceID')),
+      not(eq('shutdown', get('DesiredState'))),
+    ])),
   ]))
+
   while (nextTasks.every(not(eq('running', get('Status.State'))))) {
     await new Promise(resolve => setTimeout(resolve, 500))
     nextTasks = await this.docker.listTasks().then(pipe([
@@ -191,7 +204,10 @@ DockerService.prototype.waitFor = async function waitFor() {
         }
         throw new Error(await response.text())
       },
-      filter(not(eq('shutdown', get('DesiredState')))),
+      filter(and([
+        eq(serviceId, get('ServiceID')),
+        not(eq('shutdown', get('DesiredState'))),
+      ])),
     ]))
   }
 }
