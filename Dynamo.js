@@ -398,7 +398,7 @@ Dynamo.AttributeValue = function DynamoAttributeValue(value) {
     : typeof value == 'number' && !isNaN(value) ? { N: value.toString(10) }
     : typeof value == 'boolean' ? { BOOL: value }
     : value == null ? { NULL: true }
-    : value.constructor == Object ? { M: map.own(DynamoAttributeValue)(value) }
+    : value.constructor == Object ? { M: map(value, DynamoAttributeValue) }
     : throwTypeError(`unknown value ${value}`)
 }
 
@@ -432,7 +432,7 @@ Dynamo.attributeValueToJSON = function attributeValueToJSON(attributeValue) {
     case 'L':
       return attributeValue.L.map(attributeValueToJSON)
     case 'M':
-      return map.own(attributeValueToJSON)(attributeValue.M)
+      return map(attributeValue.M, attributeValueToJSON)
     default:
       throw new TypeError(`unknown attributeValue ${attributeValue}`)
   }
