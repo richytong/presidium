@@ -1,4 +1,5 @@
-const rubico = require('rubico')
+require('rubico/global')
+const Transducer = require('rubico/Transducer')
 const zlib = require('zlib')
 const isString = require('rubico/x/isString')
 const identity = require('rubico/x/identity')
@@ -18,17 +19,6 @@ const pathJoin = require('./internal/pathJoin')
 const has = require('./internal/has')
 const filterExists = require('./internal/filterExists')
 const createUpdateServiceSpec = require('./internal/createUpdateServiceSpec')
-
-const {
-  pipe, tap,
-  switchCase, tryCatch,
-  fork, assign, get, pick, omit,
-  map, filter, reduce, transform, flatMap,
-  and, or, not, any, all,
-  eq, gt, lt, gte, lte,
-  thunkify, always,
-  curry, __,
-} = rubico
 
 /**
  * @name Docker
@@ -239,7 +229,7 @@ Docker.prototype.buildImage = async function (image, path, options) {
  */
 Docker.prototype.pushImage = function (image, repository, options = {}) {
   return pipe([
-    fork({
+    all({
       imagename: pipe([
         name => name.split(':')[0],
         curry.arity(2, pathJoin, repository, __),
@@ -395,25 +385,29 @@ Docker.prototype.createContainer = function dockerCreateContainer(
           .map(([key, value]) => `${key}=${value}`),
       },
       ...options.expose && {
-        ExposedPorts: transform(map(pipe([
+        ExposedPorts: transform(options.expose, Transducer.map(pipe([
           String,
           split('/'),
-          fork([get(0), get(1, 'tcp')]),
+          all([get(0), get(1, 'tcp')]),
           join('/'),
           port => ({ [port]: {} }),
-        ])), {})(options.expose),
+        ])), {}),
       },
       ...options.workdir && {
         WorkingDir: options.workdir,
       },
       ...options.volume && {
-        Volumes: transform(map(path => ({ [path]: {} })), {})(options.volume),
+        Volumes: transform(
+          options.volume,
+          Transducer.map(path => ({ [path]: {} })),
+          {},
+        ),
       },
 
       ...options.healthCmd && {
         Healthcheck: { // note: this is correct versus the healthCmd in createService, which is HealthCheck
           Test: ['CMD', ...options.healthCmd],
-          ...fork({
+          ...all({
             Interval: get('healthInterval', 10e9),
             Timeout: get('healthTimeout', 20e9),
             Retries: get('healthRetries', 5),
@@ -429,11 +423,11 @@ Docker.prototype.createContainer = function dockerCreateContainer(
               isString,
               pipe([
                 split(':'),
-                fork({ target: get(0), source: get(1), readonly: get(2) }),
+                all({ target: get(0), source: get(1), readonly: get(2) }),
               ]),
               identity,
             ]),
-            fork({
+            all({
               Target: get('target'),
               Source: get('source'),
               Type: get('type', 'volume'),
@@ -444,12 +438,12 @@ Docker.prototype.createContainer = function dockerCreateContainer(
 
         ...options.memory && { Memory: options.memory },
         ...options.publish && {
-          PortBindings: map.entries(fork([ // publish and PortBindings are reversed
+          PortBindings: map.entries(all([ // publish and PortBindings are reversed
             pipe([ // container port
               get(1),
               String,
               split('/'),
-              fork([get(0), get(1, 'tcp')]),
+              all([get(0), get(1, 'tcp')]),
               join('/'),
             ]),
             pipe([ // host port
@@ -467,7 +461,7 @@ Docker.prototype.createContainer = function dockerCreateContainer(
           },
         },
         ...options.restart && {
-          RestartPolicy: fork({
+          RestartPolicy: all({
             Name: get(0, 'no'),
             MaximumRetryCount: pipe([get(1, 0), Number]),
           })(options.restart.split(':')),
@@ -831,11 +825,11 @@ Docker.prototype.createService = function dockerCreateService(service, options) 
                 isString,
                 pipe([
                   split(':'),
-                  fork({ target: get(0), source: get(1), readonly: get(2) }),
+                  all({ target: get(0), source: get(1), readonly: get(2) }),
                 ]),
                 identity,
               ]),
-              fork({
+              all({
                 Target: get('target'),
                 Source: get('source'),
                 Type: get('type', 'volume'),
@@ -847,7 +841,7 @@ Docker.prototype.createService = function dockerCreateService(service, options) 
           ...options.healthCmd && {
             HealthCheck: {
               Test: ['CMD', ...options.healthCmd],
-              ...fork({
+              ...all({
                 Interval: get('healthInterval', 10e9),
                 Timeout: get('healthTimeout', 20e9),
                 Retries: get('healthRetries', 5),
@@ -858,7 +852,7 @@ Docker.prototype.createService = function dockerCreateService(service, options) 
         },
 
         ...options.restart && {
-          RestartPolicy: fork({
+          RestartPolicy: all({
             Delay: always(options.restartDelay ?? 10e9),
             Condition: get(0, 'on-failure'),
             MaxAttempts: pipe([get(1, 10), Number]),
@@ -890,7 +884,7 @@ Docker.prototype.createService = function dockerCreateService(service, options) 
         Replicated: { Replicas: options.replicas ?? 1 }
       },
 
-      UpdateConfig: fork({
+      UpdateConfig: all({
         Parallelism: get('updateParallelism', 2),
         Delay: get('updateDelay', 1e9),
         FailureAction: get('updateFailureAction', 'pause'),
@@ -898,7 +892,7 @@ Docker.prototype.createService = function dockerCreateService(service, options) 
         MaxFailureRatio: get('updateMaxFailureRatio', 0.15),
       })(options),
 
-      RollbackConfig: fork({
+      RollbackConfig: all({
         Parallelism: get('rollbackParallelism', 1),
         Delay: get('rollbackDelay', 1e9),
         FailureAction: get('rollbackFailureAction', 'pause'),
@@ -918,7 +912,7 @@ Docker.prototype.createService = function dockerCreateService(service, options) 
         EndpointSpec: {
           Ports: Object.entries(options.publish).map(pipe([
             map(String),
-            fork({
+            all({
               Protocol: ([hostPort, containerPort]) => {
                 const hostProtocol = hostPort.split('/')[1],
                   containerProtocol = containerPort.split('/')[1]

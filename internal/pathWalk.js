@@ -1,18 +1,7 @@
+require('rubico/global')
 const fs = require('fs/promises')
-const rubico = require('rubico')
 const pathResolve = require('./pathResolve')
 const isArray = require('./isArray')
-
-const {
-  pipe, tap,
-  switchCase, tryCatch,
-  fork, assign, get, pick, omit,
-  map, filter, reduce, transform, flatMap,
-  and, or, not, any, all,
-  eq, gt, lt, gte, lte,
-  thunkify, always,
-  curry, __,
-} = rubico
 
 /**
  * @name pathWalk

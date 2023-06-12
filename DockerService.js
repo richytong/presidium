@@ -1,5 +1,6 @@
+require('rubico/global')
+const Transducer = require('rubico/Transducer')
 const assert = require('assert')
-const rubico = require('rubico')
 const Docker = require('./Docker')
 const stringifyJSON = require('./internal/stringifyJSON')
 const isString = require('rubico/x/isString')
@@ -10,18 +11,7 @@ const join = require('./internal/join')
 const inspect = require('util').inspect
 const stream = require('stream')
 
-const {
-  pipe, tap,
-  switchCase, tryCatch,
-  fork, assign, get, pick, omit,
-  map, filter, reduce, transform, flatMap,
-  and, or, not, any, all,
-  eq, gt, lt, gte, lte,
-  thunkify, always,
-  curry, __,
-} = rubico
-
-const passthrough = target => transform(map(identity), target)
+const passthrough = target => transform(Transducer.passthrough, target)
 
 const PassThroughStream = stream.PassThrough
 

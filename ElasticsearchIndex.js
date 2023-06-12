@@ -1,22 +1,9 @@
+require('rubico/global')
 const Http = require('./Http')
-const rubico = require('rubico')
-const rubicox = require('rubico/x')
+const x = require('rubico/x')
 const querystring = require('querystring')
 
-const {
-  pipe, tap,
-  switchCase, tryCatch,
-  fork, assign, get, pick, omit,
-  map, filter, reduce, transform, flatMap,
-  and, or, not, any, all,
-  eq, gt, lt, gte, lte,
-  thunkify, always,
-  curry, __,
-} = rubico
-
-const {
-  noop,
-} = rubicox
+const { noop } = x
 
 /**
  * @name ElasticsearchIndex

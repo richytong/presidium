@@ -1,23 +1,12 @@
-const rubico = require('rubico')
+require('rubico/global')
+const Transducer = require('rubico/Transducer')
 const uniq = require('rubico/x/uniq')
 const find = require('rubico/x/find')
 const flatten = require('rubico/x/flatten')
 const isDeepEqual = require('rubico/x/isDeepEqual')
-const forEach = require('rubico/x/forEach')
 const Dynamo = require('./Dynamo')
 const hashJSON = require('./internal/hashJSON')
 const trim = require('./internal/trim')
-
-const {
-  pipe, tap,
-  switchCase, tryCatch,
-  fork, assign, get, pick, omit,
-  map, filter, reduce, transform, flatMap,
-  and, or, not, any, all,
-  eq, gt, lt, gte, lte,
-  thunkify, always,
-  curry, __,
-} = rubico
 
 /**
  * @name DynamoIndex
@@ -150,7 +139,7 @@ DynamoIndex.prototype.query = async function dynamoIndexQuery(
   }
 
   const ExpressionAttributeNames = pipe([
-    fork([
+    all([
       map(
         statement => statement.trim().startsWith('begins_with')
         ? statement.split(/[()]/)[1].split(',').map(trim)[0] // begins_with(field, :field)
@@ -166,7 +155,7 @@ DynamoIndex.prototype.query = async function dynamoIndexQuery(
     filter(gt(get('length'), 0)),
     uniq,
     transform(
-      map(field => ({ [`#${hashJSON(field)}`]: field })),
+      Transducer.map(field => ({ [`#${hashJSON(field)}`]: field })),
       {},
     ),
   ])([...keyConditionStatements, ...filterExpressionStatements])

@@ -1,20 +1,9 @@
-const rubico = require('rubico')
+require('rubico/global')
 const AWSAutoscaling = require('aws-sdk/clients/autoscaling')
 const AWSAutoScalingDescribeAutoScalingGroupsFilters =
   require('./internal/AWSAutoScalingDescribeAutoScalingGroupsFilters')
 const filterExistsAndNotEmpty = require('./internal/filterExistsAndNotEmpty')
 const filterExists = require('./internal/filterExists')
-
-const {
-  pipe, tap,
-  switchCase, tryCatch,
-  fork, assign, get, set, pick, omit,
-  map, filter, reduce, transform, flatMap,
-  and, or, not, any, all,
-  eq, gt, lt, gte, lte,
-  thunkify, always,
-  curry, __,
-} = rubico
 
 /**
  * @name AutoScaling

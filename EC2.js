@@ -1,18 +1,7 @@
-const rubico = require('rubico')
+require('rubico/global')
 const AWSEC2 = require('aws-sdk/clients/ec2')
 const AWSEC2DescribeInstancesFilters = require('./internal/AWSEC2DescribeInstancesFilters.js')
 const filterExistsAndNotEmpty = require('./internal/filterExistsAndNotEmpty')
-
-const {
-  pipe, tap,
-  switchCase, tryCatch,
-  fork, assign, get, set, pick, omit,
-  map, filter, reduce, transform, flatMap,
-  and, or, not, any, all,
-  eq, gt, lt, gte, lte,
-  thunkify, always,
-  curry, __,
-} = rubico
 
 /**
  * @name EC2

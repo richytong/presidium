@@ -1,20 +1,9 @@
+require('rubico/global')
 const EventEmitter = require('events')
-const rubico = require('rubico')
 const WebSocket = require('./WebSocket')
 const sha256 = require('./internal/sha256')
 const AwsPresignedUrlV4 = require('./internal/AwsPresignedUrlV4')
 const Crc32 = require('./internal/Crc32')
-
-const {
-  pipe, tap,
-  switchCase, tryCatch,
-  fork, assign, get, pick, omit,
-  map, filter, reduce, transform, flatMap,
-  and, or, not, any, all,
-  eq, gt, lt, gte, lte,
-  thunkify, always,
-  curry, __,
-} = rubico
 
 // All prelude components are unsigned, 32-bit integers
 const PRELUDE_MEMBER_LENGTH = 4

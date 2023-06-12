@@ -1,5 +1,5 @@
-const rubico = require('rubico')
-const rubicoX = require('rubico/x')
+require('rubico/global')
+const x = require('rubico/x')
 const crypto = require('crypto')
 const DynamoDB = require('aws-sdk/clients/dynamodb')
 const Dynamo = require('./Dynamo')
@@ -9,21 +9,7 @@ const stringifyJSON = require('./internal/stringifyJSON')
 const join = require('./internal/join')
 const has = require('./internal/has')
 
-const {
-  pipe, tap,
-  switchCase, tryCatch,
-  fork, assign, get, pick, omit,
-  map, filter, reduce, transform, flatMap,
-  and, or, not, any, all,
-  eq, gt, lt, gte, lte,
-  thunkify, always,
-  curry, __,
-} = rubico
-
-const {
-  values,
-  noop,
-} = rubicoX
+const { values, noop } = x
 
 /**
  * @name DynamoTable

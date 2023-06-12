@@ -1,20 +1,9 @@
-const rubico = require('rubico')
+require('rubico/global')
 const AmzDate = require('./AmzDate')
 const AmzSignedHeaders = require('./AmzSignedHeaders')
 const AmzCanonicalHeaders = require('./AmzCanonicalHeaders')
 const AmzSignature = require('./AmzSignature')
 const sha256 = require('./sha256')
-
-const {
-  pipe, tap,
-  switchCase, tryCatch,
-  fork, assign, get, pick, omit,
-  map, filter, reduce, transform, flatMap,
-  and, or, not, any, all,
-  eq, gt, lt, gte, lte,
-  thunkify, always,
-  curry, __,
-} = rubico
 
 /**
  * @name AwsPresignedUrlV4

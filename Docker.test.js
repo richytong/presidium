@@ -1,19 +1,8 @@
-const rubico = require('rubico')
+require('rubico/global')
 const assert = require('assert')
 const Test = require('thunk-test')
 const Docker = require('./Docker')
 const pathResolve = require('./internal/pathResolve')
-
-const {
-  pipe, tap,
-  switchCase, tryCatch,
-  fork, assign, get, pick, omit,
-  map, filter, reduce, transform, flatMap,
-  and, or, not, any, all,
-  eq, gt, lt, gte, lte,
-  thunkify, always,
-  curry, __,
-} = rubico
 
 const test = Test.all([
   Test('Docker - prune', Docker)
