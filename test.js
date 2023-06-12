@@ -1,4 +1,5 @@
 require('rubico/global')
+const x = require('rubico/x')
 const glob = require('glob')
 const promisify = require('util').promisify
 
@@ -8,25 +9,16 @@ const pathResolve = require('path').resolve
 
 let numTests = 0
 
-map.series(pipe([
-  promisify(glob),
-  map(curry.arity(1, pathResolve)),
-  map(curry.arity(1, require)),
-  map.series(switchCase([
-    isArray,
-    pipe([
-      forEach(() => {
-        numTests += 1
-      }),
-      map.series(test => test()),
-    ]),
-    pipe([
-      () => {
-        numTests += 1
-      },
-      test => test(),
-    ]),
-  ])),
-]))(['*.test.js', 'internal/*.test.js']).then(() => {
-  console.log(`-- ✅ ${numTests} passing`)
-})
+const pglob = curry.arity(1, promisify(glob))
+
+pipe(['*.test.js', 'internal/*.test.js'], [
+  flatMap(pglob),
+  async function runTestFiles(filepaths) {
+    for (const filepath of filepaths) {
+      console.log(filepath)
+      const test = require(`./${filepath}`)
+      await test()
+    }
+    console.log(`-- ✅ ${filepaths.length} passing`)
+  },
+])
