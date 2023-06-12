@@ -3,12 +3,6 @@ const x = require('rubico/x')
 const glob = require('glob')
 const promisify = require('util').promisify
 
-const isArray = Array.isArray
-
-const pathResolve = require('path').resolve
-
-let numTests = 0
-
 const pglob = curry.arity(1, promisify(glob))
 
 pipe(['*.test.js', 'internal/*.test.js'], [
