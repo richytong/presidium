@@ -76,7 +76,7 @@ DockerSwarm.prototype.inspect = function dockerSwarmInspect() {
 // DockerSwarm(address).leave(options? { force: boolean }) -> Promise<Object>
 DockerSwarm.prototype.leave = function dockerSwarmLeave(options) {
   return this.docker.leaveSwarm(options)
-    .then(fork({ message: response => response.text() }))
+    .then(all({ message: response => response.text() }))
 }
 
 /**

@@ -1,5 +1,6 @@
+require('rubico/global')
+const Transducer = require('rubico/Transducer')
 const DynamoDBStreams = require('aws-sdk/clients/dynamodbstreams')
-const rubico = require('rubico')
 const rubicox = require('rubico/x')
 const has = require('./internal/has')
 const RetryAwsErrors = require('./internal/RetryAwsErrors')
@@ -7,21 +8,7 @@ const HttpAgent = require('./HttpAgent')
 const Dynamo = require('./Dynamo')
 const Mux = require('rubico/monad/Mux')
 
-const {
-  pipe, tap,
-  switchCase, tryCatch,
-  fork, assign, get, pick, omit,
-  map, filter, reduce, transform, flatMap,
-  and, or, not, any, all,
-  eq, gt, lt, gte, lte,
-  thunkify, always,
-  curry, __,
-} = rubico
-
-const {
-  identity,
-  differenceWith,
-} = rubicox
+const { identity, differenceWith } = rubicox
 
 /**
  * @name DynamoStream
@@ -202,7 +189,7 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* () {
     map(assign({
       ShardIteratorType: always(this.shardIteratorType),
     })),
-    transform(map(identity), []),
+    transform(Transducer.passthrough, []),
   ])()
   let muxAsyncIterator = Mux.race([
     ...shards.map(Shard => this.getRecords(Shard)),
@@ -222,7 +209,7 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* () {
       const latestShards = await pipe([
         always(this.getStreams()),
         flatMap(Stream => this.getShards(Stream)),
-        transform(map(identity), []),
+        transform(Transducer.passthrough, []),
       ])()
       const newShards = pipe([
         always(shards),

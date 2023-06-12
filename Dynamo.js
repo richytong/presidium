@@ -1,8 +1,4 @@
-const pipe = require('rubico/pipe')
-const fork = require('rubico/fork')
-const map = require('rubico/map')
-const get = require('rubico/get')
-const curry = require('rubico/curry')
+require('rubico/global')
 const noop = require('rubico/x/noop')
 const defaultsDeep = require('rubico/x/defaultsDeep')
 const AWSDynamo = require('aws-sdk/clients/dynamodb')
@@ -321,7 +317,7 @@ Dynamo.KeySchema = function DynamoKeySchema(primaryKeyOrIndex) {
  * ```
  */
 Dynamo.AttributeDefinitions = function DynamoAttributeDefinitions(primaryKeyOrIndex) {
-  return primaryKeyOrIndex.map(fork({
+  return primaryKeyOrIndex.map(all({
     AttributeName: getFirstKey,
     AttributeType: pipe([
       getFirstValue,

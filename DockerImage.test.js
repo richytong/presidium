@@ -1,24 +1,14 @@
+require('rubico/global')
+const Transducer = require('rubico/Transducer')
 const Test = require('thunk-test')
 const assert = require('assert')
 const DockerImage = require('./DockerImage')
 const Docker = require('./Docker')
-const rubico = require('rubico')
 const identity = require('rubico/x/identity')
 const join = require('./internal/join')
 const Http = require('./Http')
 
-const {
-  pipe, tap,
-  switchCase, tryCatch,
-  fork, assign, get, pick, omit,
-  map, filter, reduce, transform, flatMap,
-  and, or, not, any, all,
-  eq, gt, lt, gte, lte,
-  thunkify, always,
-  curry, __,
-} = rubico
-
-const passthrough = target => transform(map(identity), target)
+const passthrough = target => transform(Transducer.passthrough, target)
 
 const charCode = string => string.charCodeAt(0)
 

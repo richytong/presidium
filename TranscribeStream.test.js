@@ -1,22 +1,11 @@
+require('rubico/global')
 const fs = require('fs')
 const readline = require('readline')
 const WaveFile = require('wavefile').WaveFile
 const Test = require('thunk-test')
 const assert = require('assert')
-const rubico = require('rubico')
 const TranscribeStream = require('./TranscribeStream')
 const AwsCredentials = require('./internal/AwsCredentials')
-
-const {
-  pipe, tap,
-  switchCase, tryCatch,
-  fork, assign, get, set, pick, omit,
-  map, filter, reduce, transform, flatMap,
-  and, or, not, any, all,
-  eq, gt, lt, gte, lte,
-  thunkify, always,
-  curry, __,
-} = rubico
 
 const test = new Test('TranscribeStream', async function () {
   const awsCreds = await AwsCredentials('default').catch(error => {

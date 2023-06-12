@@ -77,11 +77,11 @@ const createUpdateServiceSpec = function (options) {
         isString,
         pipe([
           split(':'),
-          fork({ target: get(0), source: get(1), readonly: get(2) }),
+          all({ target: get(0), source: get(1), readonly: get(2) }),
         ]),
         identity,
       ]),
-      fork({
+      all({
         Target: get('target'),
         Source: get('source'),
         Type: get('type', 'volume'),
@@ -122,7 +122,7 @@ const createUpdateServiceSpec = function (options) {
     result.TaskTemplate.RestartPolicy = {}
   }
   if (options.restart != null) {
-    result.TaskTemplate.RestartPolicy = fork({
+    result.TaskTemplate.RestartPolicy = all({
       Condition: get(0),
       MaxAttempts: pipe([get(1, 0), Number]),
     })(options.restart.split(':'))
@@ -231,7 +231,7 @@ const createUpdateServiceSpec = function (options) {
     result.EndpointSpec = {
       Ports: Object.entries(options.publish).map(pipe([
         map(String),
-        fork({
+        all({
           Protocol: ([hostPort, containerPort]) => {
             const hostProtocol = hostPort.split('/')[1],
               containerProtocol = containerPort.split('/')[1]

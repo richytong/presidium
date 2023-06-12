@@ -1,8 +1,5 @@
+require('rubico/global')
 const S3 = require('./S3')
-const fork = require('rubico/fork')
-const pick = require('rubico/pick')
-const get = require('rubico/get')
-const identity = require('rubico/x/identity')
 
 /**
  * @name S3Bucket

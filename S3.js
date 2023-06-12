@@ -1,17 +1,6 @@
-const rubico = require('rubico')
+require('rubico/global')
 const AWSS3 = require('aws-sdk/clients/s3')
 const identity = require('rubico/x/identity')
-
-const {
-  pipe, tap,
-  switchCase, tryCatch,
-  fork, assign, get, pick, omit,
-  map, filter, reduce, transform, flatMap,
-  and, or, not, any, all,
-  eq, gt, lt, gte, lte,
-  thunkify, always,
-  curry, __,
-} = rubico
 
 /**
  * @name S3
@@ -221,7 +210,7 @@ S3.prototype.deleteObjects = function s3DeleteObjects(bucketname, keys, options)
   return this.s3.deleteObjects({
     Bucket: bucketname,
     Delete: {
-      Objects: keys.map(fork({ Key: identity })),
+      Objects: keys.map(all({ Key: identity })),
       Quiet,
     },
     ...optionsRest,

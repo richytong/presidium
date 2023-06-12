@@ -1,20 +1,10 @@
+require('rubico/global')
+const Transducer = require('rubico/Transducer')
 const Kinesis = require('./Kinesis')
-const rubico = require('rubico')
 const has = require('rubico/x/has')
 const identity = require('rubico/x/identity')
 const Mux = require('rubico/monad/Mux')
 const differenceWith = require('rubico/x/differenceWith')
-
-const {
-  pipe, tap,
-  switchCase, tryCatch,
-  fork, assign, get, pick, omit,
-  map, filter, reduce, transform, flatMap,
-  and, or, not, any, all,
-  eq, gt, lt, gte, lte,
-  thunkify, always,
-  curry, __,
-} = rubico
 
 /**
  * @name KinesisStream
@@ -231,7 +221,7 @@ KinesisStream.prototype.getRecords = async function* getRecords(Shard) {
 const SymbolUpdateShards = Symbol('UpdateShards')
 
 KinesisStream.prototype[Symbol.asyncIterator] = async function* generateRecords() {
-  let shards = await transform(map(identity), [])(this.listShards())
+  let shards = await transform(this.listShards(), Transducer.passthrough, [])
   let muxAsyncIterator = Mux.race([
     ...shards.map(Shard => this.getRecords(Shard)),
     (async function* UpdateShardsGenerator() {
@@ -249,7 +239,8 @@ KinesisStream.prototype[Symbol.asyncIterator] = async function* generateRecords(
   while (!this.closed) {
     const { value, done } = await muxAsyncIterator.next()
     if (value == SymbolUpdateShards) {
-      const latestShards = await transform(map(identity), [])(this.listShards())
+      const latestShards =
+        await transform(this.listShards(), Transducer.passthrough, [])
       const newShards = pipe([
         always(shards),
         differenceWith(

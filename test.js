@@ -1,18 +1,6 @@
-const rubico = require('rubico')
-const forEach = require('rubico/x/forEach')
+require('rubico/global')
 const glob = require('glob')
 const promisify = require('util').promisify
-
-const {
-  pipe, tap,
-  switchCase, tryCatch,
-  fork, assign, get, set, pick, omit,
-  map, filter, reduce, transform, flatMap,
-  and, or, not, any, all,
-  eq, gt, lt, gte, lte,
-  thunkify, always,
-  curry, __,
-} = rubico
 
 const isArray = Array.isArray
 

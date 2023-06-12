@@ -1,18 +1,7 @@
-const rubico = require('rubico')
+require('rubico/global')
 const filterExists = require('./filterExists')
 const objectFilterKeys = require('./objectFilterKeys')
 const toArray = require('./toArray')
-
-const {
-  pipe, tap,
-  switchCase, tryCatch,
-  fork, assign, get, set, pick, omit,
-  map, filter, reduce, transform, flatMap,
-  and, or, not, any, all,
-  eq, gt, lt, gte, lte,
-  thunkify, always,
-  curry, __,
-} = rubico
 
 /**
  * @name AWSEC2DescribeInstancesFilters

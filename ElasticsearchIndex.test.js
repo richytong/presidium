@@ -1,24 +1,10 @@
-const rubico = require('rubico')
-const rubicox = require('rubico/x')
+require('rubico/global')
+const x = require('rubico/x')
 const assert = require('assert')
 const Test = require('thunk-test')
 const ElasticsearchIndex = require('./ElasticsearchIndex')
 
-const {
-  pipe, tap,
-  switchCase, tryCatch,
-  fork, assign, get, pick, omit,
-  map, filter, reduce, transform, flatMap,
-  and, or, not, any, all,
-  eq, gt, lt, gte, lte,
-  thunkify, always,
-  curry, __,
-} = rubico
-
-const {
-  callProp,
-  includes,
-} = rubicox
+const { callProp, includes } = x
 
 const test = Test('ElasticsearchIndex', async function () {
   const testIndex = new ElasticsearchIndex({
