@@ -4,7 +4,7 @@ const assert = require('assert')
 const fs = require('fs/promises')
 const map = require('rubico/map')
 
-module.exports = [
+module.exports = Test.all([
   Test('Redis - string', Redis)
     .before(async function () {
       try {
@@ -212,4 +212,4 @@ module.exports = [
         anotherRedis.disconnect()
       }
     }),
-]
+])

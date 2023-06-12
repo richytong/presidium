@@ -17,18 +17,6 @@ const test = new Test('DockerService', DockerService)
 })
 
 .case({
-  name: 'ml-service-test',
-  image: 'claimyr.ml:0.0.2',
-  replicas: 1,
-  publish: { 8765: 8765 },
-  cmd: ['python', 'server.py'],
-}, async function (service) {
-  console.log('deploying claimyr.ml')
-  await service.deploy({ waitFor: true })
-  await new Promise(resolve => setTimeout(resolve, 24 * 60 * 60 * 1000))
-})
-
-.case({
   name: 'my-service',
   image: 'nginx:1.19',
   replicas: 'global',
