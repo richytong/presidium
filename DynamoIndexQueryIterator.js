@@ -15,17 +15,14 @@
  * ```
  */
 const DynamoIndexQueryIterator = async function* (
-  dynamoIndex, keyConditionExpression, queryValues, options = {}
+  dynamoIndex, keyConditionExpression, queryValues, queryOptions = {}
 ) {
-  const {
-    limit = 1000,
-    scanIndexForward = true,
-  } = options
+  const defaultLimit = 1000
 
   let response = await dynamoIndex.query(
     keyConditionExpression,
     queryValues,
-    { limit, scanIndexForward },
+    { limit: defaultLimit, ...queryOptions },
   )
   yield* response.Items
 
@@ -34,9 +31,9 @@ const DynamoIndexQueryIterator = async function* (
       keyConditionExpression,
       queryValues,
       {
-        limit,
-        scanIndexForward,
+        limit: defaultLimit,
         exclusiveStartKey: response.LastEvaluatedKey,
+        ...queryOptions,
       },
     )
     yield* response.Items
