@@ -410,6 +410,12 @@ EXPOSE 8888`,
       assert.equal(body.length, 3) // 2 for hey1, 1 for hey2 (global)
     }
 
+    { // listTasks filter
+      const response = await docker.listTasks({ desiredState: 'accepted' })
+      const body = await response.json()
+      assert.equal(body.length, 0)
+    }
+
     { // deleteService
       const response = await docker.deleteService(this.serviceId1)
       assert.equal(response.status, 200)
