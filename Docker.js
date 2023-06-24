@@ -1114,20 +1114,25 @@ Docker.prototype.getServiceLogs = async function getServiceLogs(serviceId, optio
   }`)
 }
 
+const toArray = value => Array.isArray(value) ? value : [value]
+
 /**
  * @name Docker.prototype.listTasks
  *
  * @synopsis
  * ```coffeescript [specscript]
  * new Docker().listTasks(options {
- *   service?: string,
- *   node?: string,
+ *   desiredState: 'running'|'shutdown'|'accepted'
  * }) -> Promise<HttpResponse>
  * ```
  */
-Docker.prototype.listTasks = async function listTasks(options) {
+Docker.prototype.listTasks = async function listTasks(options = {}) {
   return this.http.get(`/tasks?${
-    querystring.stringify(pick(['service', 'node'])(options))
+    querystring.stringify({
+      filters: JSON.stringify(filter({
+        'desired-state': toArray(options.desiredState),
+      }, value => value != null)),
+    })
   }`)
 }
 
