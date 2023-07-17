@@ -13,7 +13,10 @@ const stream = require('stream')
 const pathJoin = require('./internal/pathJoin')
 const parseJSON = require('./internal/parseJSON')
 
-const passthrough = target => transform(Transducer.passthrough, target)
+const passthrough = target => transform(
+  Transducer.map(chunk => chunk.toString('utf8')),
+  target,
+)
 
 const PassThroughStream = stream.PassThrough
 
