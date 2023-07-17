@@ -40,7 +40,6 @@ const test = new Test('DynamoIndexQueryIterator', async function () {
       testStatusCreateTimeIndex,
       'status = :status AND createTime > :createTime',
       { status: 'pending', createTime: 0 },
-      { limit: 10, scanIndexForward: true },
     )
     for await (const item of iter) {
       array.push(map(item, Dynamo.attributeValueToJSON))
@@ -55,7 +54,22 @@ const test = new Test('DynamoIndexQueryIterator', async function () {
       testStatusCreateTimeIndex,
       'status = :status AND createTime > :createTime',
       { status: 'pending', createTime: 0 },
-      { limit: 10, scanIndexForward: false },
+      { batchLimit: 10, scanIndexForward: true },
+    )
+    for await (const item of iter) {
+      array.push(map(item, Dynamo.attributeValueToJSON))
+    }
+    assert.equal(array.length, 50)
+    assert.equal(array[0].id, '0')
+  }
+
+  {
+    const array = []
+    const iter = DynamoIndexQueryIterator(
+      testStatusCreateTimeIndex,
+      'status = :status AND createTime > :createTime',
+      { status: 'pending', createTime: 0 },
+      { batchLimit: 10, scanIndexForward: false },
     )
     for await (const item of iter) {
       array.push(map(item, Dynamo.attributeValueToJSON))
@@ -63,6 +77,22 @@ const test = new Test('DynamoIndexQueryIterator', async function () {
     assert.equal(array.length, 50)
     assert.equal(array[0].id, '49')
   }
+
+  {
+    const array = []
+    const iter = DynamoIndexQueryIterator(
+      testStatusCreateTimeIndex,
+      'status = :status AND createTime > :createTime',
+      { status: 'pending', createTime: 0 },
+      { batchLimit: 10, limit: 30, scanIndexForward: true },
+    )
+    for await (const item of iter) {
+      array.push(map(item, Dynamo.attributeValueToJSON))
+    }
+    assert.equal(array.length, 30)
+    assert.equal(array[0].id, '0')
+  }
+
 }).case()
 
 if (process.argv[1] == __filename) {
