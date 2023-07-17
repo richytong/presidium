@@ -15,6 +15,7 @@ const charCode = string => string.charCodeAt(0)
 const test = new Test('DockerImage', DockerImage)
   .case('doesnot:exist', async function (dneImage) {
     const data = await dneImage.inspect()
+    console.log(data)
     assert(data.message.toLowerCase().startsWith('no such image'), data.message)
   })
   .case('node:15-alpine', async function (alpineImage) {
