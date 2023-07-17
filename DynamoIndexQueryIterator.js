@@ -8,35 +8,41 @@
  *   keyConditionExpression string,
  *   queryValues object,
  *   options? {
+ *     batchLimit?: number,
  *     limit?: number,
- *     scanIndexForward?: boolean, // true for ASC, false for DESC
  *   },
  * ) -> AsyncGenerator<DynamoItem>
  * ```
  */
 const DynamoIndexQueryIterator = async function* (
-  dynamoIndex, keyConditionExpression, queryValues, queryOptions = {}
+  dynamoIndex, keyConditionExpression, queryValues, options = {}
 ) {
-  const defaultLimit = 1000
+  const {
+    batchLimit = 1000,
+    limit = Infinity,
+  } = options
 
+  let numYielded = 0
   let response = await dynamoIndex.query(
     keyConditionExpression,
     queryValues,
-    { limit: defaultLimit, ...queryOptions },
+    { limit: Math.min(batchLimit, limit - numYielded), ...options },
   )
   yield* response.Items
+  numYielded += response.Items.length
 
-  while (response.LastEvaluatedKey != null) {
+  while (response.LastEvaluatedKey != null && numYielded < limit) {
     response = await dynamoIndex.query(
       keyConditionExpression,
       queryValues,
       {
-        limit: defaultLimit,
+        limit: Math.min(batchLimit, limit - numYielded),
         exclusiveStartKey: response.LastEvaluatedKey,
-        ...queryOptions,
+        ...options,
       },
     )
     yield* response.Items
+    numYielded += response.Items.length
   }
 }
 
