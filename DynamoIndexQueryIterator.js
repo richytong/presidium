@@ -26,7 +26,7 @@ const DynamoIndexQueryIterator = async function* (
   let response = await dynamoIndex.query(
     keyConditionExpression,
     queryValues,
-    { limit: Math.min(batchLimit, limit - numYielded), ...options },
+    { ...options, limit: Math.min(batchLimit, limit - numYielded) },
   )
   yield* response.Items
   numYielded += response.Items.length
@@ -36,9 +36,9 @@ const DynamoIndexQueryIterator = async function* (
       keyConditionExpression,
       queryValues,
       {
+        ...options,
         limit: Math.min(batchLimit, limit - numYielded),
         exclusiveStartKey: response.LastEvaluatedKey,
-        ...options,
       },
     )
     yield* response.Items
