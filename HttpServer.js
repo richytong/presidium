@@ -1,5 +1,7 @@
 const http = require('http')
+const zlib = require('zlib')
 const isPromise = require('./internal/isPromise')
+const StringStream = require('./StringStream')
 
 /**
  * @name HttpServer
@@ -56,7 +58,25 @@ const isPromise = require('./internal/isPromise')
  * ```
  */
 const HttpServer = function (httpHandler) {
-  return http.createServer(httpHandler)
+  return http.createServer((request, response) => {
+    response.endGzip = async function (data) {
+      response.setHeader('Content-Encoding', 'gzip')
+
+      let stream = null
+      if (typeof data == 'string') {
+        stream = StringStream(data).pipe(zlib.createGzip()).pipe(response)
+      } else {
+        throw new Error(`Unknown data type ${typeof data}`)
+      }
+
+      await new Promise((resolve, reject) => {
+        stream.on('close', resolve)
+        stream.on('error', reject)
+      })
+    }
+
+    return httpHandler(request, response)
+  })
 }
 
 module.exports = HttpServer
