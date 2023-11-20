@@ -212,6 +212,7 @@ S3.prototype.upload = function upload(bucketname, key, body, options) {
     Bucket: bucketname,
     Key: key,
     Body: body,
+    ...options,
   }).promise()
 }
 
