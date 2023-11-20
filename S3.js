@@ -158,6 +158,64 @@ S3.prototype.putObject = function s3PutObject(bucketname, key, body, options) {
 }
 
 /**
+ * @name S3.prototype.upload
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * S3(options).upload(
+ *   key string,
+ *   body Buffer|TypedArray|Blob|String|ReadableStream,
+ *   options? {
+ *     ACL: 'private'|'public-read'|'public-read-write'|'authenticated-read'|'aws-exec-read'|'bucket-owner-read'|'bucket-owner-full-control'
+ *     CacheControl?: string,
+ *     ContentDisposition?: string,
+ *     ContentEncoding?: string,
+ *     ContentLanguage?: string,
+ *     ContentLength?: string,
+ *     ContentMD5?: string,
+ *     ContentType?: string,
+ *     ExpectedBucketOwner?: string,
+ *     Expires?: Date|Date.toString()|number,
+ *     GrantFullControl?: string,
+ *     GrantRead?: string,
+ *     GrantReadACP?: string,
+ *     GrantWriteACP?: string,
+ *     Metadata?: Object<string>,
+ *     ObjectLockLegalHoldStatus?: 'ON'|'OFF',
+ *     ObjectLockMode?: 'GOVERNANCE'|'COMPLIANCE',
+ *     ObjectLockRetainUntilDate?: Date|Date.toString()|number,
+ *     RequestPayer?: requester,
+ *     SSECustomerAlgorithm?: string,
+ *     SSECustomerKey?: string|Buffer,
+ *     SSECustomerKeyMD5?: string,
+ *     SSEKMSEncryptionContext?: string,
+ *     SSEKMSKeyId?: string,
+ *     ServerSideEncryption?: 'AES256'|'aws:kms',
+ *     StorageClass?: 'STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'|'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS'
+ *     Tagging?: string,
+ *     WebsiteRedirectLocation?: string,
+ *   },
+ * ) -> Promise<{
+ *   ETag: string,
+ *   ServerSideEncryption?: 'AES256'|'aws:kms',
+ *   VersionId: string,
+ *   SSECustomerAlgorithm?: string,
+ *   SSECustomerKey?: string,
+ *   SSEKMSKeyId?: string,
+ *   SSEKMSEncryptionContext?: string,
+ *   RequestCharged?: string,
+ * }>
+ * ```
+ */
+S3.prototype.upload = function upload(bucketname, key, body, options) {
+  return this.s3.upload({
+    Bucket: bucketname,
+    Key: key,
+    Body: body,
+  }).promise()
+}
+
+/**
  * @name S3.prototype.deleteObject
  *
  * @synopsis

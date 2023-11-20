@@ -96,6 +96,62 @@ S3Bucket.prototype.putObject = async function s3BucketPutObject(
 }
 
 /**
+ * @name S3Bucket.prototype.upload
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * S3Bucket(s3).upload(
+ *   key string,
+ *   body string|Buffer|ReadableStream,
+ *   options? {
+ *     ACL: 'private'|'public-read'|'public-read-write'|'authenticated-read'|'aws-exec-read'|'bucket-owner-read'|'bucket-owner-full-control'
+ *     CacheControl?: string,
+ *     ContentDisposition?: string,
+ *     ContentEncoding?: string,
+ *     ContentLanguage?: string,
+ *     ContentLength?: string,
+ *     ContentMD5?: string,
+ *     ContentType?: string,
+ *     ExpectedBucketOwner?: string,
+ *     Expires?: Date|Date.toString()|number,
+ *     GrantFullControl?: string,
+ *     GrantRead?: string,
+ *     GrantReadACP?: string,
+ *     GrantWriteACP?: string,
+ *     Metadata?: Object<string>,
+ *     ObjectLockLegalHoldStatus?: 'ON'|'OFF',
+ *     ObjectLockMode?: 'GOVERNANCE'|'COMPLIANCE',
+ *     ObjectLockRetainUntilDate?: Date|Date.toString()|number,
+ *     RequestPayer?: requester,
+ *     SSECustomerAlgorithm?: string,
+ *     SSECustomerKey?: string|Buffer,
+ *     SSECustomerKeyMD5?: string,
+ *     SSEKMSEncryptionContext?: string,
+ *     SSEKMSKeyId?: string,
+ *     ServerSideEncryption?: 'AES256'|'aws:kms',
+ *     StorageClass?: 'STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'|'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS'
+ *     Tagging?: string,
+ *     WebsiteRedirectLocation?: string,
+ *   },
+ * ) -> Promise<{
+ *   ETag: string,
+ *   ServerSideEncryption?: 'AES256'|'aws:kms',
+ *   VersionId: string,
+ *   SSECustomerAlgorithm?: string,
+ *   SSECustomerKey?: string,
+ *   SSEKMSKeyId?: string,
+ *   SSEKMSEncryptionContext?: string,
+ *   RequestCharged?: string,
+ * }>
+ * ```
+ */
+S3Bucket.prototype.upload = async function upload(key, body, options) {
+  await this.ready
+  return this.s3.upload(this.name, key, body, options)
+}
+
+
+/**
  * @name S3Bucket.prototype.deleteObject
  *
  * @synopsis
