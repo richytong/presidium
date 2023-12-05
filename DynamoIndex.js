@@ -6,7 +6,13 @@ const flatten = require('rubico/x/flatten')
 const isDeepEqual = require('rubico/x/isDeepEqual')
 const Dynamo = require('./Dynamo')
 const hashJSON = require('./internal/hashJSON')
-const trim = require('./internal/trim')
+const createExpressionAttributeNames =
+  require('./internal/createExpressionAttributeNames')
+const createExpressionAttributeValues =
+  require('./internal/createExpressionAttributeValues')
+const createKeyConditionExpression =
+  require('./internal/createKeyConditionExpression')
+const createFilterExpression = require('./internal/createFilterExpression')
 
 /**
  * @name DynamoIndex
@@ -138,53 +144,21 @@ DynamoIndex.prototype.query = async function dynamoIndexQuery(
     }
   }
 
-  const ExpressionAttributeNames = pipe([
-    all([
-      map(
-        statement => statement.trim().startsWith('begins_with')
-        ? statement.split(/[()]/)[1].split(',').map(trim)[0] // begins_with(field, :field)
-        : statement.split(/ (.+)/)[0],
-      ),
-      always(
-        options.projectionExpression
-        ? options.projectionExpression.split(',')
-        : [],
-      ),
-    ]),
-    flatten,
-    filter(gt(get('length'), 0)),
-    uniq,
-    transform(
-      Transducer.map(field => ({ [`#${hashJSON(field)}`]: field })),
-      {},
-    ),
-  ])([...keyConditionStatements, ...filterExpressionStatements])
+  const ExpressionAttributeNames = createExpressionAttributeNames({
+    keyConditionStatements,
+    filterExpressionStatements,
+    ...options,
+  })
 
-  const ExpressionAttributeValues = map.entries(
-    ([placeholder, value]) => [`:${placeholder}`, Dynamo.AttributeValue(value)],
-  )(values)
+  const ExpressionAttributeValues = createExpressionAttributeValues({ values })
 
-  const KeyConditionExpression = keyConditionStatements.map(function (statement) {
-    if (statement.startsWith('begins_with')) {
-      const [field, prefix] = statement // 'begins_with(name, :prefix)'
-        .split(/[()]/)[1] // 'name, :prefix'
-        .split(',').map(trim) // ['name', ':prefix']
-      return `begins_with(#${hashJSON(field)}, ${prefix})`
-    }
-    const [field, rest] = statement.split(/ (.+)/)
-    return `#${hashJSON(field)} ${rest}`
-  }).join(' AND ')
+  const KeyConditionExpression = createKeyConditionExpression({
+    keyConditionStatements,
+  })
 
-  const FilterExpression = filterExpressionStatements.map(function (statement) {
-    if (statement.startsWith('begins_with')) {
-      const [field, prefix] = statement // 'begins_with(name, :prefix)'
-        .split(/[()]/)[1] // 'name, :prefix'
-        .split(',').map(trim) // ['name', ':prefix']
-      return `begins_with(#${hashJSON(field)}, ${prefix})`
-    }
-    const [field, rest] = statement.split(/ (.+)/)
-    return `#${hashJSON(field)} ${rest}`
-  }).join(' AND ')
+  const FilterExpression = createFilterExpression({
+    filterExpressionStatements,
+  })
 
   return this.connection.query({
     TableName: this.table,

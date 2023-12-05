@@ -1,15 +1,16 @@
 require('rubico/global')
-const x = require('rubico/x')
-const crypto = require('crypto')
 const DynamoDB = require('aws-sdk/clients/dynamodb')
 const Dynamo = require('./Dynamo')
-const isPromise = require('./internal/isPromise')
 const hashJSON = require('./internal/hashJSON')
 const stringifyJSON = require('./internal/stringifyJSON')
 const join = require('./internal/join')
-const has = require('./internal/has')
-
-const { values, noop } = x
+const createExpressionAttributeNames =
+  require('./internal/createExpressionAttributeNames')
+const createExpressionAttributeValues =
+  require('./internal/createExpressionAttributeValues')
+const createKeyConditionExpression =
+  require('./internal/createKeyConditionExpression')
+const createFilterExpression = require('./internal/createFilterExpression')
 
 /**
  * @name DynamoTable
@@ -336,6 +337,94 @@ DynamoTable.prototype.scan = async function scan(options = {}) {
     error.method = 'scan'
     throw error
   })
+}
+
+/**
+ * @name DynamoTable.prototype.query
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * new DynamoTable(...).query(
+ *   keyConditionExpression string, // hashKey = :a AND sortKey < :b
+ *   values {
+ *     [hashKey]: string|number|Buffer|TypedArray,
+ *     [sortKey]: string|number|Buffer|TypedArray,
+ *   },
+ *   options? {
+ *     limit: number,
+ *     exclusiveStartKey: Object<string=>DynamoAttributeValue>
+ *     scanIndexForward: boolean, // default true for ASC
+ *     projectionExpression: string, // 'fieldA,fieldB,fieldC'
+ *     filterExpression: string, // 'fieldA >= :someValueForFieldA'
+ *     select: 'ALL_ATTRIBUTES'|'ALL_PROJECTED_ATTRIBUTES'|'COUNT'|'SPECIFIC_ATTRIBUTES',
+ *     consistentRead: boolean, // true to perform a strongly consistent read (eventually consistent by default)
+ *   },
+ * ) -> Promise<{ Items: Array<Object> }>
+ * ```
+ *
+ * @description
+ * Note: only works for tables with a sort and hash key
+ */
+DynamoTable.prototype.query = async function query(
+  keyConditionExpression, values, options = {}
+) {
+  await this.ready
+  const keyConditionStatements = keyConditionExpression.trim().split(/\s+AND\s+/)
+  let statementsIndex = -1
+  while (++statementsIndex < keyConditionStatements.length) {
+    if (keyConditionStatements[statementsIndex].includes('BETWEEN')) {
+      keyConditionStatements[statementsIndex] +=
+        ` AND ${keyConditionStatements.splice(statementsIndex + 1, 1)}`
+    }
+  }
+
+  const filterExpressionStatements =
+    options.filterExpression == null ? []
+    : options.filterExpression.trim().split(/\s+AND\s+/)
+  statementsIndex = -1
+  while (++statementsIndex < filterExpressionStatements.length) {
+    if (filterExpressionStatements[statementsIndex].includes('BETWEEN')) {
+      filterExpressionStatements[statementsIndex] +=
+        ` AND ${filterExpressionStatements.splice(statementsIndex + 1, 1)}`
+    }
+  }
+
+  const ExpressionAttributeNames = createExpressionAttributeNames({
+    keyConditionStatements,
+    filterExpressionStatements,
+    ...options,
+  })
+
+  const ExpressionAttributeValues = createExpressionAttributeValues({ values })
+
+  const KeyConditionExpression = createKeyConditionExpression({
+    keyConditionStatements,
+  })
+
+  const FilterExpression = createFilterExpression({
+    filterExpressionStatements,
+  })
+
+  return this.client.query({
+    TableName: this.name,
+    ExpressionAttributeNames,
+    ExpressionAttributeValues,
+    KeyConditionExpression,
+    ...filterExpressionStatements.length > 0 && { FilterExpression },
+
+    ...options.limit && { Limit: options.limit },
+    ...options.exclusiveStartKey && {
+      ExclusiveStartKey: options.exclusiveStartKey,
+    },
+    ...options.scanIndexForward != null && {
+      ScanIndexForward: options.scanIndexForward
+    },
+    ...options.projectionExpression && {
+      ProjectionExpression: options.projectionExpression
+        .split(',').map(field => `#${hashJSON(field)}`).join(','),
+    },
+    ...options.select && { Select: options.select },
+  }).promise()
 }
 
 module.exports = DynamoTable
