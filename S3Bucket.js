@@ -299,9 +299,14 @@ S3Bucket.prototype.delete = async function s3BucketDelete() {
  * }>
  * ```
  */
-S3Bucket.prototype.getObject = async function sBucketGetObject(key, options) {
-  await this.ready
+S3Bucket.prototype.getObject = async function getObject(key, options) {
   return this.s3.getObject(this.name, key, options)
+}
+
+S3Bucket.prototype.getObjectStream = async function getObjectStream(
+  key, options,
+) {
+  return this.s3.getObjectStream(this.name, key, options)
 }
 
 /**
