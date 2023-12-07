@@ -44,7 +44,7 @@ const test = Test('WebSocketServer', function (socketHandler, httpHandler) {
 })
 .case(function saveServerMessagesAndCloseHandler(websocket) {
   websocket.on('message', message => {
-    this.serverMessages.push(message)
+    this.serverMessages.push(message.toString('utf8'))
     websocket.send(message)
   })
   websocket.on('close', async () => {
@@ -62,8 +62,8 @@ const test = Test('WebSocketServer', function (socketHandler, httpHandler) {
       websocket.on('open', () => {
         didOpen = true
       })
-      websocket.on('message', async message => {
-        this.clientMessages.push(message)
+      websocket.on('message', async chunk => {
+        this.clientMessages.push(chunk.toString('utf8'))
         if (this.clientMessages.length == 5) {
           await new Promise(resolve => setTimeout(resolve, 100)) // wait for a round of detectAndCloseBrokenConnections
           websocket.pong = function noop() {} // overwrite pong to simulate disconnect
