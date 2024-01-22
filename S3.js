@@ -346,14 +346,20 @@ S3.prototype.getObject = function s3GetObject(bucketname, key, options) {
   }).promise()
 }
 
-S3.prototype.getObjectStream = async function s3GetObject(
+S3.prototype.headObject = async function headObject(
   bucketname, key, options = {},
 ) {
-  const headRes = await this.s3.headObject({
+  return this.s3.headObject({
     Bucket: bucketname,
     Key: key,
     ...options,
   }).promise()
+}
+
+S3.prototype.getObjectStream = async function s3GetObject(
+  bucketname, key, options = {},
+) {
+  const headRes = await this.headObject(bucketname, key, options)
 
   const rs = this.s3.getObject({
     Bucket: bucketname,

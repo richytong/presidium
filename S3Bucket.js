@@ -304,6 +304,10 @@ S3Bucket.prototype.getObject = async function getObject(key, options) {
   return this.s3.getObject(this.name, key, options)
 }
 
+S3Bucket.prototype.headObject = async function headObject(key, options) {
+  return this.s3.headObject(this.name, key, options)
+}
+
 S3Bucket.prototype.getObjectStream = async function getObjectStream(
   key, options,
 ) {

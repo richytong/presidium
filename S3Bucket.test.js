@@ -69,6 +69,8 @@ const test = new Test('S3Bucket', S3Bucket)
   {
     const key = 'buffer2'
     await testBucket.upload(key, Buffer.from('buffer'))
+    const headRes = await testBucket.headObject(key)
+    assert.equal(headRes.ContentLength, 6)
     const res = await testBucket.getObjectStream(key)
     assert.equal(res.headers.ContentLength, 6)
   }
