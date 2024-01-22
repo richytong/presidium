@@ -66,6 +66,13 @@ const test = new Test('S3Bucket', S3Bucket)
   assert(buffer.ContentType == 'application/octet-stream')
   assert.deepEqual(buffer.Body, Buffer.from('buffer'))
 
+  {
+    const key = 'buffer2'
+    await testBucket.upload(key, Buffer.from('buffer'))
+    const res = await testBucket.getObjectStream(key)
+    assert.equal(res.headers.ContentLength, 6)
+  }
+
   await testBucket.deleteAllObjects({ MaxKeys: 1 })
   const deleted = await testBucket.delete()
 })
