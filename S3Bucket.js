@@ -285,6 +285,7 @@ S3Bucket.prototype.delete = async function s3BucketDelete() {
  *   WebsiteRedirectLocation: string,
  *   ServerSideEncryption?: 'AES256'|'aws:kms',
  *   Metadata?: Object<string>,
+ *   Range?: string, // 'bytes=0-9'
  *   SSECustomerAlgorithm?: string,
  *   SSECustomerKey?: string,
  *   SSEKMSKeyId?: string,
