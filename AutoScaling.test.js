@@ -4,7 +4,7 @@ const AwsCredentials = require('./internal/AwsCredentials')
 const AutoScaling = require('./AutoScaling')
 
 const test = new Test('AutoScaling', async function () {
-  const awsCreds = await AwsCredentials('default').catch(error => {
+  const awsCreds = await AwsCredentials('solum').catch(error => {
     if (error.code == 'ENOENT') {
       const accessKeyId = process.env.AWS_ACCESS_KEY_ID
       const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY
@@ -38,7 +38,7 @@ const test = new Test('AutoScaling', async function () {
     })
     assert(
       response.AutoScalingGroups.map(group => group.AutoScalingGroupName).includes('presidium-test'),
-      'There is no presidium-test autoscaling group, check the aws account'
+      'There is no autoscaling group with tag:Env = test, check the aws account'
     )
     assert.equal(response.NextToken, null)
   }
@@ -46,7 +46,7 @@ const test = new Test('AutoScaling', async function () {
   // setDesiredCapacity (errors if not auto scaling group not found)
   await autoScaling.setDesiredCapacity({
     autoScalingGroupName: 'presidium-test',
-    desiredCapacity: 1,
+    desiredCapacity: 0,
   })
 }).case()
 
