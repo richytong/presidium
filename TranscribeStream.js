@@ -120,8 +120,6 @@ class TranscribeStream extends EventEmitter {
         }
       }
     })
-
-    return this
   }
 
   /**
