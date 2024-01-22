@@ -66,114 +66,117 @@ const MINIMUM_MESSAGE_LENGTH = PRELUDE_LENGTH + CHECKSUM_LENGTH * 2
  *
  * `vocabularyName` - The name of the vocabulary to use when processing the transcription job, if any.
  */
-const TranscribeStream = function (options) {
-  const {
-    accessKeyId,
-    secretAccessKey,
-    region,
-    languageCode,
-    mediaEncoding,
-    sampleRate,
-    sessionId,
-    vocabularyName,
-  } = options
 
-  const url = AwsPresignedUrlV4({
-    accessKeyId,
-    secretAccessKey,
-    region,
-    method: 'GET',
-    endpoint: `transcribestreaming.${region}.amazonaws.com:8443`,
-    protocol: 'wss',
-    canonicalUri: '/stream-transcription-websocket',
-    serviceName: 'transcribe',
-    payloadHash: sha256(''),
-    expires: 300,
-    queryParams: {
-      'language-code': languageCode,
-      'media-encoding': mediaEncoding,
-      'sample-rate': sampleRate,
-      ...sessionId == null ? {} : { 'session-id': sessionId },
-      ...vocabularyName == null ? {} : { 'vocabulary-name': vocabularyName },
-    },
-  })
+class TranscribeStream extends EventEmitter {
+  constructor(options) {
+    super()
+    const {
+      accessKeyId,
+      secretAccessKey,
+      region,
+      languageCode,
+      mediaEncoding,
+      sampleRate,
+      sessionId,
+      vocabularyName,
+    } = options
 
-  this.websocket = new WebSocket(url)
-  this.ready = new Promise(resolve => {
-    this.websocket.on('open', resolve)
-  })
-  this.websocket.on('message', chunk => {
-    const { headers, body } = unmarshalMessage(chunk)
-    if (headers[':message-type'] == 'exception') {
-      const error = new Error(body.Message)
-      error.name = headers[':exception-type']
-      this.emit('error', error)
-    }
-    else if (body.Transcript.Results.length > 0) {
-      if (body.Transcript.Results[0].IsPartial) {
-        this.emit('partialTranscription', body.Transcript.Results[0])
-      } else {
-        this.emit('transcription', body.Transcript.Results[0])
+    const url = AwsPresignedUrlV4({
+      accessKeyId,
+      secretAccessKey,
+      region,
+      method: 'GET',
+      endpoint: `transcribestreaming.${region}.amazonaws.com:8443`,
+      protocol: 'wss',
+      canonicalUri: '/stream-transcription-websocket',
+      serviceName: 'transcribe',
+      payloadHash: sha256(''),
+      expires: 300,
+      queryParams: {
+        'language-code': languageCode,
+        'media-encoding': mediaEncoding,
+        'sample-rate': sampleRate,
+        ...sessionId == null ? {} : { 'session-id': sessionId },
+        ...vocabularyName == null ? {} : { 'vocabulary-name': vocabularyName },
+      },
+    })
+
+    this.websocket = new WebSocket(url)
+    this.ready = new Promise(resolve => {
+      this.websocket.on('open', resolve)
+    })
+    this.websocket.on('message', chunk => {
+      const { headers, body } = unmarshalMessage(chunk)
+      if (headers[':message-type'] == 'exception') {
+        const error = new Error(body.Message)
+        error.name = headers[':exception-type']
+        this.emit('error', error)
       }
-    }
-  })
+      else if (body.Transcript.Results.length > 0) {
+        if (body.Transcript.Results[0].IsPartial) {
+          this.emit('partialTranscription', body.Transcript.Results[0])
+        } else {
+          this.emit('transcription', body.Transcript.Results[0])
+        }
+      }
+    })
 
-  return this
-}
+    return this
+  }
 
-TranscribeStream.prototype = EventEmitter.prototype
+  /**
+   * @name TranscribeStream.prototype.sendAudioChunk
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * myTranscribeStream.sendAudioChunk(
+   *   chunk Buffer, // chunk is binary and assumed to be properly encoded in the specified mediaEncoding
+   * ) -> undefined
+   * ```
+   *
+   * @description
+   * https://docs.aws.amazon.com/transcribe/latest/dg/event-stream.html
+   * https://github.com/aws-samples/amazon-transcribe-comprehend-medical-twilio/blob/main/lib/transcribe-service.js
+   */
+  sendAudioChunk(chunk) {
+    const headersBytes = marshalHeaders({
+      ':message-type': {
+        type: 'string',
+        value: 'event',
+      },
+      ':event-type': {
+        type: 'string',
+        value: 'AudioEvent',
+      },
+      ':content-type': {
+        type: 'string',
+        value: 'application/octet-stream',
+      },
+      // hey: { type: 'string', value: 'yo' },
+    })
+    const length = headersBytes.byteLength + chunk.byteLength + 16
+    const bytes = new Uint8Array(length)
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+    const checksum = new Crc32()
 
-/**
- * @name TranscribeStream.prototype.sendAudioChunk
- *
- * @synopsis
- * ```coffeescript [specscript]
- * myTranscribeStream.sendAudioChunk(
- *   chunk Buffer, // chunk is binary and assumed to be properly encoded in the specified mediaEncoding
- * ) -> undefined
- * ```
- *
- * @description
- * https://docs.aws.amazon.com/transcribe/latest/dg/event-stream.html
- * https://github.com/aws-samples/amazon-transcribe-comprehend-medical-twilio/blob/main/lib/transcribe-service.js
- */
-TranscribeStream.prototype.sendAudioChunk = function (chunk) {
-  const headersBytes = marshalHeaders({
-    ':message-type': {
-      type: 'string',
-      value: 'event',
-    },
-    ':event-type': {
-      type: 'string',
-      value: 'AudioEvent',
-    },
-    ':content-type': {
-      type: 'string',
-      value: 'application/octet-stream',
-    },
-    // hey: { type: 'string', value: 'yo' },
-  })
-  const length = headersBytes.byteLength + chunk.byteLength + 16
-  const bytes = new Uint8Array(length)
-  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-  const checksum = new Crc32()
+    view.setUint32(0, length, false)
+    view.setUint32(4, headersBytes.byteLength, false)
+    view.setUint32(8, checksum.update(bytes.subarray(0, 8)).digest(), false)
+    bytes.set(headersBytes, 12)
+    bytes.set(chunk, headersBytes.byteLength + 12)
+    view.setUint32(
+      length - 4,
+      checksum.update(bytes.subarray(8, length - 4)).digest(),
+      false
+    )
+    this.websocket.send(bytes)
+  }
 
-  view.setUint32(0, length, false)
-  view.setUint32(4, headersBytes.byteLength, false)
-  view.setUint32(8, checksum.update(bytes.subarray(0, 8)).digest(), false)
-  bytes.set(headersBytes, 12)
-  bytes.set(chunk, headersBytes.byteLength + 12)
-  view.setUint32(
-    length - 4,
-    checksum.update(bytes.subarray(8, length - 4)).digest(),
-    false
-  )
-  this.websocket.send(bytes)
-}
+  close() {
+    this.websocket.close()
+    this.emit('close')
+  }
 
-TranscribeStream.prototype.close = function () {
-  this.websocket.close()
-  this.emit('close')
 }
 
 /**
@@ -216,22 +219,6 @@ const marshalHeaders = function (headers) {
 /**
  * @synopsis
  * ```coffeescript [specscript]
- * marshalStringHeaderValue(value string) -> bytes Uint8Array
- * ```
- */
-const marshalStringHeaderValue = function (value) {
-  const buffer = Buffer.from(value, 'utf8')
-  const view = new DataView(new ArrayBuffer(3 + buffer.byteLength))
-  view.setUint8(0, 7) // string value type
-  view.setUint16(1, buffer.byteLength, false)
-  const result = new Uint8Array(view.buffer)
-  result.set(buffer, 3)
-  return result
-}
-
-/**
- * @synopsis
- * ```coffeescript [specscript]
  * unmarshalMessage(chunk ArrayBuffer) -> message {
  *   headers: DataView,
  *   body: Uint8Array,
@@ -257,6 +244,22 @@ const unmarshalMessage = function (chunk) {
       )
     ))),
   }
+}
+
+/**
+ * @synopsis
+ * ```coffeescript [specscript]
+ * marshalStringHeaderValue(value string) -> bytes Uint8Array
+ * ```
+ */
+const marshalStringHeaderValue = function (value) {
+  const buffer = Buffer.from(value, 'utf8')
+  const view = new DataView(new ArrayBuffer(3 + buffer.byteLength))
+  view.setUint8(0, 7) // string value type
+  view.setUint16(1, buffer.byteLength, false)
+  const result = new Uint8Array(view.buffer)
+  result.set(buffer, 3)
+  return result
 }
 
 /**
