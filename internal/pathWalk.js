@@ -1,5 +1,6 @@
 require('rubico/global')
 const fs = require('fs/promises')
+const { minimatch } = require('minimatch')
 const pathResolve = require('./pathResolve')
 const isArray = require('./isArray')
 
@@ -20,29 +21,36 @@ const isArray = require('./isArray')
  * }) // -> Promise<paths Array<string>>
  * ```
  */
-const pathWalk = function (path, options) {
-  const ignore = new Set(get('ignore', [])(options))
-  return pipe([
-    pathResolve,
-    tryCatch(
-      curry.arity(2, fs.readdir, __, { withFileTypes: true }),
-      () => []),
+const pathWalk = async function (path, options = {}) {
+  const { ignore = [] } = options
+  const absPath = pathResolve(path)
+  const dirents = await fs.readdir(absPath, { withFileTypes: true })
+  const result = []
 
-    flatMap(dirent => {
-      const direntName = dirent.name,
-        direntPath = pathResolve(path, direntName)
-      if (
-        ignore.size > 0
-          && (ignore.has(direntName) || ignore.has(direntPath))
-      ) {
-        return []
+  for (const dirent of dirents) {
+    const dirName = dirent.name
+    const dirPath = pathResolve(path, dirName)
+    let shouldIgnore = false
+    for (const pattern of ignore) {
+      if (minimatch(dirPath, pattern) || minimatch(dirName, pattern)) {
+        shouldIgnore = true
+        break
       }
-      if (dirent.isDirectory()) {
-        return pathWalk(direntPath)
-      }
-      return [direntPath]
-    }),
-  ])(path)
+    }
+
+    if (shouldIgnore) {
+      continue
+    }
+
+    if (dirent.isDirectory()) {
+      const subPaths = await pathWalk(dirPath, options)
+      result.push(...subPaths)
+    } else {
+      result.push(dirPath)
+    }
+  }
+
+  return result
 }
 
 module.exports = pathWalk

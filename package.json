@@ -33,6 +33,7 @@
     "aws-sdk": "^2.1123.0",
     "bcrypt": "^5.1.0",
     "ioredis": "^4.19.0",
+    "minimatch": "^9.0.3",
     "mongodb": "^3.6.3",
     "node-fetch": "^2.6.1",
     "rubico": "latest",
