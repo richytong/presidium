@@ -9,13 +9,27 @@ const streamToString = require('./internal/streamToString')
  * @synopsis
  * ```coffeescript [specscript]
  * EcrLoginPassword(options {
+ *   awsAccessKeyId?: string,
+ *   awsSecretAccessKey?: string,
+ *   awsProfile?: string,
  *   awsRegion: string,
- *   awsProfile: string,
  * }) -> Promise<password string>
  * ```
  */
 
-const EcrLoginPassword = async function ({ awsRegion, awsProfile }) {
+const EcrLoginPassword = async function ({
+  awsAccessKeyId,
+  awsSecretAccessKey,
+  awsRegion,
+  awsProfile,
+}) {
+  if (awsAccessKeyId != null && awsSecretAccessKey != null) {
+    const childprocess = exec(`
+AWS_ACCESS_KEY_ID=${awsAccessKeyId} AWS_SECRET_ACCESS_KEY=${awsSecretAccessKey} aws ecr --region ${awsRegion} get-login-password
+    `.trim())
+    return streamToString(childprocess.stdout).then(callProp('trim'))
+  }
+
   const childprocess = exec(`
 aws ecr --profile ${awsProfile} --region ${awsRegion} get-login-password
   `.trim())
