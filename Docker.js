@@ -332,6 +332,7 @@ Docker.prototype.removeImage = function dockerRemoveImage(image, options) {
  *     source: string, // name of volume
  *     target: string, // mounted path inside container
  *     readonly: boolean,
+ *     type?: string, // default volume
  *   }>|Array<string>, // '<source>:<target>[:readonly]'
  *
  *   // Dockerfile defaults

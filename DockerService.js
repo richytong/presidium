@@ -237,6 +237,7 @@ DockerService.prototype.synchronize = function dockerServiceSynchronize() {
  *     source: string, // name of volume
  *     target: string, // mounted path inside container
  *     readonly: boolean,
+ *     type?: string, // default volume
  *   }>|Array<string>, // '<source>:<target>[:readonly]'
  *
  *   cmd: Array<string|number>, // CMD
