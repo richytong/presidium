@@ -357,7 +357,12 @@ S3Bucket.prototype.getObjectStream = async function getObjectStream(
  */
 S3Bucket.prototype.listObjects = async function s3BucketListObjectsV2(options) {
   await this.ready
-  return this.s3.listObjectsV2(this.name, options)
+  return this.s3.listObjectsV2(this.name, options).catch(error => {
+    if (error.retryable) {
+      return this.listObjects(options)
+    }
+    throw error
+  })
 }
 
 module.exports = S3Bucket
