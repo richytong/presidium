@@ -4,9 +4,9 @@ const DynamoStream = require('./DynamoStream')
 const ElasticsearchIndex = require('./ElasticsearchIndex')
 const S3Bucket = require('./S3Bucket')
 const KinesisStream = require('./KinesisStream')
-const teardown = require('./teardown')
+const Dependency = require('./Dependency')
 
-const test = new Test('teardown', async function () {
+const test = new Test('Dependency.teardown', async function () {
   const myDynamoTable = new DynamoTable({
     name: 'my_dynamo_table',
     key: [{ a: 'string' }],
@@ -48,12 +48,12 @@ const test = new Test('teardown', async function () {
   })
   await myKinesisStream.ready
 
-  await teardown(null)
-  await teardown(myDynamoTable)
-  await teardown(myDynamoStream)
-  await teardown(myElasticsearchIndex)
-  await teardown(myS3Bucket)
-  await teardown(myKinesisStream)
+  await Dependency.teardown(null)
+  await Dependency.teardown(myDynamoTable)
+  await Dependency.teardown(myDynamoStream)
+  await Dependency.teardown(myElasticsearchIndex)
+  await Dependency.teardown(myS3Bucket)
+  await Dependency.teardown(myKinesisStream)
 }).case()
 
 if (process.argv[1] == __filename) {
