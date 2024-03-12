@@ -36,7 +36,7 @@ const test = new Test('Archive', Archive)
 })
 
 .case({
-  Dockerfile: 'FROM busybox:1.32'
+  Dockerfile: 'FROM busybox:1.32',
   '.aws/credentials': '[claimyr]\naccessKeyId\nsecretAccessKey',
 }, async archive => {
   const pack = await archive.tar(`${pathResolve(__dirname, 'internal')}/`, {
