@@ -335,6 +335,7 @@ EXPOSE 8888`,
         }],
         memory: 512e6, // bytes
         cpus: 2,
+        gpus: 'all',
         restart: 'on-failure:5',
 
         healthCmd: ['wget', '--no-verbose', '--tries=1', '--spider', 'localhost:3000'],
@@ -364,6 +365,10 @@ EXPOSE 8888`,
         assert.equal(data.Spec.Labels.foo, 'bar')
         assert.equal(data.Spec.TaskTemplate.Resources.Reservations.NanoCPUs, 2000000000)
         assert.equal(data.Spec.TaskTemplate.Resources.Reservations.MemoryBytes, 512000000)
+        assert.equal(
+          data.Spec.TaskTemplate.Resources.Reservations.GenericResources[0].DiscreteResourceSpec.Kind,
+          'gpu',
+        )
       })
 
       this.serviceId1 = serviceId

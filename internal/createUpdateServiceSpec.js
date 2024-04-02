@@ -130,7 +130,7 @@ const createUpdateServiceSpec = function (options) {
   if (options.restartDelay != null) {
     result.TaskTemplate.RestartPolicy.Delay = Number(options.restartDelay)
   }
-  if (or([has('memory'), has('cpus')])(options)) {
+  if (or(options, [has('memory'), has('cpus'), has('gpus')])) {
     result.TaskTemplate.Resources = {}
     result.TaskTemplate.Resources.Reservations = {}
     result.TaskTemplate.Resources.Limits = {}
@@ -146,6 +146,15 @@ const createUpdateServiceSpec = function (options) {
       Number(options.cpus * 1e9)
     result.TaskTemplate.Resources.Limits.NanoCPUs =
       Number(options.cpus * 1e9)
+  }
+  if (options.gpus != null) {
+    result.TaskTemplate.Resources.Reservations.GenericResources = []
+    result.TaskTemplate.Resources.Reservations.GenericResources.push({
+      DiscreteResourceSpec: {
+        Kind: 'gpu',
+        Value: 1,
+      },
+    })
   }
   if (or([has('logDriver'), has('logDriverOptions')])(options)) {
     result.TaskTemplate.LogDriver = {}

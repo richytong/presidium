@@ -26,7 +26,7 @@ const dockerServiceOptions = [
   'rollbackParallelism', 'rollbackDelay',
   'rollbackFailureAction', 'rollbackMonitor', 'rollbackMaxFailureRatio',
   'username', 'password', 'email', 'serveraddress', 'identitytoken',
-  'network', 'memory', 'cpus',
+  'network', 'memory', 'cpus', 'gpus',
   'force',
 ]
 

@@ -246,6 +246,29 @@ const test = new Test('createUpdateServiceSpec', createUpdateServiceSpec)
   spec: {
     TaskTemplate: {},
   },
+  gpus: 'all',
+}, {
+  Name: 'my-service',
+  TaskTemplate: {
+    Resources: {
+      Limits: {},
+      Reservations: {
+        GenericResources: [{
+          DiscreteResourceSpec: {
+            Kind: 'gpu',
+            Value: 1,
+          },
+        }],
+      },
+    },
+  },
+})
+
+.case({
+  serviceName: 'my-service',
+  spec: {
+    TaskTemplate: {},
+  },
   logDriver: 'json-file',
   logDriverOptions: {
     'max-size': '10m',

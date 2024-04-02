@@ -328,6 +328,7 @@ Docker.prototype.removeImage = function dockerRemoveImage(image, options) {
  *   healthStartPeriod: >=1e6, // nanoseconds to wait on container init before starting first healthcheck
  *   memory: number, // memory limit in bytes
  *   cpus: number, // number of cpus
+ *   gpus?: 'all', // expose gpus
  *   mounts: Array<{
  *     source: string, // name of volume
  *     target: string, // mounted path inside container
@@ -468,6 +469,7 @@ Docker.prototype.createContainer = function dockerCreateContainer(
           })(options.restart.split(':')),
         },
         ...options.rm && { AutoRemove: options.rm },
+
       },
     }),
 
@@ -867,6 +869,15 @@ Docker.prototype.createService = function dockerCreateService(service, options) 
             } : {},
             ...options.cpus ? {
               NanoCPUs: Number(options.cpus * 1e9),
+            } : {},
+
+            ...options.gpus == 'all' ? {
+              GenericResources: [{
+                DiscreteResourceSpec: {
+                  Kind: 'gpu',
+                  Value: 1,
+                },
+              }],
             } : {},
           }, // bytes
         },
