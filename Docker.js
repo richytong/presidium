@@ -636,6 +636,9 @@ Docker.prototype.joinSwarm = async function dockerJoinSwarm(
   address, token, options = {}
 ) {
   return this.http.post('/swarm/join', {
+    headers: {
+      'Content-Type': 'application/json',
+    },
     body: stringifyJSON({
       JoinToken: token,
       AdvertiseAddr: get('advertiseAddr', address)(options),
