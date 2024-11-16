@@ -29,6 +29,7 @@
     "types"
   ],
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.693.0",
     "@elastic/elasticsearch": "^7.10.0",
     "aws-sdk": "^2.1123.0",
     "bcrypt": "^5.1.0",
@@ -39,7 +40,7 @@
     "rubico": "latest",
     "tar-stream": "^2.1.4",
     "thunk-test": "latest",
-    "ws": "^8.16.0"
+    "ws": "^8.18.0"
   },
   "scripts": {
     "test": "node test.js",
@@ -48,6 +49,7 @@
   "devDependencies": {
     "eslint": "^7.13.0",
     "glob": "^7.1.6",
+    "mocha": "^10.8.2",
     "nyc": "^15.1.0",
     "wavefile": "^11.0.0"
   }
