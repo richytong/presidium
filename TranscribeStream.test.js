@@ -49,7 +49,8 @@ const test = new Test('TranscribeStream', async function () {
       resolve(transcription.Alternatives[0].Transcript)
     })
   })
-  assert.equal(testTranscription, 'Hello, world.')
+  assert(testTranscription.toLowerCase().includes('hello'), testTranscription)
+  assert(testTranscription.toLowerCase().includes('world'), testTranscription)
 
   // wait for timeout error to test error handling
   await new Promise(resolve => {

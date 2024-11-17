@@ -40,7 +40,7 @@ Dependency.teardown = async function teardown(dependency) {
     await dependency.delete()
   }
 
-  dependency.timers?.forEach(clearInterval)
+  dependency?.timers?.forEach(clearInterval)
 }
 
 module.exports = Dependency

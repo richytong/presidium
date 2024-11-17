@@ -9,7 +9,7 @@ const DynamoTableScanIterator = require('./DynamoTableScanIterator')
 
 const test = new Test('DynamoTableScanIterator', async function () {
   const testTable = new DynamoTable({
-    name: 'test_table',
+    name: 'test_table_scan_iterator',
     key: [{ id: 'string' }],
     endpoint: 'http://localhost:8000/',
     region: 'dynamodblocal',
