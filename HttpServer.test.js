@@ -12,14 +12,15 @@ const test = Test('HttpServer', HttpServer)
   response.write('hello')
   response.end()
 }, async server => {
-  await new Promise(resolve => {
-    server.listen(3001, async () => {
-      const response0 = await fetch('http://localhost:3001')
-      assert.strictEqual(await response0.text(), 'hello')
-      assert.strictEqual(response0.headers.get('content-type'), 'text/plain')
-      server.close(resolve)
-    })
+  server.listen(3001, async () => {
+    console.log('Test server listening on port 3001')
   })
+  await server.ready
+
+  const response0 = await fetch('http://localhost:3001')
+  assert.strictEqual(await response0.text(), 'hello')
+  assert.strictEqual(response0.headers.get('content-type'), 'text/plain')
+  server.close()
 })
 
 if (process.argv[1] == __filename) {

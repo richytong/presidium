@@ -58,7 +58,18 @@ const StringStream = require('./StringStream')
  * ```
  */
 const HttpServer = function (httpHandler) {
-  return http.createServer(httpHandler)
+  const server = http.createServer(httpHandler)
+
+  server.ready = new Promise(resolve => {
+    server._listeningResolve = resolve
+  })
+  const originalListen = server.listen
+  server.listen = (...args) => {
+    server._listeningResolve()
+    return originalListen.apply(server, args)
+  }
+
+  return server
 }
 
 module.exports = HttpServer
