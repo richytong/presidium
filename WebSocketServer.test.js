@@ -5,6 +5,7 @@ const fs = require('fs')
 const WebSocketServer = require('./WebSocketServer')
 const WebSocket = require('./WebSocket')
 const https = require('https')
+const sleep = require('./internal/sleep')
 
 const test0 = new Test('WebSocketServer', function (socketHandler, httpHandler) {
   this.clientMessages = []
@@ -97,7 +98,11 @@ const test1 = new Test(async () => {
   }
 
   { // ssl
-    const server = new WebSocketServer(websocket => {}, {
+    const server = new WebSocketServer(websocket => {
+      websocket.on('message', message => {
+        websocket.send(message)
+      })
+    }, {
       ssl: true,
       cert: fs.readFileSync('./internal/all/my-private-root-ca.cert.pem'),
       key: fs.readFileSync('./internal/all/my-private-root-ca.privkey.pem'),
@@ -116,6 +121,25 @@ const test1 = new Test(async () => {
       const text = await response.text()
       assert.equal(text, 'ok')
     })
+
+    const websocket = new WebSocket('wss://localhost:1339/', { agent })
+    await new Promise(resolve => {
+      websocket.on('open', () => {
+        resolve()
+      })
+    })
+
+    const p = new Promise(resolve => {
+      websocket.on('message', message => {
+        console.log('received', message)
+        resolve(message)
+      })
+    })
+    websocket.send('test')
+    const message = await p
+    assert.equal(message.toString('utf8'), 'test')
+
+    websocket.close()
     server.close()
   }
 }).case()
