@@ -1,7 +1,4 @@
 const http = require('http')
-const zlib = require('zlib')
-const isPromise = require('./internal/isPromise')
-const StringStream = require('./StringStream')
 
 /**
  * @name HttpServer

@@ -1,10 +1,12 @@
 const assert = require('assert')
 const Test = require('thunk-test')
 const fetch = require('node-fetch')
+const fs = require('fs')
 const WebSocketServer = require('./WebSocketServer')
 const WebSocket = require('./WebSocket')
+const https = require('https')
 
-const test = Test('WebSocketServer', function (socketHandler, httpHandler) {
+const test0 = new Test('WebSocketServer', function (socketHandler, httpHandler) {
   this.clientMessages = []
   this.serverMessages = []
   return WebSocketServer(socketHandler, httpHandler)
@@ -80,6 +82,48 @@ const test = Test('WebSocketServer', function (socketHandler, httpHandler) {
   assert.deepEqual(this.clientMessages, ['hello', 'world', 'world', 'world', 'world'])
   assert.deepEqual(this.serverMessages, ['world', 'world', 'world', 'world'])
 })
+
+const test1 = new Test(async () => {
+  { // default http handler from options
+    const server = new WebSocketServer(websocket => {}, {})
+    await new Promise(resolve => {
+      server.listen(1338, resolve)
+    })
+    await fetch('http://localhost:1338').then(async response => {
+      const text = await response.text()
+      assert.equal(text, 'ok')
+    })
+    server.close()
+  }
+
+  { // ssl
+    const server = new WebSocketServer(websocket => {}, {
+      ssl: true,
+      cert: fs.readFileSync('./internal/all/my-private-root-ca.cert.pem'),
+      key: fs.readFileSync('./internal/all/my-private-root-ca.privkey.pem'),
+      rejectUnauthorized: true,
+    })
+    await new Promise(resolve => {
+      server.listen(1339, () => {
+        console.log('server listening on 1339')
+        resolve()
+      })
+    })
+    const agent = new https.Agent({
+      rejectUnauthorized: false,
+    })
+    await fetch('https://localhost:1339', { agent }).then(async response => {
+      const text = await response.text()
+      assert.equal(text, 'ok')
+    })
+    server.close()
+  }
+}).case()
+
+const test = Test.all([
+  test0,
+  test1,
+])
 
 if (process.argv[1] == __filename) {
   test()

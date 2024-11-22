@@ -1,4 +1,6 @@
+require('rubico/global')
 const HttpServer = require('./HttpServer')
+const HttpsServer = require('./HttpsServer')
 const WebSocket = require('ws')
 const noop = require('rubico/x/noop')
 
@@ -48,9 +50,15 @@ const healthyHttpHandler = function (request, response) {
  */
 
 const WebSocketServer = function (
-  socketHandler, httpHandler = healthyHttpHandler
+  socketHandler, options = {},
 ) {
-  const httpServer = new HttpServer(httpHandler)
+  const httpHandler =
+    typeof options == 'function' ? options
+    : options.httpHandler ?? healthyHttpHandler
+
+  const httpServer =
+    options.ssl ? new HttpsServer(pick(options, ['key', 'cert']), httpHandler)
+    : new HttpServer(httpHandler)
   const webSocketServer = new WebSocket.Server({ server: httpServer })
   if (socketHandler != null) {
     webSocketServer.on('connection', socketHandler.bind(webSocketServer))
