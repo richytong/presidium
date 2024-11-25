@@ -27,9 +27,22 @@ const healthyHttpHandler = function (request, response) {
  *
  * @synopsis
  * ```coffeescript [specscript]
+ * WebSocketServer(socketHandler (socket engine.Socket)=>Promise<>|())
+ *   -> server WebSocketServer
+ *
  * WebSocketServer(
  *   socketHandler (socket engine.Socket)=>Promise<>|(),
+ *   options: {
+ *     ssl: boolean,
+ *     key: string,
+ *     cert: string,
+ *   },
  * ) -> server WebSocketServer
+ *
+ * WebSocketServer(
+ *   socketHandler (socket engine.Socket)=>Promise<>|(),
+ *   httpHandler: function,
+ * * ) -> server WebSocketServer
  * ```
  *
  * @description
