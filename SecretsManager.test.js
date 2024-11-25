@@ -38,9 +38,12 @@ const test = new Test('SecretsManager', async function () {
   }
 
   try {
-    const result = await secretsManager.getSecretValue(mySecret.name)
-    assert.equal(result.Name, mySecret.name)
-    assert.equal(result.SecretString, mySecret.value)
+    const result0 = await secretsManager.getSecretValue(mySecret.name)
+    assert.equal(result0.Name, mySecret.name)
+    assert.equal(result0.SecretString, mySecret.value)
+
+    const result1 = await secretsManager.getSecretString(mySecret.name)
+    assert.equal(result1, mySecret.value)
   } catch (error) {
     if (error.message.includes('marked for deletion')) {
       didRerunTooSoon = true

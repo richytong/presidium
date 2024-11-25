@@ -72,6 +72,27 @@ SecretsManager.prototype.getSecretValue = function (name) {
 }
 
 /**
+ * @name SecretsManager.prototype.getSecretValue
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * new SecretsManager(...).getSecretValue(name string) -> result Promise<{
+ *   ARN: string,
+ *   CreatedDate: Date,
+ *   Name: string,
+ *   SecretString: string,
+ *   VersionId: string,
+ *   VersionStages: Array<string>,
+ * }>
+ * ```
+ */
+SecretsManager.prototype.getSecretString = function (name) {
+  return this.awsSecretsManager.getSecretValue({
+    SecretId: name,
+  }).promise().then(get('SecretString'))
+}
+
+/**
  * @name SecretsManager.prototype.deleteSecret
  *
  * @synopsis
