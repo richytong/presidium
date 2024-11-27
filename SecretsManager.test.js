@@ -27,8 +27,14 @@ const test = new Test('SecretsManager', async function () {
   let didRerunTooSoon = false
 
   try {
-    const result = await secretsManager.createSecret(mySecret.name, mySecret.value)
-    assert.equal(result.Name, mySecret.name)
+    const result0 = await secretsManager.createSecret(mySecret.name, mySecret.value)
+    assert.equal(result0.Name, mySecret.name)
+
+    mySecret.value = 'helloworld2'
+
+    // should update
+    const result1 = await secretsManager.putSecret(mySecret.name, mySecret.value)
+    assert.equal(result1.Name, mySecret.name)
   } catch (error) {
     if (error.message.includes('scheduled for deletion')) {
       didRerunTooSoon = true

@@ -47,7 +47,44 @@ SecretsManager.prototype.createSecret = function (name, secretString) {
   return this.awsSecretsManager.createSecret({
     Name: name,
     SecretString: secretString,
+  }).promise().catch(async error => {
+    if (error.name == 'ResourceExistsException') {
+      const secretValue = await this.getSecretValue(name)
+      return this.awsSecretsManager.updateSecret({
+        SecretId: secretValue.ARN,
+        SecretString: secretString,
+      }).promise()
+    } else {
+      throw error
+    }
+  })
+}
+
+/**
+ * @name SecretsManager.prototype.updateSecret
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * new SecretsManager(...).updateSecret(
+ *   name string,
+ *   secretString string,
+ * ) -> result Promise<{}>
+ * ```
+ */
+SecretsManager.prototype.updateSecret = function (name, secretString) {
+  return this.awsSecretsManager.updateSecret({
+    Name: name,
+    SecretString: secretString,
   }).promise()
+}
+
+/**
+ * @name SecretsManager.prototype.putSecret
+ *
+ * @alias SecretsManager.prototype.createSecret
+ */
+SecretsManager.prototype.putSecret = function (...args) {
+  return this.createSecret(...args)
 }
 
 /**
