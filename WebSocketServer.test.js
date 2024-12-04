@@ -104,8 +104,8 @@ const test1 = new Test(async () => {
       })
     }, {
       ssl: true,
-      cert: fs.readFileSync('./internal/all/my-private-root-ca.cert.pem'),
-      key: fs.readFileSync('./internal/all/my-private-root-ca.privkey.pem'),
+      cert: fs.readFileSync('./internal/fixtures/my-private-root-ca.cert.pem'),
+      key: fs.readFileSync('./internal/fixtures/my-private-root-ca.privkey.pem'),
       rejectUnauthorized: true,
     })
     await new Promise(resolve => {

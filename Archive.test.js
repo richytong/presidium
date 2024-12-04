@@ -25,9 +25,12 @@ const test = new Test('Archive', Archive)
 .case({
   Dockerfile: 'FROM node:15-alpine'
 }, async archive => {
-  const pack = await archive.tar(pathResolve(__dirname, 'internal'))
+  const ignore = ['fixtures']
+  const pack = await archive.tar(pathResolve(__dirname, 'internal'), { ignore })
   const extracted = await archive.untar(pack)
   const dir = await fs.readdir(pathResolve(__dirname, 'internal'))
+    .then(filter(n => !ignore.includes(n)))
+  const extractedKeys = [...extracted.keys()]
   assert.equal(extracted.size, dir.length + 1) // extra Dockerfile
   assert(extracted.has('Dockerfile'))
   assert.equal(
