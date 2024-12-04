@@ -38,12 +38,12 @@ const DynamoStream = function (options) {
   if (this == null || this.constructor != DynamoStream) {
     return new DynamoStream(options)
   }
-  const awsCreds = pick([
+  const awsCreds = pick(options, [
     'accessKeyId',
     'secretAccessKey',
     'region',
     'endpoint',
-  ])(options)
+  ])
   this.table = options.table
   this.getRecordsLimit = options.getRecordsLimit ?? 1000
   this.getRecordsInterval = options.getRecordsInterval ?? 1000
