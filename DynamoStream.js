@@ -183,14 +183,13 @@ DynamoStream.prototype.getRecords = async function* getRecords(
 const SymbolUpdateShards = Symbol('UpdateShards')
 
 DynamoStream.prototype[Symbol.asyncIterator] = async function* () {
-  let shards = await pipe([
-    always(this.getStreams()),
+  let shards = await pipe(this.getStreams(), [
     flatMap(Stream => this.getShards(Stream)),
     map(assign({
       ShardIteratorType: always(this.shardIteratorType),
     })),
     transform(Transducer.passthrough, []),
-  ])()
+  ])
   let muxAsyncIterator = Mux.race([
     ...shards.map(Shard => this.getRecords(Shard)),
     (async function* UpdateShardsGenerator() {
@@ -206,13 +205,11 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* () {
   while (!this.closed) {
     const { value, done } = await muxAsyncIterator.next()
     if (value == SymbolUpdateShards) {
-      const latestShards = await pipe([
-        always(this.getStreams()),
+      const latestShards = await pipe(this.getStreams(), [
         flatMap(Stream => this.getShards(Stream)),
         transform(Transducer.passthrough, []),
-      ])()
-      const newShards = pipe([
-        always(shards),
+      ])
+      const newShards = pipe(shards, [
         differenceWith(
           (ShardA, ShardB) => ShardA.ShardId == ShardB.ShardId,
           latestShards,
@@ -220,7 +217,7 @@ DynamoStream.prototype[Symbol.asyncIterator] = async function* () {
         map(assign({
           ShardIteratorType: always('TRIM_HORIZON'),
         })),
-      ])()
+      ])
 
       shards = latestShards
       if (newShards.length > 0) {
