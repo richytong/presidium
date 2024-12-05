@@ -407,8 +407,8 @@ class DynamoTableV2 {
     }
 
     const filterExpressionStatements =
-      options.filterExpression != null ? options.filterExpression.trim().split(/\s+AND\s+/)
-      : options.FilterExpression != null ? options.FilterExpression.trim().split(/\s+AND\s+/)
+      typeof options.filterExpression == 'string' ? options.filterExpression.trim().split(/\s+AND\s+/)
+      : typeof options.FilterExpression == 'string' ? options.FilterExpression.trim().split(/\s+AND\s+/)
       : []
     statementsIndex = -1
     while (++statementsIndex < filterExpressionStatements.length) {

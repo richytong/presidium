@@ -54,9 +54,8 @@ SecretsManager.prototype.createSecret = function (name, secretString) {
         SecretId: secretValue.ARN,
         SecretString: secretString,
       }).promise()
-    } else {
-      throw error
     }
+    throw error
   })
 }
 
