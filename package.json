@@ -29,7 +29,6 @@
     "types"
   ],
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.693.0",
     "@elastic/elasticsearch": "^7.10.0",
     "aws-sdk": "^2.1123.0",
     "bcrypt": "^5.1.0",
