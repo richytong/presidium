@@ -1,8 +1,4 @@
 require('rubico/global')
-const {
-  DynamoDBClient,
-  GetItemCommand,
-} = require('@aws-sdk/client-dynamodb')
 const DynamoDB = require('aws-sdk/clients/dynamodb')
 const Dynamo = require('./Dynamo')
 const hashJSON = require('./internal/hashJSON')
