@@ -1138,17 +1138,23 @@ const toArray = value => Array.isArray(value) ? value : [value]
  * ```coffeescript [specscript]
  * new Docker().listTasks(options {
  *   desiredState: 'running'|'shutdown'|'accepted'
+ *   service: string, // service name
  * }) -> Promise<HttpResponse>
  * ```
  */
 Docker.prototype.listTasks = async function listTasks(options = {}) {
-  return this.http.get(`/tasks?${
-    querystring.stringify({
-      filters: JSON.stringify(filter({
-        'desired-state': toArray(options.desiredState),
-      }, value => value != null)),
-    })
-  }`)
+  const filters = pipe({
+    'desired-state': options.desiredState,
+    service: options.service,
+  }, [
+    filter(value => value != null),
+    map(toArray),
+    JSON.stringify,
+  ])
+
+  const qs = querystring.stringify({ filters })
+
+  return this.http.get(`/tasks?${qs}`)
 }
 
 /**
