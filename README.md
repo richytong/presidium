@@ -234,3 +234,6 @@ const { DockerSwarm, DockerService } = require('presidium')
   await myService.ready // new nginx service is up running
 })()
 ```
+
+# Support
+ * minimum Node.js version: 16
