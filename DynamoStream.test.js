@@ -12,7 +12,11 @@ const ResourceNotFoundException = function (message) {
   return error
 }
 
-const test = Test('DynamoStream', DynamoStream)
+const test0 = Test('DynamoStream.handleGetRecordsError', DynamoStream.handleGetRecordsError)
+.case(new Error('Shard iterator has expired'), [])
+.throws(new Error('other'), new Error('other'))
+
+const test1 = Test('DynamoStream', DynamoStream)
 
 .before(async function () {
   const table = new DynamoTable({
@@ -319,6 +323,11 @@ const test = Test('DynamoStream', DynamoStream)
   await new Promise(resolve => setTimeout(thunkify(resolve, 'hey'), 1000))
   myStream.close()
 })
+
+const test = Test.all([
+  test0,
+  test1,
+])
 
 if (process.argv[1] == __filename) {
   test()

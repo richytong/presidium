@@ -82,6 +82,7 @@ const DynamoStream = function (options) {
       streamViewType: get('streamViewType', 'NEW_AND_OLD_IMAGES')(options)
     }) : {},
   ]))
+
   return this
 }
 
@@ -134,6 +135,15 @@ DynamoStream.prototype.getShards = async function* getShards(
   }
 }
 
+// handleGetRecordsError(error Error) -> ()
+const handleGetRecordsError = error => {
+  if (error.message.includes('Shard iterator has expired')) {
+    return []
+  }
+  throw error
+}
+DynamoStream.handleGetRecordsError = handleGetRecordsError
+
 // Shard => AsyncGenerator<Record>
 DynamoStream.prototype.getRecords = async function* getRecords(
   Shard,
@@ -155,7 +165,7 @@ DynamoStream.prototype.getRecords = async function* getRecords(
   let records = await this.retryGetRecords({
     ShardIterator: startingShardIterator,
     Limit: this.getRecordsLimit
-  })
+  }).catch(handleGetRecordsError)
 
   if (records.Records.length > 0) {
     yield* records.Records.map(assign({
@@ -169,7 +179,7 @@ DynamoStream.prototype.getRecords = async function* getRecords(
     records = await this.retryGetRecords({
       ShardIterator: records.NextShardIterator,
       Limit: this.getRecordsLimit
-    })
+    }).catch(handleGetRecordsError)
     if (records.Records.length > 0) {
       yield* records.Records.map(assign({
         table: always(this.table),
