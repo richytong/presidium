@@ -138,6 +138,7 @@ DynamoStream.prototype.getShards = async function* getShards(
 // handleGetRecordsError(error Error) -> ()
 const handleGetRecordsError = error => {
   if (error.message.includes('Shard iterator has expired')) {
+    console.error(error)
     return []
   }
   throw error
