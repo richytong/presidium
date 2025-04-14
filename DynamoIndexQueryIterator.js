@@ -10,6 +10,7 @@
  *   options? {
  *     batchLimit?: number,
  *     limit?: number,
+ *     filterExpression?: string,
  *   },
  * ) -> AsyncGenerator<DynamoItem>
  * ```
