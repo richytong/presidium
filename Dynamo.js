@@ -125,7 +125,7 @@ Dynamo.prototype.createTable = function createTable(
     TableName: tablename,
     KeySchema: Dynamo.KeySchema(primaryKey),
     AttributeDefinitions: Dynamo.AttributeDefinitions(primaryKey),
-    BillingMode: get('BillingMode', 'PROVISIONED')(options),
+    BillingMode: get(options, 'BillingMode', 'PAY_PER_REQUEST'),
   }
   if (params.BillingMode == 'PROVISIONED') {
     params.ProvisionedThroughput = get('ProvisionedThroughput', {
@@ -251,7 +251,7 @@ Dynamo.prototype.waitFor = async function waitFor(tablename, status) {
 
 Dynamo.prototype.createIndex = async function createIndex(tablename, index, options = {}) {
   const { Table } = await this.describeTable(tablename)
-  const BillingMode = Table.BillingModeSummary?.BillingMode ?? 'PROVISIONED'
+  const BillingMode = Table.BillingModeSummary?.BillingMode ?? 'PAY_PER_REQUEST'
   const params = {
     IndexName: Dynamo.Indexname(index),
     KeySchema: Dynamo.KeySchema(index),
