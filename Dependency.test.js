@@ -1,4 +1,5 @@
 const Test = require('thunk-test')
+const assert = require('assert')
 const DynamoTable = require('./DynamoTable')
 const DynamoStream = require('./DynamoStream')
 const ElasticsearchIndex = require('./ElasticsearchIndex')
@@ -48,12 +49,22 @@ const test = new Test('Dependency.teardown', async function () {
   })
   await myKinesisStream.ready
 
+  let didDestroyMyCache = false
+  const myCache = {
+    destroy() {
+      didDestroyMyCache = true
+    }
+  }
+
   await Dependency.teardown(null)
   await Dependency.teardown(myDynamoTable)
   await Dependency.teardown(myDynamoStream)
   await Dependency.teardown(myElasticsearchIndex)
   await Dependency.teardown(myS3Bucket)
   await Dependency.teardown(myKinesisStream)
+  await Dependency.teardown(myCache)
+  assert(didDestroyMyCache)
+
 }).case()
 
 if (process.argv[1] == __filename) {

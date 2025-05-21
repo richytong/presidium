@@ -39,6 +39,9 @@ Dependency.teardown = async function teardown(dependency) {
     dependency.close()
     await dependency.delete()
   }
+  else if (typeof dependency.destroy == 'function') {
+    await dependency.destroy()
+  }
 
   dependency?.timers?.forEach(clearInterval)
 }
