@@ -35,6 +35,24 @@ aws_secret_access_key = FFF
     assert.equal(awsCreds.secretAccessKey, 'FFF')
   }
 
+  {
+    process.env.AWS_ACCESS_KEY_ID = 'AA2'
+    process.env.AWS_SECRET_ACCESS_KEY = 'FF2'
+    const awsCreds = await AwsCredentials()
+    assert.equal(awsCreds.accessKeyId, 'AA2')
+    assert.equal(awsCreds.secretAccessKey, 'FF2')
+  }
+
+  {
+    process.env.AWS_ACCESS_KEY_ID = 'AA2'
+    process.env.AWS_SECRET_ACCESS_KEY = 'FF2'
+    process.env.AWS_REGION = 'us-east-2'
+    const awsCreds = await AwsCredentials()
+    assert.equal(awsCreds.accessKeyId, 'AA2')
+    assert.equal(awsCreds.secretAccessKey, 'FF2')
+    assert.equal(awsCreds.region, 'us-east-2')
+  }
+
   await fs.promises.rm(`${__dirname}/../.aws`, { recursive: true })
 }).case()
 

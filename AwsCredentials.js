@@ -24,6 +24,17 @@ const pathResolve = require('./internal/pathResolve')
  */
 
 const AwsCredentials = async function (options = {}) {
+  if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+    const awsCreds = {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    }
+    if (process.env.AWS_REGION) {
+      awsCreds.region = process.env.AWS_REGION
+    }
+    return awsCreds
+  }
+
   const profile = (
     typeof options == 'string' ? options : options.profile
   ) ?? 'default'
