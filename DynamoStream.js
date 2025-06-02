@@ -181,7 +181,10 @@ DynamoStream.prototype.getRecords = async function* getRecords(
       ShardIterator: records.NextShardIterator,
       Limit: this.getRecordsLimit
     }).catch(handleGetRecordsError)
-    if (records.Records.length > 0) {
+    if (records.Records == null) {
+      console.error(`DynamoStream: records.Records undefined: ${records}`)
+      break
+    } else if (records.Records.length > 0) {
       yield* records.Records.map(assign({
         table: always(this.table),
         shardId: always(Shard.ShardId),
