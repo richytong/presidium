@@ -8,22 +8,16 @@ const pathResolve = require('./internal/pathResolve')
  *
  * @synopsis
  * ```coffeescript [specscript]
- * AwsCredentials(options {
- *   profile?: string,
- *   credentialsFileDir?: string,
+ * AwsCredentials(profile string, options? {
+ *   credentialsFilename?: string,
  * }) -> awsCreds {
- *   accessKeyId: string,
- *   secretAccessKey: string,
- * }
- *
- * AwsCredentials(profile string) -> awsCreds {
  *   accessKeyId: string,
  *   secretAccessKey: string,
  * }
  * ```
  */
 
-const AwsCredentials = async function (options = {}) {
+const AwsCredentials = async function (profile, options = {}) {
   if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
     const awsCreds = {
       accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -35,16 +29,12 @@ const AwsCredentials = async function (options = {}) {
     return awsCreds
   }
 
-  const profile = (
-    typeof options == 'string' ? options : options.profile
-  ) ?? 'default'
-
-  let credentialsFileDir =
-    options.credentialsFileDir ?? pathResolve(process.cwd())
+  const credentialsFilename = options.credentialsFilename ?? 'credentials'
+  let credentialsFileDir = pathResolve(process.cwd())
   let lines = ''
   while (credentialsFileDir != '/') {
     const credentialsFilePath =
-      pathResolve(credentialsFileDir, '.aws/credentials')
+      pathResolve(credentialsFileDir, `.aws/${credentialsFilename}`)
     if (fs.existsSync(credentialsFilePath)) {
       lines = await (
         fs.promises.readFile(credentialsFilePath)

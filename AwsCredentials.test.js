@@ -4,6 +4,8 @@ const fs = require('fs')
 const AwsCredentials = require('./AwsCredentials')
 
 const test = new Test('AwsCredentials', async function () {
+  const credentialsFilename = 'credentials-test'
+
   try {
     await fs.promises.mkdir(`${__dirname}/../.aws`)
   } catch {
@@ -11,45 +13,36 @@ const test = new Test('AwsCredentials', async function () {
     await fs.promises.mkdir(`${__dirname}/../.aws`)
   }
 
-  await fs.promises.writeFile(`${__dirname}/../.aws/credentials`, `
+  await fs.promises.writeFile(`${__dirname}/../.aws/${credentialsFilename}`, `
+[default]
+aws_access_key_id = X
+aws_secret_access_key = X
+
 [presidium]
-aws_access_key_id = ***
-aws_secret_access_key = ***
+aws_access_key_id = AAA
+aws_secret_access_key = BBB
   `.trim())
 
   {
-    const awsCreds = await AwsCredentials('presidium')
-    console.log('awsCreds', awsCreds)
-    assert.equal(awsCreds.secretAccessKey.length, 3)
+    const awsCreds = await AwsCredentials('presidium', { credentialsFilename })
+    assert.equal(awsCreds.secretAccessKey, 'BBB')
   }
 
   {
-    const awsCreds = await AwsCredentials({ profile: 'presidium' })
-    assert.equal(awsCreds.accessKeyId.length, 3)
-    assert.equal(awsCreds.secretAccessKey.length, 3)
+    process.env.AWS_ACCESS_KEY_ID = 'AAAA'
+    process.env.AWS_SECRET_ACCESS_KEY = 'BBBB'
+    const awsCreds = await AwsCredentials('presidium', { credentialsFilename })
+    assert.equal(awsCreds.accessKeyId, 'AAAA')
+    assert.equal(awsCreds.secretAccessKey, 'BBBB')
   }
 
   {
-    const awsCreds = await AwsCredentials()
-    assert.equal(awsCreds.accessKeyId.length, 3)
-    assert.equal(awsCreds.secretAccessKey.length, 3)
-  }
-
-  {
-    process.env.AWS_ACCESS_KEY_ID = '****'
-    process.env.AWS_SECRET_ACCESS_KEY = '****'
-    const awsCreds = await AwsCredentials()
-    assert.equal(awsCreds.accessKeyId.length, 4)
-    assert.equal(awsCreds.secretAccessKey.length, 4)
-  }
-
-  {
-    process.env.AWS_ACCESS_KEY_ID = '****'
-    process.env.AWS_SECRET_ACCESS_KEY = '****'
+    process.env.AWS_ACCESS_KEY_ID = 'AAAA'
+    process.env.AWS_SECRET_ACCESS_KEY = 'BBBB'
     process.env.AWS_REGION = 'us-east-2'
-    const awsCreds = await AwsCredentials()
-    assert.equal(awsCreds.accessKeyId.length, 4)
-    assert.equal(awsCreds.secretAccessKey.length, 4)
+    const awsCreds = await AwsCredentials('presidium', { credentialsFilename })
+    assert.equal(awsCreds.accessKeyId, 'AAAA')
+    assert.equal(awsCreds.secretAccessKey, 'BBBB')
     assert.equal(awsCreds.region, 'us-east-2')
   }
 
