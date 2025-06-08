@@ -29,12 +29,13 @@ const AwsCredentials = async function (profile, options = {}) {
     return awsCreds
   }
 
+  const credentialsFileDirname = options.credentialsFileDirname ?? '.aws'
   const credentialsFilename = options.credentialsFilename ?? 'credentials'
   let credentialsFileDir = pathResolve(process.cwd())
   let lines = ''
   while (credentialsFileDir != '/') {
     const credentialsFilePath =
-      pathResolve(credentialsFileDir, `.aws/${credentialsFilename}`)
+      pathResolve(credentialsFileDir, `${credentialsFileDirname}/${credentialsFilename}`)
     if (fs.existsSync(credentialsFilePath)) {
       lines = await (
         fs.promises.readFile(credentialsFilePath)
