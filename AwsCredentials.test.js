@@ -19,6 +19,7 @@ aws_secret_access_key = FFF
 
   {
     const awsCreds = await AwsCredentials('default')
+    console.log('awsCreds', awsCreds)
     assert.equal(awsCreds.accessKeyId, 'AAA')
     assert.equal(awsCreds.secretAccessKey, 'FFF')
   }
