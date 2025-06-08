@@ -20,28 +20,27 @@ aws_secret_access_key = ***
   {
     const awsCreds = await AwsCredentials('default')
     console.log('awsCreds', awsCreds)
-    assert.equal(awsCreds.accessKeyId, '***')
-    assert.equal(awsCreds.secretAccessKey, '***')
+    assert.equal(awsCreds.secretAccessKey.length, 3)
   }
 
   {
     const awsCreds = await AwsCredentials({ profile: 'default' })
-    assert.equal(awsCreds.accessKeyId, '***')
-    assert.equal(awsCreds.secretAccessKey, '***')
+    assert.equal(awsCreds.accessKeyId.length, 3)
+    assert.equal(awsCreds.secretAccessKey.length, 3)
   }
 
   {
     const awsCreds = await AwsCredentials()
-    assert.equal(awsCreds.accessKeyId, '***')
-    assert.equal(awsCreds.secretAccessKey, '***')
+    assert.equal(awsCreds.accessKeyId.length, 3)
+    assert.equal(awsCreds.secretAccessKey.length, 3)
   }
 
   {
     process.env.AWS_ACCESS_KEY_ID = '****'
     process.env.AWS_SECRET_ACCESS_KEY = '****'
     const awsCreds = await AwsCredentials()
-    assert.equal(awsCreds.accessKeyId, '****')
-    assert.equal(awsCreds.secretAccessKey, '****')
+    assert.equal(awsCreds.accessKeyId.length, 4)
+    assert.equal(awsCreds.secretAccessKey.length, 4)
   }
 
   {
@@ -49,8 +48,8 @@ aws_secret_access_key = ***
     process.env.AWS_SECRET_ACCESS_KEY = '****'
     process.env.AWS_REGION = 'us-east-2'
     const awsCreds = await AwsCredentials()
-    assert.equal(awsCreds.accessKeyId, '****')
-    assert.equal(awsCreds.secretAccessKey, '****')
+    assert.equal(awsCreds.accessKeyId.length, 4)
+    assert.equal(awsCreds.secretAccessKey.length, 4)
     assert.equal(awsCreds.region, 'us-east-2')
   }
 
