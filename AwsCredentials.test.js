@@ -13,44 +13,44 @@ const test = new Test('AwsCredentials', async function () {
 
   await fs.promises.writeFile(`${__dirname}/../.aws/credentials`, `
 [default]
-aws_access_key_id = AAA
-aws_secret_access_key = FFF
+aws_access_key_id = ***
+aws_secret_access_key = ***
   `.trim())
 
   {
     const awsCreds = await AwsCredentials('default')
     console.log('awsCreds', awsCreds)
-    assert.equal(awsCreds.accessKeyId, 'AAA')
-    assert.equal(awsCreds.secretAccessKey, 'FFF')
+    assert.equal(awsCreds.accessKeyId, '***')
+    assert.equal(awsCreds.secretAccessKey, '***')
   }
 
   {
     const awsCreds = await AwsCredentials({ profile: 'default' })
-    assert.equal(awsCreds.accessKeyId, 'AAA')
-    assert.equal(awsCreds.secretAccessKey, 'FFF')
+    assert.equal(awsCreds.accessKeyId, '***')
+    assert.equal(awsCreds.secretAccessKey, '***')
   }
 
   {
     const awsCreds = await AwsCredentials()
-    assert.equal(awsCreds.accessKeyId, 'AAA')
-    assert.equal(awsCreds.secretAccessKey, 'FFF')
+    assert.equal(awsCreds.accessKeyId, '***')
+    assert.equal(awsCreds.secretAccessKey, '***')
   }
 
   {
-    process.env.AWS_ACCESS_KEY_ID = 'AA2'
-    process.env.AWS_SECRET_ACCESS_KEY = 'FF2'
+    process.env.AWS_ACCESS_KEY_ID = '****'
+    process.env.AWS_SECRET_ACCESS_KEY = '****'
     const awsCreds = await AwsCredentials()
-    assert.equal(awsCreds.accessKeyId, 'AA2')
-    assert.equal(awsCreds.secretAccessKey, 'FF2')
+    assert.equal(awsCreds.accessKeyId, '****')
+    assert.equal(awsCreds.secretAccessKey, '****')
   }
 
   {
-    process.env.AWS_ACCESS_KEY_ID = 'AA2'
-    process.env.AWS_SECRET_ACCESS_KEY = 'FF2'
+    process.env.AWS_ACCESS_KEY_ID = '****'
+    process.env.AWS_SECRET_ACCESS_KEY = '****'
     process.env.AWS_REGION = 'us-east-2'
     const awsCreds = await AwsCredentials()
-    assert.equal(awsCreds.accessKeyId, 'AA2')
-    assert.equal(awsCreds.secretAccessKey, 'FF2')
+    assert.equal(awsCreds.accessKeyId, '****')
+    assert.equal(awsCreds.secretAccessKey, '****')
     assert.equal(awsCreds.region, 'us-east-2')
   }
 
