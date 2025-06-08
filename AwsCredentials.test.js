@@ -12,19 +12,19 @@ const test = new Test('AwsCredentials', async function () {
   }
 
   await fs.promises.writeFile(`${__dirname}/../.aws/credentials`, `
-[default]
+[presidium]
 aws_access_key_id = ***
 aws_secret_access_key = ***
   `.trim())
 
   {
-    const awsCreds = await AwsCredentials('default')
+    const awsCreds = await AwsCredentials('presidium')
     console.log('awsCreds', awsCreds)
     assert.equal(awsCreds.secretAccessKey.length, 3)
   }
 
   {
-    const awsCreds = await AwsCredentials({ profile: 'default' })
+    const awsCreds = await AwsCredentials({ profile: 'presidium' })
     assert.equal(awsCreds.accessKeyId.length, 3)
     assert.equal(awsCreds.secretAccessKey.length, 3)
   }
