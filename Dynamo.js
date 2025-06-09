@@ -403,6 +403,50 @@ Dynamo.AttributeValue = function DynamoAttributeValue(value) {
 }
 
 /**
+ * @name Dynamo.isDynamoDBJSON
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Dynamo.isDynamoDBJSON(o object) -> boolean
+ * ```
+ */
+Dynamo.isDynamoDBJSON = function isDynamoDBJSON(o) {
+  if (typeof o != 'object') {
+    return false
+  }
+  for (const key in o) {
+    const value = o[key]
+    if (Dynamo.isAttributeValue(value)) {
+      continue
+    }
+    return false
+  }
+  return true
+}
+
+/**
+ * @name Dynamo.isAttributeValue
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * Dynamo.isAttributeValue(o object) -> boolean
+ * ```
+ */
+Dynamo.isAttributeValue = function isAttributeValue(o) {
+  if (typeof o != 'object') {
+    return false
+  }
+  return (
+    'S' in o
+    || 'N' in o
+    || 'B' in o
+    || 'BOOL' in o
+    || 'NULL' in o
+    || 'M' in o
+  )
+}
+
+/**
  * @name Dynamo.attributeValueToJSON
  *
  * @synopsis

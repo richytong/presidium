@@ -6,28 +6,30 @@ const DynamoTable = require('./DynamoTable')
 
 const dynamo = Dynamo('http://localhost:8000/')
 
-const test = new Test('DynamoTable', DynamoTable)
-
-.before(async function () {
+const test = new Test('DynamoTable', async () => {
   this.dynamo = Dynamo({ endpoint: 'http://localhost:8000/' })
   await this.dynamo.deleteTable('test-tablename')
-})
+  await this.dynamo.waitFor('test-tablename', 'tableNotExists')
 
-.case({
-  name: 'test-tablename',
-  endpoint: 'http://localhost:8000/',
-  key: [{ id: 'string' }],
-}, async function (testTable) {
-  await testTable.ready
-  // if we created another instance of testTable it shouldn't have to create now
-  await new DynamoTable({
+  const testTable = new DynamoTable({
     name: 'test-tablename',
     endpoint: 'http://localhost:8000/',
     key: [{ id: 'string' }],
-  }).ready
+  })
+  await testTable.ready.then(({ message }) => {
+    assert.equal(message, 'created-table')
+  })
 
-  // .case('http://localhost:8000/', 'test-tablename', async function (testTable) {
-  await testTable.putItem({ id: '1', name: 'george' })
+  const testTable2 = new DynamoTable({
+    name: 'test-tablename',
+    endpoint: 'http://localhost:8000/',
+    key: [{ id: 'string' }],
+  })
+  await testTable2.ready.then(({ message }) => {
+    assert.equal(message, 'table-exists')
+  })
+
+  await testTable.putItem({ id: '1', name: 'john' })
   await testTable.putItem({ id: '2', name: 'henry' })
   await testTable.putItem({ id: '3', name: 'jude' })
   assert.rejects(
@@ -38,206 +40,241 @@ const test = new Test('DynamoTable', DynamoTable)
       tableName: 'test-tablename',
     },
   )
+
   assert.deepEqual(
     await testTable.getItem({ id: '1' }),
-    { Item: map(Dynamo.AttributeValue)({ id: '1', name: 'george' }) })
-  assert.rejects(
-    testTable.getItem({ id: 'not-exists' }),
     {
-      name: 'Error',
-      message: 'Item not found for {"id":"not-exists"}',
-      tableName: 'test-tablename',
-    },
-  )
-  assert.deepEqual(
-    await testTable.putItem({ id: '1', name: 'george' }, {
-      ReturnValues: 'ALL_OLD',
-      ReturnConsumedCapacity: 'TOTAL',
-    }),
-    {
-      Attributes: map(Dynamo.AttributeValue)({ id: '1', name: 'george' }),
-      ConsumedCapacity: { CapacityUnits: 1, TableName: 'test-tablename' },
-    })
-
-  assert.deepStrictEqual(
-    await testTable.updateItem({ id: '1' }, {
-      name: 'George III',
-      isKing: true,
-      ruleStart: 1820,
-      ruleEnd: null,
-    }, { ReturnValues: 'ALL_NEW' }),
-    {
-      Attributes: {
+      Item: {
         id: { S: '1' },
-        name: { S: 'George III' },
-        isKing: { BOOL: true },
-        ruleStart: { N: '1820' },
-        ruleEnd: { NULL: true },
+        name: { S: 'john' }
       },
     },
   )
 
-  assert.rejects(
-    testTable.updateItem({ id: 'not-exists' }, { a: 1 }, {
-      ConditionExpression: 'attribute_exists(id)',
-    }),
-    {
-      name: 'ConditionalCheckFailedException',
-      message: 'The conditional request failed',
-      tableName: 'test-tablename',
-    }
-  )
-
   assert.deepEqual(
-    await testTable.getItem({ id: '1' }),
+    await testTable.getItem({ id: { S: '3' } }),
     {
-      Item: map(Dynamo.AttributeValue)({
-        id: '1',
-        name: 'George III',
-        isKing: true,
-        ruleStart: 1820,
-        ruleEnd: null,
-      })
-    })
-
-  {
-    const data = await testTable.incrementItem(
-      { id: '1' },
-      { ruleStart: 1, newNumberField: 5, negativeNewNumberField: -1 },
-      { ReturnValues: 'UPDATED_NEW' },
-    )
-    assert.deepEqual(data, {
-      Attributes: {
-        newNumberField: { N: '5' },
-        negativeNewNumberField: { N: '-1' },
-        ruleStart: { N: '1821' },
-      }
-    })
-  }
-
-  assert.deepEqual(
-    await testTable.getItem({ id: '1' }),
-    {
-      Item: map(Dynamo.AttributeValue)({
-        id: '1',
-        name: 'George III',
-        isKing: true,
-        ruleStart: 1821,
-        ruleEnd: null,
-        newNumberField: 5,
-        negativeNewNumberField: -1,
-      })
-    })
-
-  assert.rejects(
-    () => testTable.incrementItem(
-      { id: '1' },
-      { ruleEnd: 10 },
-    ),
-    {
-      name: 'ValidationException',
-      message: 'An operand in the update expression has an incorrect data type',
-      tableName: 'test-tablename',
+      Item: {
+        id: { S: '3' },
+        name: { S: 'jude' }
+      },
     },
   )
 
-  assert.rejects(
-    testTable.incrementItem({ id: 'not-exists' }, { a: 1 }, {
-      ConditionExpression: 'attribute_exists(id)',
+  assert.deepEqual(
+    await testTable.getItemJSON({ id: '2' }),
+    { id: '2', name: 'henry' },
+  )
+
+  assert.deepEqual(
+    await testTable.getItemJSON({ id: { S: '2' } }),
+    { id: '2', name: 'henry' },
+  )
+
+  await testTable.updateItem({ id: '2' }, { age: 36 }, {
+    ReturnConsumedCapacity: 'TOTAL',
+    ReturnItemCollectionMetrics: 'SIZE',
+    ReturnValues: 'ALL_NEW',
+  }).then(res => {
+    assert.deepEqual(res.Attributes, {
+      id: { S: '2' },
+      name: { S: 'henry' },
+      age: { N: '36' },
+    })
+    assert.equal(res.ConsumedCapacity.CapacityUnits, 1)
+  })
+  assert.deepEqual(
+    await testTable.getItemJSON({ id: '2' }),
+    { id: '2', name: 'henry', age: 36 },
+  )
+
+  await assert.rejects(
+    () => testTable.updateItem({ id: '2' }, { param: 'wont-be-set' }, {
+      ConditionExpression: 'attribute_not_exists(age)',
     }),
     {
       name: 'ConditionalCheckFailedException',
       message: 'The conditional request failed',
-      tableName: 'test-tablename',
-    }
+    },
   )
 
-  {
-    const scanResult1 = await testTable.scan({ limit: 1 })
-    const scanResult2 = await testTable.scan({ limit: 2, exclusiveStartKey: scanResult1.LastEvaluatedKey })
-    const scanResult3 = await testTable.scan({ exclusiveStartKey: scanResult2.LastEvaluatedKey })
-    const bareScanResult = await testTable.scan()
-    assert.strictEqual(scanResult1.Items.length, 1)
-    assert.strictEqual(scanResult2.Items.length, 2)
-    assert.strictEqual(scanResult3.Items.length, 0)
-    assert.strictEqual(bareScanResult.Items.length, 3)
+  await testTable.scan().then(res => {
+    assert.equal(res.Items.length, 3)
+    assert.equal(res.Count, 3)
+  })
 
-    assert.rejects(
-      testTable.scan({ forceTableName: 'nonexistent-table-name' }),
-      {
-        name: 'ResourceNotFoundException',
-        message: 'Cannot do operations on a non-existent table',
-        tableName: 'test-tablename',
-      },
+  {
+    const iter = await testTable.scanIterator()
+    const items = []
+    for await (const item of iter) {
+      assert(Dynamo.isDynamoDBJSON(item))
+      items.push(item)
+    }
+    assert.equal(items.length, 3)
+  }
+
+  {
+    const iter = await testTable.scanIterator({ BatchLimit: 1 })
+    const items = []
+    for await (const item of iter) {
+      assert(Dynamo.isDynamoDBJSON(item))
+      items.push(item)
+    }
+    assert.equal(items.length, 3)
+  }
+
+  {
+    const iter = await testTable.scanIteratorJSON()
+    const items = []
+    for await (const item of iter) {
+      assert(!Dynamo.isDynamoDBJSON(item))
+      items.push(item)
+    }
+    assert.equal(items.length, 3)
+  }
+
+  {
+    const iter = await testTable.scanIteratorJSON({ BatchLimit: 1 })
+    const items = []
+    for await (const item of iter) {
+      assert(!Dynamo.isDynamoDBJSON(item))
+      items.push(item)
+    }
+    assert.equal(items.length, 3)
+  }
+
+  await testTable.incrementItem({ id: '2' }, { age: 1 })
+  assert.deepEqual(
+    await testTable.getItemJSON({ id: '2' }),
+    { id: '2', name: 'henry', age: 37 },
+  )
+
+  await testTable.incrementItem({ id: '2' }, { age: 2 })
+  assert.deepEqual(
+    await testTable.getItemJSON({ id: '2' }),
+    { id: '2', name: 'henry', age: 39 },
+  )
+
+  await testTable.deleteItem({ id: '2' })
+  await assert.rejects(
+    () => testTable.getItemJSON({ id: '2' }),
+    new Error('Item not found for {"id":"2"}'),
+  )
+
+  await testTable.deleteItem({ id: { S: '4' } })
+  await assert.rejects(
+    () => testTable.getItemJSON({ id: '4' }),
+    new Error('Item not found for {"id":"4"}'),
+  )
+
+  const userVersionTable = new DynamoTable({
+    name: 'test-user-version-tablename',
+    endpoint: 'http://localhost:8000/',
+    key: [{ id: 'string' }, { version: 'number' }],
+  })
+  await userVersionTable.ready
+
+  await userVersionTable.putItem({
+    id: '1',
+    version: 0,
+  })
+  await userVersionTable.putItem({
+    id: '1',
+    version: 1,
+  })
+  await userVersionTable.putItem({
+    id: '1',
+    version: 2,
+  })
+  await userVersionTable.putItem({
+    id: '1',
+    version: 3,
+  })
+
+  await userVersionTable.query(
+    'id = :id AND version > :version',
+    { id: '1', version: 0 },
+    { ScanIndexForward: true },
+  ).then(res => {
+    assert.equal(res.Items.length, 3)
+    assert.equal(res.Count, 3)
+    for (const item of res.Items) {
+      assert(Dynamo.isDynamoDBJSON(item))
+    }
+    assert.equal(res.Items[0].version.N, '1')
+    assert.equal(res.Items[1].version.N, '2')
+    assert.equal(res.Items[2].version.N, '3')
+  })
+
+  {
+    const iter = userVersionTable.queryIterator(
+      'id = :id AND version > :version',
+      { id: '1', version: 0 },
+      { ScanIndexForward: true, BatchLimit: 1 },
     )
-  }
-
-  await testTable.deleteItem({ id: '1' })
-  assert.rejects(
-    testTable.deleteItem({ somekey: 'a' }),
-    {
-      name: 'ValidationException',
-      message: 'One of the required keys was not given a value',
-      tableName: 'test-tablename',
+    const items = []
+    for await (const item of iter) {
+      assert(Dynamo.isDynamoDBJSON(item))
+      items.push(item)
     }
-  )
-  const shouldReject = testTable.getItem({ id: '1' })
-  assert.rejects(
-    () => shouldReject,
-    new Error('Item not found for {"id":"1"}'))
-  await shouldReject.catch(() => {})
-
-  {
-    const response = await testTable.delete()
-    assert.deepEqual(response, {})
-  }
-})
-
-.case({
-  name: 'test-tablename',
-  endpoint: 'http://localhost:8000/',
-  key: [{ callSid: 'string' }, { ts: 'number' }],
-}, async function (table) {
-  await table.ready
-
-  const callSid = 'a'
-
-  await table.putItem({ callSid, ts: 1 })
-  await table.putItem({ callSid, ts: 2 })
-  await table.putItem({ callSid, ts: 3 })
-  await table.putItem({ callSid, ts: 4 })
-
-  {
-    const calls = await table.query(
-      'callSid = :callSid AND ts > :ts',
-      { callSid, ts: 0 },
-      { limit: 1000, scanIndexForward: true }, // ASC
-    ).then(pipe([
-      get('Items'),
-      map(map(Dynamo.attributeValueToJSON)),
-    ]))
-
-    assert.equal(calls.length, 4)
-    assert.equal(calls[0].ts, 1)
-    assert.equal(calls[3].ts, 4)
+    assert.equal(items.length, 3)
+    assert.equal(items[0].version.N, '1')
+    assert.equal(items[1].version.N, '2')
+    assert.equal(items[2].version.N, '3')
   }
 
   {
-    const calls = await table.query(
-      'callSid = :callSid AND ts > :ts',
-      { callSid, ts: 0 },
-      { limit: 1000, scanIndexForward: false }, // DESC
-    ).then(pipe([
-      get('Items'),
-      map(map(Dynamo.attributeValueToJSON)),
-    ]))
-
-    assert.equal(calls.length, 4)
-    assert.equal(calls[0].ts, 4)
-    assert.equal(calls[3].ts, 1)
+    const iter = userVersionTable.queryIterator(
+      'id = :id AND version > :version',
+      { id: '1', version: 0 },
+      { ScanIndexForward: false, BatchLimit: 1, Limit: 2 },
+    )
+    const items = []
+    for await (const item of iter) {
+      assert(Dynamo.isDynamoDBJSON(item))
+      items.push(item)
+    }
+    assert.equal(items.length, 2)
+    assert.equal(items[0].version.N, '3')
+    assert.equal(items[1].version.N, '2')
   }
 
-})
+  {
+    const iter = userVersionTable.queryIteratorJSON(
+      'id = :id AND version > :version',
+      { id: '1', version: 0 },
+      { ScanIndexForward: true, BatchLimit: 1 },
+    )
+    const items = []
+    for await (const item of iter) {
+      assert(!Dynamo.isDynamoDBJSON(item))
+      items.push(item)
+    }
+    assert.equal(items.length, 3)
+    assert.equal(items[0].version, 1)
+    assert.equal(items[1].version, 2)
+    assert.equal(items[2].version, 3)
+  }
+
+  {
+    const iter = userVersionTable.queryIteratorJSON(
+      'id = :id AND version > :version',
+      { id: '1', version: 0 },
+      { ScanIndexForward: false, BatchLimit: 1, Limit: 2 },
+    )
+    const items = []
+    for await (const item of iter) {
+      assert(!Dynamo.isDynamoDBJSON(item))
+      items.push(item)
+    }
+    assert.equal(items.length, 2)
+    assert.equal(items[0].version, 3)
+    assert.equal(items[1].version, 2)
+  }
+
+  await testTable.delete()
+  await userVersionTable.delete()
+}).case()
 
 if (process.argv[1] == __filename) {
   test()
