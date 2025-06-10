@@ -31,7 +31,7 @@ const createFilterExpression = require('./internal/createFilterExpression')
  * ```
  *
  * @description
- * Creates a DynamoDB table. [AWS DynamoDB Docs](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html)
+ * Creates a DynamoDB table.
  *
  * ```javascript
  * // local testing
@@ -44,7 +44,7 @@ const createFilterExpression = require('./internal/createFilterExpression')
  *
  * // production
  * const myProductionTable = new DynamoTable({
- *   name: my-production-table',
+ *   name: 'my-production-table',
  *   key: [{ id: 'string' }],
  *   accessKeyId: 'my-access-key-id',
  *   secretAccessKey: 'my-secret-access-key',
@@ -52,6 +52,9 @@ const createFilterExpression = require('./internal/createFilterExpression')
  * })
  * await myProductionTable.ready
  * ```
+ *
+ * @note
+ * [AWS DynamoDB Docs](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html)
  */
 class DynamoTable {
   constructor(options) {
@@ -654,7 +657,7 @@ class DynamoTable {
    * @description
    * Query a DynamoDB table. Use the hash and sort keys as query parameters and to construct the key condition expression.
    *
-   * The key condition expression is a SQL-like querystring comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`
+   * The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
    *
    * ```javascript
    * // userVersionTable has hashKey `id` and sortKey `version`
@@ -775,9 +778,38 @@ class DynamoTable {
    *   options? {
    *     BatchLimit?: number,
    *     Limit?: number,
+   *     ScanIndexForward?: boolean, // default true for ASC
    *   }
    * ) -> AsyncIterator<DynamoDBJSONObject>
    * ```
+   *
+   * @description
+   * Get an `AsyncIterator` of all items represented by a query on a DynamoDB table in DynamoDB JSON format.
+   *
+   * The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
+   *
+   * ```javascript
+   * // userVersionTable has hashKey `id` and sortKey `version`
+   *
+   * const iter = userVersionTable.queryIterator(
+   *   'id = :id AND version > :version',
+   *   { id: '1', version: 0 },
+   *   { ScanIndexForward: true },
+   * )
+   *
+   * for await (const item of iter) {
+   *   console.log(item)
+   *   // { id: { S: '1' }, version: { N: '1' } }
+   *   // { id: { S: '1' }, version: { N: '2' } }
+   *   // { id: { S: '1' }, version: { N: '3' } }
+   *   // ...
+   * }
+   * ```
+   *
+   * Options:
+   *   * `BatchLimit` - Max number of items to retrieve per `query` call
+   *   * `Limit` - Max number of items to yield from returned iterator
+   *   * `ScanIndexForward` - true to sort items in ascending order
    */
   async * queryIterator(keyConditionExpression, queryValues, options = {}) {
     const BatchLimit = options.BatchLimit ?? 1000
@@ -824,9 +856,38 @@ class DynamoTable {
    *   options? {
    *     BatchLimit?: number,
    *     Limit?: number,
+   *     ScanIndexForward?: boolean, // default true for ASC
    *   }
    * ) -> AsyncIterator<JSONObject>
    * ```
+   *
+   * @description
+   * Get an `AsyncIterator` of all items represented by a query on a DynamoDB table in JSON format.
+   *
+   * The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
+   *
+   * ```javascript
+   * // userVersionTable has hashKey `id` and sortKey `version`
+   *
+   * const iter = userVersionTable.queryIteratorJSON(
+   *   'id = :id AND version > :version',
+   *   { id: '1', version: 0 },
+   *   { ScanIndexForward: true },
+   * )
+   *
+   * for await (const item of iter) {
+   *   console.log(item)
+   *   // { id: '1', version: 1 }
+   *   // { id: '1', version: 2 }
+   *   // { id: '1', version: 3 }
+   *   // ...
+   * }
+   * ```
+   *
+   * Options:
+   *   * `BatchLimit` - Max number of items to retrieve per `query` call
+   *   * `Limit` - Max number of items to yield from returned iterator
+   *   * `ScanIndexForward` - true to sort items in ascending order
    */
   queryIteratorJSON(...args) {
     return map(this.queryIterator(...args), map(Dynamo.attributeValueToJSON))

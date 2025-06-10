@@ -1,414 +1,179 @@
-const assert = require('assert')
-const map = require('rubico/map')
+require('rubico/global')
 const Test = require('thunk-test')
+const assert = require('assert')
 const Dynamo = require('./Dynamo')
 const DynamoTable = require('./DynamoTable')
 const DynamoIndex = require('./DynamoIndex')
-const inspect = require('./internal/inspect')
 
-const test = new Test('DynamoIndex', DynamoIndex)
-  .before(async function () {
-    this.dynamo = Dynamo({ endpoint: 'http://localhost:8000/' })
-    await this.dynamo.deleteTable('test-tablename')
-    await this.dynamo.deleteTable('test-tablename-2')
+const dynamo = Dynamo('http://localhost:8000/')
+
+const test = new Test('DynamoIndex', async () => {
+  this.dynamo = Dynamo({ endpoint: 'http://localhost:8000/' })
+  await this.dynamo.deleteTable('test-tablename')
+  await this.dynamo.waitFor('test-tablename', 'tableNotExists')
+
+  const testTable = new DynamoTable({
+    name: 'test-tablename',
+    key: [{ id: 'string' }],
+    endpoint: 'http://localhost:8000/',
   })
-  .before(async function () {
-    await this.dynamo.createTable('test-tablename', [{ id: 'string' }])
-    // await this.dynamo.createIndex('test-tablename', [{ status: 'string' }, { createTime: 'number' }])
-    // await this.dynamo.createTable('test-tablename-2', [{ id: 'string' }])
-    // await this.dynamo.createIndex('test-tablename-2', [{ status: 'string' }, { name: 'string' }])
+  await testTable.ready.then(({ message }) => {
+    assert.equal(message, 'created-table')
   })
-  .before(async function () {
-    this.testTable = DynamoTable({
-      name: 'test-tablename',
-      endpoint: 'http://localhost:8000/',
-      key: [{ id: 'string' }],
-    })
-    this.testTable2 = new DynamoTable({
-      name: 'test-tablename-2',
-      endpoint: 'http://localhost:8000/',
-      key: [{ id: 'S' }],
-    })
 
-    await this.testTable.ready
-    await this.testTable2.ready
+  const testIndex = new DynamoIndex({
+    table: 'test-tablename',
+    key: [{ type: 'string' }, { time: 'number' }],
+    endpoint: 'http://localhost:8000/',
+  })
+  await testIndex.ready.then(({ message }) => {
+    assert.equal(message, 'created-index')
+  })
 
-    for (const table of [this.testTable, this.testTable2]) {
-      await table.putItem({
-        id: '1',
-        status: 'waitlist',
-        createTime: 1000,
-        name: 'George',
-      })
-      await table.putItem({
-        id: '2',
-        status: 'waitlist',
-        createTime: 1001,
-        name: 'geo',
-      })
-      await table.putItem({
-        id: '3',
-        status: 'waitlist',
-        createTime: 1002,
-        name: 'john',
-      })
-      await table.putItem({
-        id: '4',
-        status: 'approved',
-        createTime: 1003,
-        name: 'sally',
-      })
-      await table.putItem({
-        id: '5',
-        status: 'approved',
-        createTime: 1004,
-        name: 'sally',
-      })
+  const testIndex2 = new DynamoIndex({
+    table: 'test-tablename',
+    key: [{ type: 'string' }, { time: 'number' }],
+    endpoint: 'http://localhost:8000/',
+  })
+  await testIndex2.ready.then(({ message }) => {
+    assert.equal(message, 'index-exists')
+  })
+
+  await testTable.putItem({ id: '0', type: 'page_view', time: 0, a: 0 })
+  await testTable.putItem({ id: '1', type: 'page_view', time: 1, a: 1 })
+  await testTable.putItem({ id: '2', type: 'page_view', time: 2, a: 2 })
+  await testTable.putItem({ id: '3', type: 'page_view', time: 3, a: 3 })
+  await testTable.putItem({ id: '4', type: 'page_view', time: 4, a: 4 })
+  await testTable.putItem({ id: '5', type: 'page_view', time: 5, a: 5 })
+
+  await testIndex.query(
+    'type = :type AND time > :time',
+    { type: 'page_view', time: 0 },
+    { ScanIndexForward: true },
+  ).then(res => {
+    assert.equal(res.Items.length, 5)
+    assert.equal(res.Count, 5)
+    assert.equal(res.ScannedCount, 5)
+    for (const item of res.Items) {
+      assert(Dynamo.isDynamoDBJSON(item))
     }
-
+    assert.equal(res.Items[0].time.N, '1')
+    assert.equal(res.Items[1].time.N, '2')
+    assert.equal(res.Items[2].time.N, '3')
+    assert.equal(res.Items[3].time.N, '4')
+    assert.equal(res.Items[4].time.N, '5')
   })
-  .case({
-    table: 'test-tablename',
-    key: [{ name: 'string' }],
-    endpoint: 'http://localhost:8000/',
-  }, async nameIndex => {
-    const items = await nameIndex.query('name = :name', { name: 'sally' })
-    assert.strictEqual(items.Items.length, 2)
+
+  await testIndex.query(
+    'type = :type AND time > :time',
+    { type: 'page_view', time: 0 },
+    {
+      ScanIndexForward: false,
+      ProjectionExpression: 'id,time'
+    },
+  ).then(res => {
+    assert.equal(res.Items.length, 5)
+    assert.equal(res.Count, 5)
+    assert.equal(res.ScannedCount, 5)
+    for (const item of res.Items) {
+      assert(Dynamo.isDynamoDBJSON(item))
+    }
+    assert.deepEqual(res.Items[4], { id: { S: '1' }, time: { N: '1' } })
+    assert.deepEqual(res.Items[3], { id: { S: '2' }, time: { N: '2' } })
+    assert.deepEqual(res.Items[2], { id: { S: '3' }, time: { N: '3' } })
+    assert.deepEqual(res.Items[1], { id: { S: '4' }, time: { N: '4' } })
+    assert.deepEqual(res.Items[0], { id: { S: '5' }, time: { N: '5' } })
   })
-  .case({
-    table: 'test-tablename',
-    key: [{ status: 'string' }, { createTime: 'number' }],
-    endpoint: 'http://localhost:8000/',
-  }, async index => {
-    assert(index.table == 'test-tablename')
-    await index.ready
 
-    assert.deepEqual(
-      await index.query('status = :status AND createTime > :createTime', {
-        status: 'waitlist',
-        createTime: 1000,
-      }),
-      {
-        Items: [
-          {
-            createTime: { N: '1001' },
-            id: { S: '2' },
-            status: { S: 'waitlist' },
-            name: { S: 'geo' },
-          },
-          {
-            createTime: { N: '1002' },
-            id: { S: '3' },
-            status: { S: 'waitlist' },
-            name: { S: 'john' },
-          }
-        ],
-        Count: 2,
-        ScannedCount: 2
-      })
-
-    assert.deepEqual(
-      await index.query('status = :status AND createTime BETWEEN :lower AND :upper', {
-        status: 'waitlist',
-        lower: 999,
-        upper: 2000,
-      }),
-      {
-        Items: [
-          {
-            createTime: { N: '1000' },
-            id: { S: '1' },
-            status: { S: 'waitlist' },
-            name: { S: 'George' },
-          },
-          {
-            createTime: { N: '1001' },
-            id: { S: '2' },
-            status: { S: 'waitlist' },
-            name: { S: 'geo' },
-          },
-          {
-            createTime: { N: '1002' },
-            id: { S: '3' },
-            status: { S: 'waitlist' },
-            name: { S: 'john' },
-          }
-        ],
-        Count: 3,
-        ScannedCount: 3
-      })
-
-    assert.deepEqual(
-      await index.query('status = :status AND createTime BETWEEN :lower AND :upper', {
-        status: 'waitlist',
-        lower: 999,
-        upper: 2000,
-        name: 'George',
-      }, {
-        filterExpression: 'name = :name',
-      }),
-      {
-        Items: [
-          {
-            createTime: { N: '1000' },
-            id: { S: '1' },
-            status: { S: 'waitlist' },
-            name: { S: 'George' },
-          },
-        ],
-        Count: 1,
-        ScannedCount: 3
-      })
-
-    assert.deepEqual(
-      await index.query('status = :status AND createTime >= :createTime', {
-        status: 'waitlist',
-        createTime: 1000,
-      }, { scanIndexForward: true }),
-      {
-        Items: [
-          {
-            createTime: { N: '1000' },
-            id: { S: '1' },
-            status: { S: 'waitlist' },
-            name: { S: 'George' },
-          },
-          {
-            createTime: { N: '1001' },
-            id: { S: '2' },
-            status: { S: 'waitlist' },
-            name: { S: 'geo' },
-          },
-          {
-            createTime: { N: '1002' },
-            id: { S: '3' },
-            status: { S: 'waitlist' },
-            name: { S: 'john' },
-          }
-        ],
-        Count: 3,
-        ScannedCount: 3
-      })
-
-    assert.deepEqual(
-      await index.query('status = :status AND createTime >= :createTime', {
-        status: 'waitlist',
-        createTime: 1000,
-      }, { scanIndexForward: false }),
-      {
-        Items: [
-          {
-            createTime: { N: '1002' },
-            id: { S: '3' },
-            status: { S: 'waitlist' },
-            name: { S: 'john' },
-          },
-          {
-            createTime: { N: '1001' },
-            id: { S: '2' },
-            status: { S: 'waitlist' },
-            name: { S: 'geo' },
-          },
-          {
-            createTime: { N: '1000' },
-            id: { S: '1' },
-            status: { S: 'waitlist' },
-            name: { S: 'George' },
-          },
-        ],
-        Count: 3,
-        ScannedCount: 3
-      })
-
-    assert.deepEqual(
-      await index.query('status = :status AND createTime >= :createTime', {
-        status: 'waitlist',
-        createTime: 1000,
-      }, {
-        scanIndexForward: false,
-        projectionExpression: 'name,status',
-      }),
-      {
-        Items: [
-          {
-            status: { S: 'waitlist' },
-            name: { S: 'john' },
-          },
-          {
-            status: { S: 'waitlist' },
-            name: { S: 'geo' },
-          },
-          {
-            status: { S: 'waitlist' },
-            name: { S: 'George' },
-          },
-        ],
-        Count: 3,
-        ScannedCount: 3
-      })
-
-    assert.deepEqual(
-      await index.query('status = :status AND createTime <= :createTime', {
-        status: 'waitlist',
-        createTime: 10e3,
-      }, {
-        scanIndexForward: false,
-        limit: 2,
-      }),
-      {
-        Items: [
-          {
-            createTime: { N: '1002' },
-            id: { S: '3' },
-            status: { S: 'waitlist' },
-            name: { S: 'john' },
-          },
-          {
-            createTime: { N: '1001' },
-            id: { S: '2' },
-            status: { S: 'waitlist' },
-            name: { S: 'geo' },
-          },
-        ],
-        LastEvaluatedKey: {
-          createTime: { N: '1001' },
-          id: { S: '2' },
-          status: { S: 'waitlist' },
-        },
-        Count: 2,
-        ScannedCount: 2,
-      })
-
-    assert.deepEqual(
-      await index.query('status = :status AND createTime <= :createTime', {
-        status: 'waitlist',
-        createTime: 10e3,
-      }, {
-        scanIndexForward: false,
-        limit: 2,
-        exclusiveStartKey: {
-          createTime: { N: '1001' },
-          id: { S: '2' },
-          status: { S: 'waitlist' },
-        },
-      }),
-      {
-        Items: [
-          {
-            createTime: { N: '1000' },
-            id: { S: '1' },
-            status: { S: 'waitlist' },
-            name: { S: 'George' },
-          },
-        ],
-        Count: 1,
-        ScannedCount: 1,
-      })
-
-    assert.deepEqual(
-      await index.query('status = :status', { status: 'approved' }),
-      {
-        Items: [
-          {
-            createTime: { N: '1003' },
-            id: { S: '4' },
-            status: { S: 'approved' },
-            name: { S: 'sally' },
-          },
-          {
-            createTime: { N: '1004' },
-            id: { S: '5' },
-            status: { S: 'approved' },
-            name: { S: 'sally' },
-          },
-        ],
-        Count: 2,
-        ScannedCount: 2
-      })
-
-    assert.deepEqual(
-      await index.query('status = :status AND createTime = :createTime', {
-        status: 'approved',
-        createTime: 1004,
-      }),
-      {
-        Items: [
-          {
-            createTime: { N: '1004' },
-            id: { S: '5' },
-            status: { S: 'approved' },
-            name: { S: 'sally' },
-          },
-        ],
-        Count: 1,
-        ScannedCount: 1
-      })
-
-    assert.deepEqual(
-      await index.query('status = :status AND createTime < :createTime', {
-        status: 'approved',
-        createTime: 10,
-      }),
-      {
-        Items: [],
-        Count: 0,
-        ScannedCount: 0
-      })
+  await testIndex.query(
+    'type = :type AND time > :time',
+    { type: 'page_view', time: 0, a: 4 },
+    {
+      ScanIndexForward: true,
+      FilterExpression: 'a > :a',
+    },
+  ).then(res => {
+    assert.equal(res.Items.length, 1)
+    assert.equal(res.Count, 1)
+    assert.equal(res.ScannedCount, 5)
+    for (const item of res.Items) {
+      assert(Dynamo.isDynamoDBJSON(item))
+    }
+    assert.equal(res.Items[0].id.S, '5')
   })
-  .case({
-    table: 'test-tablename-2',
-    key: [{ status: 'string' }, { name: 'string' }],
-    endpoint: 'http://localhost:8000/',
-  }, async index => {
-    assert(index.table == 'test-tablename-2')
-    assert(index.name == 'status-name-index')
-    assert.deepEqual(
-      await index.query('status = :status AND begins_with(name, :name)', {
-        status: 'waitlist',
-        name: 'geo',
-      }),
-      {
-        Items: [
-          {
-            createTime: { N: '1001' },
-            id: { S: '2' },
-            status: { S: 'waitlist' },
-            name: { S: 'geo' },
-          },
-        ],
-        Count: 1,
-        ScannedCount: 1
-      })
 
-    assert.deepEqual(
-      await index.query('status = :st AND begins_with ( name, :prefix ) ', {
-        st: 'approved',
-        prefix: 's',
-      }),
-      {
-        Items: [
-          {
-            name: { S: 'sally' },
-            id: { S: '4' },
-            createTime: { N: '1003' },
-            status: { S: 'approved' }
-          },
-          {
-            name: { S: 'sally' },
-            id: { S: '5' },
-            createTime: { N: '1004' },
-            status: { S: 'approved' }
-          }
-        ],
-        Count: 2,
-        ScannedCount: 2
-      })
+  {
+    const iter = testIndex.queryIterator(
+      'type = :type AND time > :time',
+      { type: 'page_view', time: 0 },
+      { ScanIndexForward: true, BatchLimit: 1 },
+    )
+    const items = []
+    for await (const item of iter) {
+      assert(Dynamo.isDynamoDBJSON(item))
+      items.push(item)
+    }
+    assert.equal(items.length, 5)
+    assert.equal(items[0].id.S, '1')
+    assert.equal(items[1].id.S, '2')
+    assert.equal(items[2].id.S, '3')
+    assert.equal(items[3].id.S, '4')
+    assert.equal(items[4].id.S, '5')
+  }
 
-  })
-  .after(async function () {
-    await this.dynamo.deleteTable('test-tablename')
-    await this.dynamo.deleteTable('test-tablename-2')
-  })
+  {
+    const iter = testIndex.queryIterator(
+      'type = :type AND time > :time',
+      { type: 'page_view', time: 0 },
+      { ScanIndexForward: false, BatchLimit: 1, Limit: 2 },
+    )
+    const items = []
+    for await (const item of iter) {
+      assert(Dynamo.isDynamoDBJSON(item))
+      items.push(item)
+    }
+    assert.equal(items.length, 2)
+    assert.equal(items[0].id.S, '5')
+    assert.equal(items[1].id.S, '4')
+  }
+
+  {
+    const iter = testIndex.queryIteratorJSON(
+      'type = :type AND time > :time',
+      { type: 'page_view', time: 0 },
+      { ScanIndexForward: true, BatchLimit: 1 },
+    )
+    const items = []
+    for await (const item of iter) {
+      assert(!Dynamo.isDynamoDBJSON(item))
+      items.push(item)
+    }
+    assert.equal(items.length, 5)
+    assert.equal(items[0].id, '1')
+    assert.equal(items[1].id, '2')
+    assert.equal(items[2].id, '3')
+    assert.equal(items[3].id, '4')
+    assert.equal(items[4].id, '5')
+  }
+
+  {
+    const iter = testIndex.queryIteratorJSON(
+      'type = :type AND time > :time',
+      { type: 'page_view', time: 0 },
+      { ScanIndexForward: false, BatchLimit: 1, Limit: 2 },
+    )
+    const items = []
+    for await (const item of iter) {
+      assert(!Dynamo.isDynamoDBJSON(item))
+      items.push(item)
+    }
+    assert.equal(items.length, 2)
+    assert.equal(items[0].id, '5')
+    assert.equal(items[1].id, '4')
+  }
+
+  await testTable.delete()
+}).case()
 
 if (process.argv[1] == __filename) {
   test()
