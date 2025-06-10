@@ -177,24 +177,28 @@ const test = new Test('DynamoTable', async () => {
   await userVersionTable.putItem({
     id: '1',
     version: 0,
+    createTime: 1,
   })
   await userVersionTable.putItem({
     id: '1',
     version: 1,
+    createTime: 2,
   })
   await userVersionTable.putItem({
     id: '1',
     version: 2,
+    createTime: 3,
   })
   await userVersionTable.putItem({
     id: '1',
     version: 3,
+    createTime: 4,
   })
 
   await userVersionTable.query(
     'id = :id AND version > :version',
     { id: '1', version: 0 },
-    { ScanIndexForward: true },
+    { ScanIndexForward: true, ConsistentRead: true },
   ).then(res => {
     assert.equal(res.Items.length, 3)
     assert.equal(res.Count, 3)
@@ -204,6 +208,39 @@ const test = new Test('DynamoTable', async () => {
     assert.equal(res.Items[0].version.N, '1')
     assert.equal(res.Items[1].version.N, '2')
     assert.equal(res.Items[2].version.N, '3')
+  })
+
+  await userVersionTable.query(
+    'id = :id AND version > :version',
+    { id: '1', version: 0 },
+    { ScanIndexForward: true, ProjectionExpression: 'id,createTime' },
+  ).then(res => {
+    assert.equal(res.Items.length, 3)
+    assert.equal(res.Count, 3)
+    for (const item of res.Items) {
+      assert(Dynamo.isDynamoDBJSON(item))
+    }
+    assert.deepEqual(res.Items[0], { id: { S: '1' }, createTime: { N: '2' } })
+    assert.deepEqual(res.Items[1], { id: { S: '1' }, createTime: { N: '3' } })
+    assert.deepEqual(res.Items[2], { id: { S: '1' }, createTime: { N: '4' } })
+  })
+
+  await userVersionTable.query(
+    'id = :id AND version > :version',
+    { id: '1', version: 0, createTime: 2 },
+    {
+      ScanIndexForward: true,
+      FilterExpression: 'createTime > :createTime',
+    },
+  ).then(res => {
+    assert.equal(res.Items.length, 2)
+    assert.equal(res.Count, 2)
+    assert.equal(res.ScannedCount, 3)
+    for (const item of res.Items) {
+      assert(Dynamo.isDynamoDBJSON(item))
+    }
+    assert.equal(res.Items[0].createTime.N, '3')
+    assert.equal(res.Items[1].createTime.N, '4')
   })
 
   {
