@@ -61,42 +61,73 @@ const awsCreds = {
     key: [{ id: 'string' }],
     ...awsCreds,
   })
-  const myIndex = new DynamoIndex({
-    table: 'my-table',
-    key: [{ name: 'string' }, { age: 'number' }],
-    ...awsCreds,
-  })
-  const myStream = new DynamoStream({
-    table: 'my-table',
-    ...awsCreds,
-  })
-
   await myTable.ready
-  await myIndex.ready
-  await myStream.ready
 
-  await myTable.putItem({ id: '1', name: 'George' })
+  const myTypeAgeIndex = new DynamoIndex({
+    table: 'my-table',
+    key: [{ type: 'string' }, { age: 'number' }],
+    ...awsCreds,
+  })
+  await myTypeAgeIndex.ready
+
+  await myTable.putItem({ id: '1', name: 'John', type: 'person' })
   await myTable.updateItem({ id: '1' }, { age: 32 })
-  console.log(
-    await myTable.getItem({ id: '1' }),
-  ) // { Item: { id: { S: '1' }, ... } }
 
-  console.log(
-    await myIndex.query('name = :name AND age < :age', {
-      name: 'George',
-      age: 33,
-    }),
-  ) // [{ Items: [{ id: { S: '1' }, ... }, ...] }]
+  await myTable.putItem({ id: '2', name: 'Joe', age: 19, type: 'person' })
+  await myTable.putItem({ id: '3', name: 'Jane', age: 33, type: 'person' })
 
-  for await (const record of myStream) {
-    console.log(record) // { dynamodb: { NewImage: {...}, OldImage: {...} }, ... }
+  const getItemResponse = await myTable.getItem({ id: '1' }),
+  console.log(getItemResponse)
+  // { Item: { id: { S: '1' }, name: { S: 'John' }, age: { N: '32' } } }
+
+  const jsonItem = await myTable.getItemJSON({ id: '1' })
+  console.log(jsonItem)
+  // { id: '1', name: 'John', age: 32 }
+
+  const queryResponse = await myTypeAgeIndex.query(
+    'type = :type AND age < :age',
+    { type: 'person', age: 100 },
+    { Limit: 2, ScanIndexForward: true },
+  )
+  console.log(queryResponse)
+  // {
+  //   Items: [
+  //     { id: { S: '1' }, name: { S: 'John' }, age: { N: '32' }, type: { S: 'person' } },
+  //     { id: { S: '2' }, name: { S: 'Joe' }, age: { N: '19' }, type: { S: 'person' } },
+  //   ],
+  //   Count: 2,
+  //   ScannedCount: 2,
+  // }
+
+  const iter = myTypeAgeIndex.queryIterator(
+    'type = :type AND age < :age',
+    { type: 'person', age: 100 },
+    { ScanIndexForward: true },
+  )
+  for await (const item of iter) {
+    console.log(item)
+    // { id: { S: '2' }, name: { S: 'Joe' }, age: { N: '19' }, type: { S: 'person' } },
+    // { id: { S: '1' }, name: { S: 'John' }, age: { N: '32' }, type: { S: 'person' } },
+    // { id: { S: '3' }, name: { S: 'Jane' }, age: { N: '33' }, type: { S: 'person' } },
+  }
+
+  const jsonIter = myTypeAgeIndex.queryIteratorJSON(
+    'type = :type AND age < :age',
+    { type: 'person', age: 100 },
+    { ScanIndexForward: true },
+  )
+  for await (const jsonItem of iter) {
+    console.log(jsonItem)
+    // { id: '2', name: 'Joe', age: 19, type: 'person' }
+    // { id: '1', name: 'John', age: 32, type: 'person' }
+    // { id: '3', name: 'Jane', age: 33, type: 'person' }
   }
 })()
 ```
 
-## Consume Kinesis Streams
+## Consume DynamoDB Streams
 ```javascript
-const { KinesisStream } = require('presidium')
+const { DynamoTable, DynamoStream } = require('presidium')
 
 const awsCreds = {
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -104,42 +135,27 @@ const awsCreds = {
   region: process.env.AWS_REGION,
 }
 
-const myStream = new KinesisStream({
-  name: 'my-stream',
-  ...awsCreds,
-})
-
 ;(async function() {
+  const myTable = new DynamoTable({
+    name: 'my-table',
+    key: [{ id: 'string' }],
+    ...awsCreds,
+  })
+  await myTable.ready
+
+  const myStream = new DynamoStream({
+    table: 'my-table',
+    ...awsCreds,
+  })
   await myStream.ready
 
-  await myStream.putRecord('hey')
-  await myStream.putRecord('hey')
-  await myStream.putRecord('hey')
-
-  for await (const item of myStream) {
-    console.log(item) /*
-    {
-      SequenceNumber: '49614...',
-      ApproximateArrivalTimestamp: 2021-01-12T16:01:24.432Z,
-      Data: <Buffer ...>, // hey
-      PartitionKey: 'hey',
-    }
-    {
-      SequenceNumber: '...',
-      SequenceNumber: '49614...',
-      ApproximateArrivalTimestamp: 2021-01-12T16:01:24.432Z,
-      Data: <Buffer ...>, // hey
-      PartitionKey: 'hey',
-    }
-    {
-      SequenceNumber: '49614...',
-      ApproximateArrivalTimestamp: 2021-01-12T16:01:24.432Z,
-      Data: <Buffer ...>, // hey
-      PartitionKey: 'hey',
-    }
-    */
+  for await (const record of myStream) {
+    console.log(record)
+    // { dynamodb: { NewImage: {...}, OldImage: {...} }, ... }
+    // { dynamodb: { NewImage: {...}, OldImage: {...} }, ... }
+    // { dynamodb: { NewImage: {...}, OldImage: {...} }, ... }
   }
-})
+})()
 ```
 
 ## Upload to S3
