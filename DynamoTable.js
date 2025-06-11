@@ -17,7 +17,7 @@ const createFilterExpression = require('./internal/createFilterExpression')
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DynamoTable(options {
+ * new DynamoTable(options {
  *   name: string,
  *   key: [
  *     { [hashKey string]: 'S'|'string'|'N'|'number'|'B'|'binary' },
@@ -27,7 +27,7 @@ const createFilterExpression = require('./internal/createFilterExpression')
  *   secretAccessKey: string,
  *   region: string,
  *   endpoint?: string,
- * })
+ * }) -> DynamoTable
  * ```
  *
  * @description

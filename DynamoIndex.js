@@ -19,7 +19,7 @@ const createFilterExpression = require('./internal/createFilterExpression')
  *
  * @synopsis
  * ```coffeescript [specscript]
- * DynamoIndex(options {
+ * new DynamoIndex(options {
  *   name: string,
  *   key: [
  *     { [hashKey string]: 'S'|'string'|'N'|'number'|'B'|'binary' },

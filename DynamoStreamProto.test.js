@@ -1,8 +1,9 @@
-require('rubico/global')
 const assert = require('assert')
 const Test = require('thunk-test')
 const DynamoTable = require('./DynamoTable')
 const DynamoStream = require('./DynamoStream')
+const map = require('rubico/map')
+const thunkify = require('rubico/thunkify')
 const asyncIterableTake = require('./internal/asyncIterableTake')
 
 const ResourceNotFoundException = function (message) {
@@ -15,7 +16,7 @@ const test0 = Test('DynamoStream.handleGetRecordsError', DynamoStream.handleGetR
 .case(new Error('Shard iterator has expired'), [])
 .throws(new Error('other'), new Error('other'))
 
-const test1 = Test('DynamoStream', options => new DynamoStream(options))
+const test1 = Test('DynamoStream', DynamoStream)
 
 .before(async function () {
   const table = new DynamoTable({
