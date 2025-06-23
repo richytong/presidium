@@ -23,16 +23,25 @@ const pathResolve = require('./internal/pathResolve')
 const AwsCredentials = async function (profile, options = {}) {
   if (
     process.env.AWS_ACCESS_KEY_ID
-    && process.env.AWS_SECRET_ACCESS_KEY
-    && process.env.AWS_REGION
+    || process.env.AWS_SECRET_ACCESS_KEY
+    || process.env.AWS_REGION
   ) {
-    const awsCreds = {
+    if (process.env.AWS_ACCESS_KEY_ID == null) {
+      throw new Error('unable to find AWS_ACCESS_KEY_ID in env')
+    }
+    if (process.env.AWS_SECRET_ACCESS_KEY == null) {
+      throw new Error('unable to find AWS_SECRET_ACCESS_KEY in env')
+    }
+    if (process.env.AWS_REGION == null) {
+      throw new Error('unable to find AWS_REGION in env')
+    }
+    return {
       accessKeyId: process.env.AWS_ACCESS_KEY_ID,
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
       region: process.env.AWS_REGION,
     }
-    return awsCreds
   }
+
 
   if (profile == null) {
     profile = 'default'

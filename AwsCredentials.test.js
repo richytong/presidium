@@ -51,6 +51,9 @@ region = us-east-missing-secret-access-key
   `.trim())
 
   {
+    delete process.env.AWS_ACCESS_KEY_ID
+    delete process.env.AWS_SECRET_ACCESS_KEY
+    delete process.env.AWS_REGION
     const awsCreds = await AwsCredentials('presidium', {
       credentialsFileDirname,
       credentialsFilename,
@@ -144,6 +147,43 @@ region = us-east-missing-secret-access-key
     assert.equal(awsCreds.accessKeyId, 'AAAA')
     assert.equal(awsCreds.secretAccessKey, 'BBBB')
     assert.equal(awsCreds.region, 'CCCC')
+  }
+
+  {
+    // process.env.AWS_ACCESS_KEY_ID
+    // process.env.AWS_SECRET_ACCESS_KEY = 'BBBB'
+    delete process.env.AWS_REGION
+    assert.rejects(
+      async () => {
+        const awsCreds = await AwsCredentials()
+        console.error('awsCreds', awsCreds)
+      },
+      new Error('unable to find AWS_REGION in env')
+    )
+  }
+
+  {
+    // process.env.AWS_ACCESS_KEY_ID
+    delete process.env.AWS_SECRET_ACCESS_KEY
+    assert.rejects(
+      async () => {
+        const awsCreds = await AwsCredentials()
+        console.error('awsCreds', awsCreds)
+      },
+      new Error('unable to find AWS_SECRET_ACCESS_KEY in env')
+    )
+  }
+
+  {
+    process.env.AWS_REGION = 'us-east-test'
+    delete process.env.AWS_ACCESS_KEY_ID
+    assert.rejects(
+      async () => {
+        const awsCreds = await AwsCredentials()
+        console.error('awsCreds', awsCreds)
+      },
+      new Error('unable to find AWS_ACCESS_KEY_ID in env')
+    )
   }
 
   await fs.promises.rm(`${__dirname}/../${credentialsFileDirname}`, { recursive: true })
