@@ -24,6 +24,16 @@ aws_secret_access_key = X2
 [presidium]
 aws_access_key_id = AAA
 aws_secret_access_key = BBB
+
+[missing-access-key-id]
+aws_secret_access_key = BBB
+
+[missing-secret-access-key]
+aws_access_key_id = AAA
+
+[missing-region]
+aws_access_key_id = AAA
+aws_secret_access_key = BBB
   `.trim())
 
   await fs.promises.writeFile(`${__dirname}/../${configFileDirname}/${configFilename}`, `
@@ -32,6 +42,12 @@ region = us-east-default
 
 [presidium]
 region = us-east-presidium
+
+[missing-access-key-id]
+region = us-east-missing-access-key-id
+
+[missing-secret-access-key]
+region = us-east-missing-secret-access-key
   `.trim())
 
   {
@@ -68,6 +84,51 @@ region = us-east-presidium
     assert.equal(awsCreds.accessKeyId, 'X1')
     assert.equal(awsCreds.secretAccessKey, 'X2')
     assert.equal(awsCreds.region, 'us-east-default')
+  }
+
+  {
+    await assert.rejects(
+      async () => {
+        const awsCreds = await AwsCredentials('missing-access-key-id', {
+          credentialsFileDirname,
+          credentialsFilename,
+          configFileDirname,
+          configFilename,
+        })
+        console.error('awsCreds', awsCreds)
+      },
+      new Error('unable to find aws_access_key_id for profile missing-access-key-id')
+    )
+  }
+
+  {
+    await assert.rejects(
+      async () => {
+        const awsCreds = await AwsCredentials('missing-secret-access-key', {
+          credentialsFileDirname,
+          credentialsFilename,
+          configFileDirname,
+          configFilename,
+        })
+        console.error('awsCreds', awsCreds)
+      },
+      new Error('unable to find aws_secret_access_key for profile missing-secret-access-key')
+    )
+  }
+
+  {
+    await assert.rejects(
+      async () => {
+        const awsCreds = await AwsCredentials('missing-region', {
+          credentialsFileDirname,
+          credentialsFilename,
+          configFileDirname,
+          configFilename,
+        })
+        console.error('awsCreds', awsCreds)
+      },
+      new Error('unable to find region for profile missing-region')
+    )
   }
 
   {

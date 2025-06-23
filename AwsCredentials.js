@@ -68,14 +68,16 @@ const AwsCredentials = async function (profile, options = {}) {
 
   const startingLineNumber = lines.findIndex(line => line == `[${profile}]`)
 
-  const accessKeyId = lines.find(
+  const accessKeyId = startingLineNumber == -1 ? undefined : lines.find(
     (line, index) => index > startingLineNumber
       && line.startsWith('aws_access_key_id')
-  ).split(' = ')[1]
-  const secretAccessKey = lines.find(
+      && index - startingLineNumber < 3
+  )?.split(' = ')[1]
+  const secretAccessKey = startingLineNumber == -1 ? undefined : lines.find(
     (line, index) => index > startingLineNumber
       && line.startsWith('aws_secret_access_key')
-  ).split(' = ')[1]
+      && index - startingLineNumber < 3
+  )?.split(' = ')[1]
 
   const configFileDirname = options.configFileDirname ?? '.aws'
   const configFilename = options.configFilename ?? 'config'
@@ -95,10 +97,21 @@ const AwsCredentials = async function (profile, options = {}) {
 
   const startingLineNumber2 = lines2.findIndex(line => line == `[${profile}]`)
 
-  const region = lines2.find(
+  const region = startingLineNumber2 == -1 ? undefined : lines2.find(
     (line, index) => index > startingLineNumber2
       && line.startsWith('region')
-  ).split(' = ')[1]
+      && index - startingLineNumber < 2
+  )?.split(' = ')[1]
+
+  if (accessKeyId == null) {
+    throw new Error(`unable to find aws_access_key_id for profile ${profile}`)
+  }
+  if (secretAccessKey == null) {
+    throw new Error(`unable to find aws_secret_access_key for profile ${profile}`)
+  }
+  if (region == null) {
+    throw new Error(`unable to find region for profile ${profile}`)
+  }
 
   return { accessKeyId, secretAccessKey, region }
 }
