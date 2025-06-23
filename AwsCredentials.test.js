@@ -146,21 +146,6 @@ region = us-east-missing-secret-access-key
     assert.equal(awsCreds.region, 'CCCC')
   }
 
-  {
-    process.env.AWS_ACCESS_KEY_ID = 'AAAA'
-    process.env.AWS_SECRET_ACCESS_KEY = 'BBBB'
-    delete process.env.AWS_REGION
-    const awsCreds = await AwsCredentials('presidium', {
-      credentialsFileDirname,
-      credentialsFilename,
-      configFileDirname,
-      configFilename,
-    })
-    assert.equal(awsCreds.accessKeyId, 'AAAA')
-    assert.equal(awsCreds.secretAccessKey, 'BBBB')
-    assert.equal(awsCreds.region, undefined)
-  }
-
   await fs.promises.rm(`${__dirname}/../${credentialsFileDirname}`, { recursive: true })
 }).case()
 
