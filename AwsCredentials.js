@@ -9,6 +9,7 @@ const pathResolve = require('./internal/pathResolve')
  * @synopsis
  * ```coffeescript [specscript]
  * AwsCredentials(profile string, options? {
+ *   noenv?: boolean,
  *   credentialsFileDirname?: string
  *   credentialsFilename?: string,
  *   configFileDirname?: string
@@ -21,7 +22,9 @@ const pathResolve = require('./internal/pathResolve')
  */
 
 const AwsCredentials = async function (profile, options = {}) {
-  if (
+  if (options.noenv) {
+    // continue
+  } else if (
     process.env.AWS_ACCESS_KEY_ID
     || process.env.AWS_SECRET_ACCESS_KEY
     || process.env.AWS_REGION

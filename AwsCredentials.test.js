@@ -150,6 +150,22 @@ region = us-east-missing-secret-access-key
   }
 
   {
+    process.env.AWS_ACCESS_KEY_ID = 'AAAA'
+    process.env.AWS_SECRET_ACCESS_KEY = 'BBBB'
+    process.env.AWS_REGION = 'CCCC'
+    const awsCreds = await AwsCredentials('default', {
+      noenv: true,
+      credentialsFileDirname,
+      credentialsFilename,
+      configFileDirname,
+      configFilename,
+    })
+    assert.equal(awsCreds.accessKeyId, 'X1')
+    assert.equal(awsCreds.secretAccessKey, 'X2')
+    assert.equal(awsCreds.region, 'us-east-default')
+  }
+
+  {
     // process.env.AWS_ACCESS_KEY_ID
     // process.env.AWS_SECRET_ACCESS_KEY = 'BBBB'
     delete process.env.AWS_REGION
