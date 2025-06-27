@@ -1,5 +1,5 @@
 require('rubico/global')
-const AWSECR = require('aws-sdk/clients/ecr')
+const AWSECR = require('./aws-sdk/clients/ecr')
 
 /**
  * @name ECR

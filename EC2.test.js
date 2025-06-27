@@ -26,8 +26,8 @@ const test = new Test('EC2', async function () {
   { // listInstances all instances
     const response = await ec2.listInstances()
     assert(
-      response.Instances.filter(instance => instance.State.Name == 'running').length == 1,
-      'There is not a running instance, check the aws account'
+      response.Instances.filter(instance => instance.State.Name == 'running').length == 0,
+      'There should be no instances running'
     )
     assert.equal(response.NextToken, null)
   }
@@ -36,16 +36,16 @@ const test = new Test('EC2', async function () {
     const response = await ec2.listInstances({
       'tag:Env': 'test',
     })
-    assert.equal(response.Instances.length, 1)
+    assert.equal(response.Instances.length, 0)
     assert.equal(response.NextToken, null)
   }
 
   // terminateInstances with nonexistent instanceId
   await assert.rejects(
-    ec2.terminateInstances(['i-dne']),
+    ec2.terminateInstances(['i-055d6f6846eeaaaaa']),
     {
-      message: 'Invalid id: "i-dne"',
-      name: 'InvalidInstanceID.Malformed',
+      message: 'The instance ID \'i-055d6f6846eeaaaaa\' does not exist',
+      name: 'InvalidInstanceID.NotFound',
     },
   )
 }).case()

@@ -1,4 +1,4 @@
-const AWSKinesis = require('aws-sdk/clients/kinesis')
+const AWSKinesis = require('./aws-sdk/clients/kinesis')
 
 /**
  * @name Kinesis

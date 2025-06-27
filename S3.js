@@ -1,5 +1,5 @@
 require('rubico/global')
-const AWSS3 = require('aws-sdk/clients/s3')
+const AWSS3 = require('./aws-sdk/clients/s3')
 const identity = require('rubico/x/identity')
 
 /**

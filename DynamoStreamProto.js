@@ -1,6 +1,6 @@
 require('rubico/global')
 const Transducer = require('rubico/Transducer')
-const DynamoDBStreams = require('aws-sdk/clients/dynamodbstreams')
+const DynamoDBStreams = require('./aws-sdk/clients/dynamodbstreams')
 const rubicox = require('rubico/x')
 const has = require('./internal/has')
 const RetryAwsErrors = require('./internal/RetryAwsErrors')

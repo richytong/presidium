@@ -1,7 +1,7 @@
 require('rubico/global')
 const noop = require('rubico/x/noop')
 const defaultsDeep = require('rubico/x/defaultsDeep')
-const AWSDynamo = require('aws-sdk/clients/dynamodb')
+const AWSDynamo = require('./aws-sdk/clients/dynamodb')
 const getFirstKey = require('./internal/getFirstKey')
 const getFirstValue = require('./internal/getFirstValue')
 const HttpAgent = require('./HttpAgent')
