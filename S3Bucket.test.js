@@ -2,9 +2,9 @@ const assert = require('assert')
 const Test = require('thunk-test')
 const S3 = require('./S3')
 const S3Bucket = require('./S3Bucket')
-const inspect = require('./internal/inspect')
 
-const test = new Test('S3Bucket', S3Bucket)
+const test = new Test('S3Bucket', (...args) => new S3Bucket(...args))
+
 .before(async function () {
   this.s3 = new S3({
     accessKeyId: 'minioadmin',
@@ -30,6 +30,7 @@ const test = new Test('S3Bucket', S3Bucket)
     await this.s3.deleteBucket('test-bucket')
   } catch {}
 })
+
 .case({
   name: 'test-bucket',
   accessKeyId: 'minioadmin',

@@ -1,25 +1,23 @@
-require('rubico/global')
-const HttpServer = require('./HttpServer')
-const HttpsServer = require('./HttpsServer')
-const WebSocket = require('ws')
-const noop = require('rubico/x/noop')
+const http = require('http')
+const https = require('https')
+const ws = require('ws')
 
 /**
- * @name healthyHttpHandler
+ * @name defaultHttpHandler
  *
  * @synopsis
  * ```coffeescript [specscript]
- * healthyHttpHandler(
+ * defaultHttpHandler(
  *   request IncomingMessage,
  *   response ServerResponse,
  * )=>Promise<>|(),
  * ```
  */
-const healthyHttpHandler = function (request, response) {
+function defaultHttpHandler(request, response) {
   response.writeHead(200, {
     'Content-Type': 'text/plain',
   })
-  response.end('ok')
+  response.end('OK')
 }
 
 /**
@@ -27,83 +25,87 @@ const healthyHttpHandler = function (request, response) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * WebSocketServer(socketHandler (socket engine.Socket)=>Promise<>|())
- *   -> server WebSocketServer
+ * module ws
+ * module http
  *
- * WebSocketServer(
- *   socketHandler (socket engine.Socket)=>Promise<>|(),
- *   options: {
- *     ssl: boolean,
- *     key: string,
- *     cert: string,
- *   },
- * ) -> server WebSocketServer
+ * new WebSocketServer() -> server WebSocketServer
  *
- * WebSocketServer(
- *   socketHandler (socket engine.Socket)=>Promise<>|(),
- *   httpHandler: function,
- * * ) -> server WebSocketServer
+ * new WebSocketServer(wsHandler ws.WebSocket=>()) -> server WebSocketServer
+ *
+ * new WebSocketServer(wsHandler ws.WebSocket=>(), options {
+ *   httpHandler: (request http.ClientRequest, response http.ServerResponse)=>(),
+ *   ssl: boolean,
+ *   key: string,
+ *   cert: string,
+ * }) -> server WebSocketServer
+ *
+ * server.listen(port number, callback? function) -> ()
+ * server.close() -> ()
+ *
+ * server.on('connection', wsHandler ws.WebSocket=>()) -> ()
  * ```
  *
  * @description
- * Creates a WebSocketServer. Sockets are [engine.Socket](https://github.com/socketio/engine.io/blob/master/lib/socket.js)
+ * Server for the [WebSocket protocol](https://datatracker.ietf.org/doc/html/rfc6455).
  *
  * ```javascript
- * new WebSocketServer(socket => {
+ * const server = new WebSocketServer(socket => {
  *   socket.on('message', message => {
  *     console.log('Got message:', message)
  *   })
  *   socket.on('close', () => {
  *     console.log('Socket closed')
  *   })
- * }).listen(1337, () => {
+ * })
+ *
+ * server.listen(1337, () => {
  *   console.log('WebSocket server listening on port 1337')
  * })
  * ```
  */
+class WebSocketServer {
+  constructor(wsHandler, options = {}) {
+    const { httpHandler = defaultHttpHandler, ssl, key, cert } = options
 
-const WebSocketServer = function (
-  socketHandler, options = {},
-) {
-  const httpHandler =
-    typeof options == 'function' ? options
-    : options.httpHandler ?? healthyHttpHandler
+    this._httpServer = options.ssl
+      ? https.createServer({ key, cert }, httpHandler)
+      : http.createServer(httpHandler)
 
-  const httpServer =
-    options.ssl ? new HttpsServer(pick(options, ['key', 'cert']), httpHandler)
-    : new HttpServer(httpHandler)
-  const webSocketServer = new WebSocket.Server({ server: httpServer })
-  if (socketHandler != null) {
-    webSocketServer.on('connection', socketHandler.bind(webSocketServer))
+    this._wsServer = new ws.WebSocketServer({ server: this._httpServer })
+
+    if (wsHandler) {
+      this._wsServer.on('connection', wsHandler)
+    }
   }
-  webSocketServer.on('close', function closeHttpServer() {
-    httpServer.close()
-  })
-  webSocketServer.listen = (...args) => httpServer.listen(...args)
-  webSocketServer.detectAndCloseBrokenConnections = (options = {}) => {
-    const { pingInterval = 30000 } = options
-    webSocketServer.on('connection', function (websocket) {
-      websocket.isAlive = true
-      websocket.on('pong', function heartbeat() {
-        websocket.isAlive = true
-      })
-    })
 
-    const interval = setInterval(function pingConnectedWebSockets() {
-      webSocketServer.clients.forEach(function ping(websocket) {
-        if (websocket.isAlive) {
-          websocket.isAlive = false
-          websocket.ping(noop)
-        } else {
-          websocket.terminate()
-        }
-      })
-    }, pingInterval)
-    webSocketServer.on('close', function cleanupInterval() {
-      clearInterval(interval)
-    })
+  get clients() {
+    return this._wsServer.clients
   }
-  return webSocketServer
+
+  listen(...args) {
+    this._httpServer.listen(...args)
+  }
+
+  close() {
+    this._httpServer.close()
+    this._wsServer.close()
+  }
+
+  on(eventName, handler) {
+    if (eventName == 'connection') {
+      this._wsServer.on('connection', handler)
+    } else if (eventName == 'close') {
+      this._wsServer.on('close', handler)
+    } else if (eventName == 'upgrade') {
+      this._httpServer.on('upgrade', handler)
+    } else if (eventName == 'request') {
+      this._httpServer.on('request', handler)
+    } else if (eventName == 'error') {
+      this._wsServer.on('error', handler)
+    } else {
+      throw new Error(`Unrecognized event ${eventName}`)
+    }
+  }
 }
 
 module.exports = WebSocketServer
