@@ -1,504 +1,515 @@
 require('rubico/global')
-const noop = require('rubico/x/noop')
-const defaultsDeep = require('rubico/x/defaultsDeep')
-const AWSDynamo = require('./aws-sdk/clients/dynamodb')
+const { defaultsDeep } = require('rubico/x')
+const DynamoDBClient = require('./aws-sdk/clients/dynamodb')
 const getFirstKey = require('./internal/getFirstKey')
 const getFirstValue = require('./internal/getFirstValue')
 const HttpAgent = require('./HttpAgent')
-
-const isArray = Array.isArray
-
-const isBinary = ArrayBuffer.isView
-
-const objectKeys = Object.keys
-
-// message => ()
-const throwTypeError = function throwTypeError(message) {
-  throw new TypeError(message)
-}
 
 /**
  * @name Dynamo
  *
  * @synopsis
  * ```coffeescript [specscript]
- * Dynamo(options {
+ * new Dynamo(options {
  *   accessKeyId: string,
  *   secretAccessKey: string,
  *   region: string,
  *   endpoint: string,
- * }) -> DynamoTable
- *
- * Dynamo(endpoint string) -> DynamoTable
- * ```
- *
- * @description
- * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#constructor-property
- */
-const Dynamo = function (options) {
-  if (this == null || this.constructor != Dynamo) {
-    return new Dynamo(options)
-  }
-  this.connection = new AWSDynamo({
-    apiVersion: '2012-08-10',
-    accessKeyId: 'id',
-    secretAccessKey: 'secret',
-    region: 'x-x-x',
-    ...options,
-  })
-  return this
-}
-
-/**
- * @name Dynamo.prototype.describeTable
- *
- * @synopsis
- * ```coffeescript [specscript]
- * Dynamo(options).describeTable(tablename string) -> Promise<Object>
- * ```
- */
-Dynamo.prototype.describeTable = function (tablename) {
-  return this.connection.describeTable({ TableName: tablename }).promise()
-}
-
-/**
- * @name Dynamo.prototype.enableStreams
- *
- * @synopsis
- * ```coffeescript [specscript]
- * Dynamo(options).enableStreams(
- *   tablename string,
- *   options {
- *     streamViewType: 'NEW_IMAGE'|'OLD_IMAGE'|'NEW_AND_OLD_IMAGES'|'KEYS_ONLY',
- *   },
- * ) -> Promise<Object>
- * ```
- */
-Dynamo.prototype.enableStreams = function (tablename, options) {
-  return this.connection.updateTable({
-    TableName: tablename,
-    StreamSpecification: {
-      StreamEnabled: true,
-      StreamViewType: options.streamViewType,
-    },
-  }).promise()
-}
-
-/**
- * @name Dynamo.prototype.createTable
- *
- * @synopsis
- * ```coffeescript [specscript]
- * DynamoAttributeType = 'S'|'N'|'B'|'string'|'number'|'binary'
- *
- * Dynamo(options).createTable(
- *   tablename string,
- *   primaryKey [Object<DynamoAttributeType>, Object<DynamoAttributeType>?],
- *   options? {
- *     ProvisionedThroughput?: {
- *       ReadCapacityUnits: number,
- *       WriteCapacityUnits: number,
- *     },
- *     BillingMode?: 'PROVISIONED'|'PAY_PER_REQUEST',
- *   },
- * )
- * ```
- *
- * @description
- * Creates a DynamoDB table.
- *
- * DynamoAttributeType
- *  * `'S'` - string
- *  * `'N'` - number
- *  * `'B'` - binary
- *
- * ```javascript
- * Dynamo(options).createTable('my-table', [{ id: 'string' }])
- *
- * Dynamo(options).createTable('my-table', [{ id: 'string' }, { createTime: 'number' }])
- * ```
- */
-Dynamo.prototype.createTable = function createTable(
-  tablename, primaryKey, options,
-) {
-  const params = {
-    TableName: tablename,
-    KeySchema: Dynamo.KeySchema(primaryKey),
-    AttributeDefinitions: Dynamo.AttributeDefinitions(primaryKey),
-    BillingMode: get(options, 'BillingMode', 'PAY_PER_REQUEST'),
-  }
-  if (params.BillingMode == 'PROVISIONED') {
-    params.ProvisionedThroughput = get('ProvisionedThroughput', {
-      ReadCapacityUnits: 5,
-      WriteCapacityUnits: 5,
-    })(options)
-  }
-  return this.connection.createTable(params).promise()
-}
-
-/**
- * @name Dynamo.prototype.deleteTable
- *
- * @synopsis
- * ```coffeescript [specscript]
- * Dynamo(options).deleteTable(tablename string) -> Promise<DynamoResponse>
- * ```
- */
-Dynamo.prototype.deleteTable = async function deleteTable(tablename) {
-  return this.connection.deleteTable({
-    TableName: tablename,
-  }).promise().catch(noop)
-}
-
-/**
- * @name Dynamo.prototype.waitFor
- *
- * @synopsis
- * ```coffeescript [specscript]
- * Dynamo(options).waitFor(
- *   tablename string,
- *   status 'tableExists'|'tableNotExists',
- * ) -> Promise<{
- *   AttributeDefinitions: Array<{ AttributeName: string, AttributeType: any }>,
- *   TableName: string,
- *   KeySchema: Array<{ AttributeName: string, KeyType: 'HASH'|'RANGE' }>,
- *   TableStatus: 'CREATING'|'UPDATING'|'DELETING'|'ACTIVE'|'INACCESSIBLE_ENCRYPTION_CREDENTIALS'|'ARCHIVING'|'ARCHIVED'
- *   CreationDateTime: Date,
- *   ProvisionedThroughput: {
- *     LastIncreaseDateTime: Date,
- *     LastDecreaseDateTime: Date,
- *     NumberOfDecreasesToday: number,
- *     ReadCapacityUnits: number,
- *     WriteCapacityUnits: number,
- *   },
- *   TableSizeBytes: number,
- *   ItemCount: number, // The number of items in the specified table. DynamoDB updates this value approximately every six hours. Recent changes might not be reflected in this value.
- *   TableArn: string,
- *   TableId: string,
- *   BillingModeSummary: {
- *     BillingMode: 'PROVISIONED'|'PAY_PER_REQUEST',
- *     LocalSecondaryIndexes: Array<Object>,
- *     GlobalSecondaryIndexes: Array<Object>,
- * }>
- * ```
- *
- * @description
- * Wait for a Dynamo Table
- *
- * ```javascript
- * Dynamo('http://localhost:8000/')
- *   .waitFor('test-tablename', 'tableExists')
- *   .then(console.log)
- * // {
- * //   Table: {
- * //     AttributeDefinitions: [ [Object] ],
- * //     TableName: 'test-tablename',
- * //     KeySchema: [ [Object] ],
- * //     TableStatus: 'ACTIVE',
- * //     CreationDateTime: 2020-11-13T22:29:35.269Z,
- * //     ProvisionedThroughput: {
- * //       LastIncreaseDateTime: 1970-01-01T00:00:00.000Z,
- * //       LastDecreaseDateTime: 1970-01-01T00:00:00.000Z,
- * //       NumberOfDecreasesToday: 0,
- * //       ReadCapacityUnits: 5,
- * //       WriteCapacityUnits: 5
- * //     },
- * //     TableSizeBytes: 0,
- * //     ItemCount: 0,
- * //     TableArn: 'arn:aws:dynamodb:ddblocal:000000000000:table/test-tablename'
- * //   }
- * // }
- * ```
- */
-Dynamo.prototype.waitFor = async function waitFor(tablename, status) {
-  return this.connection.waitFor(status, {
-    TableName: tablename,
-  }).promise()
-}
-
-/**
- * @name Dynamo.prototype.createIndex
- *
- * @synopsis
- * ```coffeescript [specscript]
- * DynamoAttributeType = 'S'|'N'|'B'|'string'|'number'|'binary'
- *
- * Dynamo(options).createIndex(
- *   tablename string,
- *   index [Object<DynamoAttributeType>, Object<DynamoAttributeType>?],
- *   options? {
- *     ProvisionedThroughput?: {
- *       ReadCapacityUnits: number,
- *       WriteCapacityUnits: number,
- *     },
- *     Projection?: {
- *       NonKeyAttributes?: Array<string>,
- *       ProjectionType: 'ALL'|'KEYS_ONLY'|'INCLUDE',
- *     }
- *   },
- * )
- * ```
- *
- * @description
- * ```javascript
- * Dynamo('localhost:8000').createIndex('test-tablename', [{ status: 'string', createTime: 'number' }])
+ * }) -> dynamo Dynamo
  * ```
  *
  * @reference
- * https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LSI.html#LSI.Creating
- * https://stackoverflow.com/questions/36493323/adding-new-local-secondary-index-to-an-existing-dynamodb-table
+ * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#constructor-property
  */
-
-Dynamo.prototype.createIndex = async function createIndex(tablename, index, options = {}) {
-  const { Table } = await this.describeTable(tablename)
-  const BillingMode = Table.BillingModeSummary?.BillingMode ?? 'PAY_PER_REQUEST'
-  const params = {
-    IndexName: Dynamo.Indexname(index),
-    KeySchema: Dynamo.KeySchema(index),
-    ...defaultsDeep({
-      Projection: {
-        ProjectionType: 'ALL',
-      },
-      ...BillingMode == 'PROVISIONED' ? {
-        ProvisionedThroughput: {
-          ReadCapacityUnits: 5,
-          WriteCapacityUnits: 5,
-        },
-      } : {}
-    })(options),
+class Dynamo {
+  constructor(options) {
+    this.client = new DynamoDBClient({
+      ...options,
+      apiVersion: '2012-08-10',
+    })
   }
 
-  return this.connection.updateTable({
-    TableName: tablename,
-    AttributeDefinitions: Dynamo.AttributeDefinitions(index),
-    GlobalSecondaryIndexUpdates: [{ Create: params }],
-  }).promise()
-}
-
-/**
- * @name Dynamo.KeySchema
- *
- * @synopsis
- * ```coffeescript [specscript]
- * DynamoAttributeType = 'S'|'N'|'B'|'string'|'number'|'binary'
- *
- * Dynamo.KeySchema(
- *   primaryKeyOrIndex [{ string: DynamoAttributeType }],
- * ) -> [{ AttributeName: string, KeyType: 'HASH' }]
- *
- * Dynamo.KeySchema(
- *   primaryKeyOrIndex [{ string: DynamoAttributeType }, { string: DynamoAttributeType }],
- * ) -> [{ AttributeName: string, KeyType: 'HASH' }, { AttributeName: string, KeyType: 'RANGE' }]
- * ```
- */
-Dynamo.KeySchema = function DynamoKeySchema(primaryKeyOrIndex) {
-  return primaryKeyOrIndex.length == 1 ? [{
-    AttributeName: getFirstKey(primaryKeyOrIndex[0]),
-    KeyType: 'HASH',
-  }] : [{
-    AttributeName: getFirstKey(primaryKeyOrIndex[0]),
-    KeyType: 'HASH',
-  }, {
-    AttributeName: getFirstKey(primaryKeyOrIndex[1]),
-    KeyType: 'RANGE',
-  }]
-}
-
-/**
- * @name Dynamo.AttributeDefinitions
- *
- * @synopsis
- * ```coffeescript [specscript]
- * DynamoAttributeType = 'S'|'N'|'B'|'string'|'number'|'binary'
- *
- * Dynamo.AttributeDefinitions(
- *   primaryKeyOrIndex Array<Object<DynamoAttributeType>>
- * ) -> Array<{ AttributeName: string, AttributeType: any }>
- * ```
- */
-Dynamo.AttributeDefinitions = function DynamoAttributeDefinitions(primaryKeyOrIndex) {
-  return primaryKeyOrIndex.map(all({
-    AttributeName: getFirstKey,
-    AttributeType: pipe([
-      getFirstValue,
-      Dynamo.AttributeType,
-    ]),
-  }))
-}
-
-/**
- * @name Dynamo.Indexname
- *
- * @synopsis
- * ```coffeescript [specscript]
- * Dynamo.Indexname(index [Object, Object?]) -> indexName string
- * ```
- *
- * @description
- * Converts an index object to its indexname
- *
- * ```javascript
- * console.log(
- *   Dynamo.Indexname([{ name: 'string' }, { createTime: 'number' }]),
- * ) // 'name-createTime-index'
- * ```
- */
-Dynamo.Indexname = function DynamoIndexname(index) {
-  return `${index.map(getFirstKey).join('-')}-index`
-}
-
-/**
- * @name Dynamo.AttributeType
- *
- * @synopsis
- * ```coffeescript [specscript]
- * Dynamo.AttributeType(value string) -> 'S'
- *
- * Dynamo.AttributeType(value number) -> 'N'
- *
- * Dynamo.AttributeType(value TypedArray) -> 'B'
- * ```
- */
-Dynamo.AttributeType = function DynamoAttributeType(value) {
-  switch (value) {
-    case 'string':
-    case 'S':
-      return 'S'
-    case 'number':
-    case 'N':
-      return 'N'
-    case 'binary':
-    case 'B':
-      return 'B'
-    default:
-      throw new TypeError(`unknown type for ${value}`)
+  /**
+   * @name KeySchema
+   * @static
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * type DynamoAttributeType = 'S'|'N'|'B'|'string'|'number'|'binary'
+   *
+   * KeySchema(
+   *   primaryKeyOrIndex [{ string: DynamoAttributeType }]
+   * ) -> [{ AttributeName: string, KeyType: 'HASH' }]
+   *
+   * KeySchema(
+   *   primaryKeyOrIndex [
+   *     { string: DynamoAttributeType },
+   *     { string: DynamoAttributeType }
+   *   ]
+   * ) -> [
+   *   { AttributeName: string, KeyType: 'HASH' },
+   *   { AttributeName: string, KeyType: 'RANGE' }
+   * ]
+   * ```
+   */
+  static KeySchema(primaryKeyOrIndex) {
+    return primaryKeyOrIndex.length == 1 ? [{
+      AttributeName: getFirstKey(primaryKeyOrIndex[0]),
+      KeyType: 'HASH',
+    }] : [{
+      AttributeName: getFirstKey(primaryKeyOrIndex[0]),
+      KeyType: 'HASH',
+    }, {
+      AttributeName: getFirstKey(primaryKeyOrIndex[1]),
+      KeyType: 'RANGE',
+    }]
   }
-}
 
-/**
- * @name Dynamo.AttributeValue
- *
- * @synopsis
- * ```coffeescript [specscript]
- * DynamoAttributeValue = {
- *   S: string,
- *   N: string,
- *   BOOL: boolean,
- *   NULL: boolean,
- *   L: Array<DynamoAttributeValue>,
- *   M: Object<DynamoAttributeValue>,
- * }
- *
- * Dynamo.AttributeValue(value any) -> DynamoAttributeValue
- * ```
- */
-Dynamo.AttributeValue = function DynamoAttributeValue(value) {
-  return isArray(value) ? { L: value.map(DynamoAttributeValue) }
-    : typeof value == 'string' ? { S: value }
-    : typeof value == 'number' && !isNaN(value) ? { N: value.toString(10) }
-    : typeof value == 'boolean' ? { BOOL: value }
-    : value == null ? { NULL: true }
-    : value.constructor == Object ? { M: map(value, DynamoAttributeValue) }
-    : throwTypeError(`unknown value ${value}`)
-}
-
-/**
- * @name Dynamo.isDynamoDBJSON
- *
- * @synopsis
- * ```coffeescript [specscript]
- * Dynamo.isDynamoDBJSON(o object) -> boolean
- * ```
- */
-Dynamo.isDynamoDBJSON = function isDynamoDBJSON(o) {
-  if (typeof o != 'object') {
-    return false
+  /**
+   * @name AttributeDefinitions
+   * @static
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * type DynamoAttributeType = 'S'|'N'|'B'|'string'|'number'|'binary'
+   *
+   * AttributeDefinitions(
+   *   primaryKeyOrIndex Array<Object<DynamoAttributeType>>
+   * ) -> Array<{ AttributeName: string, AttributeType: any }>
+   * ```
+   */
+  static AttributeDefinitions(primaryKeyOrIndex) {
+    return primaryKeyOrIndex.map(all({
+      AttributeName: getFirstKey,
+      AttributeType: pipe([
+        getFirstValue,
+        Dynamo.AttributeType,
+      ]),
+    }))
   }
-  for (const key in o) {
-    const value = o[key]
-    if (Dynamo.isAttributeValue(value)) {
-      continue
+
+  /**
+   * @name AttributeDefinitions
+   * @static
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * type DynamoAttributeType = 'S'|'N'|'B'|'string'|'number'|'binary'
+   *
+   * AttributeDefinitions(
+   *   primaryKeyOrIndex Array<Object<DynamoAttributeType>>
+   * ) -> Array<{ AttributeName: string, AttributeType: any }>
+   * ```
+   */
+  static AttributeDefinitions(primaryKeyOrIndex) {
+    return primaryKeyOrIndex.map(all({
+      AttributeName: getFirstKey,
+      AttributeType: pipe([
+        getFirstValue,
+        Dynamo.AttributeType,
+      ]),
+    }))
+  }
+
+  /**
+   * @name Indexname
+   * @static
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * type JSONKey = {
+   *   [hashKey string]: string|number|binary,
+   *   [sortKey string]?: string|number|binary,
+   * }
+   *
+   * Indexname(indexKey JSONKey) -> indexName string
+   * ```
+   *
+   * @description
+   * Converts an index key to its indexname
+   *
+   * ```javascript
+   * console.log(
+   *   Dynamo.Indexname([{ name: 'string' }, { createTime: 'number' }]),
+   * ) // 'name-createTime-index'
+   * ```
+   */
+  static Indexname(indexKey) {
+    return `${indexKey.map(getFirstKey).join('-')}-index`
+  }
+
+  /**
+   * @name AttributeType
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * AttributeType(value string) -> 'S'
+   *
+   * AttributeType(value number) -> 'N'
+   *
+   * AttributeType(value TypedArray) -> 'B'
+   * ```
+   */
+  static AttributeType(value) {
+    switch (value) {
+      case 'string':
+      case 'S':
+        return 'S'
+      case 'number':
+      case 'N':
+        return 'N'
+      case 'binary':
+      case 'B':
+        return 'B'
+      default:
+        throw new TypeError(`Invalid value ${value}`)
     }
-    return false
   }
-  return true
-}
 
-/**
- * @name Dynamo.isAttributeValue
- *
- * @synopsis
- * ```coffeescript [specscript]
- * Dynamo.isAttributeValue(o object) -> boolean
- * ```
- */
-Dynamo.isAttributeValue = function isAttributeValue(o) {
-  if (typeof o != 'object') {
-    return false
+  /**
+   * @name AttributeValue
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * DynamoAttributeValue = {
+   *   S: string,
+   *   N: string,
+   *   BOOL: boolean,
+   *   NULL: boolean,
+   *   L: Array<DynamoAttributeValue>,
+   *   M: Object<DynamoAttributeValue>,
+   * }
+   *
+   * AttributeValue(value any) -> DynamoAttributeValue
+   * ```
+   */
+  static AttributeValue(value) {
+    if (Array.isArray(value)) {
+      return { L: value.map(Dynamo.AttributeValue) }
+    }
+    if (typeof value == 'string') {
+      return { S: value }
+    }
+    if (typeof value == 'number' && !isNaN(value)) {
+      return { N: value.toString(10) }
+    }
+    if (typeof value == 'boolean') {
+      return { BOOL: value }
+    }
+    if (value == null) {
+      return { NULL: true }
+    }
+    if (value.constructor == Object) {
+      return { M: map(value, Dynamo.AttributeValue) }
+    }
+    throw new TypeError(`Invalid value ${value}`)
   }
-  return (
-    'S' in o
-    || 'N' in o
-    || 'B' in o
-    || 'BOOL' in o
-    || 'NULL' in o
-    || 'M' in o
-  )
-}
 
-/**
- * @name Dynamo.attributeValueToJSON
- *
- * @synopsis
- * ```coffeescript [specscript]
- * DynamoAttributeValue = {
- *   S: string,
- *   N: string,
- *   BOOL: boolean,
- *   NULL: boolean,
- *   L: Array<DynamoAttributeValue>,
- *   M: Object<DynamoAttributeValue>,
- * }
- *
- * Dynamo.AttributeValue.toJSON(value DynamoAttributeValue) -> string|number|boolean|Array|Object
- * ```
- */
-Dynamo.attributeValueToJSON = function attributeValueToJSON(attributeValue) {
-  switch (getFirstKey(attributeValue)) {
-    case 'S':
-      return String(attributeValue.S)
-    case 'N':
-      return Number(attributeValue.N)
-    case 'BOOL':
-      return Boolean(attributeValue.BOOL)
-    case 'NULL':
-      return null
-    case 'L':
-      return attributeValue.L.map(attributeValueToJSON)
-    case 'M':
-      return map(attributeValue.M, attributeValueToJSON)
-    default:
-      throw new TypeError(`unknown attributeValue ${attributeValue}`)
+  /**
+   * @name isDynamoDBJSON
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * isDynamoDBJSON(o object) -> boolean
+   * ```
+   */
+  isDynamoDBJSON(o) {
+    if (typeof o != 'object') {
+      return false
+    }
+    for (const key in o) {
+      const value = o[key]
+      if (Dynamo.isAttributeValue(value)) {
+        continue
+      }
+      return false
+    }
+    return true
   }
-}
 
-/**
- * @name Dynamo.itemResponseToJSON
- *
- * @synopsis
- * ```coffeescript [specscript]
- * Dynamo.itemResponseToJSON(
- *   dynamoResponse {
- *     Item: Object<DynamoAttributeValue>
- *   }
- * ) -> json Object
- * ```
- */
-Dynamo.itemResponseToJSON = function itemResponseToJSON(dynamoResponse) {
-  return pipe(dynamoResponse, [
-    get('Item'),
-    map(Dynamo.attributeValueToJSON),
-  ])
+  /**
+   * @name isAttributeValue
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * isAttributeValue(o object) -> boolean
+   * ```
+   */
+  isAttributeValue(o) {
+    if (typeof o != 'object') {
+      return false
+    }
+    return (
+      'S' in o
+      || 'N' in o
+      || 'B' in o
+      || 'BOOL' in o
+      || 'NULL' in o
+      || 'M' in o
+    )
+  }
+
+  /**
+   * @name attributeValueToJSON
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * DynamoAttributeValue = {
+   *   S: string,
+   *   N: string,
+   *   BOOL: boolean,
+   *   NULL: boolean,
+   *   L: Array<DynamoAttributeValue>,
+   *   M: Object<DynamoAttributeValue>,
+   * }
+   *
+   * attributeValueToJSON(attributeValue DynamoAttributeValue) -> string|number|boolean|Array|Object
+   * ```
+   */
+  static attributeValueToJSON(attributeValue) {
+    switch (getFirstKey(attributeValue)) {
+      case 'S':
+        return String(attributeValue.S)
+      case 'N':
+        return Number(attributeValue.N)
+      case 'BOOL':
+        return Boolean(attributeValue.BOOL)
+      case 'NULL':
+        return null
+      case 'L':
+        return attributeValue.L.map(Dynamo.attributeValueToJSON)
+      case 'M':
+        return map(attributeValue.M, Dynamo.attributeValueToJSON)
+      default:
+        throw new TypeError(`Invalid attributeValue ${attributeValue}`)
+    }
+  }
+
+  /**
+   * @name describeTable
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * describeTable(tableName string) -> Promise<Object>
+   * ```
+   */
+  describeTable(tableName) {
+    return this.client.describeTable({ TableName: tableName }).promise()
+  }
+
+  /**
+   * @name enableStreams
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * enableStreams(
+   *   tableName string,
+   *   options {
+   *     streamViewType: 'NEW_IMAGE'|'OLD_IMAGE'|'NEW_AND_OLD_IMAGES'|'KEYS_ONLY',
+   *   },
+   * ) -> Promise<Object>
+   * ```
+   */
+  enableStreams(tableName, options) {
+    return this.client.updateTable({
+      TableName: tableName,
+      StreamSpecification: {
+        StreamEnabled: true,
+        StreamViewType: options.streamViewType,
+      },
+    }).promise()
+  }
+
+  /**
+   * @name createTable
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * DynamoAttributeType = 'S'|'N'|'B'|'string'|'number'|'binary'
+   *
+   * createTable(
+   *   tableName string,
+   *   primaryKey [Object<DynamoAttributeType>, Object<DynamoAttributeType>?],
+   *   options? {
+   *     ProvisionedThroughput?: {
+   *       ReadCapacityUnits: number,
+   *       WriteCapacityUnits: number,
+   *     },
+   *     BillingMode?: 'PROVISIONED'|'PAY_PER_REQUEST',
+   *   },
+   * )
+   * ```
+   *
+   * @description
+   * Creates a DynamoDB table.
+   *
+   * DynamoAttributeType
+   *  * `'S'` - string
+   *  * `'N'` - number
+   *  * `'B'` - binary
+   *
+   * ```javascript
+   * Dynamo(options).createTable('my-table', [{ id: 'string' }])
+   *
+   * Dynamo(options).createTable('my-table', [{ id: 'string' }, { createTime: 'number' }])
+   * ```
+   */
+  createTable(tableName, primaryKey, options) {
+    const params = {
+      TableName: tableName,
+      KeySchema: Dynamo.KeySchema(primaryKey),
+      AttributeDefinitions: Dynamo.AttributeDefinitions(primaryKey),
+      BillingMode: get(options, 'BillingMode', 'PAY_PER_REQUEST'),
+    }
+    if (params.BillingMode == 'PROVISIONED') {
+      params.ProvisionedThroughput = get(options, 'ProvisionedThroughput', {
+        ReadCapacityUnits: 5,
+        WriteCapacityUnits: 5,
+      })
+    }
+    return this.client.createTable(params).promise()
+  }
+
+  /**
+   * @name deleteTable
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * deleteTable(tableName string) -> Promise<Object>
+   * ```
+   */
+  deleteTable(tableName) {
+    return this.client.deleteTable({
+      TableName: tableName,
+    }).promise()
+  }
+
+  /**
+   * @name waitFor
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * waitFor(
+   *   tablename string,
+   *   status 'tableExists'|'tableNotExists'
+   * ) -> Promise<{
+   *   AttributeDefinitions: Array<{ AttributeName: string, AttributeType: any }>,
+   *   TableName: string,
+   *   KeySchema: Array<{ AttributeName: string, KeyType: 'HASH'|'RANGE' }>,
+   *   TableStatus: 'CREATING'|'UPDATING'|'DELETING'|'ACTIVE'|'INACCESSIBLE_ENCRYPTION_CREDENTIALS'|'ARCHIVING'|'ARCHIVED'
+   *   CreationDateTime: Date,
+   *   ProvisionedThroughput: {
+   *     LastIncreaseDateTime: Date,
+   *     LastDecreaseDateTime: Date,
+   *     NumberOfDecreasesToday: number,
+   *     ReadCapacityUnits: number,
+   *     WriteCapacityUnits: number,
+   *   },
+   *   TableSizeBytes: number,
+   *   ItemCount: number, # The number of items in the specified table.
+   *                      # DynamoDB updates this value approximately every six hours.
+   *                      # Recent changes might not be reflected in this value.
+   *   TableArn: string,
+   *   TableId: string,
+   *   BillingModeSummary: {
+   *     BillingMode: 'PROVISIONED'|'PAY_PER_REQUEST',
+   *     LocalSecondaryIndexes: Array<Object>,
+   *     GlobalSecondaryIndexes: Array<Object>,
+   * }>
+   * ```
+   *
+   * @description
+   * Wait for a DynamoDB Table to reach a specified status
+   *
+   * ```javascript
+   * Dynamo('http://localhost:8000/')
+   *   .waitFor('test-tablename', 'tableExists')
+   *   .then(console.log)
+   * // {
+   * //   Table: {
+   * //     AttributeDefinitions: [ [Object] ],
+   * //     TableName: 'test-tablename',
+   * //     KeySchema: [ [Object] ],
+   * //     TableStatus: 'ACTIVE',
+   * //     CreationDateTime: 2020-11-13T22:29:35.269Z,
+   * //     ProvisionedThroughput: {
+   * //       LastIncreaseDateTime: 1970-01-01T00:00:00.000Z,
+   * //       LastDecreaseDateTime: 1970-01-01T00:00:00.000Z,
+   * //       NumberOfDecreasesToday: 0,
+   * //       ReadCapacityUnits: 5,
+   * //       WriteCapacityUnits: 5
+   * //     },
+   * //     TableSizeBytes: 0,
+   * //     ItemCount: 0,
+   * //     TableArn: 'arn:aws:dynamodb:ddblocal:000000000000:table/test-tablename'
+   * //   }
+   * // }
+   * ```
+   */
+  waitFor(tableName, status) {
+    return this.client.waitFor(status, {
+      TableName: tableName,
+    }).promise()
+  }
+
+  /**
+   * @name createIndex
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * DynamoAttributeType = 'S'|'N'|'B'|'string'|'number'|'binary'
+   *
+   * createIndex(
+   *   tableName string,
+   *   index [Object<DynamoAttributeType>, Object<DynamoAttributeType>?],
+   *   options? {
+   *     ProvisionedThroughput?: {
+   *       ReadCapacityUnits: number,
+   *       WriteCapacityUnits: number,
+   *     },
+   *     Projection?: {
+   *       NonKeyAttributes?: Array<string>,
+   *       ProjectionType: 'ALL'|'KEYS_ONLY'|'INCLUDE',
+   *     }
+   *   },
+   * ) -> Promise<>
+   * ```
+   *
+   * @description
+   * ```javascript
+   * const dynamo = new Dynamo('localhost:8000')
+   * await dynamo.createIndex('test-tablename', [{ status: 'string', createTime: 'number' }])
+   * ```
+   *
+   * @reference
+   * https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LSI.html#LSI.Creating
+   * https://stackoverflow.com/questions/36493323/adding-new-local-secondary-index-to-an-existing-dynamodb-table
+   */
+  async createIndex(tableName, index, options = {}) {
+    const { Table } = await this.describeTable(tableName)
+    const BillingMode = Table.BillingModeSummary?.BillingMode ?? 'PAY_PER_REQUEST'
+    const params = {
+      IndexName: Dynamo.Indexname(index),
+      KeySchema: Dynamo.KeySchema(index),
+      ...defaultsDeep(options, {
+        Projection: {
+          ProjectionType: 'ALL',
+        },
+        ...BillingMode == 'PROVISIONED' ? {
+          ProvisionedThroughput: {
+            ReadCapacityUnits: 5,
+            WriteCapacityUnits: 5,
+          },
+        } : {}
+      }),
+    }
+
+    return this.client.updateTable({
+      TableName: tableName,
+      AttributeDefinitions: Dynamo.AttributeDefinitions(index),
+      GlobalSecondaryIndexUpdates: [{ Create: params }],
+    }).promise()
+  }
 }
 
 module.exports = Dynamo

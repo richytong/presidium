@@ -14,7 +14,7 @@ const combinedTest = Test.all([
     .case(null, { NULL: true })
     .case(undefined, { NULL: true })
     .case({ a: 1, b: ['a', true] }, { M: { a: { N: '1' }, b: { L: [{ S: 'a' }, { BOOL: true }] } } })
-    .throws(NaN, new TypeError('unknown value NaN')),
+    .throws(NaN, new TypeError('Invalid value NaN')),
 
   Test('Dynamo.attributeValueToJSON', Dynamo.attributeValueToJSON)
     .case({ S: 'hey' }, 'hey')
@@ -27,13 +27,7 @@ const combinedTest = Test.all([
     .case({ NULL: true }, null)
     .case({ NULL: false }, null)
     .case({ M: { a: { N: '1' }, b: { L: [{ S: 'a' }, { BOOL: true }] } } }, { a: 1, b: ['a', true] })
-    .throws(NaN, new TypeError('unknown attributeValue NaN')),
-
-  Test('Dynamo.itemResponseToJSON', Dynamo.itemResponseToJSON)
-    .case({ Item: { a: { S: 'hey' } } }, { a: 'hey' })
-    .case({ Item: { b: { S: '' } } }, { b: '' })
-    .case({ Item: { c: { N: '1' } } }, { c: 1 })
-    .case({ Item: { a: { M: { a: { N: '1' }, b: { L: [{ S: 'a' }, { BOOL: true }] } } } } }, { a: { a: 1, b: ['a', true] } }),
+    .throws(NaN, new TypeError('Invalid attributeValue NaN')),
 
   Test('Dynamo.AttributeType', Dynamo.AttributeType)
     .case('string', 'S')
@@ -42,9 +36,9 @@ const combinedTest = Test.all([
     .case('N', 'N')
     .case('binary', 'B')
     .case('B', 'B')
-    .throws('?', new TypeError('unknown type for ?')),
+    .throws('?', new TypeError('Invalid value ?')),
 
-  Test('Dynamo', Dynamo)
+  Test('Dynamo', (...args) => new Dynamo(...args))
     .case({ endpoint: 'http://localhost:8000' }, async function (dynamo) {
       await dynamo.deleteTable('test-1').catch(() => {})
       await dynamo.waitFor('test-1', 'tableNotExists')
@@ -69,7 +63,7 @@ const combinedTest = Test.all([
     .case({
       endpoint: 'http://localhost:8000',
     }, async function (dynamo) {
-      assert.strictEqual(dynamo.connection.config.endpoint, 'http://localhost:8000')
+      assert.strictEqual(dynamo.client.config.endpoint, 'http://localhost:8000')
     }),
 ])
 
