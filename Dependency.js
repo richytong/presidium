@@ -1,8 +1,6 @@
 const DynamoTable = require('./DynamoTable')
 const DynamoStream = require('./DynamoStream')
-const ElasticsearchIndex = require('./ElasticsearchIndex')
 const S3Bucket = require('./S3Bucket')
-const KinesisStream = require('./KinesisStream')
 
 const Dependency = {}
 
@@ -12,9 +10,7 @@ const Dependency = {}
  * @synopsis
  * ```coffeescript [specscript]
  * teardown(
- *   dependency DynamoTable|DynamoStream
- *              |ElasticsearchIndex|S3Bucket
- *              |KinesisStream
+ *   dependency DynamoTable|DynamoStream|S3Bucket
  * ) -> Promise<>
  * ```
  */
@@ -28,15 +24,8 @@ Dependency.teardown = async function teardown(dependency) {
   else if (dependency.constructor == DynamoStream) {
     dependency.close()
   }
-  else if (dependency.constructor == ElasticsearchIndex) {
-    await dependency.delete()
-  }
   else if (dependency.constructor == S3Bucket) {
     await dependency.deleteAllObjects()
-    await dependency.delete()
-  }
-  else if (dependency.constructor == KinesisStream) {
-    dependency.close()
     await dependency.delete()
   }
   else if (typeof dependency.destroy == 'function') {
