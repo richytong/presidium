@@ -10,7 +10,6 @@ const test = new Test('S3Bucket', (...args) => new S3Bucket(...args))
     accessKeyId: 'minioadmin',
     secretAccessKey: 'minioadmin',
     endpoint: 'http://localhost:9000',
-    region: 'us-west-1',
   })
   try {
     await new S3Bucket({
@@ -18,14 +17,12 @@ const test = new Test('S3Bucket', (...args) => new S3Bucket(...args))
       accessKeyId: 'minioadmin',
       secretAccessKey: 'minioadmin',
       endpoint: 'http://localhost:9000',
-      region: 'us-west-1',
     }).deleteObjects(['a', 'b', 'c'])
     await new S3Bucket({
       name: 'test-bucket',
       accessKeyId: 'minioadmin',
       secretAccessKey: 'minioadmin',
       endpoint: 'http://localhost:9000',
-      region: 'us-west-1',
     }).deleteObject('binary')
     await this.s3.deleteBucket('test-bucket')
   } catch {}
@@ -36,7 +33,6 @@ const test = new Test('S3Bucket', (...args) => new S3Bucket(...args))
   accessKeyId: 'minioadmin',
   secretAccessKey: 'minioadmin',
   endpoint: 'http://localhost:9000/',
-  region: 'us-west-1',
 }, async function (testBucket) {
   await testBucket.ready
 
