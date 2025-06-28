@@ -32,7 +32,6 @@
     "aws-sdk": "^2.1692.0",
     "bcrypt": "^5.1.0",
     "minimatch": "^9.0.3",
-    "node-fetch": "^2.6.1",
     "rubico": "^2.6.5",
     "tar-stream": "^2.1.4",
     "ws": "^8.18.2"

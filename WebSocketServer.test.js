@@ -1,6 +1,6 @@
 const Test = require('thunk-test')
+const Http = require('./Http')
 const assert = require('assert')
-const fetch = require('node-fetch')
 const WebSocket = require('ws')
 const WebSocketServer = require('./WebSocketServer')
 
@@ -21,7 +21,8 @@ const test = new Test('WebSocketServer', async function () {
       new Error('Unrecognized event unknown')
     )
 
-    const response = await fetch('http://localhost:7357')
+    const http = new Http('http://localhost:7357')
+    const response = await http.get('http://localhost:7357')
     assert(didRequest)
     assert.equal(response.status, 200)
     assert.equal(await response.text(), 'OK')
