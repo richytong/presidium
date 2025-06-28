@@ -1,5 +1,5 @@
 require('rubico/global')
-const AWSSecretsManager = require('./aws-sdk/clients/secretsmanager')
+const AWSSecretsManager = require('aws-sdk/clients/secretsmanager')
 
 /**
  * @name SecretsManager

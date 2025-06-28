@@ -1,5 +1,5 @@
 require('rubico/global')
-const AWSAutoscaling = require('./aws-sdk/clients/autoscaling')
+const AWSAutoscaling = require('aws-sdk/clients/autoscaling')
 const AWSAutoScalingDescribeAutoScalingGroupsFilters =
   require('./internal/AWSAutoScalingDescribeAutoScalingGroupsFilters')
 const filterExistsAndNotEmpty = require('./internal/filterExistsAndNotEmpty')

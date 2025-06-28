@@ -1,5 +1,5 @@
 require('rubico/global')
-const AWSEC2 = require('./aws-sdk/clients/ec2')
+const AWSEC2 = require('aws-sdk/clients/ec2')
 const AWSEC2DescribeInstancesFilters = require('./internal/AWSEC2DescribeInstancesFilters.js')
 const filterExistsAndNotEmpty = require('./internal/filterExistsAndNotEmpty')
 

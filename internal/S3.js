@@ -1,6 +1,6 @@
 require('rubico/global')
 const { identity } = require('rubico/x')
-const S3Client = require('../aws-sdk/clients/s3')
+const S3Client = require('aws-sdk/clients/s3')
 
 /**
  * @name S3
