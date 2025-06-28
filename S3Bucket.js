@@ -54,6 +54,68 @@ const S3 = require('./internal/S3')
  * Add an object to the S3 Bucket.
  *
  * ```coffeescript [specscript]
+ * type DateString = string # Wed Dec 31 1969 16:00:00 GMT-0800 (PST)
+ * type TimestampSeconds = number # 1751111429
+ *
+ * s3Bucket.putObject(
+ *   key string,
+ *   body Buffer|TypedArray|Blob|string|ReadableStream,
+ *   options {
+ *     ACL: 'private'|'public-read'|'public-read-write'|'authenticated-read'
+ *          |'aws-exec-read'|'bucket-owner-read'|'bucket-owner-full-control',
+ *     CacheControl: string,
+ *     ContentDisposition: string,
+ *     ContentEncoding: string,
+ *     ContentLanguage: string,
+ *     ContentLength: number,
+ *     ContentMD5: string,
+ *     ContentType: string,
+ *     ChecksumAlgorithm: 'CRC32'|'CRC32C'|'SHA1'|'SHA256',
+ *     ChecksumCRC32: string,
+ *     ChecksumCRC32C: string,
+ *     ChecksumSHA1: string,
+ *     ChecksumSHA256: string,
+ *     Expires: Date|DateString|TimestampSeconds,
+ *     IfNoneMatch: '*',
+ *     GrantFullControl: string,
+ *     GrantRead: string,
+ *     GrantReadACP: string,
+ *     GrantWriteACP: string,
+ *     Metadata: Object<string>,
+ *     ServerSideEncryption: 'AES256'|'aws:kms'|'aws:kms:dsse',
+ *     StorageClass: 'STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'
+ *                   |'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS'
+ *                   |'GLACIER_IR'|'SNOW'|'EXPRESS_ONEZONE',
+ *     WebsiteRedirectLocation: string,
+ *     SSECustomerAlgorithm: string,
+ *     SSECustomerKey: Buffer|TypedArray|Blob|string,
+ *     SSECustomerKeyMD5: string,
+ *     SSEKMSKeyId: string,
+ *     SSEKMSEncryptionContext: string,
+ *     BucketKeyEnabled: boolean,
+ *     RequestPayer: string,
+ *     Tagging: string, # key1=value1&key2=value2
+ *     ObjectLockMode: 'GOVERNANCE'|'COMPLIANCE',
+ *     ObjectLockRetainUntilDate: Date|DateString|TimestampSeconds,
+ *     ObjectLockLegalHoldStatus: 'ON'|'OFF',
+ *     ExpectedBucketOwner: string, # aws account id '123456789000'
+ *   }
+ * ) -> response Promise<{
+ *   Expiration: string,
+ *   ETag: string,
+ *   ChecksumCRC32: string,
+ *   ChecksumCRC32C: string,
+ *   ChecksumSHA1: string,
+ *   ChecksumSHA256: string,
+ *   ServerSideEncryption: 'AES256'|'aws:kms'|'aws:kms:dsse',
+ *   VersionId: string,
+ *   SSECustomerAlgorithm: string,
+ *   SSECustomerKeyMD5: string,
+ *   SSEKMSKeyId: string,
+ *   SSEKMSEncryptionContext: string,
+ *   BucketKeyEnabled: boolean,
+ *   RequestCharged: 'requester'
+ * }>
  * ```
  */
 class S3Bucket {
@@ -132,7 +194,7 @@ class S3Bucket {
    *     ObjectLockLegalHoldStatus: 'ON'|'OFF',
    *     ExpectedBucketOwner: string, # aws account id '123456789000'
    *   },
-   * ) -> Promise<{
+   * ) -> response Promise<{
    *   Expiration: string,
    *   ETag: string,
    *   ChecksumCRC32: string,
@@ -146,7 +208,7 @@ class S3Bucket {
    *   SSEKMSKeyId: string,
    *   SSEKMSEncryptionContext: string,
    *   BucketKeyEnabled: boolean,
-   *   RequestCharged: string,
+   *   RequestCharged: 'requester',
    * }>
    * ```
    */
