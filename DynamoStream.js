@@ -5,7 +5,7 @@ const { differenceWith } = require('rubico/x')
 const has = require('./internal/has')
 const RetryAwsErrors = require('./internal/RetryAwsErrors')
 const HttpAgent = require('./HttpAgent')
-const Dynamo = require('./Dynamo')
+const Dynamo = require('./internal/Dynamo')
 const Mux = require('rubico/monad/Mux')
 
 /**
@@ -26,12 +26,14 @@ const Mux = require('rubico/monad/Mux')
  */
 class DynamoStream {
   constructor(options) {
-    const awsCreds = pick(options, [
-      'accessKeyId',
-      'secretAccessKey',
-      'region',
-      'endpoint',
-    ])
+    const awsCreds = {
+      ...pick(options, [
+        'accessKeyId',
+        'secretAccessKey',
+        'endpoint',
+      ]),
+      region: options.region ?? 'default-region',
+    }
 
     this.table = options.table
     this.getRecordsLimit = options.getRecordsLimit ?? 1000
@@ -41,11 +43,8 @@ class DynamoStream {
     this.listStreamsLimit = options.listStreamsLimit ?? 100
 
     this.client = new DynamoDBStreams({
-      apiVersion: '2012-08-10',
-      accessKeyId: 'id',
-      secretAccessKey: 'secret',
-      region: 'x-x-x',
       ...awsCreds,
+      apiVersion: '2012-08-10',
     })
 
     this.retryListStreams = RetryAwsErrors(

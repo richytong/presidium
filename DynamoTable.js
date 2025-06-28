@@ -60,12 +60,14 @@ class DynamoTable {
   constructor(options) {
     this.name = options.name
     this.key = options.key
-    this.dynamo = new Dynamo(pick(options, [
-      'accessKeyId',
-      'secretAccessKey',
-      'region',
-      'endpoint',
-    ]))
+    this.dynamo = new Dynamo({
+      ...pick(options, [
+        'accessKeyId',
+        'secretAccessKey',
+        'endpoint',
+      ]),
+      region: options.region ?? 'default-region',
+    })
     this.client = this.dynamo.client
     this.ready = this.exists().then(async () => {
       await this.dynamo.waitFor(this.name, 'tableExists')

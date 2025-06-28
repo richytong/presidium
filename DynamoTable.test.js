@@ -5,7 +5,10 @@ const Dynamo = require('./internal/Dynamo')
 const DynamoTable = require('./DynamoTable')
 
 const test = new Test('DynamoTable', async () => {
-  this.dynamo = new Dynamo({ endpoint: 'http://localhost:8000/' })
+  this.dynamo = new Dynamo({
+    endpoint: 'http://localhost:8000/',
+    region: 'default-region',
+  })
   await this.dynamo.deleteTable('test-tablename').catch(() => {})
   await this.dynamo.waitFor('test-tablename', 'tableNotExists')
 

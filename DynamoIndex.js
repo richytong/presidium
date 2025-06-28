@@ -87,12 +87,14 @@ class DynamoIndex {
     this.table = options.table
     this.key = options.key
     this.name = Dynamo.Indexname(this.key)
-    this.dynamo = new Dynamo(pick(options, [
-      'accessKeyId',
-      'secretAccessKey',
-      'region',
-      'endpoint',
-    ]))
+    this.dynamo = new Dynamo({
+      ...pick(options, [
+        'accessKeyId',
+        'secretAccessKey',
+        'endpoint',
+      ]),
+      region: options.region ?? 'default-region',
+    })
     this.client = this.dynamo.client
 
     this.ready = this.inspect().then(async () => {
