@@ -1,6 +1,7 @@
 require('rubico/global')
 const { identity } = require('rubico/x')
 const S3Client = require('aws-sdk/clients/s3')
+require('aws-sdk/lib/maintenance_mode_message').suppress = true
 
 /**
  * @name S3

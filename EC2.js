@@ -1,5 +1,6 @@
 require('rubico/global')
 const AWSEC2 = require('aws-sdk/clients/ec2')
+require('aws-sdk/lib/maintenance_mode_message').suppress = true
 const AWSEC2DescribeInstancesFilters = require('./internal/AWSEC2DescribeInstancesFilters.js')
 const filterExistsAndNotEmpty = require('./internal/filterExistsAndNotEmpty')
 

@@ -1,5 +1,6 @@
 require('rubico/global')
 const AWSSecretsManager = require('aws-sdk/clients/secretsmanager')
+require('aws-sdk/lib/maintenance_mode_message').suppress = true
 
 /**
  * @name SecretsManager

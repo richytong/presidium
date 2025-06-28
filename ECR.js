@@ -1,5 +1,6 @@
 require('rubico/global')
 const AWSECR = require('aws-sdk/clients/ecr')
+require('aws-sdk/lib/maintenance_mode_message').suppress = true
 
 /**
  * @name ECR

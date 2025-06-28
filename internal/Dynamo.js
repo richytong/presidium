@@ -1,6 +1,7 @@
 require('rubico/global')
 const { defaultsDeep } = require('rubico/x')
 const DynamoDBClient = require('aws-sdk/clients/dynamodb')
+require('aws-sdk/lib/maintenance_mode_message').suppress = true
 const getFirstKey = require('./getFirstKey')
 const getFirstValue = require('./getFirstValue')
 

@@ -1,5 +1,6 @@
 require('rubico/global')
 const AWSAutoscaling = require('aws-sdk/clients/autoscaling')
+require('aws-sdk/lib/maintenance_mode_message').suppress = true
 const AWSAutoScalingDescribeAutoScalingGroupsFilters =
   require('./internal/AWSAutoScalingDescribeAutoScalingGroupsFilters')
 const filterExistsAndNotEmpty = require('./internal/filterExistsAndNotEmpty')

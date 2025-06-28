@@ -1,6 +1,7 @@
 require('rubico/global')
 const Transducer = require('rubico/Transducer')
 const DynamoDBStreams = require('aws-sdk/clients/dynamodbstreams')
+require('aws-sdk/lib/maintenance_mode_message').suppress = true
 const { differenceWith } = require('rubico/x')
 const has = require('./internal/has')
 const RetryAwsErrors = require('./internal/RetryAwsErrors')
