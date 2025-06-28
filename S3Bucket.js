@@ -1,5 +1,4 @@
 require('rubico/global')
-const { noop } = require('rubico/x')
 const S3 = require('./S3')
 
 /**
@@ -30,7 +29,7 @@ class S3Bucket {
       return { message: 'bucket-exists' }
     }).catch(async error => {
       if (error.name == 'NoSuchBucket') {
-        await this.s3.createBucket(this.name).catch(noop)
+        await this.s3.createBucket(this.name).catch(() => {})
         return { message: 'created-bucket' }
       } else {
         throw error
