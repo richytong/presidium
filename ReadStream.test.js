@@ -4,15 +4,15 @@ const stream = require('stream')
 const ReadStream = require('./ReadStream')
 
 const test1 =
-  new Test('ReadStream.buffer', ReadStream.buffer)
+  new Test(ReadStream.Buffer)
     .case(stream.Readable.from([Buffer.from('abc')]), Buffer.from('abc'))
 
 const test2 =
-  new Test('ReadStream.text', ReadStream.text)
+  new Test(ReadStream.Text)
     .case(stream.Readable.from(['abc']), 'abc')
 
 const test3 =
-  new Test('ReadStream.json', ReadStream.json)
+  new Test(ReadStream.JSON)
     .case(stream.Readable.from([JSON.stringify({ a: 1 })]), { a: 1 })
     .throws(stream.Readable.from(['s']), new SyntaxError('Unexpected token \'s\', "s" is not valid JSON'))
 

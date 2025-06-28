@@ -1,20 +1,20 @@
 const ReadStream = {}
 
 /**
- * @name ReadStream.buffer
+ * @name ReadStream.Buffer
  *
  * @synopsis
  * ```coffeescript [specscript]
  * module stream
  *
- * ReadStream.buffer(readable stream.Readable) -> Promise<Buffer>
+ * ReadStream.Buffer(readable stream.Readable) -> Promise<Buffer>
  * ```
  *
  * ```javascript
- * const buffer = await ReadStream.buffer(readable)
+ * const buffer = await ReadStream.Buffer(readable)
  * ```
  */
-ReadStream.buffer = function buffer(readable) {
+ReadStream.Buffer = function ReadStreamBuffer(readable) {
   return new Promise((resolve, reject) => {
     const chunks = []
     readable.on('data', chunk => {
@@ -28,20 +28,20 @@ ReadStream.buffer = function buffer(readable) {
 }
 
 /**
- * @name ReadStream.text
+ * @name ReadStream.Text
  *
  * @synopsis
  * ```coffeescript [specscript]
  * module stream
  *
- * ReadStream.text(readable stream.Readable) -> Promise<string>
+ * ReadStream.Text(readable stream.Readable) -> Promise<string>
  * ```
  *
  * ```javascript
- * const text = await ReadStream.text(readable)
+ * const text = await ReadStream.Text(readable)
  * ```
  */
-ReadStream.text = function text(readable) {
+ReadStream.Text = function ReadStreamText(readable) {
   return new Promise((resolve, reject) => {
     const chunks = []
     readable.on('data', chunk => {
@@ -55,20 +55,20 @@ ReadStream.text = function text(readable) {
 }
 
 /**
- * @name ReadStream.json
+ * @name ReadStream.JSON
  *
  * @synopsis
  * ```coffeescript [specscript]
  * module stream
  *
- * ReadStream.json(readable stream.Readable) -> Promise<object>
+ * ReadStream.JSON(readable stream.Readable) -> Promise<object>
  * ```
  *
  * ```javascript
- * const data = await ReadStream.json(readable)
+ * const data = await ReadStream.JSON(readable)
  * ```
  */
-ReadStream.json = function json(readable) {
+ReadStream.JSON = function ReadStreamJSON(readable) {
   return new Promise((resolve, reject) => {
     const chunks = []
     readable.on('data', chunk => {
