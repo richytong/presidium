@@ -49,74 +49,6 @@ const S3 = require('./internal/S3')
  *   * [headObject](#headobject)
  *   * [getObjectStream](#getobjectstream)
  *   * [listObjects](#listobjects)
- *
- * ## putObject
- * Add an object to the S3 Bucket.
- *
- * ```coffeescript [specscript]
- * type DateString = string # Wed Dec 31 1969 16:00:00 GMT-0800 (PST)
- * type TimestampSeconds = number # 1751111429
- *
- * s3Bucket.putObject(
- *   key string,
- *   body Buffer|TypedArray|Blob|string|ReadableStream,
- *   options {
- *     ACL: 'private'|'public-read'|'public-read-write'|'authenticated-read'
- *          |'aws-exec-read'|'bucket-owner-read'|'bucket-owner-full-control',
- *     CacheControl: string,
- *     ContentDisposition: string,
- *     ContentEncoding: string,
- *     ContentLanguage: string,
- *     ContentLength: number,
- *     ContentMD5: string,
- *     ContentType: string,
- *     ChecksumAlgorithm: 'CRC32'|'CRC32C'|'SHA1'|'SHA256',
- *     ChecksumCRC32: string,
- *     ChecksumCRC32C: string,
- *     ChecksumSHA1: string,
- *     ChecksumSHA256: string,
- *     Expires: Date|DateString|TimestampSeconds,
- *     IfNoneMatch: '*',
- *     GrantFullControl: string,
- *     GrantRead: string,
- *     GrantReadACP: string,
- *     GrantWriteACP: string,
- *     Metadata: Object<string>,
- *     ServerSideEncryption: 'AES256'|'aws:kms'|'aws:kms:dsse',
- *     StorageClass: 'STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'
- *                   |'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS'
- *                   |'GLACIER_IR'|'SNOW'|'EXPRESS_ONEZONE',
- *     WebsiteRedirectLocation: string,
- *     SSECustomerAlgorithm: string,
- *     SSECustomerKey: Buffer|TypedArray|Blob|string,
- *     SSECustomerKeyMD5: string,
- *     SSEKMSKeyId: string,
- *     SSEKMSEncryptionContext: string,
- *     BucketKeyEnabled: boolean,
- *     RequestPayer: string,
- *     Tagging: string, # key1=value1&key2=value2
- *     ObjectLockMode: 'GOVERNANCE'|'COMPLIANCE',
- *     ObjectLockRetainUntilDate: Date|DateString|TimestampSeconds,
- *     ObjectLockLegalHoldStatus: 'ON'|'OFF',
- *     ExpectedBucketOwner: string, # aws account id '123456789000'
- *   }
- * ) -> response Promise<{
- *   Expiration: string,
- *   ETag: string,
- *   ChecksumCRC32: string,
- *   ChecksumCRC32C: string,
- *   ChecksumSHA1: string,
- *   ChecksumSHA256: string,
- *   ServerSideEncryption: 'AES256'|'aws:kms'|'aws:kms:dsse',
- *   VersionId: string,
- *   SSECustomerAlgorithm: string,
- *   SSECustomerKeyMD5: string,
- *   SSEKMSKeyId: string,
- *   SSEKMSEncryptionContext: string,
- *   BucketKeyEnabled: boolean,
- *   RequestCharged: 'requester'
- * }>
- * ```
  */
 class S3Bucket {
   constructor(options) {
@@ -146,12 +78,14 @@ class S3Bucket {
   /**
    * @name putObject
    *
-   * @synopsis
+   * @docs
+   * Add an object to the S3 Bucket.
+   *
    * ```coffeescript [specscript]
    * type DateString = string # Wed Dec 31 1969 16:00:00 GMT-0800 (PST)
    * type TimestampSeconds = number # 1751111429
    *
-   * putObject(
+   * s3Bucket.putObject(
    *   key string,
    *   body Buffer|TypedArray|Blob|string|ReadableStream,
    *   options {
@@ -193,7 +127,7 @@ class S3Bucket {
    *     ObjectLockRetainUntilDate: Date|DateString|TimestampSeconds,
    *     ObjectLockLegalHoldStatus: 'ON'|'OFF',
    *     ExpectedBucketOwner: string, # aws account id '123456789000'
-   *   },
+   *   }
    * ) -> response Promise<{
    *   Expiration: string,
    *   ETag: string,
@@ -208,8 +142,14 @@ class S3Bucket {
    *   SSEKMSKeyId: string,
    *   SSEKMSEncryptionContext: string,
    *   BucketKeyEnabled: boolean,
-   *   RequestCharged: 'requester',
+   *   RequestCharged: 'requester'
    * }>
+   * ```
+   *
+   * ```javascript
+   * await myBucket.putObject('some-key', '{"hello":"world"}', {
+   *   ContentType: 'application/json',
+   * })
    * ```
    */
   putObject(key, body, options) {
@@ -219,51 +159,82 @@ class S3Bucket {
   /**
    * @name upload
    *
-   * @synopsis
+   * @docs
+   * Upload an object to the S3 Bucket.
+   *
    * ```coffeescript [specscript]
-   * upload(
+   * type DateString = string # Wed Dec 31 1969 16:00:00 GMT-0800 (PST)
+   * type TimestampSeconds = number # 1751111429
+   *
+   * s3Bucket.upload(
    *   key string,
    *   body string|Buffer|ReadableStream,
    *   options {
-   *     ACL: 'private'|'public-read'|'public-read-write'|'authenticated-read'|'aws-exec-read'|'bucket-owner-read'|'bucket-owner-full-control'
+   *     ACL: 'private'|'public-read'|'public-read-write'|'authenticated-read'
+   *          |'aws-exec-read'|'bucket-owner-read'|'bucket-owner-full-control',
    *     CacheControl: string,
    *     ContentDisposition: string,
    *     ContentEncoding: string,
    *     ContentLanguage: string,
-   *     ContentLength: string,
+   *     ContentLength: number,
    *     ContentMD5: string,
    *     ContentType: string,
-   *     ExpectedBucketOwner: string,
-   *     Expires: Date|Date.toString()|number,
+   *     ChecksumAlgorithm: 'CRC32'|'CRC32C'|'SHA1'|'SHA256',
+   *     ChecksumCRC32: string,
+   *     ChecksumCRC32C: string,
+   *     ChecksumSHA1: string,
+   *     ChecksumSHA256: string,
+   *     Expires: Date|DateString|TimestampSeconds,
+   *     IfNoneMatch: '*',
    *     GrantFullControl: string,
    *     GrantRead: string,
    *     GrantReadACP: string,
    *     GrantWriteACP: string,
    *     Metadata: Object<string>,
-   *     ObjectLockLegalHoldStatus: 'ON'|'OFF',
-   *     ObjectLockMode: 'GOVERNANCE'|'COMPLIANCE',
-   *     ObjectLockRetainUntilDate: Date|Date.toString()|number,
-   *     RequestPayer: requester,
-   *     SSECustomerAlgorithm: string,
-   *     SSECustomerKey: string|Buffer,
-   *     SSECustomerKeyMD5: string,
-   *     SSEKMSEncryptionContext: string,
-   *     SSEKMSKeyId: string,
-   *     ServerSideEncryption: 'AES256'|'aws:kms',
-   *     StorageClass: 'STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'|'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS'
-   *     Tagging: string,
+   *     ServerSideEncryption: 'AES256'|'aws:kms'|'aws:kms:dsse',
+   *     StorageClass: 'STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'
+   *                   |'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS'
+   *                   |'GLACIER_IR'|'SNOW'|'EXPRESS_ONEZONE',
    *     WebsiteRedirectLocation: string,
+   *     SSECustomerAlgorithm: string,
+   *     SSECustomerKey: Buffer|TypedArray|Blob|string,
+   *     SSECustomerKeyMD5: string,
+   *     SSEKMSKeyId: string,
+   *     SSEKMSEncryptionContext: string,
+   *     BucketKeyEnabled: boolean,
+   *     RequestPayer: string,
+   *     Tagging: string, # key1=value1&key2=value2
+   *     ObjectLockMode: 'GOVERNANCE'|'COMPLIANCE',
+   *     ObjectLockRetainUntilDate: Date|DateString|TimestampSeconds,
+   *     ObjectLockLegalHoldStatus: 'ON'|'OFF',
+   *     ExpectedBucketOwner: string, # aws account id '123456789000'
    *   },
    * ) -> Promise<{
+   *   Expiration: string,
    *   ETag: string,
-   *   ServerSideEncryption: 'AES256'|'aws:kms',
+   *   ChecksumCRC32: string,
+   *   ChecksumCRC32C: string,
+   *   ChecksumSHA1: string,
+   *   ChecksumSHA256: string,
+   *   ServerSideEncryption: 'AES256'|'aws:kms'|'aws:kms:dsse',
    *   VersionId: string,
    *   SSECustomerAlgorithm: string,
-   *   SSECustomerKey: string,
+   *   SSECustomerKeyMD5: string,
    *   SSEKMSKeyId: string,
    *   SSEKMSEncryptionContext: string,
-   *   RequestCharged: string,
+   *   BucketKeyEnabled: boolean,
+   *   RequestCharged: 'requester'
    * }>
+   * ```
+   *
+   * ```javascript
+   * const fs = require('fs')
+   *
+   * const myFileReadStream = fs.createReadStream('/path/to/my-file.wav')
+   *
+   * await myBucket.upload('my-file-key', myFileReadStream, {
+   *   ContentType: 'audio/x-wav',
+   * })
    * ```
    */
   upload(key, body, options) {
@@ -273,15 +244,21 @@ class S3Bucket {
   /**
    * @name deleteObject
    *
-   * @synopsis
+   * @docs
+   * Remove an object from the S3 Bucket.
+   *
    * ```coffeescript [specscript]
-   * deleteObject(key string, options {
+   * s3Bucket.deleteObject(key string, options {
    *   BypassGovernanceRetention: boolean,
    *   ExpectedBucketOwner: string,
    *   MFA: string,
    *   RequestPayer: requester,
    *   VersionId: string,
    * }) -> Promise
+   * ```
+   *
+   * ```javascript
+   * await myBucket.deleteObject('my-key')
    * ```
    */
   deleteObject(key, options) {
@@ -291,9 +268,11 @@ class S3Bucket {
   /**
    * @name deleteObjects
    *
-   * @synopsis
+   * @docs
+   * Remove multiple objects from the S3 Bucket.
+   *
    * ```coffeescript [specscript]
-   * deleteObjects(keys Array<string>, options {
+   * s3Bucket.deleteObjects(keys Array<string>, options {
    *   Quiet: boolean,
    *   BypassGovernanceRetention: boolean,
    *   ExpectedBucketOwner: string,
@@ -313,6 +292,10 @@ class S3Bucket {
    *   }>,
    * }>
    * ```
+   *
+   * ```javascript
+   * await myBucket.deleteObjects(['my-key-1', 'my-key-2'])
+   * ```
    */
   deleteObjects(keys, options) {
     return this.s3.deleteObjects(this.name, keys, options)
@@ -321,11 +304,17 @@ class S3Bucket {
   /**
    * @name deleteAllObjects
    *
-   * @synopsis
+   * @docs
+   * Remove all objects from an S3 Bucket.
+   *
    * ```coffeescript [specscript]
-   * deleteAllObjects(options {
+   * s3Bucket.deleteAllObjects(options {
    *   MaxKeys: number, // batch size
    * }) -> Promise<number>
+   * ```
+   *
+   * ```javascript
+   * await myBucket.deleteAllObjects()
    * ```
    */
   async deleteAllObjects(options = {}) {
@@ -343,9 +332,15 @@ class S3Bucket {
   /**
    * @name delete
    *
-   * @synopsis
+   * @docs
+   * Delete the S3 Bucket.
+   *
    * ```coffeescript [specscript]
-   * delete() -> Promise<>
+   * s3Bucket.delete() -> Promise<>
+   * ```
+   *
+   * ```javascript
+   * await myBucket.delete()
    * ```
    */
   delete() {
@@ -355,9 +350,11 @@ class S3Bucket {
   /**
    * @name getObject
    *
-   * @synopsis
+   * @docs
+   * Retrieve an object from the S3 Bucket.
+   *
    * ```coffeescript [specscript]
-   * getObject(
+   * s3Bucket.getObject(
    *   key string,
    *   options {
    *     ExpectedBucketOwner: string,
@@ -413,6 +410,10 @@ class S3Bucket {
    *   ObjectLockLegalHoldStatus: 'ON'|'OFF',
    * }>
    * ```
+   *
+   * ```javascript
+   * await myBucket.getObject('my-key')
+   * ```
    */
   getObject(key, options) {
     return this.s3.getObject(this.name, key, options)
@@ -421,9 +422,11 @@ class S3Bucket {
   /**
    * @name headObject
    *
-   * @synopsis
+   * @docs
+   * Retrieve the headers of an object from the S3 Bucket.
+   *
    * ```coffeescript [specscript]
-   * headObject(
+   * s3Bucket.headObject(
    *   key string,
    *   options {
    *     ExpectedBucketOwner: string,
@@ -477,6 +480,10 @@ class S3Bucket {
    *   ObjectLockRetainUntilDate: Date|Date.toString()|number,
    *   ObjectLockLegalHoldStatus: 'ON'|'OFF',
    * }>
+   * ```
+   *
+   * ```javascript
+   * const response = await myBucket.headObject('my-key')
    * ```
    */
   headObject(key, options) {
@@ -544,6 +551,23 @@ class S3Bucket {
    *   },
    * }
    * ```
+   *
+   * ```javascript
+   * const myObjectStream = await myBucket.getObjectStream('my-file-key', {
+   *   Range: 'bytes=0-1000000',
+   * })
+   *
+   * myObjectStream.on('data', chunk => {
+   *   response.write(chunk)
+   * })
+   * myObjectStream.on('close', () => {
+   *   response.end()
+   * })
+   * myObjectStream.on('error', error => {
+   *   console.error(error)
+   *   response.end()
+   * })
+   * ```
    */
   getObjectStream(key, options) {
     return this.s3.getObjectStream(this.name, key, options)
@@ -588,6 +612,14 @@ class S3Bucket {
    *   NextContinuationToken: string,
    *   StartAfter: string,
    * }>
+   * ```
+   *
+   * ```javascript
+   * const response = await myBucket.listObjects()
+   *
+   * const response = await myBucket.listObjects({
+   *   Prefix: 'my-prefix'
+   * })
    * ```
    */
   listObjects(options) {
