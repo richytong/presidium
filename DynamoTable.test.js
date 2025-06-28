@@ -4,10 +4,8 @@ const assert = require('assert')
 const Dynamo = require('./Dynamo')
 const DynamoTable = require('./DynamoTable')
 
-const dynamo = Dynamo('http://localhost:8000/')
-
 const test = new Test('DynamoTable', async () => {
-  this.dynamo = Dynamo({ endpoint: 'http://localhost:8000/' })
+  this.dynamo = new Dynamo({ endpoint: 'http://localhost:8000/' })
   await this.dynamo.deleteTable('test-tablename')
   await this.dynamo.waitFor('test-tablename', 'tableNotExists')
 

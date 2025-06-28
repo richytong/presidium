@@ -66,7 +66,7 @@ class DynamoTable {
       'region',
       'endpoint',
     ]))
-    this.connection = this.dynamo.connection
+    this.client = this.dynamo.client
     this.ready = this.exists().then(async () => {
       await this.dynamo.waitFor(this.name, 'tableExists')
       return { message: 'table-exists' }
@@ -159,7 +159,7 @@ class DynamoTable {
    * [AWS DynamoDB putItem](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#putItem-property)
    */
   putItem(item, options = {}) {
-    return this.connection.putItem({
+    return this.client.putItem({
       TableName: this.name,
       Item:
         Dynamo.isDynamoDBJSON(item)
@@ -216,7 +216,7 @@ class DynamoTable {
    * [AWS DynamoDB getItem](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#getItem-property)
    */
   getItem(key) {
-    return this.connection.getItem({
+    return this.client.getItem({
       TableName: this.name,
       Key: Dynamo.isDynamoDBJSON(key) ? key : map(key, Dynamo.AttributeValue),
     }).promise().then(result => {
@@ -272,7 +272,7 @@ class DynamoTable {
    * [AWS DynamoDB getItem](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#getItem-property)
    */
   getItemJSON(key) {
-    return this.connection.getItem({
+    return this.client.getItem({
       TableName: this.name,
       Key: Dynamo.isDynamoDBJSON(key) ? key : map(key, Dynamo.AttributeValue),
     }).promise().then(pipe([
@@ -353,7 +353,7 @@ class DynamoTable {
       ? map(updates, Dynamo.attributeValueToJSON)
       : updates
 
-    return this.connection.updateItem({
+    return this.client.updateItem({
       TableName: this.name,
       Key: Dynamo.isDynamoDBJSON(key) ? key : map(key, Dynamo.AttributeValue),
 
@@ -432,7 +432,7 @@ class DynamoTable {
       ? map(incrementUpdates, Dynamo.attributeValueToJSON)
       : incrementUpdates
 
-    return this.connection.updateItem({
+    return this.client.updateItem({
       TableName: this.name,
       Key: Dynamo.isDynamoDBJSON(key) ? key : map(key, Dynamo.AttributeValue),
 
@@ -503,7 +503,7 @@ class DynamoTable {
    * ```
    */
   deleteItem(key, options) {
-    return this.connection.deleteItem({
+    return this.client.deleteItem({
       TableName: this.name,
       Key: Dynamo.isDynamoDBJSON(key) ? key : map(key, Dynamo.AttributeValue),
       ...options,
@@ -549,7 +549,7 @@ class DynamoTable {
    * ```
    */
   scan(options = {}) {
-    return this.connection.scan({
+    return this.client.scan({
       TableName: this.name,
       Limit: options.Limit ?? 1000,
       ...options.ExclusiveStartKey ? {
@@ -736,7 +736,7 @@ class DynamoTable {
       filterExpressionStatements,
     })
 
-    return this.connection.query({
+    return this.client.query({
       TableName: this.name,
       ExpressionAttributeNames,
       ExpressionAttributeValues,

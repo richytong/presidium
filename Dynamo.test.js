@@ -38,6 +38,21 @@ const combinedTest = Test.all([
     .case('B', 'B')
     .throws('?', new TypeError('Invalid value ?')),
 
+  Test('Dynamo.isDynamoDBJSON', Dynamo.isDynamoDBJSON)
+    .case('a', false)
+    .case({ S: 'a' }, false)
+    .case({ a: { S: '1' } }, true)
+    .case({ a: { S: '1' }, b: 2 }, false),
+
+  Test('Dynamo.isAttributeValue', Dynamo.isAttributeValue)
+    .case(1, false)
+    .case({ S: '1' }, true)
+    .case({ N: '1' }, true)
+    .case({ B: Buffer.from([1, 2, 3]) }, true)
+    .case({ BOOL: 'true' }, true)
+    .case({ NULL: true }, true)
+    .case({ M: {} }, true),
+
   Test('Dynamo', (...args) => new Dynamo(...args))
     .case({ endpoint: 'http://localhost:8000' }, async function (dynamo) {
       await dynamo.deleteTable('test-1').catch(() => {})

@@ -213,7 +213,7 @@ class Dynamo {
    * isDynamoDBJSON(o object) -> boolean
    * ```
    */
-  isDynamoDBJSON(o) {
+  static isDynamoDBJSON(o) {
     if (typeof o != 'object') {
       return false
     }
@@ -235,7 +235,7 @@ class Dynamo {
    * isAttributeValue(o object) -> boolean
    * ```
    */
-  isAttributeValue(o) {
+  static isAttributeValue(o) {
     if (typeof o != 'object') {
       return false
     }

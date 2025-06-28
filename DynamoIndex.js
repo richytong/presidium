@@ -93,7 +93,7 @@ class DynamoIndex {
       'region',
       'endpoint',
     ]))
-    this.connection = this.dynamo.connection
+    this.client = this.dynamo.client
 
     this.ready = this.inspect().then(async () => {
       await this.waitForIndexStatus('ACTIVE')
@@ -263,7 +263,7 @@ class DynamoIndex {
       filterExpressionStatements,
     })
 
-    return this.connection.query({
+    return this.client.query({
       TableName: this.table,
       IndexName: this.name,
       ExpressionAttributeNames,
