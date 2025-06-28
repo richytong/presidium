@@ -1,6 +1,5 @@
 const pipe = require('rubico/pipe')
 const get = require('rubico/get')
-const callProp = require('rubico/x/callProp')
 const fs = require('fs')
 
 /**
@@ -17,8 +16,7 @@ const fs = require('fs')
 
 const NpmToken = async function () {
   return fs.promises.readFile(`${process.env.HOME}/.npmrc`).then(pipe([
-    callProp('toString'),
-    callProp('split', '\n'),
+    buffer => buffer.toString().split('\n'),
     get(0),
     value => (/\/\/registry.npmjs.org\/:_authToken=(.+)/g).exec(value),
     get(1),
