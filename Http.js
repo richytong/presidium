@@ -34,7 +34,7 @@ class Http {
 
         const chunks = []
 
-        response.bytes = () => new Promise((resolve2, reject2) => {
+        response.buffer = () => new Promise((resolve2, reject2) => {
           if (response.ended) {
             resolve2(new Uint8Array(Buffer.concat(chunks)))
           } else {
@@ -43,7 +43,7 @@ class Http {
             })
             response.on('end', () => {
               response.ended = true
-              resolve2(new Uint8Array(Buffer.concat(chunks)))
+              resolve2(Buffer.concat(chunks))
             })
             response.on('error', reject2)
           }
