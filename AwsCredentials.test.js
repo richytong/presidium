@@ -40,14 +40,14 @@ aws_secret_access_key = BBB
 [default]
 region = us-east-default
 
-[presidium]
-region = us-east-presidium
-
 [missing-access-key-id]
 region = us-east-missing-access-key-id
 
 [missing-secret-access-key]
 region = us-east-missing-secret-access-key
+
+[presidium]
+region = us-east-presidium
   `.trim())
 
   {

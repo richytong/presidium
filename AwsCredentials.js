@@ -101,7 +101,7 @@ const AwsCredentials = async function (profile, options = {}) {
   const region = startingLineNumber2 == -1 ? undefined : lines2.find(
     (line, index) => index > startingLineNumber2
       && line.startsWith('region')
-      && index - startingLineNumber < 2
+      && index - startingLineNumber2 < 2
   )?.split(' = ')[1]
 
   if (accessKeyId == null) {
