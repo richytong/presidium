@@ -19,7 +19,7 @@ const Stdout = {
   },
 }
 
-module.exports = Test('DockerContainer', DockerContainer)
+const test = new Test('DockerContainer', DockerContainer)
   .before(async function () {
     this.docker = new Docker()
     await this.docker.pruneContainers()
@@ -114,3 +114,9 @@ http.createServer((request, response) => {
     await this.docker.pruneContainers()
     await this.docker.pruneImages()
   })
+
+if (process.argv[1] == __filename) {
+  test()
+}
+
+module.exports = test
