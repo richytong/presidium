@@ -266,7 +266,7 @@ class S3Bucket {
    * }) -> Promise<number>
    * ```
    */
-  async deleteAllObjects(options) {
+  async deleteAllObjects(options = {}) {
     const { MaxKeys } = options
     let contents = await this.listObjects({ MaxKeys }).then(get('Contents'))
     let numDeleted = contents.length
