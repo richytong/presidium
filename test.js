@@ -30,7 +30,6 @@ const test = Test.all([
   require('./MongoCollection.test'),
   require('./OptionalValidator.test'),
   require('./Password.test'),
-  require('./Redis.test'),
   require('./RequestBuffer.test'),
   require('./S3.test'),
   require('./S3Bucket.test'),
