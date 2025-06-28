@@ -7,7 +7,7 @@ const identity = require('rubico/x/identity')
  *
  * @synopsis
  * ```coffeescript [specscript]
- * S3(connection {
+ * S3(options {
  *   accessKeyId: string,
  *   secretAccessKey: string,
  *   region: string,
