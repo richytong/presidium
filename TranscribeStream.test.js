@@ -30,7 +30,7 @@ const test = new Test('TranscribeStream', async function () {
   await testTranscribeStream.ready
 
   const mediaStreamFixtureAwsKeynote =
-    fs.createReadStream('./media-stream-fixture-aws-keynote.txt')
+    fs.createReadStream('./fixtures/media-stream-fixture-aws-keynote.txt')
   const rl = readline.createInterface({
     input: mediaStreamFixtureAwsKeynote,
   })
@@ -68,7 +68,7 @@ const test = new Test('TranscribeStream', async function () {
   const WebSocketServer = require('./WebSocketServer')
   const testPort = 7538
   const mediaStreamFixtureAwsKeynote =
-    fs.createWriteStream('./media-stream-fixture-aws-keynote.txt', { flags: 'a' })
+    fs.createWriteStream('./fixtures/media-stream-fixture-aws-keynote.txt', { flags: 'a' })
   new WebSocketServer(socket => {
     socket.on('message', chunk => {
       const message = JSON.parse(chunk.toString('utf8'))
