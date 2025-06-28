@@ -49,6 +49,7 @@ const test = new Test('TranscribeStream', async function () {
       resolve(transcription.Alternatives[0].Transcript)
     })
   })
+  console.log(testTranscription)
   assert(testTranscription.toLowerCase().includes('hello'), testTranscription)
   assert(testTranscription.toLowerCase().includes('world'), testTranscription)
 

@@ -1,6 +1,6 @@
 require('rubico/global')
 const EventEmitter = require('events')
-const WebSocket = require('./WebSocket')
+const WebSocket = require('ws')
 const sha256 = require('./internal/sha256')
 const AwsPresignedUrlV4 = require('./internal/AwsPresignedUrlV4')
 const Crc32 = require('./internal/Crc32')
