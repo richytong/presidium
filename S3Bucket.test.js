@@ -1,6 +1,6 @@
 const assert = require('assert')
 const Test = require('thunk-test')
-const S3 = require('./S3')
+const S3 = require('./internal/S3')
 const S3Bucket = require('./S3Bucket')
 
 const test = new Test('S3Bucket', (...args) => new S3Bucket(...args))
