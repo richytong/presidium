@@ -1,6 +1,7 @@
 const Test = require('thunk-test')
 const assert = require('assert')
 const fetch = require('node-fetch')
+const WebSocket = require('ws')
 const WebSocketServer = require('./WebSocketServer')
 
 const test = new Test('WebSocketServer', async function () {
@@ -28,7 +29,10 @@ const test = new Test('WebSocketServer', async function () {
   }
 
   {
-    const { promise, resolve } = Promise.withResolvers()
+    let resolve
+    const promise = new Promise(_resolve => {
+      resolve = _resolve
+    })
 
     let didRequest = false
     let didUpgrade = false
