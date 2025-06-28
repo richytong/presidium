@@ -16,7 +16,6 @@ let maxHeapUsed = 0;
     endpoint: 'http://localhost:8000',
     shardIteratorType: 'TRIM_HORIZON',
   })
-  console.log('stream', stream)
   await stream.ready;
   (async function() {
     for await (const item of stream) {
