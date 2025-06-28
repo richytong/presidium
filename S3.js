@@ -1,6 +1,6 @@
 require('rubico/global')
+const { identity } = require('rubico/x')
 const AWSS3 = require('./aws-sdk/clients/s3')
-const identity = require('rubico/x/identity')
 
 /**
  * @name S3
@@ -22,7 +22,7 @@ const S3 = function (options) {
   if (this == null || this.constructor != S3) {
     return new S3(options)
   }
-  this.s3 = new AWSS3({
+  this.client = new AWSS3({
     apiVersion: '2006-03-01',
     s3ForcePathStyle: true,
     signatureVersion: 'v4',
@@ -58,7 +58,7 @@ const S3 = function (options) {
  * ```
  */
 S3.prototype.createBucket = function createBucket(bucketname, options) {
-  return this.s3.createBucket({
+  return this.client.createBucket({
     Bucket: bucketname,
     ...options,
   }).promise()
@@ -80,7 +80,7 @@ S3.prototype.createBucket = function createBucket(bucketname, options) {
  * ```
  */
 S3.prototype.deleteBucket = function deleteBucket(bucketname) {
-  return this.s3.deleteBucket({
+  return this.client.deleteBucket({
     Bucket: bucketname,
   }).promise()
 }
@@ -95,7 +95,7 @@ S3.prototype.deleteBucket = function deleteBucket(bucketname) {
  * ```
  */
 S3.prototype.getBucketLocation = function s3GetBucketLocation(bucketname) {
-  return this.s3.getBucketLocation({ Bucket: bucketname }).promise()
+  return this.client.getBucketLocation({ Bucket: bucketname }).promise()
 }
 
 /**
@@ -149,7 +149,7 @@ S3.prototype.getBucketLocation = function s3GetBucketLocation(bucketname) {
  * ```
  */
 S3.prototype.putObject = function s3PutObject(bucketname, key, body, options) {
-  return this.s3.putObject({
+  return this.client.putObject({
     Bucket: bucketname,
     Key: key,
     Body: body,
@@ -208,7 +208,7 @@ S3.prototype.putObject = function s3PutObject(bucketname, key, body, options) {
  * ```
  */
 S3.prototype.upload = function upload(bucketname, key, body, options) {
-  return this.s3.upload({
+  return this.client.upload({
     Bucket: bucketname,
     Key: key,
     Body: body,
@@ -231,7 +231,7 @@ S3.prototype.upload = function upload(bucketname, key, body, options) {
  * ```
  */
 S3.prototype.deleteObject = function s3DeleteObject(bucketname, key, options) {
-  return this.s3.deleteObject({
+  return this.client.deleteObject({
     Bucket: bucketname,
     Key: key,
     ...options,
@@ -266,7 +266,7 @@ S3.prototype.deleteObject = function s3DeleteObject(bucketname, key, options) {
  */
 S3.prototype.deleteObjects = function s3DeleteObjects(bucketname, keys, options) {
   const { Quiet = false, ...optionsRest } = options ?? {}
-  return this.s3.deleteObjects({
+  return this.client.deleteObjects({
     Bucket: bucketname,
     Delete: {
       Objects: keys.map(all({ Key: identity })),
@@ -339,7 +339,7 @@ S3.prototype.deleteObjects = function s3DeleteObjects(bucketname, keys, options)
  */
 
 S3.prototype.getObject = function s3GetObject(bucketname, key, options) {
-  return this.s3.getObject({
+  return this.client.getObject({
     Bucket: bucketname,
     Key: key,
     ...options,
@@ -349,7 +349,7 @@ S3.prototype.getObject = function s3GetObject(bucketname, key, options) {
 S3.prototype.headObject = async function headObject(
   bucketname, key, options = {},
 ) {
-  return this.s3.headObject({
+  return this.client.headObject({
     Bucket: bucketname,
     Key: key,
     ...options,
@@ -361,7 +361,7 @@ S3.prototype.getObjectStream = async function s3GetObject(
 ) {
   const headRes = await this.headObject(bucketname, key, options)
 
-  const rs = this.s3.getObject({
+  const rs = this.client.getObject({
     Bucket: bucketname,
     Key: key,
     ...options,
@@ -415,7 +415,7 @@ S3.prototype.getObjectStream = async function s3GetObject(
  */
 
 S3.prototype.listObjectsV2 = function s3ListObjectsV2(bucketname, options) {
-  return this.s3.listObjectsV2({
+  return this.client.listObjectsV2({
     Bucket: bucketname,
     ...options,
   }).promise()
