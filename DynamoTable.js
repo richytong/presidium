@@ -1,7 +1,7 @@
 require('rubico/global')
 const { identity } = require('rubico/x')
 const DynamoDB = require('./aws-sdk/clients/dynamodb')
-const Dynamo = require('./Dynamo')
+const Dynamo = require('./internal/Dynamo')
 const hashJSON = require('./internal/hashJSON')
 const join = require('./internal/join')
 const createExpressionAttributeNames =

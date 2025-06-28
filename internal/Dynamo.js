@@ -1,9 +1,8 @@
 require('rubico/global')
 const { defaultsDeep } = require('rubico/x')
-const DynamoDBClient = require('./aws-sdk/clients/dynamodb')
-const getFirstKey = require('./internal/getFirstKey')
-const getFirstValue = require('./internal/getFirstValue')
-const HttpAgent = require('./HttpAgent')
+const DynamoDBClient = require('../aws-sdk/clients/dynamodb')
+const getFirstKey = require('./getFirstKey')
+const getFirstValue = require('./getFirstValue')
 
 /**
  * @name Dynamo

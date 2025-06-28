@@ -1,7 +1,7 @@
 require('rubico/global')
 const Test = require('thunk-test')
 const assert = require('assert')
-const Dynamo = require('./Dynamo')
+const Dynamo = require('./internal/Dynamo')
 const DynamoTable = require('./DynamoTable')
 
 const test = new Test('DynamoTable', async () => {

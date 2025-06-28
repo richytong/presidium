@@ -4,7 +4,7 @@ const uniq = require('rubico/x/uniq')
 const find = require('rubico/x/find')
 const flatten = require('rubico/x/flatten')
 const isDeepEqual = require('rubico/x/isDeepEqual')
-const Dynamo = require('./Dynamo')
+const Dynamo = require('./internal/Dynamo')
 const hashJSON = require('./internal/hashJSON')
 const createExpressionAttributeNames =
   require('./internal/createExpressionAttributeNames')

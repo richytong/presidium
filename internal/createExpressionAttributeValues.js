@@ -1,4 +1,4 @@
-const Dynamo = require('../Dynamo')
+const Dynamo = require('./Dynamo')
 
 /**
  * @name createExpressionAttributeValues
