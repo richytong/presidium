@@ -87,7 +87,7 @@ class S3Bucket {
    * @synopsis
    * ```coffeescript [specscript]
    * type DateString = string # Wed Dec 31 1969 16:00:00 GMT-0800 (PST)
-   * type Timestamp = number # 1751111429548
+   * type TimestampSeconds = number # 1751111429
    *
    * putObject(
    *   key string,
@@ -107,7 +107,7 @@ class S3Bucket {
    *     ChecksumCRC32C: string,
    *     ChecksumSHA1: string,
    *     ChecksumSHA256: string,
-   *     Expires: Date|DateString|Timestamp,
+   *     Expires: Date|DateString|TimestampSeconds,
    *     IfNoneMatch: '*',
    *     GrantFullControl: string,
    *     GrantRead: string,
@@ -128,7 +128,7 @@ class S3Bucket {
    *     RequestPayer: string,
    *     Tagging: string, # key1=value1&key2=value2
    *     ObjectLockMode: 'GOVERNANCE'|'COMPLIANCE',
-   *     ObjectLockRetainUntilDate: Date|DateString|Timestamp,
+   *     ObjectLockRetainUntilDate: Date|DateString|TimestampSeconds,
    *     ObjectLockLegalHoldStatus: 'ON'|'OFF',
    *     ExpectedBucketOwner: string, # aws account id '123456789000'
    *   },
