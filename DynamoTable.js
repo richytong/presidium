@@ -1,6 +1,5 @@
 require('rubico/global')
 const { identity } = require('rubico/x')
-const DynamoDB = require('aws-sdk/clients/dynamodb')
 require('aws-sdk/lib/maintenance_mode_message').suppress = true
 const Dynamo = require('./internal/Dynamo')
 const hashJSON = require('./internal/hashJSON')
