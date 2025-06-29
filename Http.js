@@ -4,11 +4,46 @@ const path = require('path')
 
 /**
  * @name Http
+ *
+ * @synopsis
+ * ```coffeescript [specscript]
+ * httpOptions {
+ *   agent: http.Agent,
+ *   auth: string,
+ *   createConnection: function,
+ *   defaultPort: number,
+ *   family: number,
+ *   headers: object,
+ *   hints: number,
+ *   host: string,
+ *   hostname: string,
+ *   insecureHTTPParser: boolean,
+ *   joinDuplicateHeaders: boolean,
+ *   localAddress: string,
+ *   localPort: number,
+ *   lookup: function,
+ *   maxHeaderSize: number,
+ *   method: string,
+ *   path: string,
+ *   port: number,
+ *   protocol: string,
+ *   setDefaultHeaders: boolean,
+ *   setHost: boolean,
+ *   signal: AbortSignal,
+ *   socketPath: string,
+ *   timeout: number,
+ *   uniqueHeaders: Array<string>,
+ * }
+ *
+ * new Http(baseUrl string, httpOptions) -> http Http
+ * new Http(httpOptions) -> http Http
+ * ```
  */
 class Http {
-  constructor(baseUrl) {
+  constructor(baseUrl, httpOptions = {}) {
     this.baseUrl = baseUrl
     this.client = baseUrl.includes('https') ? https : http
+    this.httpOptions = httpOptions
   }
 
   /**
@@ -96,10 +131,10 @@ class Http {
   }
 
   get(relativeUrl, options = {}) {
-    console.log('get', relativeUrl, options)
     const url = path.join(this.baseUrl, relativeUrl)
     const parsedUrl = new URL(url)
     const requestOptions = {
+      ...this.httpOptions,
       hostname: parsedUrl.hostname,
       port: parsedUrl.port,
       path: parsedUrl.pathname,
@@ -114,6 +149,7 @@ class Http {
     const url = path.join(this.baseUrl, relativeUrl)
     const parsedUrl = new URL(url)
     const requestOptions = {
+      ...this.httpOptions,
       hostname: parsedUrl.hostname,
       port: parsedUrl.port,
       path: parsedUrl.pathname,
@@ -128,6 +164,7 @@ class Http {
     const url = path.join(this.baseUrl, relativeUrl)
     const parsedUrl = new URL(url)
     const requestOptions = {
+      ...this.httpOptions,
       hostname: parsedUrl.hostname,
       port: parsedUrl.port,
       path: parsedUrl.pathname,
@@ -142,6 +179,7 @@ class Http {
     const url = path.join(this.baseUrl, relativeUrl)
     const parsedUrl = new URL(url)
     const requestOptions = {
+      ...this.httpOptions,
       hostname: parsedUrl.hostname,
       port: parsedUrl.port,
       path: parsedUrl.pathname,
@@ -156,6 +194,7 @@ class Http {
     const url = path.join(this.baseUrl, relativeUrl)
     const parsedUrl = new URL(url)
     const requestOptions = {
+      ...this.httpOptions,
       hostname: parsedUrl.hostname,
       port: parsedUrl.port,
       path: parsedUrl.pathname,
@@ -170,6 +209,7 @@ class Http {
     const url = path.join(this.baseUrl, relativeUrl)
     const parsedUrl = new URL(url)
     const requestOptions = {
+      ...this.httpOptions,
       hostname: parsedUrl.hostname,
       port: parsedUrl.port,
       path: parsedUrl.pathname,
@@ -183,6 +223,7 @@ class Http {
   connect(options = {}) {
     const parsedUrl = new URL(this.baseUrl)
     const requestOptions = {
+      ...this.httpOptions,
       host: parsedUrl.hostname,
       port: Number(parsedUrl.port),
       method: 'CONNECT',
@@ -197,6 +238,7 @@ class Http {
     const url = path.join(this.baseUrl, relativeUrl)
     const parsedUrl = new URL(url)
     const requestOptions = {
+      ...this.httpOptions,
       hostname: parsedUrl.hostname,
       port: parsedUrl.port,
       path: parsedUrl.pathname,
@@ -211,6 +253,7 @@ class Http {
     const url = path.join(this.baseUrl, relativeUrl)
     const parsedUrl = new URL(url)
     const requestOptions = {
+      ...this.httpOptions,
       hostname: parsedUrl.hostname,
       port: parsedUrl.port,
       path: parsedUrl.pathname,
