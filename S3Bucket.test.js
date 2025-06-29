@@ -17,13 +17,7 @@ const test = new Test('S3Bucket', (...args) => new S3Bucket(...args))
       accessKeyId: 'minioadmin',
       secretAccessKey: 'minioadmin',
       endpoint: 'http://localhost:9000',
-    }).deleteObjects(['a', 'b', 'c'])
-    await new S3Bucket({
-      name: 'test-bucket',
-      accessKeyId: 'minioadmin',
-      secretAccessKey: 'minioadmin',
-      endpoint: 'http://localhost:9000',
-    }).deleteObject('binary')
+    }).deleteAllObjects()
     await this.s3.deleteBucket('test-bucket')
   } catch {}
 })
@@ -36,7 +30,7 @@ const test = new Test('S3Bucket', (...args) => new S3Bucket(...args))
 }, async function (testBucket) {
   await testBucket.ready
 
-  await testBucket.deleteObjects(['a', 'b', 'c'])
+  await testBucket.deleteAllObjects()
   await testBucket.deleteObject('binary')
 
   await testBucket.putObject('a', JSON.stringify({ id: 'a' }), {
@@ -73,11 +67,27 @@ const test = new Test('S3Bucket', (...args) => new S3Bucket(...args))
   }
 
   {
-    const a1 = await testBucket.getObject('a')
-    console.log('a1', a1)
-    await testBucket.deleteObjects(['a'])
     const a = await testBucket.getObject('a')
-    console.log('a', a)
+    const body = a.Body.toString('utf8')
+    assert.equal(body, '{"id":"a"}')
+    await testBucket.deleteObjects(['a'])
+    await assert.rejects(
+      testBucket.getObject('a'),
+      { name: 'NoSuchKey', message: 'The specified key does not exist.' },
+    )
+  }
+
+  {
+    let b = await testBucket.getObject('b')
+    assert.equal(b.Body.toString('utf8'), '{"id":"b"}')
+    await testBucket.deleteObjects([{ Key: 'b', VersionId: '0' }])
+    b = await testBucket.getObject('b')
+    assert.equal(b.Body.toString('utf8'), '{"id":"b"}')
+    await testBucket.deleteObjects([{ Key: 'b' }]),
+    await assert.rejects(
+      testBucket.getObject('b'),
+      { name: 'NoSuchKey', message: 'The specified key does not exist.' },
+    )
   }
 
   await testBucket.deleteAllObjects({ MaxKeys: 1 })

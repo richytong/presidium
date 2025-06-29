@@ -264,7 +264,7 @@ class S3 {
     return this.client.deleteObjects({
       Bucket: bucketname,
       Delete: {
-        Objects: keys.map(all({ Key: identity })),
+        Objects: keys.map(key => typeof key == 'string' ? ({ Key: key }) : key),
         Quiet,
       },
       ...optionsRest,
