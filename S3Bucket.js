@@ -287,7 +287,7 @@ class S3Bucket {
    *     DeleteMarkerVersionId: string,
    *     Key: string,
    *   }>,
-   *   RequestCharged: string,
+   *   RequestCharged: 'requester',
    *   Errors: Array<{
    *     Key: string,
    *     VersionId: string,
@@ -416,7 +416,7 @@ class S3Bucket {
    *   StorageClass: 'STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'
    *                 |'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS'
    *                 |'GLACIER_IR'|'SNOW'|'EXPRESS_ONEZONE',
-   *   RequestCharged: string,
+   *   RequestCharged: 'requester',
    *   ReplicationStatus: 'COMPLETE'|'PENDING'|'FAILED'|'REPLICA',
    *   PartsCount: number,
    *   TagCount: number,
@@ -496,7 +496,7 @@ class S3Bucket {
    *   StorageClass: 'STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'
    *                 |'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS'
    *                 |'GLACIER_IR'|'SNOW'|'EXPRESS_ONEZONE',
-   *   RequestCharged: string,
+   *   RequestCharged: 'requester',
    *   ReplicationStatus: 'COMPLETE'|'PENDING'|'FAILED'|'REPLICA',
    *   PartsCount: number,
    *   TagCount: number,
@@ -573,7 +573,7 @@ class S3Bucket {
    *     StorageClass: 'STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'
    *                   |'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS'
    *                   |'GLACIER_IR'|'SNOW'|'EXPRESS_ONEZONE',
-   *     RequestCharged: string,
+   *     RequestCharged: 'requester',
    *     ReplicationStatus: 'COMPLETE'|'PENDING'|'FAILED'|'REPLICA',
    *     PartsCount: number,
    *     TagCount: number,
@@ -611,38 +611,47 @@ class S3Bucket {
    * @synopsis
    * ```coffeescript [specscript]
    * listObjects(options {
-   *   Prefix: string,
-   *   ContinuationToken: string,
    *   Delimiter: string,
    *   EncodingType: 'url',
-   *   ExpectedBucketOwner: string,
-   *   FetchOwner: boolean,
    *   MaxKeys: number,
-   *   RequestPayer: requester,
+   *   Prefix: string,
+   *   ContinuationToken: string,
+   *   FetchOwner: boolean,
    *   StartAfter: string,
+   *   RequestPayer: requester,
+   *   ExpectedBucketOwner: string,
+   *   OptionalObjectAttributes: Array<string>
    * }) -> Promise<{
    *   isTruncated: boolean,
    *   Contents: Array<{
    *     Key: string,
    *     LastModified: Date,
-   *     ETag: string, // hash of the object
-   *     Size: number, // bytes
-   *     StorageClass: 'STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'|'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS',
+   *     ETag: string,
+   *     ChecksumAlgorithm: 'CRC32'|'CRC32C'|'SHA1'|'SHA256',
+   *     Size: number, # bytes
+   *     StorageClass: 'STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'
+   *                   |'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS'
+   *                   |'GLACIER_IR'|'SNOW'|'EXPRESS_ONEZONE',
    *     Owner: {
    *       DisplayName: string,
-   *       ID: string,
+   *       ID: string
    *     },
+   *     RestoreStatus: {
+   *       IsRestoreInProgress: boolean,
+   *       RestoreExpiryDate: Date|DateString|TimestampSeconds
+   *     }
    *   }>,
-   *   Name: string, // bucketname
+   *   Name: string,
    *   Prefix: string,
    *   Delimiter: string,
    *   MaxKeys: number,
-   *   CommonPrefixes: Array,
+   *   CommonPrefixes: Array<{ Prefix: string }>,
    *   EncodingType: 'url',
    *   KeyCount: number,
    *   ContinuationToken: string,
    *   NextContinuationToken: string,
    *   StartAfter: string,
+   *   RequestCharged: 'requester'
    * }>
    * ```
    *
