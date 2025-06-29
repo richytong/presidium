@@ -1,13 +1,13 @@
 require('rubico/global')
 const Transducer = require('rubico/Transducer')
 const zlib = require('zlib')
+const http = require('http')
 const isString = require('rubico/x/isString')
 const identity = require('rubico/x/identity')
 const size = require('rubico/x/size')
 const flatten = require('rubico/x/flatten')
 const defaultsDeep = require('rubico/x/defaultsDeep')
 const Http = require('./Http')
-const HttpAgent = require('./HttpAgent')
 const Archive = require('./Archive')
 const querystring = require('querystring')
 const stringifyJSON = require('./internal/stringifyJSON')
@@ -29,10 +29,14 @@ const Docker = function () {
   if (this == null || this.constructor != Docker) {
     return new Docker()
   }
-  const agent = new HttpAgent({
+
+  const agent = new http.Agent({
     socketPath: '/var/run/docker.sock',
+    maxSockets: Infinity,
   })
+
   this.http = new Http('http://0.0.0.0/v1.40', { agent })
+
   return this
 }
 
@@ -50,7 +54,7 @@ const Docker = function () {
  * ```
  */
 Docker.prototype.auth = function dockerAuth(options) {
-  return this.http.post('auth', {
+  return this.http.post('/auth', {
     headers: {
       'Content-Type': 'application/json',
     },
