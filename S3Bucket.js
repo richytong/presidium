@@ -249,11 +249,11 @@ class S3Bucket {
    *
    * ```coffeescript [specscript]
    * s3Bucket.deleteObject(key string, options {
+   *   MFA: string,
+   *   VersionId: string,
+   *   RequestPayer: requester,
    *   BypassGovernanceRetention: boolean,
    *   ExpectedBucketOwner: string,
-   *   MFA: string,
-   *   RequestPayer: requester,
-   *   VersionId: string,
    * }) -> Promise
    * ```
    *
@@ -272,13 +272,16 @@ class S3Bucket {
    * Remove multiple objects from the S3 Bucket.
    *
    * ```coffeescript [specscript]
-   * s3Bucket.deleteObjects(keys Array<string>, options {
-   *   Quiet: boolean,
-   *   BypassGovernanceRetention: boolean,
-   *   ExpectedBucketOwner: string,
-   *   MFA: string,
-   *   RequestPayer: requester,
-   * }) -> Promise<{
+   * s3Bucket.deleteObjects(
+   *   keys Array<string|{ Key: string, VersionId: string }>,
+   *   options {
+   *     Quiet: boolean,
+   *     BypassGovernanceRetention: boolean,
+   *     ExpectedBucketOwner: string,
+   *     MFA: string,
+   *     RequestPayer: requester,
+   *   }
+   * ) -> Promise<{
    *   Deleted: Array<{
    *     DeleteMarker: boolean,
    *     DeleteMarkerVersionId: string,

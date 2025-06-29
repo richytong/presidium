@@ -72,6 +72,14 @@ const test = new Test('S3Bucket', (...args) => new S3Bucket(...args))
     assert.equal(res.headers.ContentLength, 6)
   }
 
+  {
+    const a1 = await testBucket.getObject('a')
+    console.log('a1', a1)
+    await testBucket.deleteObjects(['a'])
+    const a = await testBucket.getObject('a')
+    console.log('a', a)
+  }
+
   await testBucket.deleteAllObjects({ MaxKeys: 1 })
   const deleted = await testBucket.delete()
 })
