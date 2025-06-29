@@ -90,7 +90,7 @@ const test = new Test('S3Bucket', (...args) => new S3Bucket(...args))
     )
   }
 
-  await testBucket.deleteAllObjects({ MaxKeys: 1 })
+  await testBucket.deleteAllObjects({ BatchSize: 1 })
   const deleted = await testBucket.delete()
 })
 

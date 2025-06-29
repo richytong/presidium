@@ -126,7 +126,7 @@ class S3Bucket {
    *     ObjectLockMode: 'GOVERNANCE'|'COMPLIANCE',
    *     ObjectLockRetainUntilDate: Date|DateString|TimestampSeconds,
    *     ObjectLockLegalHoldStatus: 'ON'|'OFF',
-   *     ExpectedBucketOwner: string, # aws account id '123456789000'
+   *     ExpectedBucketOwner: string # aws account id '123456789000'
    *   }
    * ) -> response Promise<{
    *   Expiration: string,
@@ -312,7 +312,7 @@ class S3Bucket {
    *
    * ```coffeescript [specscript]
    * s3Bucket.deleteAllObjects(options {
-   *   MaxKeys: number, // batch size
+   *   BatchSize: number, // batch size
    * }) -> Promise<number>
    * ```
    *
@@ -321,13 +321,13 @@ class S3Bucket {
    * ```
    */
   async deleteAllObjects(options = {}) {
-    const { MaxKeys } = options
-    let contents = await this.listObjects({ MaxKeys }).then(get('Contents'))
+    const { BatchSize } = options
+    let contents = await this.listObjects({ MaxKeys: BatchSize }).then(get('Contents'))
     let numDeleted = contents.length
     while (contents.length > 0) {
       await this.deleteObjects(contents.map(get('Key')))
       numDeleted += contents.length
-      contents = await this.listObjects({ MaxKeys }).then(get('Contents'))
+      contents = await this.listObjects({ MaxKeys: BatchSize }).then(get('Contents'))
     }
     return numDeleted
   }
@@ -357,27 +357,31 @@ class S3Bucket {
    * Retrieve an object from the S3 Bucket.
    *
    * ```coffeescript [specscript]
+   * type DateString = string # Wed Dec 31 1969 16:00:00 GMT-0800 (PST)
+   * type TimestampSeconds = number # 1751111429
+   *
    * s3Bucket.getObject(
    *   key string,
    *   options {
-   *     ExpectedBucketOwner: string,
    *     IfMatch: string,
-   *     IfModifiedSince: Date|Date.toString()|number,
+   *     IfModifiedSince: Date|DateString|TimestampSeconds,
    *     IfNoneMatch: string,
-   *     IfUnmodifiedSince: Date|Date.toString()|number,
-   *     PartNumber: number,
-   *     Range: string,
-   *     RequestPayer: requester,
+   *     IfUnmodifiedSince: Date|DateString|TimestampSeconds,
+   *     Range: string, # 'bytes=0-9'
    *     ResponseCacheControl: string,
    *     ResponseContentDisposition: string,
    *     ResponseContentEncoding: string,
    *     ResponseContentLanguage: string,
    *     ResponseContentType: string,
    *     ResponseExpires: Date|Date.toString()|number,
-   *     SSECustomerAlgorithm: string,
-   *     SSECustomerKey: string|Buffer,
-   *     SSECustomerKeyMD5: string,
    *     VersionId: string,
+   *     SSECustomerAlgorithm: string,
+   *     SSECustomerKey: Buffer|TypedArray|Blob|string,
+   *     SSECustomerKeyMD5: string,
+   *     RequestPayer: requester,
+   *     PartNumber: number,
+   *     ExpectedBucketOwner: string,
+   *     ChecksumMode: 'ENABLED',
    *   },
    * ) -> Promise<{
    *   Body: Buffer|TypedArray|ReadableStream,
@@ -388,29 +392,37 @@ class S3Bucket {
    *   LastModified: Date,
    *   ContentLength: number,
    *   ETag: string,
+   *   ChecksumCRC32: string,
+   *   ChecksumCRC32C: string,
+   *   ChecksumSHA1: string,
+   *   ChecksumSHA256: string,
    *   MissingMeta: number,
    *   VersionId: string,
    *   CacheControl: string,
    *   ContentDisposition: string,
    *   ContentEncoding: string,
+   *   ContentLanguage: string,
    *   ContentRange: string,
    *   ContentType: string,
    *   Expires: Date,
+   *   ExpiresString: string,
    *   WebsiteRedirectLocation: string,
-   *   ServerSideEncryption: 'AES256'|'aws:kms',
+   *   ServerSideEncryption: 'AES256'|'aws:kms'|'aws:kms:dsse',
    *   Metadata: Object<string>,
-   *   Range: string, // 'bytes=0-9'
    *   SSECustomerAlgorithm: string,
-   *   SSECustomerKey: string,
+   *   SSECustomerKeyMD5: string,
    *   SSEKMSKeyId: string,
-   *   StorageClass: 'STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'|'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS',
+   *   BucketKeyEnabled: boolean,
+   *   StorageClass: 'STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'
+   *                 |'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS'
+   *                 |'GLACIER_IR'|'SNOW'|'EXPRESS_ONEZONE',
    *   RequestCharged: string,
    *   ReplicationStatus: 'COMPLETE'|'PENDING'|'FAILED'|'REPLICA',
    *   PartsCount: number,
    *   TagCount: number,
    *   ObjectLockMode: GOVERNANCE'|'COMPLIANCE,
-   *   ObjectLockRetainUntilDate: Date|Date.toString()|number,
-   *   ObjectLockLegalHoldStatus: 'ON'|'OFF',
+   *   ObjectLockRetainUntilDate: Date|DateString|TimestampSeconds,
+   *   ObjectLockLegalHoldStatus: 'ON'|'OFF'
    * }>
    * ```
    *
@@ -432,24 +444,25 @@ class S3Bucket {
    * s3Bucket.headObject(
    *   key string,
    *   options {
-   *     ExpectedBucketOwner: string,
    *     IfMatch: string,
-   *     IfModifiedSince: Date|Date.toString()|number,
+   *     IfModifiedSince: Date|DateString|TimestampSeconds,
    *     IfNoneMatch: string,
-   *     IfUnmodifiedSince: Date|Date.toString()|number,
-   *     PartNumber: number,
-   *     Range: string,
-   *     RequestPayer: requester,
+   *     IfUnmodifiedSince: Date|DateString|TimestampSeconds,
+   *     Range: string, # 'bytes=0-9'
    *     ResponseCacheControl: string,
    *     ResponseContentDisposition: string,
    *     ResponseContentEncoding: string,
    *     ResponseContentLanguage: string,
    *     ResponseContentType: string,
    *     ResponseExpires: Date|Date.toString()|number,
-   *     SSECustomerAlgorithm: string,
-   *     SSECustomerKey: string|Buffer,
-   *     SSECustomerKeyMD5: string,
    *     VersionId: string,
+   *     SSECustomerAlgorithm: string,
+   *     SSECustomerKey: Buffer|TypedArray|Blob|string,
+   *     SSECustomerKeyMD5: string,
+   *     RequestPayer: requester,
+   *     PartNumber: number,
+   *     ExpectedBucketOwner: string,
+   *     ChecksumMode: 'ENABLED',
    *   },
    * ) -> Promise<{
    *   DeleteMarker: boolean,
@@ -459,29 +472,37 @@ class S3Bucket {
    *   LastModified: Date,
    *   ContentLength: number,
    *   ETag: string,
+   *   ChecksumCRC32: string,
+   *   ChecksumCRC32C: string,
+   *   ChecksumSHA1: string,
+   *   ChecksumSHA256: string,
    *   MissingMeta: number,
    *   VersionId: string,
    *   CacheControl: string,
    *   ContentDisposition: string,
    *   ContentEncoding: string,
+   *   ContentLanguage: string,
    *   ContentRange: string,
    *   ContentType: string,
    *   Expires: Date,
+   *   ExpiresString: string,
    *   WebsiteRedirectLocation: string,
-   *   ServerSideEncryption: 'AES256'|'aws:kms',
+   *   ServerSideEncryption: 'AES256'|'aws:kms'|'aws:kms:dsse',
    *   Metadata: Object<string>,
-   *   Range: string, // 'bytes=0-9'
    *   SSECustomerAlgorithm: string,
-   *   SSECustomerKey: string,
+   *   SSECustomerKeyMD5: string,
    *   SSEKMSKeyId: string,
-   *   StorageClass: 'STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'|'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS',
+   *   BucketKeyEnabled: boolean,
+   *   StorageClass: 'STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'
+   *                 |'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS'
+   *                 |'GLACIER_IR'|'SNOW'|'EXPRESS_ONEZONE',
    *   RequestCharged: string,
    *   ReplicationStatus: 'COMPLETE'|'PENDING'|'FAILED'|'REPLICA',
    *   PartsCount: number,
    *   TagCount: number,
    *   ObjectLockMode: GOVERNANCE'|'COMPLIANCE,
-   *   ObjectLockRetainUntilDate: Date|Date.toString()|number,
-   *   ObjectLockLegalHoldStatus: 'ON'|'OFF',
+   *   ObjectLockRetainUntilDate: Date|DateString|TimestampSecond
+   *   ObjectLockLegalHoldStatus: 'ON'|'OFF'
    * }>
    * ```
    *
@@ -507,7 +528,7 @@ class S3Bucket {
    *   IfNoneMatch: string,
    *   IfUnmodifiedSince: Date|Date.toString()|number,
    *   PartNumber: number,
-   *   Range: string,
+   *   Range: string, // 'bytes=0-9'
    *   RequestPayer: requester,
    *   ResponseCacheControl: string,
    *   ResponseContentDisposition: string,
@@ -528,30 +549,38 @@ class S3Bucket {
    *     LastModified: Date,
    *     ContentLength: number,
    *     ETag: string,
+   *     ChecksumCRC32: string,
+   *     ChecksumCRC32C: string,
+   *     ChecksumSHA1: string,
+   *     ChecksumSHA256: string,
    *     MissingMeta: number,
    *     VersionId: string,
    *     CacheControl: string,
    *     ContentDisposition: string,
    *     ContentEncoding: string,
+   *     ContentLanguage: string,
    *     ContentRange: string,
    *     ContentType: string,
    *     Expires: Date,
+   *     ExpiresString: string,
    *     WebsiteRedirectLocation: string,
-   *     ServerSideEncryption: 'AES256'|'aws:kms',
+   *     ServerSideEncryption: 'AES256'|'aws:kms'|'aws:kms:dsse',
    *     Metadata: Object<string>,
-   *     Range: string, // 'bytes=0-9'
    *     SSECustomerAlgorithm: string,
-   *     SSECustomerKey: string,
+   *     SSECustomerKeyMD5: string,
    *     SSEKMSKeyId: string,
-   *     StorageClass: 'STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'|'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS',
+   *     BucketKeyEnabled: boolean,
+   *     StorageClass: 'STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'
+   *                   |'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS'
+   *                   |'GLACIER_IR'|'SNOW'|'EXPRESS_ONEZONE',
    *     RequestCharged: string,
    *     ReplicationStatus: 'COMPLETE'|'PENDING'|'FAILED'|'REPLICA',
    *     PartsCount: number,
    *     TagCount: number,
    *     ObjectLockMode: GOVERNANCE'|'COMPLIANCE,
-   *     ObjectLockRetainUntilDate: Date|Date.toString()|number,
-   *     ObjectLockLegalHoldStatus: 'ON'|'OFF',
-   *   },
+   *     ObjectLockRetainUntilDate: Date|DateString|TimestampSeconds,
+   *     ObjectLockLegalHoldStatus: 'ON'|'OFF'
+   *   }
    * }
    * ```
    *
