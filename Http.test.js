@@ -51,6 +51,21 @@ const test1 = new Test('Http GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and T
   const _http = new Http('http://localhost:3000/')
 
   {
+    const httpParsedUrl = new Http(new URL('http://localhost:3000/'))
+    assert.equal(httpParsedUrl.baseUrl.host, 'localhost:3000')
+    assert.equal(httpParsedUrl.baseUrl.protocol, 'http:')
+    assert.throws(() => new Http(null), TypeError('baseUrl invalid'))
+    const httpUrlToString = new Http({
+      toString() {
+        return 'http://localhost:3000/'
+      }
+    })
+    assert.equal(httpUrlToString.baseUrl.host, 'localhost:3000')
+    assert.equal(httpUrlToString.baseUrl.protocol, 'http:')
+    assert.throws(() => new Http(Object.create(null)), TypeError('baseUrl invalid'))
+  }
+
+  {
     const response = await _http.get('/echo')
     assert.equal(response.status, 200)
     const data = await response.json()

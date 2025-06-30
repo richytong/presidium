@@ -41,8 +41,22 @@ const path = require('path')
  */
 class Http {
   constructor(baseUrl, httpOptions = {}) {
-    this.baseUrl = baseUrl.toString()
-    this.client = this.baseUrl.includes('https') ? https : http
+    if (typeof baseUrl == 'string') {
+      this.baseUrl = new URL(baseUrl)
+    }
+    else if (baseUrl == null) {
+      throw new TypeError('baseUrl invalid')
+    }
+    else if (typeof baseUrl.toString == 'function') {
+      this.baseUrl = new URL(baseUrl)
+    }
+    else if (baseUrl.constructor == URL) {
+      this.baseUrl = baseUrl
+    } else {
+      throw new TypeError('baseUrl invalid')
+    }
+
+    this.client = this.baseUrl.protocol == 'https' ? https : http
     this.httpOptions = httpOptions
   }
 
@@ -144,13 +158,11 @@ class Http {
   }
 
   get(relativeUrl, options = {}) {
-    const url = path.join(this.baseUrl, relativeUrl)
-    const parsedUrl = new URL(url)
     const requestOptions = {
       ...this.httpOptions,
-      hostname: parsedUrl.hostname,
-      port: parsedUrl.port,
-      path: parsedUrl.pathname,
+      hostname: this.baseUrl.hostname,
+      port: this.baseUrl.port,
+      path: path.join(this.baseUrl.pathname, relativeUrl),
       method: 'GET',
       headers: options.headers ?? {},
       body: options.body,
@@ -159,13 +171,11 @@ class Http {
   }
 
   head(relativeUrl, options = {}) {
-    const url = path.join(this.baseUrl, relativeUrl)
-    const parsedUrl = new URL(url)
     const requestOptions = {
       ...this.httpOptions,
-      hostname: parsedUrl.hostname,
-      port: parsedUrl.port,
-      path: parsedUrl.pathname,
+      hostname: this.baseUrl.hostname,
+      port: this.baseUrl.port,
+      path: path.join(this.baseUrl.pathname, relativeUrl),
       method: 'HEAD',
       headers: options.headers ?? {},
       body: options.body,
@@ -174,13 +184,11 @@ class Http {
   }
 
   post(relativeUrl, options = {}) {
-    const url = path.join(this.baseUrl, relativeUrl)
-    const parsedUrl = new URL(url)
     const requestOptions = {
       ...this.httpOptions,
-      hostname: parsedUrl.hostname,
-      port: parsedUrl.port,
-      path: parsedUrl.pathname,
+      hostname: this.baseUrl.hostname,
+      port: this.baseUrl.port,
+      path: path.join(this.baseUrl.pathname, relativeUrl),
       method: 'POST',
       headers: options.headers ?? {},
       body: options.body,
@@ -189,13 +197,11 @@ class Http {
   }
 
   put(relativeUrl, options = {}) {
-    const url = path.join(this.baseUrl, relativeUrl)
-    const parsedUrl = new URL(url)
     const requestOptions = {
       ...this.httpOptions,
-      hostname: parsedUrl.hostname,
-      port: parsedUrl.port,
-      path: parsedUrl.pathname,
+      hostname: this.baseUrl.hostname,
+      port: this.baseUrl.port,
+      path: path.join(this.baseUrl.pathname, relativeUrl),
       method: 'PUT',
       headers: options.headers ?? {},
       body: options.body,
@@ -204,13 +210,11 @@ class Http {
   }
 
   patch(relativeUrl, options = {}) {
-    const url = path.join(this.baseUrl, relativeUrl)
-    const parsedUrl = new URL(url)
     const requestOptions = {
       ...this.httpOptions,
-      hostname: parsedUrl.hostname,
-      port: parsedUrl.port,
-      path: parsedUrl.pathname,
+      hostname: this.baseUrl.hostname,
+      port: this.baseUrl.port,
+      path: path.join(this.baseUrl.pathname, relativeUrl),
       method: 'PATCH',
       headers: options.headers ?? {},
       body: options.body,
@@ -219,26 +223,23 @@ class Http {
   }
 
   delete(relativeUrl, options = {}) {
-    const url = path.join(this.baseUrl, relativeUrl)
-    const parsedUrl = new URL(url)
     const requestOptions = {
       ...this.httpOptions,
-      hostname: parsedUrl.hostname,
-      port: parsedUrl.port,
-      path: parsedUrl.pathname,
+      hostname: this.baseUrl.hostname,
+      port: this.baseUrl.port,
+      path: path.join(this.baseUrl.pathname, relativeUrl),
       method: 'DELETE',
       headers: options.headers ?? {},
-      body: options.body
+      body: options.body,
     }
     return this.request(requestOptions)
   }
 
   connect(options = {}) {
-    const parsedUrl = new URL(this.baseUrl)
     const requestOptions = {
       ...this.httpOptions,
-      host: parsedUrl.hostname,
-      port: Number(parsedUrl.port),
+      host: this.baseUrl.hostname,
+      port: Number(this.baseUrl.port),
       method: 'CONNECT',
       path: options.path,
     }
@@ -248,13 +249,11 @@ class Http {
   }
 
   options(relativeUrl, options2 = {}) {
-    const url = path.join(this.baseUrl, relativeUrl)
-    const parsedUrl = new URL(url)
     const requestOptions = {
       ...this.httpOptions,
-      hostname: parsedUrl.hostname,
-      port: parsedUrl.port,
-      path: parsedUrl.pathname,
+      hostname: this.baseUrl.hostname,
+      port: this.baseUrl.port,
+      path: path.join(this.baseUrl.pathname, relativeUrl),
       method: 'OPTIONS',
       headers: options2.headers ?? {},
       body: options2.body,
@@ -263,19 +262,18 @@ class Http {
   }
 
   trace(relativeUrl, options = {}) {
-    const url = path.join(this.baseUrl, relativeUrl)
-    const parsedUrl = new URL(url)
     const requestOptions = {
       ...this.httpOptions,
-      hostname: parsedUrl.hostname,
-      port: parsedUrl.port,
-      path: parsedUrl.pathname,
+      hostname: this.baseUrl.hostname,
+      port: this.baseUrl.port,
+      path: path.join(this.baseUrl.pathname, relativeUrl),
       method: 'TRACE',
       headers: options.headers ?? {},
       body: options.body,
     }
     return this.request(requestOptions)
   }
+
 }
 
 module.exports = Http
