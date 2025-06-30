@@ -7,7 +7,7 @@ const path = require('path')
  *
  * @synopsis
  * ```coffeescript [specscript]
- * httpOptions {
+ * requestOptions {
  *   agent: http.Agent,
  *   auth: string,
  *   createConnection: function,
@@ -35,12 +35,12 @@ const path = require('path')
  *   uniqueHeaders: Array<string>,
  * }
  *
- * new Http(baseUrl string, httpOptions) -> http Http
- * new Http(httpOptions) -> http Http
+ * new Http(baseUrl string, requestOptions) -> http Http
+ * new Http(requestOptions) -> http Http
  * ```
  */
 class Http {
-  constructor(baseUrl, httpOptions = {}) {
+  constructor(baseUrl, requestOptions = {}) {
     if (typeof baseUrl == 'string') {
       this.baseUrl = new URL(baseUrl)
     }
@@ -57,7 +57,20 @@ class Http {
     }
 
     this.client = this.baseUrl.protocol == 'https' ? https : http
-    this.httpOptions = httpOptions
+    this.requestOptions = {
+      hostname: this.baseUrl.hostname,
+      protocol: this.baseUrl.protocol,
+      ...requestOptions,
+    }
+
+    this.requestHeaders = {}
+
+    if (this.baseUrl.username && this.baseUrl.password) {
+      const { username, password } = this.baseUrl
+      const credentials = `${username}:${password}`
+      const encodedCredentials = Buffer.from(credentials).toString('base64')
+      this.requestHeaders['Authorization'] = `Basic ${encodedCredentials}`
+    }
   }
 
   /**
@@ -80,6 +93,7 @@ class Http {
     return new Promise((resolve, reject) => {
       const request = this.client.request(requestOptions, response => {
         response.status = response.statusCode
+        response.ok = response.statusCode >= 200 && response.statusCode <= 299
 
         const chunks = []
 
@@ -159,13 +173,16 @@ class Http {
 
   get(relativeUrl, options = {}) {
     const requestOptions = {
-      ...this.httpOptions,
+      ...this.requestOptions,
       hostname: this.baseUrl.hostname,
       protocol: this.baseUrl.protocol,
       port: this.baseUrl.port,
       path: path.join(this.baseUrl.pathname, relativeUrl),
       method: 'GET',
-      headers: options.headers ?? {},
+      headers: {
+        ...this.requestHeaders,
+        ...options.headers
+      },
       body: options.body,
     }
     return this.request(requestOptions)
@@ -173,13 +190,16 @@ class Http {
 
   head(relativeUrl, options = {}) {
     const requestOptions = {
-      ...this.httpOptions,
+      ...this.requestOptions,
       hostname: this.baseUrl.hostname,
       protocol: this.baseUrl.protocol,
       port: this.baseUrl.port,
       path: path.join(this.baseUrl.pathname, relativeUrl),
       method: 'HEAD',
-      headers: options.headers ?? {},
+      headers: {
+        ...this.requestHeaders,
+        ...options.headers
+      },
       body: options.body,
     }
     return this.request(requestOptions)
@@ -187,13 +207,16 @@ class Http {
 
   post(relativeUrl, options = {}) {
     const requestOptions = {
-      ...this.httpOptions,
+      ...this.requestOptions,
       hostname: this.baseUrl.hostname,
       protocol: this.baseUrl.protocol,
       port: this.baseUrl.port,
       path: path.join(this.baseUrl.pathname, relativeUrl),
       method: 'POST',
-      headers: options.headers ?? {},
+      headers: {
+        ...this.requestHeaders,
+        ...options.headers
+      },
       body: options.body,
     }
     return this.request(requestOptions)
@@ -201,13 +224,16 @@ class Http {
 
   put(relativeUrl, options = {}) {
     const requestOptions = {
-      ...this.httpOptions,
+      ...this.requestOptions,
       hostname: this.baseUrl.hostname,
       protocol: this.baseUrl.protocol,
       port: this.baseUrl.port,
       path: path.join(this.baseUrl.pathname, relativeUrl),
       method: 'PUT',
-      headers: options.headers ?? {},
+      headers: {
+        ...this.requestHeaders,
+        ...options.headers
+      },
       body: options.body,
     }
     return this.request(requestOptions)
@@ -215,13 +241,16 @@ class Http {
 
   patch(relativeUrl, options = {}) {
     const requestOptions = {
-      ...this.httpOptions,
+      ...this.requestOptions,
       hostname: this.baseUrl.hostname,
       protocol: this.baseUrl.protocol,
       port: this.baseUrl.port,
       path: path.join(this.baseUrl.pathname, relativeUrl),
       method: 'PATCH',
-      headers: options.headers ?? {},
+      headers: {
+        ...this.requestHeaders,
+        ...options.headers
+      },
       body: options.body,
     }
     return this.request(requestOptions)
@@ -229,13 +258,16 @@ class Http {
 
   delete(relativeUrl, options = {}) {
     const requestOptions = {
-      ...this.httpOptions,
+      ...this.requestOptions,
       hostname: this.baseUrl.hostname,
       protocol: this.baseUrl.protocol,
       port: this.baseUrl.port,
       path: path.join(this.baseUrl.pathname, relativeUrl),
       method: 'DELETE',
-      headers: options.headers ?? {},
+      headers: {
+        ...this.requestHeaders,
+        ...options.headers
+      },
       body: options.body,
     }
     return this.request(requestOptions)
@@ -243,7 +275,7 @@ class Http {
 
   connect(options = {}) {
     const requestOptions = {
-      ...this.httpOptions,
+      ...this.requestOptions,
       host: this.baseUrl.hostname,
       protocol: this.baseUrl.protocol,
       port: Number(this.baseUrl.port),
@@ -257,13 +289,16 @@ class Http {
 
   options(relativeUrl, options2 = {}) {
     const requestOptions = {
-      ...this.httpOptions,
+      ...this.requestOptions,
       hostname: this.baseUrl.hostname,
       protocol: this.baseUrl.protocol,
       port: this.baseUrl.port,
       path: path.join(this.baseUrl.pathname, relativeUrl),
       method: 'OPTIONS',
-      headers: options2.headers ?? {},
+      headers: {
+        ...this.requestHeaders,
+        ...options2.headers
+      },
       body: options2.body,
     }
     return this.request(requestOptions)
@@ -271,13 +306,16 @@ class Http {
 
   trace(relativeUrl, options = {}) {
     const requestOptions = {
-      ...this.httpOptions,
+      ...this.requestOptions,
       hostname: this.baseUrl.hostname,
       protocol: this.baseUrl.protocol,
       port: this.baseUrl.port,
       path: path.join(this.baseUrl.pathname, relativeUrl),
       method: 'TRACE',
-      headers: options.headers ?? {},
+      headers: {
+        ...this.requestHeaders,
+        ...options.headers
+      },
       body: options.body,
     }
     return this.request(requestOptions)

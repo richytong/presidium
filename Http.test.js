@@ -48,12 +48,17 @@ const test1 = new Test('Http GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and T
     console.log('server listening on port 3000')
   })
 
-  const _http = new Http('http://localhost:3000/')
+  const _http = new Http('http://username:password@localhost:3000/')
+  assert.equal(typeof _http.requestHeaders['Authorization'], 'string')
 
   {
-    const httpParsedUrl = new Http(new URL('http://localhost:3000/'))
+    const url = new URL('http://localhost:3000/')
+    url.username = 'username'
+    url.password = 'password'
+    const httpParsedUrl = new Http(url)
     assert.equal(httpParsedUrl.baseUrl.host, 'localhost:3000')
     assert.equal(httpParsedUrl.baseUrl.protocol, 'http:')
+    assert.equal(typeof httpParsedUrl.requestHeaders['Authorization'], 'string')
     assert.throws(() => new Http(null), TypeError('baseUrl invalid'))
     const httpUrlToString = new Http({
       toString() {
@@ -68,6 +73,7 @@ const test1 = new Test('Http GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and T
   {
     const response = await _http.get('/echo')
     assert.equal(response.status, 200)
+    assert.strictEqual(response.ok, true)
     const data = await response.json()
     assert.equal(response.headers['content-type'], 'application/json')
     assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World"}')
