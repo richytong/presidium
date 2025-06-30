@@ -161,6 +161,7 @@ class Http {
     const requestOptions = {
       ...this.httpOptions,
       hostname: this.baseUrl.hostname,
+      protocol: this.baseUrl.protocol,
       port: this.baseUrl.port,
       path: path.join(this.baseUrl.pathname, relativeUrl),
       method: 'GET',
@@ -174,6 +175,7 @@ class Http {
     const requestOptions = {
       ...this.httpOptions,
       hostname: this.baseUrl.hostname,
+      protocol: this.baseUrl.protocol,
       port: this.baseUrl.port,
       path: path.join(this.baseUrl.pathname, relativeUrl),
       method: 'HEAD',
@@ -187,6 +189,7 @@ class Http {
     const requestOptions = {
       ...this.httpOptions,
       hostname: this.baseUrl.hostname,
+      protocol: this.baseUrl.protocol,
       port: this.baseUrl.port,
       path: path.join(this.baseUrl.pathname, relativeUrl),
       method: 'POST',
@@ -200,6 +203,7 @@ class Http {
     const requestOptions = {
       ...this.httpOptions,
       hostname: this.baseUrl.hostname,
+      protocol: this.baseUrl.protocol,
       port: this.baseUrl.port,
       path: path.join(this.baseUrl.pathname, relativeUrl),
       method: 'PUT',
@@ -213,6 +217,7 @@ class Http {
     const requestOptions = {
       ...this.httpOptions,
       hostname: this.baseUrl.hostname,
+      protocol: this.baseUrl.protocol,
       port: this.baseUrl.port,
       path: path.join(this.baseUrl.pathname, relativeUrl),
       method: 'PATCH',
@@ -226,6 +231,7 @@ class Http {
     const requestOptions = {
       ...this.httpOptions,
       hostname: this.baseUrl.hostname,
+      protocol: this.baseUrl.protocol,
       port: this.baseUrl.port,
       path: path.join(this.baseUrl.pathname, relativeUrl),
       method: 'DELETE',
@@ -239,6 +245,7 @@ class Http {
     const requestOptions = {
       ...this.httpOptions,
       host: this.baseUrl.hostname,
+      protocol: this.baseUrl.protocol,
       port: Number(this.baseUrl.port),
       method: 'CONNECT',
       path: options.path,
@@ -252,6 +259,7 @@ class Http {
     const requestOptions = {
       ...this.httpOptions,
       hostname: this.baseUrl.hostname,
+      protocol: this.baseUrl.protocol,
       port: this.baseUrl.port,
       path: path.join(this.baseUrl.pathname, relativeUrl),
       method: 'OPTIONS',
@@ -265,6 +273,7 @@ class Http {
     const requestOptions = {
       ...this.httpOptions,
       hostname: this.baseUrl.hostname,
+      protocol: this.baseUrl.protocol,
       port: this.baseUrl.port,
       path: path.join(this.baseUrl.pathname, relativeUrl),
       method: 'TRACE',
