@@ -20,7 +20,23 @@ const test1 = new Test('Http GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and T
         ...request.headers,
       })
       response.end(JSON.stringify({ greeting: 'Hello World', ...requestBodyJSON }))
-    } else {
+    } else if (request.url == '/echo-binary') {
+      const buffer = await RequestBuffer(request)
+      delete request.headers['content-length']
+      response.writeHead(200, {
+        ...request.headers,
+      })
+      response.end(buffer)
+    } else if (request.url == '/echo-text') {
+      const buffer = await RequestBuffer(request)
+      const text = buffer.toString('utf8')
+      delete request.headers['content-length']
+      response.writeHead(200, {
+        ...request.headers,
+      })
+      response.end(text)
+    }
+    else {
       response.writeHead(404, {
         'Content-Type': 'text/plain',
       })
@@ -75,6 +91,49 @@ const test1 = new Test('Http GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and T
     assert.deepEqual(await response.json(), { greeting: 'Hello World', a: 1 })
     assert.deepEqual(await response.json(), { greeting: 'Hello World', a: 1 })
   }
+
+  {
+    const response = await _http.post('/echo-binary', {
+      headers: {
+        'x-test-header': 'testvalue',
+        'Content-Type': 'application/octet-stream',
+      },
+      body: Buffer.from('abc'),
+    })
+    assert.equal(response.headers['x-test-header'], 'testvalue')
+    assert.equal(response.status, 200)
+    const data = await response.buffer()
+    assert.equal(response.headers['content-type'], 'application/octet-stream')
+    assert.deepEqual(Buffer.from(await response.buffer()), Buffer.from('abc'))
+  }
+
+  {
+    const urlSearchParams = new URLSearchParams()
+    urlSearchParams.set('a', 1)
+    const response = await _http.post('/echo-text', {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'x-test-header': 'testvalue',
+      },
+      body: urlSearchParams,
+    })
+    assert.equal(response.headers['x-test-header'], 'testvalue')
+    assert.equal(response.status, 200)
+    const data = await response.text()
+    assert.equal(response.headers['content-type'], 'application/x-www-form-urlencoded')
+    assert.equal(await response.text(), 'a=1')
+  }
+
+  await assert.rejects(
+    _http.post('/echo-text', {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'x-test-header': 'testvalue',
+      },
+      body: Object.create(null),
+    }),
+    new TypeError('body must be one of Buffer, TypedArray, or string'),
+  )
 
   {
     const response = await _http.put('/echo', {

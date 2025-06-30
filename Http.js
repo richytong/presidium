@@ -41,8 +41,8 @@ const path = require('path')
  */
 class Http {
   constructor(baseUrl, httpOptions = {}) {
-    this.baseUrl = baseUrl
-    this.client = baseUrl.includes('https') ? https : http
+    this.baseUrl = baseUrl.toString()
+    this.client = this.baseUrl.includes('https') ? https : http
     this.httpOptions = httpOptions
   }
 
@@ -126,7 +126,20 @@ class Http {
       })
 
       request.on('error', reject)
-      request.end(body)
+      if (
+        Buffer.isBuffer(body)
+        || ArrayBuffer.isView(body)
+        || typeof body == 'string'
+      ) {
+        request.end(body)
+      } else if (body == null) {
+        request.end()
+      } else if (typeof body.toString == 'function') {
+        request.end(body.toString())
+      } else {
+        console.error(body)
+        throw new TypeError('body must be one of Buffer, TypedArray, or string')
+      }
     })
   }
 
