@@ -2,13 +2,12 @@ const Test = require('thunk-test')
 const Http = require('./Http')
 const assert = require('assert')
 const WebSocket = require('./WebSocket')
-const WebSocketServer = require('./WebSocketServer')
 
-const test = new Test('WebSocketServer', async function () {
+const test = new Test('WebSocket', async function () {
   {
     let didRequest = false
 
-    const server = new WebSocketServer()
+    const server = new WebSocket.Server()
     server.listen(7357, () => {
       console.log('server listening on port 7357')
     })
@@ -34,7 +33,7 @@ const test = new Test('WebSocketServer', async function () {
     let didUpgrade = false
     const messages = []
 
-    const server = new WebSocketServer(socket => {
+    const server = new WebSocket.Server(socket => {
       socket.on('message', message => {
         assert.equal(server.clients.size, 1)
         messages.push(message.toString('utf8'))
