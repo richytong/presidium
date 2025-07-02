@@ -14,7 +14,6 @@ globalThis.EC2 = require('./EC2')
 globalThis.ECR = require('./ECR')
 globalThis.Http = require('./Http')
 globalThis.WebSocket = require('./WebSocket')
-globalThis.HttpAgent = require('./HttpAgent')
 globalThis.NpmToken = require('./NpmToken')
-// TODO after rename
 globalThis.S3Bucket = require('./S3Bucket')
+// TODO after rename
