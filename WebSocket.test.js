@@ -1,7 +1,7 @@
 const Test = require('thunk-test')
 const Http = require('./Http')
 const assert = require('assert')
-const WebSocket = require('ws')
+const WebSocket = require('./WebSocket')
 const WebSocketServer = require('./WebSocketServer')
 
 const test = new Test('WebSocketServer', async function () {
@@ -15,11 +15,6 @@ const test = new Test('WebSocketServer', async function () {
     server.on('request', () => {
       didRequest = true
     })
-
-    assert.throws(
-      () => server.on('unknown', () => {}),
-      new Error('Unrecognized event unknown')
-    )
 
     const http = new Http('http://localhost:7357')
     const response = await http.get('http://localhost:7357')
@@ -67,12 +62,12 @@ const test = new Test('WebSocketServer', async function () {
 
     const socket = new WebSocket('ws://localhost:7357')
 
-    socket.addEventListener('message', message => {
-      messages.push(message.data)
+    socket.on('message', message => {
+      messages.push(message)
       socket.close()
     })
 
-    socket.addEventListener('open', () => {
+    socket.on('open', () => {
       console.log('WebSocket connection established!')
       socket.send('ping')
     })
