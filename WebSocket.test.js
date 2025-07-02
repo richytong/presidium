@@ -3,14 +3,12 @@ const Http = require('./Http')
 const assert = require('assert')
 const WebSocket = require('./WebSocket')
 
-const test = new Test('WebSocket', async function () {
+const test = new Test('WebSocket', async function integration() {
   {
     let didRequest = false
 
     const server = new WebSocket.Server()
-    server.listen(7357, () => {
-      console.log('server listening on port 7357')
-    })
+    server.listen(7357)
     server.on('request', () => {
       didRequest = true
     })
@@ -55,9 +53,7 @@ const test = new Test('WebSocket', async function () {
 
     server.on('close', resolve)
 
-    server.listen(7357, () => {
-      console.log('server listening on port 7357')
-    })
+    server.listen(7357)
 
     const socket = new WebSocket('ws://localhost:7357')
 
@@ -67,7 +63,6 @@ const test = new Test('WebSocket', async function () {
     })
 
     socket.on('open', () => {
-      console.log('WebSocket connection established!')
       socket.send('ping')
     })
 
