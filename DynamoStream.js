@@ -5,7 +5,6 @@ require('aws-sdk/lib/maintenance_mode_message').suppress = true
 const { differenceWith } = require('rubico/x')
 const has = require('./internal/has')
 const RetryAwsErrors = require('./internal/RetryAwsErrors')
-const HttpAgent = require('./HttpAgent')
 const Dynamo = require('./internal/Dynamo')
 const Mux = require('rubico/monad/Mux')
 
