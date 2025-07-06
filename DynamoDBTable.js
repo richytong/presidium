@@ -13,11 +13,11 @@ const createKeyConditionExpression =
 const createFilterExpression = require('./internal/createFilterExpression')
 
 /**
- * @name DynamoTable
+ * @name DynamoDBTable
  *
  * @synopsis
  * ```coffeescript [specscript]
- * new DynamoTable(options {
+ * new DynamoDBTable(options {
  *   name: string,
  *   key: [
  *     { [hashKey string]: 'S'|'string'|'N'|'number'|'B'|'binary' },
@@ -27,7 +27,7 @@ const createFilterExpression = require('./internal/createFilterExpression')
  *   secretAccessKey: string,
  *   region: string,
  *   endpoint?: string,
- * }) -> DynamoTable
+ * }) -> DynamoDBTable
  * ```
  *
  * @description
@@ -35,7 +35,7 @@ const createFilterExpression = require('./internal/createFilterExpression')
  *
  * ```javascript
  * // local testing
- * const myLocalTable = new DynamoTable({
+ * const myLocalTable = new DynamoDBTable({
  *   name: 'my-local-table',
  *   key: [{ id: 'string' }],
  *   endpoint: 'http://localhost:8000/',
@@ -43,7 +43,7 @@ const createFilterExpression = require('./internal/createFilterExpression')
  * await myLocalTable.ready
  *
  * // production
- * const myProductionTable = new DynamoTable({
+ * const myProductionTable = new DynamoDBTable({
  *   name: 'my-production-table',
  *   key: [{ id: 'string' }],
  *   accessKeyId: 'my-access-key-id',
@@ -56,7 +56,7 @@ const createFilterExpression = require('./internal/createFilterExpression')
  * @note
  * [AWS DynamoDB Docs](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html)
  */
-class DynamoTable {
+class DynamoDBTable {
   constructor(options) {
     this.name = options.name
     this.key = options.key
@@ -896,4 +896,4 @@ class DynamoTable {
   }
 }
 
-module.exports = DynamoTable
+module.exports = DynamoDBTable

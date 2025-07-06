@@ -2,10 +2,10 @@ require('rubico/global')
 const Test = require('thunk-test')
 const assert = require('assert')
 const Dynamo = require('./internal/Dynamo')
-const DynamoTable = require('./DynamoTable')
-const DynamoIndex = require('./DynamoIndex')
+const DynamoDBTable = require('./DynamoDBTable')
+const DynamoDBIndex = require('./DynamoDBIndex')
 
-const test = new Test('DynamoIndex', async () => {
+const test = new Test('DynamoDBIndex', async function integration() {
   this.dynamo = new Dynamo({
     endpoint: 'http://localhost:8000/',
     region: 'default-region',
@@ -13,7 +13,7 @@ const test = new Test('DynamoIndex', async () => {
   await this.dynamo.deleteTable('test-tablename').catch(() => {})
   await this.dynamo.waitFor('test-tablename', 'tableNotExists')
 
-  const testTable = new DynamoTable({
+  const testTable = new DynamoDBTable({
     name: 'test-tablename',
     key: [{ id: 'string' }],
     endpoint: 'http://localhost:8000/',
@@ -22,7 +22,7 @@ const test = new Test('DynamoIndex', async () => {
     assert.equal(message, 'created-table')
   })
 
-  const testIndex = new DynamoIndex({
+  const testIndex = new DynamoDBIndex({
     table: 'test-tablename',
     key: [{ type: 'string' }, { time: 'number' }],
     endpoint: 'http://localhost:8000/',
@@ -31,7 +31,7 @@ const test = new Test('DynamoIndex', async () => {
     assert.equal(message, 'created-index')
   })
 
-  const testIndex2 = new DynamoIndex({
+  const testIndex2 = new DynamoDBIndex({
     table: 'test-tablename',
     key: [{ type: 'string' }, { time: 'number' }],
     endpoint: 'http://localhost:8000/',

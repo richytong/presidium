@@ -1,8 +1,8 @@
 require('rubico/global')
 const assert = require('assert')
 const Test = require('thunk-test')
-const DynamoTable = require('./DynamoTable')
-const DynamoStream = require('./DynamoStream')
+const DynamoDBTable = require('./DynamoDBTable')
+const DynamoDBStream = require('./DynamoDBStream')
 const asyncIterableTake = require('./internal/asyncIterableTake')
 
 const ResourceNotFoundException = function (message) {
@@ -11,14 +11,16 @@ const ResourceNotFoundException = function (message) {
   return error
 }
 
-const test0 = Test('DynamoStream.handleGetRecordsError', DynamoStream.handleGetRecordsError)
+const test0 = Test('DynamoDBStream.handleGetRecordsError', DynamoDBStream.handleGetRecordsError)
 .case(new Error('Shard iterator has expired'), [])
 .throws(new Error('other'), new Error('other'))
 
-const test1 = Test('DynamoStream', options => new DynamoStream(options))
+const test1 = Test('DynamoDBStream', function construct(options) {
+  return new DynamoDBStream(options)
+})
 
-.before(async function () {
-  const table = new DynamoTable({
+.before(async function deleteTable() {
+  const table = new DynamoDBTable({
     name: 'my-table',
     key: [{ id: 'string' }],
     endpoint: 'http://localhost:8000',
@@ -27,8 +29,8 @@ const test1 = Test('DynamoStream', options => new DynamoStream(options))
   await table.delete()
 })
 
-.before(async function () {
-  this.table = new DynamoTable({
+.before(async function createTable() {
+  this.table = new DynamoDBTable({
     name: 'my-table',
     key: [{ id: 'string' }],
     endpoint: 'http://localhost:8000',
@@ -41,7 +43,7 @@ const test1 = Test('DynamoStream', options => new DynamoStream(options))
   endpoint: 'http://localhost:8000',
   shardIteratorType: 'TRIM_HORIZON',
   shardUpdatePeriod: 1000,
-}, async function (myStream) {
+}, async function integration1(myStream) {
   await myStream.ready
 
   const table = this.table
@@ -88,7 +90,7 @@ const test1 = Test('DynamoStream', options => new DynamoStream(options))
   getRecordsInterval: 1000,
   shardUpdatePeriod: 1000,
   shardIteratorType: 'TRIM_HORIZON',
-}, async function (myStream) {
+}, async function integration2(myStream) {
   await myStream.ready
 
   const table = this.table
@@ -134,7 +136,7 @@ const test1 = Test('DynamoStream', options => new DynamoStream(options))
   getRecordsLimit: 1,
   shardUpdatePeriod: 1000,
   shardIteratorType: 'TRIM_HORIZON',
-}, async function (myStream) {
+}, async function integration3(myStream) {
   await myStream.ready
 
   const table = this.table
@@ -173,7 +175,7 @@ const test1 = Test('DynamoStream', options => new DynamoStream(options))
   assert.strictEqual(first5.length, 5)
   myStream.close()
   await table.delete()
-  this.table = new DynamoTable({
+  this.table = new DynamoDBTable({
     name: 'my-table',
     key: [{ id: 'string' }],
     endpoint: 'http://localhost:8000',
@@ -188,7 +190,7 @@ const test1 = Test('DynamoStream', options => new DynamoStream(options))
   shardIteratorType: 'TRIM_HORIZON',
   debug: true,
   shardUpdatePeriod: 1000,
-}, async function (myStream) {
+}, async function integration4(myStream) {
   await myStream.ready
 
   const table = this.table
@@ -235,7 +237,7 @@ const test1 = Test('DynamoStream', options => new DynamoStream(options))
   shardIteratorType: 'TRIM_HORIZON',
   debug: true,
   shardUpdatePeriod: 1000,
-}, async function (myStream) {
+}, async function integration5(myStream) {
   await myStream.ready
 
   const originalClient = myStream.client
@@ -308,7 +310,7 @@ const test1 = Test('DynamoStream', options => new DynamoStream(options))
   table: 'my-table',
   endpoint: 'http://localhost:8000',
   shardUpdatePeriod: 500,
-}, async function (myStream) {
+}, async function integration6(myStream) {
   await myStream.ready
 
   // there shouldn't be any more records, so this should hang

@@ -1,20 +1,21 @@
-const DynamoTable = require('./DynamoTable')
-const DynamoStream = require('./DynamoStream')
+const DynamoDBTable = require('./DynamoDBTable')
+const DynamoDBStream = require('./DynamoDBStream')
 
 let maxHeapUsed = 0;
 
 (async function() {
   console.log('initializing dependencies')
-  const table = new DynamoTable({
+  const table = new DynamoDBTable({
     name: 'local-iteration',
     key: [{ iteration: 'number' }],
     endpoint: 'http://localhost:8000',
   })
   await table.ready
-  const stream = new DynamoStream({
+  const stream = new DynamoDBStream({
     table: 'local-iteration',
     endpoint: 'http://localhost:8000',
     shardIteratorType: 'TRIM_HORIZON',
+    shardUpdatePeriod: 1000
   })
   await stream.ready;
   (async function() {

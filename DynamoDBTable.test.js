@@ -2,9 +2,9 @@ require('rubico/global')
 const Test = require('thunk-test')
 const assert = require('assert')
 const Dynamo = require('./internal/Dynamo')
-const DynamoTable = require('./DynamoTable')
+const DynamoDBTable = require('./DynamoDBTable')
 
-const test = new Test('DynamoTable', async () => {
+const test = new Test('DynamoDBTable', async function integration() {
   this.dynamo = new Dynamo({
     endpoint: 'http://localhost:8000/',
     region: 'default-region',
@@ -12,7 +12,7 @@ const test = new Test('DynamoTable', async () => {
   await this.dynamo.deleteTable('test-tablename').catch(() => {})
   await this.dynamo.waitFor('test-tablename', 'tableNotExists')
 
-  const testTable = new DynamoTable({
+  const testTable = new DynamoDBTable({
     name: 'test-tablename',
     endpoint: 'http://localhost:8000/',
     key: [{ id: 'string' }],
@@ -21,7 +21,7 @@ const test = new Test('DynamoTable', async () => {
     assert.equal(message, 'created-table')
   })
 
-  const testTable2 = new DynamoTable({
+  const testTable2 = new DynamoDBTable({
     name: 'test-tablename',
     endpoint: 'http://localhost:8000/',
     key: [{ id: 'string' }],
@@ -168,7 +168,7 @@ const test = new Test('DynamoTable', async () => {
     new Error('Item not found for {"id":"4"}'),
   )
 
-  const userVersionTable = new DynamoTable({
+  const userVersionTable = new DynamoDBTable({
     name: 'test-user-version-tablename',
     endpoint: 'http://localhost:8000/',
     key: [{ id: 'string' }, { version: 'number' }],

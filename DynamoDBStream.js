@@ -9,11 +9,11 @@ const Dynamo = require('./internal/Dynamo')
 const Mux = require('rubico/monad/Mux')
 
 /**
- * @name DynamoStream
+ * @name DynamoDBStream
  *
  * @synopsis
  * ```coffeescript [specscript]
- * new DynamoStream(options {
+ * new DynamoDBStream(options {
  *   table: string,
  *   accessKeyId: string,
  *   secretAccessKey: string,
@@ -21,10 +21,10 @@ const Mux = require('rubico/monad/Mux')
  *   endpoint: string,
  *   streamViewType?: 'NEW_AND_OLD_IMAGES'|'NEW_IMAGE'|'OLD_IMAGE'|'KEYS_ONLY',
  *   shardIteratorType?: 'TRIM_HORIZON'|'LATEST'|'AT_SEQUENCE_NUMBER'|'AFTER_SEQUENCE_NUMBER',
- * }) -> DynamoStream
+ * }) -> stream DynamoDBStream
  * ```
  */
-class DynamoStream {
+class DynamoDBStream {
   constructor(options) {
     const awsCreds = {
       ...pick(options, [
@@ -47,19 +47,19 @@ class DynamoStream {
       apiVersion: '2012-08-10',
     })
 
-    this.retryListStreams = RetryAwsErrors(
+    this._retryListStreams = RetryAwsErrors(
       this.client.listStreams,
       this.client,
     )
-    this.retryDescribeStream = RetryAwsErrors(
+    this._retryDescribeStream = RetryAwsErrors(
       this.client.describeStream,
       this.client,
     )
-    this.retryGetShardIterator = RetryAwsErrors(
+    this._retryGetShardIterator = RetryAwsErrors(
       this.client.getShardIterator,
       this.client,
     )
-    this.retryGetRecords = RetryAwsErrors(
+    this._retryGetRecords = RetryAwsErrors(
       this.client.getRecords,
       this.client,
     )
@@ -86,7 +86,7 @@ class DynamoStream {
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * close() -> ()
+   * stream.close() -> ()
    * ```
    */
   close() {
@@ -98,11 +98,11 @@ class DynamoStream {
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * getStreams() -> AsyncIterator<Stream { StreamArn: string }>
+   * stream._getStreams() -> asyncIterator AsyncIterator<Stream { StreamArn: string }>
    * ```
    */
-  async * getStreams() {
-    let streams = await this.retryListStreams({
+  async * _getStreams() {
+    let streams = await this._retryListStreams({
       Limit: this.listStreamsLimit,
       TableName: this.table
     })
@@ -110,7 +110,7 @@ class DynamoStream {
       yield* streams.Streams
     }
     while (!this.closed && streams.LastEvaluatedStreamArn != null) {
-      streams = await this.retryListStreams({
+      streams = await this._retryListStreams({
         Limit: this.listStreamsLimit,
         TableName: this.table,
         ExclusiveStartStreamArn: streams.LastEvaluatedStreamArn,
@@ -122,19 +122,21 @@ class DynamoStream {
   }
 
   /**
-   * @name getShards
+   * @name _getShards
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * getShards(Stream { StreamArn: string }) -> AsyncIterator<Shard {
+   * stream._getShards(Stream {
+   *   StreamArn: string
+   * }) -> asyncIterator AsyncIterator<Shard {
    *   ShardId: string,
    *   ShardIteratorType: string,
    *   Stream: { StreamArn: string },
    * }>
    * ```
    */
-  async * getShards(Stream) {
-    let shards = await this.retryDescribeStream({
+  async * _getShards(Stream) {
+    let shards = await this._retryDescribeStream({
       StreamArn: Stream.StreamArn,
       Limit: 100,
     }).then(get('StreamDescription'))
@@ -142,7 +144,7 @@ class DynamoStream {
       yield* shards.Shards.map(assign({ Stream }))
     }
     while (!this.closed && shards.LastEvaluatedShardId != null) {
-      shards = await this.retryDescribeStream({
+      shards = await this._retryDescribeStream({
         StreamArn: Stream.StreamArn,
         Limit: 100,
         ExclusiveStartShardId: shards.LastEvaluatedShardId,
@@ -164,7 +166,7 @@ class DynamoStream {
 
 
   /**
-   * @name getRecords
+   * @name _getRecords
    *
    * @synopsis
    * ```coffeescript [specscript]
@@ -173,11 +175,11 @@ class DynamoStream {
    *     string|number|binary|Array<DynamoDBJSONObject>|DynamoDBJSONObject,
    * }>
    *
-   * getRecords(Shard {
+   * stream._getRecords(Shard {
    *   ShardId: string,
    *   ShardIteratorType: string,
    *   Stream: { StreamArn: string },
-   * }) -> AsyncIterator<Record {
+   * }) -> asyncIterator AsyncIterator<Record {
    *   eventID,
    *   eventName: 'INSERT'|'MODIFY'|'REMOVE',
    *   eventVersion: string,
@@ -193,21 +195,20 @@ class DynamoStream {
    * }>
    * ```
    */
-  async * getRecords(Shard) {
-    const startingShardIterator = await this.retryGetShardIterator({
+  async * _getRecords(Shard) {
+    const startingShardIterator = await this._retryGetShardIterator({
       ShardId: Shard.ShardId,
       StreamArn: Shard.Stream.StreamArn,
       ShardIteratorType: Shard.ShardIteratorType,
     }).then(get('ShardIterator'))
 
-    let getRecordsResponse = await this.retryGetRecords({
+    let getRecordsResponse = await this._retryGetRecords({
       ShardIterator: startingShardIterator,
       Limit: this.getRecordsLimit
-    }).catch(DynamoStream.handleGetRecordsError)
+    }).catch(DynamoDBStream.handleGetRecordsError)
 
     if (getRecordsResponse.Records == null) {
-      const error =
-        new Error('DynamoStream: getRecordsResponse.Records undefined')
+      const error = new Error('getRecordsResponse.Records undefined')
       error.getRecordsResponse = getRecordsResponse
       throw error
     }
@@ -220,13 +221,12 @@ class DynamoStream {
     await new Promise(resolve => setTimeout(resolve, this.getRecordsInterval))
 
     while (!this.closed && getRecordsResponse.NextShardIterator != null) {
-      getRecordsResponse = await this.retryGetRecords({
+      getRecordsResponse = await this._retryGetRecords({
         ShardIterator: getRecordsResponse.NextShardIterator,
         Limit: this.getRecordsLimit
-      }).catch(DynamoStream.handleGetRecordsError)
+      }).catch(DynamoDBStream.handleGetRecordsError)
       if (getRecordsResponse.Records == null) {
-        const error =
-          new Error('DynamoStream: getRecordsResponse.Records undefined')
+        const error = new Error('getRecordsResponse.Records undefined')
         error.getRecordsResponse = getRecordsResponse
         throw error
       } else if (getRecordsResponse.Records.length > 0) {
@@ -246,7 +246,7 @@ class DynamoStream {
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * [Symbol.asyncIterator]() -> AsyncIterator<Record {
+   * [Symbol.asyncIterator]() -> asyncIterator AsyncIterator<Record {
    *   eventID,
    *   eventName: 'INSERT'|'MODIFY'|'REMOVE',
    *   eventVersion: string,
@@ -279,7 +279,7 @@ class DynamoStream {
    * })
    * await myTable.ready
    *
-   * cons myStream = new DynamoStream({
+   * cons myStream = new DynamoDBStream({
    *   table: 'my-table',
    *   ...awsCreds,
    * })
@@ -293,7 +293,7 @@ class DynamoStream {
    * }
    * ```
    *
-   * Same DynamoStream instance [Symbol.asyncIterator] interface may be invoked to produce multiple streams of the same records
+   * Same DynamoDBStream instance [Symbol.asyncIterator] interface may be invoked to produce multiple streams of the same records
    *
    * ```javascript
    * ;(async () => {
@@ -318,14 +318,14 @@ class DynamoStream {
    * ```
    */
   async * [Symbol.asyncIterator]() {
-    let shards = await pipe(this.getStreams(), [
-      flatMap(Stream => this.getShards(Stream)),
+    let shards = await pipe(this._getStreams(), [
+      flatMap(Stream => this._getShards(Stream)),
       map(assign({ ShardIteratorType: this.shardIteratorType })),
       transform(Transducer.passthrough, []),
     ])
 
     let muxAsyncIterator = Mux.race([
-      ...shards.map(Shard => this.getRecords(Shard)),
+      ...shards.map(Shard => this._getRecords(Shard)),
       (async function* UpdateShardsGenerator() {
         while (true) {
           await new Promise(resolve => {
@@ -339,8 +339,8 @@ class DynamoStream {
     while (!this.closed) {
       const { value, done } = await muxAsyncIterator.next()
       if (value == this.SymbolUpdateShards) {
-        const latestShards = await pipe(this.getStreams(), [
-          flatMap(Stream => this.getShards(Stream)),
+        const latestShards = await pipe(this._getStreams(), [
+          flatMap(Stream => this._getShards(Stream)),
           transform(Transducer.passthrough, []),
         ])
         const newShards = pipe(shards, [
@@ -354,7 +354,7 @@ class DynamoStream {
         shards = latestShards
         if (newShards.length > 0) {
           muxAsyncIterator = Mux.race([
-            ...newShards.map(Shard => this.getRecords(Shard)),
+            ...newShards.map(Shard => this._getRecords(Shard)),
             muxAsyncIterator,
           ])
         }
@@ -367,4 +367,4 @@ class DynamoStream {
   }
 }
 
-module.exports = DynamoStream
+module.exports = DynamoDBStream
