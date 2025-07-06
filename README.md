@@ -1,5 +1,5 @@
 # Presidium
-![presidium](https://rubico.land/assets/wreath-logo-w256.png)
+![presidium](https://rubico.land/assets/presidium-logo.jpg)
 
 ![Node.js CI](https://github.com/richytong/presidium/workflows/Node.js%20CI/badge.svg)
 [![codecov](https://codecov.io/gh/richytong/presidium/branch/master/graph/badge.svg)](https://codecov.io/gh/richytong/presidium)
