@@ -227,6 +227,9 @@ const test1 = Test('DynamoDBStream', function construct(options) {
 
   const first5 = await asyncIterableTake(5)(myStream)
   assert.strictEqual(first5.length, 5)
+  for (const record of first5) {
+    assert(record.newImageJSON)
+  }
   myStream.close()
 })
 

@@ -216,6 +216,14 @@ class DynamoDBStream {
       yield* getRecordsResponse.Records.map(assign({
         table: this.table,
         shardId: Shard.ShardId,
+        oldImageJSON: pipe([
+          get('dynamodb.OldImage', undefined),
+          map(Dynamo.attributeValueToJSON)
+        ]),
+        newImageJSON: pipe([
+          get('dynamodb.NewImage', undefined),
+          map(Dynamo.attributeValueToJSON)
+        ])
       }))
     }
     await new Promise(resolve => setTimeout(resolve, this.getRecordsInterval))
@@ -233,6 +241,14 @@ class DynamoDBStream {
         yield* getRecordsResponse.Records.map(assign({
           table: this.table,
           shardId: Shard.ShardId,
+          oldImageJSON: pipe([
+            get('dynamodb.OldImage', undefined),
+            map(Dynamo.attributeValueToJSON)
+          ]),
+          newImageJSON: pipe([
+            get('dynamodb.NewImage', undefined),
+            map(Dynamo.attributeValueToJSON)
+          ])
         }))
       }
       await new Promise(resolve => setTimeout(resolve, this.getRecordsInterval))
@@ -365,6 +381,7 @@ class DynamoDBStream {
       }
     }
   }
+
 }
 
 module.exports = DynamoDBStream
