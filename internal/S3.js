@@ -45,6 +45,7 @@ class S3 {
    *   GrantWrite: string,
    *   GrantWriteACP: string,
    *   ObjectLockEnabledForBucket: boolean,
+   *   ObjectOwnership: 'BucketOwnerPreferred'|'ObjectWriter'|'BucketOwnerEnforced'
    * })
    * ```
    *

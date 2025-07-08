@@ -5,7 +5,7 @@ const S3 = require('./internal/S3')
  * @name S3Bucket
  *
  * @docs
- * Presidium S3Bucket client for [Amazon S3](https://aws.amazon.com/s3/).
+ * Presidium S3Bucket client for [Amazon S3](https://aws.amazon.com/s3/). Creates a new S3 bucket under `name` if a bucket does not already exist. Access to the newly creaed S3 bucket is private.
  *
  * ```coffeescript [specscript]
  * new S3Bucket(options {
@@ -14,12 +14,8 @@ const S3 = require('./internal/S3')
  *   secretAccessKey: string,
  *   region: string,
  *   endpoint: string,
- * }) -> s3Bucket S3Bucket
- *
- * s3Bucket.ready -> Promise<>
+ * }) -> bucket S3Bucket
  * ```
- *
- * Persist an S3 Bucket. While the `ready` promise is pending, the Presidium S3Bucket client checks if the bucket under the provided name exists, and if not creates a new bucket for the provided name.
  *
  * ```javascript
  * const S3Bucket = require('presidium/S3Bucket')
@@ -38,7 +34,13 @@ const S3 = require('./internal/S3')
  * // myBucket is operational
  * ```
  *
- * List of methods:
+ * Options:
+ *   * `name` - globally unique name of the S3 Bucket.
+ *   * `accessKeyId` - long term credential (ID) of an [IAM](https://aws.amazon.com/iam/) user.
+ *   * `secretAccessKey` - long term credential (secret) of an [IAM](https://aws.amazon.com/iam/) user.
+ *   * `region` - geographic location of data center cluster, e.g. `us-east-1` or `us-west-2`. [Full list of AWS regions](https://docs.aws.amazon.com/global-infrastructure/latest/regions/aws-regions.html#available-regions)
+ *
+ * Methods:
  *   * [putObject](#putobject)
  *   * [upload](#upload)
  *   * [deleteObject](#deleteobject)
@@ -49,19 +51,24 @@ const S3 = require('./internal/S3')
  *   * [headObject](#headobject)
  *   * [getObjectStream](#getobjectstream)
  *   * [listObjects](#listobjects)
+ *
+ * Attributes:
+ *   * [ready](#ready)
  */
 class S3Bucket {
   constructor(options) {
     this.name = options.name
 
-    this.s3 = new S3({
+    const awsCreds = {
       ...pick(options, [
         'accessKeyId',
         'secretAccessKey',
-        'endpoint',
+        'endpoint'
       ]),
       region: options.region ?? 'default-region',
-    })
+    }
+
+    this.s3 = new S3({ ...awsCreds })
 
     this.ready = this.s3.getBucketLocation(this.name).then(() => {
       return { message: 'bucket-exists' }
@@ -85,7 +92,7 @@ class S3Bucket {
    * type DateString = string # Wed Dec 31 1969 16:00:00 GMT-0800 (PST)
    * type TimestampSeconds = number # 1751111429
    *
-   * s3Bucket.putObject(
+   * bucket.putObject(
    *   key string,
    *   body Buffer|TypedArray|Blob|string|ReadableStream,
    *   options {
@@ -151,6 +158,43 @@ class S3Bucket {
    *   ContentType: 'application/json',
    * })
    * ```
+   *
+   * Options:
+   *   * `ACL` - the [canned access control list (ACL)](https://docs.aws.amazon.com/AmazonS3/latest/userguide/acl-overview.html#canned-acl) to apply to the object. For more information, see [Access control list (ACL) overview](https://docs.aws.amazon.com/AmazonS3/latest/userguide/acl-overview.html).
+   *   * `CacheControl` - lists directives for caches along the request/response chain. For more information, see [Cache-Control](https://www.rfc-editor.org/rfc/rfc9111#section-5.2).
+   *   * `ContentDisposition` - conveys additional information about how to process the response payload. For more information, see [Content-Disposition](https://www.rfc-editor.org/rfc/rfc6266#section-4).
+   *   * `ContentEncoding` - indicates what content coding(s) have been applied to the object in order to obtain data in the media type referenced by the `ContentType` option. For more information, see [Content-Encoding](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.4).
+   *   * `ContentLanguage` - describes the natural language(s) of the intended audience for the object. For more information, see [Content-Language](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.5)
+   *   * `ContentLength` - indicates the object's data length as a non-negative integer number of bytes. For more information, see [Content-Length](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.6).
+   *   * `ContentMD5` - the base64-encoded 128-bit MD5 digest of the object. For more information, see [RFC 1864](https://datatracker.ietf.org/doc/html/rfc1864).
+   *   * `ContentType` - indicates the media type of the object. For more information, see [Content-Type](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.3).
+   *   * `ChecksumAlgorithm`- indicates the algorithm used to create the checksum of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html).
+   *   * `ChecksumCRC32` - specifies the base64-encoded, 32-bit CRC-32 checksum of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html).
+   *   * `ChecksumCRC32C` - specifies the base64-encoded, 32-bit CRC-32C checksum of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html).
+   *   * `ChecksumSHA1` - specifies the base64-encoded, 160-bit SHA-1 digest of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html).
+   *   * `ChecksumSHA256` - specifies the base64-encoded, 256-bit SHA-256 digest of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html).
+   *   * `Expires` - the date/time after which the object is considered stale. For more information, see [Expires](https://www.rfc-editor.org/rfc/rfc7234#section-5.3).
+   *   * `IfNoneMatch` - uploads the object only if the object key name does not already exist in the bucket. Otherwise, Amazon S3 responds with `412 Precondition Failed`. If a conflicting operation occurs during the upload, Amazon S3 responds with `409 ConditionalRequestConflict`. For more information, see [RFC 7232](https://datatracker.ietf.org/doc/html/rfc7232) and [Add preconditions to S3 operations with conditional requests](https://docs.aws.amazon.com/AmazonS3/latest/userguide/conditional-requests.html).
+   *   * `GrantFullControl`
+   *   * `GrantRead`
+   *   * `GrantReadACP`
+   *   * `GrantWriteACP`
+   *   * `Metadata`
+   *   * `ServerSideEncryption`
+   *   * `StorageClass`
+   *   * `WebsiteRedirectLocation`
+   *   * `SSECustomerAlgorithm`
+   *   * `SSECustomerKey`
+   *   * `SSECustomerKeyMD5`
+   *   * `SSEKMSKeyId`
+   *   * `SSEKMSEncryptionContext`
+   *   * `BucketKeyEnabled`
+   *   * `RequestPayer`
+   *   * `Tagging`
+   *   * `ObjectLockMode`
+   *   * `ObjectLockRetainUntilDate`
+   *   * `ObjectLockLegalHoldStatus`
+   *   * `ExpectedBucketOwner`
    */
   putObject(key, body, options) {
     return this.s3.putObject(this.name, key, body, options)
@@ -166,7 +210,7 @@ class S3Bucket {
    * type DateString = string # Wed Dec 31 1969 16:00:00 GMT-0800 (PST)
    * type TimestampSeconds = number # 1751111429
    *
-   * s3Bucket.upload(
+   * bucket.upload(
    *   key string,
    *   body string|Buffer|ReadableStream,
    *   options {
@@ -248,7 +292,7 @@ class S3Bucket {
    * Remove an object from the S3 Bucket.
    *
    * ```coffeescript [specscript]
-   * s3Bucket.deleteObject(key string, options {
+   * bucket.deleteObject(key string, options {
    *   MFA: string,
    *   VersionId: string,
    *   RequestPayer: requester,
@@ -272,7 +316,7 @@ class S3Bucket {
    * Remove multiple objects from the S3 Bucket.
    *
    * ```coffeescript [specscript]
-   * s3Bucket.deleteObjects(
+   * bucket.deleteObjects(
    *   keys Array<string|{ Key: string, VersionId: string }>,
    *   options {
    *     Quiet: boolean,
@@ -311,7 +355,7 @@ class S3Bucket {
    * Remove all objects from an S3 Bucket.
    *
    * ```coffeescript [specscript]
-   * s3Bucket.deleteAllObjects(options {
+   * bucket.deleteAllObjects(options {
    *   BatchSize: number, // batch size
    * }) -> Promise<number>
    * ```
@@ -339,7 +383,7 @@ class S3Bucket {
    * Delete the S3 Bucket.
    *
    * ```coffeescript [specscript]
-   * s3Bucket.delete() -> Promise<>
+   * bucket.delete() -> Promise<>
    * ```
    *
    * ```javascript
@@ -360,7 +404,7 @@ class S3Bucket {
    * type DateString = string # Wed Dec 31 1969 16:00:00 GMT-0800 (PST)
    * type TimestampSeconds = number # 1751111429
    *
-   * s3Bucket.getObject(
+   * bucket.getObject(
    *   key string,
    *   options {
    *     IfMatch: string,
@@ -441,7 +485,7 @@ class S3Bucket {
    * Retrieve the headers of an object from the S3 Bucket.
    *
    * ```coffeescript [specscript]
-   * s3Bucket.headObject(
+   * bucket.headObject(
    *   key string,
    *   options {
    *     IfMatch: string,
