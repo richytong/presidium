@@ -15,11 +15,11 @@ const createKeyConditionExpression =
 const createFilterExpression = require('./internal/createFilterExpression')
 
 /**
- * @name DynamoIndex
+ * @name DynamoDBGlobalSecondaryIndex
  *
  * @synopsis
  * ```coffeescript [specscript]
- * new DynamoIndex(options {
+ * new DynamoDBGlobalSecondaryIndex(options {
  *   name: string,
  *   key: [
  *     { [hashKey string]: 'S'|'string'|'N'|'number'|'B'|'binary' },
@@ -30,7 +30,7 @@ const createFilterExpression = require('./internal/createFilterExpression')
  *   secretAccessKey: string,
  *   region: string,
  *   endpoint: string,
- * }) -> DynamoIndex
+ * }) -> index DynamoDBGlobalSecondaryIndex
  * ```
  *
  * @description
@@ -52,7 +52,7 @@ const createFilterExpression = require('./internal/createFilterExpression')
  *   })
  *   await myProductionTable.ready
  *
- *   const myProductionStatusUpdateTimeIndex = new DynamoIndex({
+ *   const myProductionStatusUpdateTimeIndex = new DynamoDBGlobalSecondaryIndex({
  *     table: 'my-production-table',
  *     key: [{ status: 'string' }, { updateTime: 'number' }],
  *     ...awsCreds,
@@ -69,7 +69,7 @@ const createFilterExpression = require('./internal/createFilterExpression')
  *   })
  *   await myLocalTable.ready
  *
- *   const myLocalStatusUpdateTimeIndex = new DynamoIndex({
+ *   const myLocalStatusUpdateTimeIndex = new DynamoDBGlobalSecondaryIndex({
  *     table: 'my-local-table',
  *     key: [{ status: 'string' }, { updateTime: 'number' }],
  *     endpoint: 'http://localhost:8000/',
@@ -82,7 +82,7 @@ const createFilterExpression = require('./internal/createFilterExpression')
  * [AWS DynamoDB Docs](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html)
 
  */
-class DynamoIndex {
+class DynamoDBGlobalSecondaryIndex {
   constructor(options) {
     this.table = options.table
     this.key = options.key
@@ -428,4 +428,4 @@ class DynamoIndex {
   }
 }
 
-module.exports = DynamoIndex
+module.exports = DynamoDBGlobalSecondaryIndex

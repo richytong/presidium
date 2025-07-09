@@ -3,9 +3,9 @@ const Test = require('thunk-test')
 const assert = require('assert')
 const Dynamo = require('./internal/Dynamo')
 const DynamoDBTable = require('./DynamoDBTable')
-const DynamoDBIndex = require('./DynamoDBIndex')
+const DynamoDBGlobalSecondaryIndex = require('./DynamoDBGlobalSecondaryIndex')
 
-const test = new Test('DynamoDBIndex', async function integration() {
+const test = new Test('DynamoDBGlobalSecondaryIndex', async function integration() {
   this.dynamo = new Dynamo({
     endpoint: 'http://localhost:8000/',
     region: 'default-region',
@@ -22,7 +22,7 @@ const test = new Test('DynamoDBIndex', async function integration() {
     assert.equal(message, 'created-table')
   })
 
-  const testIndex = new DynamoDBIndex({
+  const testIndex = new DynamoDBGlobalSecondaryIndex({
     table: 'test-tablename',
     key: [{ type: 'string' }, { time: 'number' }],
     endpoint: 'http://localhost:8000/',
@@ -31,7 +31,7 @@ const test = new Test('DynamoDBIndex', async function integration() {
     assert.equal(message, 'created-index')
   })
 
-  const testIndex2 = new DynamoDBIndex({
+  const testIndex2 = new DynamoDBGlobalSecondaryIndex({
     table: 'test-tablename',
     key: [{ type: 'string' }, { time: 'number' }],
     endpoint: 'http://localhost:8000/',

@@ -1,7 +1,7 @@
 const DynamoDB = {}
 
 DynamoDB.Table = require('./DynamoDBTable')
-DynamoDB.Index = require('./DynamoDBIndex')
+DynamoDB.GlobalSecondaryIndex = require('./DynamoDBGlobalSecondaryIndex')
 DynamoDB.Stream = require('./DynamoDBStream')
 
 module.exports = DynamoDB
