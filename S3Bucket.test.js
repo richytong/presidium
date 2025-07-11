@@ -1,12 +1,12 @@
 const assert = require('assert')
 const Test = require('thunk-test')
-const S3 = require('./internal/S3')
+const _S3 = require('./internal/_S3')
 const S3Bucket = require('./S3Bucket')
 
 const test = new Test('S3Bucket', (...args) => new S3Bucket(...args))
 
 .before(async function () {
-  this.s3 = new S3({
+  this._s3 = new _S3({
     accessKeyId: 'minioadmin',
     secretAccessKey: 'minioadmin',
     endpoint: 'http://localhost:9000',
@@ -18,7 +18,7 @@ const test = new Test('S3Bucket', (...args) => new S3Bucket(...args))
       secretAccessKey: 'minioadmin',
       endpoint: 'http://localhost:9000',
     }).deleteAllObjects()
-    await this.s3.deleteBucket('test-bucket')
+    await this._s3.deleteBucket('test-bucket')
   } catch {}
 })
 

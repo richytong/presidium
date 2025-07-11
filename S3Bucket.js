@@ -1,5 +1,5 @@
 require('rubico/global')
-const S3 = require('./internal/S3')
+const _S3 = require('./internal/_S3')
 
 /**
  * @name S3Bucket
@@ -68,13 +68,13 @@ class S3Bucket {
       region: options.region ?? 'default-region',
     }
 
-    this.s3 = new S3({ ...awsCreds })
+    this._s3 = new _S3({ ...awsCreds })
 
-    this.ready = this.s3.getBucketLocation(this.name).then(() => {
+    this.ready = this._s3.getBucketLocation(this.name).then(() => {
       return { message: 'bucket-exists' }
     }).catch(async error => {
       if (error.name == 'NoSuchBucket') {
-        await this.s3.createBucket(this.name).catch(() => {})
+        await this._s3.createBucket(this.name).catch(() => {})
         return { message: 'created-bucket' }
       } else {
         throw error
@@ -197,7 +197,7 @@ class S3Bucket {
    *   * `ExpectedBucketOwner`
    */
   putObject(key, body, options) {
-    return this.s3.putObject(this.name, key, body, options)
+    return this._s3.putObject(this.name, key, body, options)
   }
 
   /**
@@ -282,7 +282,7 @@ class S3Bucket {
    * ```
    */
   upload(key, body, options) {
-    return this.s3.upload(this.name, key, body, options)
+    return this._s3.upload(this.name, key, body, options)
   }
 
   /**
@@ -306,7 +306,7 @@ class S3Bucket {
    * ```
    */
   deleteObject(key, options) {
-    return this.s3.deleteObject(this.name, key, options)
+    return this._s3.deleteObject(this.name, key, options)
   }
 
   /**
@@ -345,7 +345,7 @@ class S3Bucket {
    * ```
    */
   deleteObjects(keys, options) {
-    return this.s3.deleteObjects(this.name, keys, options)
+    return this._s3.deleteObjects(this.name, keys, options)
   }
 
   /**
@@ -391,7 +391,7 @@ class S3Bucket {
    * ```
    */
   delete() {
-    return this.s3.deleteBucket(this.name)
+    return this._s3.deleteBucket(this.name)
   }
 
   /**
@@ -475,7 +475,7 @@ class S3Bucket {
    * ```
    */
   getObject(key, options) {
-    return this.s3.getObject(this.name, key, options)
+    return this._s3.getObject(this.name, key, options)
   }
 
   /**
@@ -555,7 +555,7 @@ class S3Bucket {
    * ```
    */
   headObject(key, options) {
-    return this.s3.headObject(this.name, key, options)
+    return this._s3.headObject(this.name, key, options)
   }
 
   /**
@@ -646,7 +646,7 @@ class S3Bucket {
    * ```
    */
   getObjectStream(key, options) {
-    return this.s3.getObjectStream(this.name, key, options)
+    return this._s3.getObjectStream(this.name, key, options)
   }
 
   /**
@@ -708,7 +708,7 @@ class S3Bucket {
    * ```
    */
   listObjects(options) {
-    return this.s3.listObjectsV2(this.name, options).catch(error => {
+    return this._s3.listObjectsV2(this.name, options).catch(error => {
       if (error.retryable) {
         return this.listObjects(options)
       }

@@ -1,8 +1,8 @@
 const assert = require('assert')
 const Test = require('thunk-test')
-const S3 = require('./S3')
+const _S3 = require('./_S3')
 
-const test = new Test('S3', (...args) => new S3(...args))
+const test = new Test('_S3', (...args) => new _S3(...args))
 .case({
   endpoint: 'http://localhost:9000',
   accessKeyId: 'minioadmin',
