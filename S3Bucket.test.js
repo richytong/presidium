@@ -90,7 +90,17 @@ const test = new Test('S3Bucket', (...args) => new S3Bucket(...args))
     )
   }
 
-  await testBucket.deleteAllObjects({ BatchSize: 1 })
+  {
+    const response = await testBucket.deleteAllObjects({ BatchSize: 1 })
+    assert.deepEqual(response.Deleted, [
+      { Key: 'binary' },
+      { Key: 'buffer' },
+      { Key: 'buffer2' },
+      { Key: 'c' }
+    ])
+    assert.deepEqual(response.Errors, [])
+  }
+
   const deleted = await testBucket.delete()
 })
 
