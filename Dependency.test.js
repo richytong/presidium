@@ -1,12 +1,12 @@
 const Test = require('thunk-test')
 const assert = require('assert')
-const DynamoTable = require('./DynamoTable')
-const DynamoStream = require('./DynamoStream')
+const DynamoDBTable = require('./DynamoDBTable')
+const DynamoDBStream = require('./DynamoDBStream')
 const S3Bucket = require('./S3Bucket')
 const Dependency = require('./Dependency')
 
 const test = new Test('Dependency.teardown', async function () {
-  const myDynamoTable = new DynamoTable({
+  const myDynamoTable = new DynamoDBTable({
     name: 'my_dynamo_table',
     key: [{ a: 'string' }],
     endpoint: 'http://localhost:8000',
@@ -14,7 +14,7 @@ const test = new Test('Dependency.teardown', async function () {
   })
   await myDynamoTable.ready
 
-  const myDynamoStream = new DynamoStream({
+  const myDynamoStream = new DynamoDBStream({
     table: 'my_dynamo_table',
     endpoint: 'http://localhost:8000',
     region: 'dynamodblocal',
