@@ -195,15 +195,20 @@ Docker.prototype.pullImage = function dockerPullImage(name, options = {}) {
 
 Docker.prototype.buildImage = async function (image, path, options) {
   const archive = new Archive(options.archive)
+
+  const pack = archive.tar(path, {
+    ignore: options.ignore ?? ['node_modules', '.git', '.nyc_output'],
+  })
+
+  const compressed = pack.pipe(zlib.createGzip())
+
   return this.http.post(`/build?${querystring.stringify({
     dockerfile: options.archiveDockerfile ?? 'Dockerfile',
     t: image,
     forcerm: true,
     platform: options.platform ?? '',
   })}`, {
-    body: archive.tar(path, {
-      ignore: options.ignore ?? ['node_modules', '.git', '.nyc_output'],
-    }).pipe(zlib.createGzip()),
+    body: compressed,
     headers: {
       'Content-Type': 'application/x-tar',
     },
@@ -231,7 +236,22 @@ Docker.prototype.buildImage = async function (image, path, options) {
  * https://docs.docker.com/registry/deploying/
  */
 Docker.prototype.pushImage = function (image, repository, options = {}) {
-  return pipe([
+  const headers = {
+    'X-Registry-Auth': options.authToken ?? pipe(options, [
+      pick([
+        'username',
+        'password',
+        'email',
+        'serveraddress',
+        'identitytoken',
+      ]),
+      stringifyJSON,
+      Buffer.from,
+      buffer => buffer.toString('base64'),
+    ])
+  }
+
+  return pipe(image, [
     all({
       imagename: pipe([
         name => name.split(':')[0],
@@ -239,25 +259,9 @@ Docker.prototype.pushImage = function (image, repository, options = {}) {
       ]),
       search: name => querystring.stringify({ tag: name.split(':')[1] }),
     }),
-    ({
-      imagename, search,
-    }) => this.http.post(`/images/${imagename}/push?${search}`, {
-      headers: {
-        'X-Registry-Auth': pipe([
-          pick([
-            'username',
-            'password',
-            'email',
-            'serveraddress',
-            'identitytoken',
-          ]),
-          stringifyJSON,
-          Buffer.from,
-          buffer => buffer.toString('base64'),
-        ])(options),
-      },
-    }),
-  ])(image)
+    ({ imagename, search }) =>
+      this.http.post(`/images/${imagename}/push?${search}`, { headers }),
+  ])
 }
 
 /**
