@@ -1,0 +1,58 @@
+#!/usr/bin/env node
+
+const AwsCredentials = require('../AwsCredentials')
+const Docker = require('../Docker')
+const NpmToken = require('../NpmToken')
+const ECR = require('../ECR')
+const package = require('./package.json')
+
+;(async function () {
+  const awsCreds = await AwsCredentials('solum')
+
+  const docker = new Docker()
+
+  const ecr = new ECR({ ...awsCreds })
+
+  const image = `${package.name}:${package.version}`
+  const repository = '095798571722.dkr.ecr.us-east-1.amazonaws.com'
+
+  const buildStream = await docker.buildImage(
+    image,
+    __dirname,
+    {
+      ignore: ['.git', '.github', 'node_modules', 'build-push', 'deploy', 'test.js'],
+      archive: {
+        Dockerfile: `
+FROM node:22-alpine
+WORKDIR /home/node
+COPY . .
+RUN apk add curl \
+  && echo //registry.npmjs.org/:_authToken=${await NpmToken()} > .npmrc \
+  && npm i \
+  && rm .npmrc \
+  && rm Dockerfile
+USER node
+        `.trim()
+      }
+    }
+  )
+
+  buildStream.pipe(process.stdout)
+  await new Promise(resolve => buildStream.on('end', resolve))
+
+  await docker.tagImage(image, {
+    tag: package.version,
+    repo: `${repository}/${package.name}`
+  })
+
+  await ecr.createRepository(package.name).catch(() => {})
+
+  const authToken = await ecr.getAuthorizationToken()
+
+  const pushStream = await docker.pushImage(image, repository, { authToken })
+
+  pushStream.pipe(process.stdout)
+  await new Promise(resolve => pushStream.on('end', resolve))
+
+})()
+
