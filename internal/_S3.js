@@ -438,39 +438,45 @@ class S3 {
    *   SSECustomerKey?: string|Buffer,
    *   SSECustomerKeyMD5?: string,
    *   VersionId?: string,
-   * }) -> rs stream.Readable {
-   *   headers: {
-   *     DeleteMarker: boolean,
-   *     AcceptRanges: string,
-   *     Expiration: string,
-   *     Restore: string,
-   *     LastModified: Date,
-   *     ContentLength: number,
-   *     ETag: string,
-   *     MissingMeta: number,
-   *     VersionId: string,
-   *     CacheControl: string,
-   *     ContentDisposition: string,
-   *     ContentEncoding: string,
-   *     ContentRange: string,
-   *     ContentType: string,
-   *     Expires: Date,
-   *     WebsiteRedirectLocation: string,
-   *     ServerSideEncryption?: 'AES256'|'aws:kms',
-   *     Metadata?: Object<string>,
-   *     Range?: string, // 'bytes=0-9'
-   *     SSECustomerAlgorithm?: string,
-   *     SSECustomerKey?: string,
-   *     SSEKMSKeyId?: string,
-   *     StorageClass?: 'STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'|'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS',
-   *     RequestCharged?: string,
-   *     ReplicationStatus?: 'COMPLETE'|'PENDING'|'FAILED'|'REPLICA',
-   *     PartsCount: number,
-   *     TagCount: number,
-   *     ObjectLockMode: GOVERNANCE'|'COMPLIANCE,
-   *     ObjectLockRetainUntilDate?: Date|Date.toString()|number,
-   *     ObjectLockLegalHoldStatus?: 'ON'|'OFF',
-   *   },
+   * }) -> response stream.Readable {
+   *   DeleteMarker: boolean,
+   *   AcceptRanges: string,
+   *   Expiration: string,
+   *   Restore: string,
+   *   ArchiveStatus: 'ARCHIVE_ACCESS|DEEP_ARCHIVE_ACCESS',
+   *   LastModified: Date,
+   *   ContentLength: number,
+   *   ETag: string,
+   *   ChecksumCRC32: string,
+   *   ChecksumCRC32C: string,
+   *   ChecksumSHA1: string,
+   *   ChecksumSHA256: string,
+   *   MissingMeta: number,
+   *   VersionId: string,
+   *   CacheControl: string,
+   *   ContentDisposition: string,
+   *   ContentEncoding: string,
+   *   ContentLanguage: string,
+   *   ContentRange: string,
+   *   ContentType: string,
+   *   Expires: Date,
+   *   ExpiresString: string,
+   *   WebsiteRedirectLocation: string,
+   *   ServerSideEncryption: 'AES256'|'aws:kms'|'aws:kms:dsse',
+   *   Metadata: Object<string>,
+   *   SSECustomerAlgorithm: string,
+   *   SSECustomerKeyMD5: string,
+   *   SSEKMSKeyId: string,
+   *   BucketKeyEnabled: boolean,
+   *   StorageClass: 'STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'
+   *                 |'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS'
+   *                 |'GLACIER_IR'|'SNOW'|'EXPRESS_ONEZONE',
+   *   RequestCharged: 'requester',
+   *   ReplicationStatus: 'COMPLETE'|'PENDING'|'FAILED'|'REPLICA'|'COMPLETED',
+   *   PartsCount: number,
+   *   ObjectLockMode: GOVERNANCE'|'COMPLIANCE,
+   *   ObjectLockRetainUntilDate: Date|DateString|TimestampSecond
+   *   ObjectLockLegalHoldStatus: 'ON'|'OFF'
    * }
    * ```
    */
@@ -483,7 +489,7 @@ class S3 {
       ...options,
     }).createReadStream()
 
-    rs.headers = headRes
+    Object.assign(rs, headRes)
 
     return rs
   }
