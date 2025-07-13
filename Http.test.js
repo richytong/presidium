@@ -1,6 +1,8 @@
 const assert = require('assert')
 const Test = require('thunk-test')
 const http = require('http')
+const zlib = require('zlib')
+const { Readable } = require('stream')
 const { connect } = require('net')
 const Http = require('./Http')
 const RequestBuffer = require('./RequestBuffer')
@@ -85,6 +87,13 @@ const test1 = new Test('Http GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and T
   }
 
   {
+    const response = await _http.head('/echo')
+    assert.equal(response.status, 200)
+    assert.strictEqual(response.ok, true)
+    assert.equal(response.headers['content-type'], 'application/json')
+  }
+
+  {
     const response = await _http.get('/invalid-json')
     await assert.rejects(
       response.json(),
@@ -100,6 +109,23 @@ const test1 = new Test('Http GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and T
     const response = await _http.post('/echo', {
       headers: { 'x-test-header': 'testvalue' },
       body: JSON.stringify({ a: 1 }),
+    })
+    assert.equal(response.headers['x-test-header'], 'testvalue')
+    assert.equal(response.status, 200)
+    const data = await response.json()
+    assert.equal(response.headers['content-type'], 'application/json')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World","a":1}')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World","a":1}')
+    assert.equal(await response.text(), '{"greeting":"Hello World","a":1}')
+    assert.equal(await response.text(), '{"greeting":"Hello World","a":1}')
+    assert.deepEqual(await response.json(), { greeting: 'Hello World', a: 1 })
+    assert.deepEqual(await response.json(), { greeting: 'Hello World', a: 1 })
+  }
+
+  {
+    const response = await _http.post('/echo', {
+      headers: { 'x-test-header': 'testvalue' },
+      body: Readable.from([JSON.stringify({ a: 1 })]),
     })
     assert.equal(response.headers['x-test-header'], 'testvalue')
     assert.equal(response.status, 200)

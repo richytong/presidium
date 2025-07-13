@@ -1,6 +1,7 @@
 const http = require('http')
 const https = require('https')
 const path = require('path')
+const stream = require('stream')
 
 /**
  * @name Http
@@ -160,11 +161,14 @@ class Http {
         || typeof body == 'string'
       ) {
         request.end(body)
+      } else if (stream.isReadable(body)) {
+        body.pipe(request)
       } else if (body == null) {
         request.end()
       } else if (typeof body.toString == 'function') {
         request.end(body.toString())
-      } else {
+      }
+      else {
         console.error(body)
         throw new TypeError('body must be one of Buffer, TypedArray, or string')
       }
