@@ -19,8 +19,8 @@ const Mux = require('rubico/monad/Mux')
  *   secretAccessKey: string,
  *   region: string,
  *   endpoint: string,
- *   streamViewType?: 'NEW_AND_OLD_IMAGES'|'NEW_IMAGE'|'OLD_IMAGE'|'KEYS_ONLY',
- *   shardIteratorType?: 'TRIM_HORIZON'|'LATEST'|'AT_SEQUENCE_NUMBER'|'AFTER_SEQUENCE_NUMBER',
+ *   streamViewType: 'NEW_AND_OLD_IMAGES'|'NEW_IMAGE'|'OLD_IMAGE'|'KEYS_ONLY',
+ *   shardIteratorType: 'TRIM_HORIZON'|'LATEST'|'AT_SEQUENCE_NUMBER'|'AFTER_SEQUENCE_NUMBER',
  * }) -> stream DynamoDBStream
  * ```
  */
@@ -262,7 +262,7 @@ class DynamoDBStream {
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * [Symbol.asyncIterator]() -> asyncIterator AsyncIterator<Record {
+   * stream[Symbol.asyncIterator]() -> asyncIterator AsyncIterator<Record {
    *   eventID,
    *   eventName: 'INSERT'|'MODIFY'|'REMOVE',
    *   eventVersion: string,
