@@ -26,7 +26,7 @@ const createFilterExpression = require('./internal/createFilterExpression')
  *   accessKeyId: string,
  *   secretAccessKey: string,
  *   region: string,
- *   endpoint?: string,
+ *   endpoint: string,
  * }) -> table DynamoDBTable
  * ```
  *
@@ -124,14 +124,14 @@ class DynamoDBTable {
    *
    * table.putItem(
    *   item JSONObject|DynamoDBJSONObject,
-   *   options? {
-   *     ReturnConsumedCapacity?: 'INDEXES'|'TOTAL'|'NONE',
-   *     ReturnItemCollectionMetrics?: 'SIZE'|'NONE',
-   *     ReturnValues?: 'NONE'|'ALL_OLD',
+   *   options {
+   *     ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
+   *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
+   *     ReturnValues: 'NONE'|'ALL_OLD',
    *   }
    * ) -> Promise<{
-   *   Attributes?: {...},
-   *   ConsumedCapacity?: {
+   *   Attributes: {...},
+   *   ConsumedCapacity: {
    *     CapacityUnits: number,
    *     TableName: string,
    *   },
@@ -183,11 +183,11 @@ class DynamoDBTable {
    * ```coffeescript [specscript]
    * type JSONKey = {
    *   [hashKey string]: string|number|binary,
-   *   [sortKey string]?: string|number|binary,
+   *   [sortKey string]: string|number|binary,
    * }
    * type DynamoDBJSONKey = {
    *   [hashKey string]: { ['S'|'N'|'B']: string|number|binary },
-   *   [sortKey string]?: { ['S'|'N'|'B']: string|number|binary },
+   *   [sortKey string]: { ['S'|'N'|'B']: string|number|binary },
    * }
    * type DynamoDBJSONObject = Object<[key string]: {
    *   ['S'|'N'|'B'|'L'|'M']:
@@ -243,13 +243,13 @@ class DynamoDBTable {
    * ```coffeescript [specscript]
    * type JSONKey = {
    *   [hashKey string]: string|number|binary,
-   *   [sortKey string]?: string|number|binary,
+   *   [sortKey string]: string|number|binary,
    * }
    * type JSONObject = Object<[key string]: string|number|binary|Array|Object>
    *
    * type DynamoDBJSONKey = {
    *   [hashKey string]: { ['S'|'N'|'B']: string|number|binary },
-   *   [sortKey string]?: { ['S'|'N'|'B']: string|number|binary },
+   *   [sortKey string]: { ['S'|'N'|'B']: string|number|binary },
    * }
    *
    * table.getItemJSON(key JSONKey|DynamoDBJSONKey) -> Promise<JSONObject>
@@ -302,11 +302,11 @@ class DynamoDBTable {
    * ```coffeescript [specscript]
    * type JSONKey = {
    *   [hashKey string]: string|number|binary,
-   *   [sortKey string]?: string|number|binary,
+   *   [sortKey string]: string|number|binary,
    * }
    * type DynamoDBJSONKey = {
    *   [hashKey string]: { ['S'|'N'|'B']: string|number|binary },
-   *   [sortKey string]?: { ['S'|'N'|'B']: string|number|binary },
+   *   [sortKey string]: { ['S'|'N'|'B']: string|number|binary },
    * }
    *
    * type JSONObject = Object<[key string]: string|number|binary|Array|Object>
@@ -318,13 +318,13 @@ class DynamoDBTable {
    * table.updateItem(
    *   key JSONKey|DynamoDBJSONKey,
    *   updates JSONObject|DynamoDBJSONObject,
-   *   options? {
-   *     ConditionExpression?: string, // 'attribute_exists(username)'
-   *     ReturnConsumedCapacity?: 'INDEXES'|'TOTAL'|'NONE',
-   *     ReturnItemCollectionMetrics?: 'SIZE'|'NONE',
-   *     ReturnValues?: 'NONE'|'ALL_OLD'|'UPDATED_OLD'|'ALL_NEW'|'UPDATED_NEW',
+   *   options {
+   *     ConditionExpression: string, // 'attribute_exists(username)'
+   *     ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
+   *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
+   *     ReturnValues: 'NONE'|'ALL_OLD'|'UPDATED_OLD'|'ALL_NEW'|'UPDATED_NEW',
    *   },
-   * ) -> Promise<{ Attributes?: object }>
+   * ) -> Promise<{ Attributes: object }>
    * ```
    *
    * @description
@@ -395,11 +395,11 @@ class DynamoDBTable {
    * ```coffeescript [specscript]
    * type JSONKey = {
    *   [hashKey string]: string|number|binary,
-   *   [sortKey string]?: string|number|binary,
+   *   [sortKey string]: string|number|binary,
    * }
    * type DynamoDBJSONKey = {
    *   [hashKey string]: { ['S'|'N'|'B']: string|number|binary },
-   *   [sortKey string]?: { ['S'|'N'|'B']: string|number|binary },
+   *   [sortKey string]: { ['S'|'N'|'B']: string|number|binary },
    * }
    *
    * type JSONIncrementObject = Object<[key string]: number>
@@ -408,13 +408,13 @@ class DynamoDBTable {
    * table.incrementItem(
    *   key JSONKey|DynamoDBJSONKey,
    *   incrementUpdates JSONIncrementObject|DynamoDBJSONIncrementObject,
-   *   options? {
-   *     ConditionExpression?: string, // 'attribute_exists(username)'
-   *     ReturnConsumedCapacity?: 'INDEXES'|'TOTAL'|'NONE',
-   *     ReturnItemCollectionMetrics?: 'SIZE'|'NONE',
-   *     ReturnValues?: 'NONE'|'ALL_OLD'|'UPDATED_OLD'|'ALL_NEW'|'UPDATED_NEW',
+   *   options {
+   *     ConditionExpression: string, // 'attribute_exists(username)'
+   *     ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
+   *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
+   *     ReturnValues: 'NONE'|'ALL_OLD'|'UPDATED_OLD'|'ALL_NEW'|'UPDATED_NEW',
    *   },
-   * ) -> Promise<{ Attributes?: object }>
+   * ) -> Promise<{ Attributes: object }>
    * ```
    *
    * @description
@@ -476,21 +476,21 @@ class DynamoDBTable {
    * ```coffeescript [specscript]
    * type JSONKey = {
    *   [hashKey string]: string|number|binary,
-   *   [sortKey string]?: string|number|binary,
+   *   [sortKey string]: string|number|binary,
    * }
    * type DynamoDBJSONKey = {
    *   [hashKey string]: { ['S'|'N'|'B']: string|number|binary },
-   *   [sortKey string]?: { ['S'|'N'|'B']: string|number|binary },
+   *   [sortKey string]: { ['S'|'N'|'B']: string|number|binary },
    * }
    *
    * table.deleteItem(
    *   key JSONKey|DynamoDBJSONKey,
-   *   options? {
-   *     ReturnConsumedCapacity?: 'INDEXES'|'TOTAL'|'NONE',
-   *     ReturnItemCollectionMetrics?: 'SIZE'|'NONE',
-   *     ReturnValues?: 'NONE'|'ALL_OLD',
+   *   options {
+   *     ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
+   *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
+   *     ReturnValues: 'NONE'|'ALL_OLD',
    *   },
-   * ) -> Promise<{ Item?: DynamoDBJSONObject }>
+   * ) -> Promise<{ Item: DynamoDBJSONObject }>
    * ```
    *
    * @description
@@ -528,7 +528,7 @@ class DynamoDBTable {
    * }>
    * type DynamoDBJSONKey = {
    *   [hashKey string]: { ['S'|'N'|'B']: string|number|binary },
-   *   [sortKey string]?: { ['S'|'N'|'B']: string|number|binary },
+   *   [sortKey string]: { ['S'|'N'|'B']: string|number|binary },
    * }
    *
    * table.scan(options {
@@ -575,8 +575,8 @@ class DynamoDBTable {
    *     string|number|binary|Array<DynamoDBJSONObject>|DynamoDBJSONObject,
    * }>
    *
-   * scanIterator(options? {
-   *   BatchLimit?: number,
+   * scanIterator(options {
+   *   BatchLimit: number,
    * }) -> AsyncIterator<DynamoDBJSONObject>
    * ```
    *
@@ -603,8 +603,8 @@ class DynamoDBTable {
    * ```coffeescript [specscript]
    * type JSONObject = Object<[key string]: string|number|binary|Array|Object>
    *
-   * table.scanIteratorJSON(options?: {
-   *   BatchLimit?: number,
+   * table.scanIteratorJSON(options: {
+   *   BatchLimit: number,
    * }) -> AsyncIterator<JSONObject>
    * ```
    *
@@ -631,11 +631,11 @@ class DynamoDBTable {
    * ```coffeescript [specscript]
    * type JSONKey = {
    *   [hashKey string]: string|number|binary,
-   *   [sortKey string]?: string|number|binary,
+   *   [sortKey string]: string|number|binary,
    * }
    * type DynamoDBJSONKey = {
    *   [hashKey string]: { ['S'|'N'|'B']: string|number|binary },
-   *   [sortKey string]?: { ['S'|'N'|'B']: string|number|binary },
+   *   [sortKey string]: { ['S'|'N'|'B']: string|number|binary },
    * }
    * type DynamoDBJSONObject = Object<[key string]: {
    *   ['S'|'N'|'B'|'L'|'M']:
@@ -645,13 +645,13 @@ class DynamoDBTable {
    * table.query(
    *   keyConditionExpression string, // hashKey = :a AND sortKey < :b
    *   values JSONKey|DynamoDBJSONKey,
-   *   options? {
-   *     Limit?: number,
-   *     ExclusiveStartKey?: DynamoDBJSONKey,
-   *     ScanIndexForward?: boolean, // default true for ASC
-   *     ProjectionExpression?: string, // 'fieldA,fieldB,fieldC'
-   *     FilterExpression?: string, // 'fieldA >= :someValue'
-   *     ConsistentRead?: boolean, // true to perform a strongly consistent read (eventually consistent by default)
+   *   options {
+   *     Limit: number,
+   *     ExclusiveStartKey: DynamoDBJSONKey,
+   *     ScanIndexForward: boolean, // default true for ASC
+   *     ProjectionExpression: string, // 'fieldA,fieldB,fieldC'
+   *     FilterExpression: string, // 'fieldA >= :someValue'
+   *     ConsistentRead: boolean, // true to perform a strongly consistent read (eventually consistent by default)
    *   },
    * ) -> Promise<{ Items: Array<DynamoDBJSONObject> }>
    * ```
@@ -777,10 +777,10 @@ class DynamoDBTable {
    * table.queryIterator(
    *   keyConditionExpression string,
    *   queryValues JSONObject,
-   *   options? {
-   *     BatchLimit?: number,
-   *     Limit?: number,
-   *     ScanIndexForward?: boolean, // default true for ASC
+   *   options {
+   *     BatchLimit: number,
+   *     Limit: number,
+   *     ScanIndexForward: boolean, // default true for ASC
    *   }
    * ) -> AsyncIterator<DynamoDBJSONObject>
    * ```
@@ -855,10 +855,10 @@ class DynamoDBTable {
    * table.queryIteratorJSON(
    *   keyConditionExpression string,
    *   queryValues JSONObject,
-   *   options? {
-   *     BatchLimit?: number,
-   *     Limit?: number,
-   *     ScanIndexForward?: boolean, // default true for ASC
+   *   options {
+   *     BatchLimit: number,
+   *     Limit: number,
+   *     ScanIndexForward: boolean, // default true for ASC
    *   }
    * ) -> AsyncIterator<JSONObject>
    * ```
