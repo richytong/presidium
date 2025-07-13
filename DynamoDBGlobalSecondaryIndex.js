@@ -172,11 +172,11 @@ class DynamoDBGlobalSecondaryIndex {
    * ```coffeescript [specscript]
    * type JSONKey = {
    *   [hashKey string]: string|number|binary,
-   *   [sortKey string]?: string|number|binary,
+   *   [sortKey string]: string|number|binary,
    * }
    * type DynamoDBJSONKey = {
    *   [hashKey string]: { ['S'|'N'|'B']: string|number|binary },
-   *   [sortKey string]?: { ['S'|'N'|'B']: string|number|binary },
+   *   [sortKey string]: { ['S'|'N'|'B']: string|number|binary },
    * }
    * type DynamoDBJSONObject = Object<[key string]: {
    *   ['S'|'N'|'B'|'L'|'M']:
@@ -186,12 +186,12 @@ class DynamoDBGlobalSecondaryIndex {
    * index.query(
    *   keyConditionExpression string, // hashKey = :a AND sortKey < :b
    *   values JSONKey|DynamoDBJSONKey,
-   *   options? {
-   *     Limit?: number,
-   *     ExclusiveStartKey?: Object<string=>DynamoAttributeValue>
-   *     ScanIndexForward?: boolean, // default true for ASC
-   *     ProjectionExpression?: string, // 'fieldA,fieldB,fieldC'
-   *     FilterExpression?: string, // 'fieldA >= :someValueForFieldA'
+   *   options {
+   *     Limit: number,
+   *     ExclusiveStartKey: Object<string=>DynamoAttributeValue>
+   *     ScanIndexForward: boolean, // default true for ASC
+   *     ProjectionExpression: string, // 'fieldA,fieldB,fieldC'
+   *     FilterExpression: string, // 'fieldA >= :someValueForFieldA'
    *   },
    * ) -> Promise<{ Items: Array<DynamoDBJSONObject> }>
    * ```
@@ -303,12 +303,12 @@ class DynamoDBGlobalSecondaryIndex {
    * index.queryIterator(
    *   keyConditionExpression string,
    *   queryValues JSONObject,
-   *   options? {
-   *     BatchLimit?: number,
-   *     Limit?: number,
-   *     ScanIndexForward?: boolean, // default true for ASC
-   *     ProjectionExpression?: string, // 'fieldA,fieldB,fieldC'
-   *     FilterExpression?: string, // 'fieldA >= :someValue'
+   *   options {
+   *     BatchLimit: number,
+   *     Limit: number,
+   *     ScanIndexForward: boolean, // default true for ASC
+   *     ProjectionExpression: string, // 'fieldA,fieldB,fieldC'
+   *     FilterExpression: string, // 'fieldA >= :someValue'
    *   }
    * ) -> AsyncIterator<DynamoDBJSONObject>
    * ```
@@ -384,12 +384,12 @@ class DynamoDBGlobalSecondaryIndex {
    * index.queryIteratorJSON(
    *   keyConditionExpression string,
    *   queryValues JSONObject,
-   *   options? {
-   *     BatchLimit?: number,
-   *     Limit?: number,
-   *     ScanIndexForward?: boolean, // default true for ASC
-   *     ProjectionExpression?: string, // 'fieldA,fieldB,fieldC'
-   *     FilterExpression?: string, // 'fieldA >= :someValue'
+   *   options {
+   *     BatchLimit: number,
+   *     Limit: number,
+   *     ScanIndexForward: boolean, // default true for ASC
+   *     ProjectionExpression: string, // 'fieldA,fieldB,fieldC'
+   *     FilterExpression: string, // 'fieldA >= :someValue'
    *   }
    * ) -> AsyncIterator<JSONObject>
    * ```
