@@ -27,7 +27,7 @@ const createFilterExpression = require('./internal/createFilterExpression')
  *   secretAccessKey: string,
  *   region: string,
  *   endpoint?: string,
- * }) -> DynamoDBTable
+ * }) -> table DynamoDBTable
  * ```
  *
  * @description
@@ -84,7 +84,7 @@ class DynamoDBTable {
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * exists() -> Promise<>
+   * table.exists() -> Promise<>
    * ```
    */
   async exists() {
@@ -96,7 +96,7 @@ class DynamoDBTable {
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * delete() -> Promise<>
+   * table.delete() -> Promise<>
    * ```
    *
    * @description
@@ -122,7 +122,7 @@ class DynamoDBTable {
    *     string|number|binary|Array<DynamoDBJSONObject>|DynamoDBJSONObject,
    * }>
    *
-   * putItem(
+   * table.putItem(
    *   item JSONObject|DynamoDBJSONObject,
    *   options? {
    *     ReturnConsumedCapacity?: 'INDEXES'|'TOTAL'|'NONE',
@@ -194,7 +194,7 @@ class DynamoDBTable {
    *     string|number|binary|Array<DynamoDBJSONObject>|DynamoDBJSONObject,
    * }>
    *
-   * getItem(key JSONKey|DynamoDBJSONKey) -> Promise<{
+   * table.getItem(key JSONKey|DynamoDBJSONKey) -> Promise<{
    *   Item: DynamoDBJSONObject,
    * }>
    * ```
@@ -252,7 +252,7 @@ class DynamoDBTable {
    *   [sortKey string]?: { ['S'|'N'|'B']: string|number|binary },
    * }
    *
-   * getItemJSON(key JSONKey|DynamoDBJSONKey) -> Promise<JSONObject>
+   * table.getItemJSON(key JSONKey|DynamoDBJSONKey) -> Promise<JSONObject>
    * ```
    *
    * @description
@@ -315,7 +315,7 @@ class DynamoDBTable {
    *     string|number|binary|Array<DynamoDBJSONObject>|DynamoDBJSONObject,
    * }>
    *
-   * updateItem(
+   * table.updateItem(
    *   key JSONKey|DynamoDBJSONKey,
    *   updates JSONObject|DynamoDBJSONObject,
    *   options? {
@@ -405,7 +405,7 @@ class DynamoDBTable {
    * type JSONIncrementObject = Object<[key string]: number>
    * type DynamoDBJSONIncrementObject = Object<[key string]: { N: number }>
    *
-   * incrementItem(
+   * table.incrementItem(
    *   key JSONKey|DynamoDBJSONKey,
    *   incrementUpdates JSONIncrementObject|DynamoDBJSONIncrementObject,
    *   options? {
@@ -483,7 +483,7 @@ class DynamoDBTable {
    *   [sortKey string]?: { ['S'|'N'|'B']: string|number|binary },
    * }
    *
-   * deleteItem(
+   * table.deleteItem(
    *   key JSONKey|DynamoDBJSONKey,
    *   options? {
    *     ReturnConsumedCapacity?: 'INDEXES'|'TOTAL'|'NONE',
@@ -531,7 +531,7 @@ class DynamoDBTable {
    *   [sortKey string]?: { ['S'|'N'|'B']: string|number|binary },
    * }
    *
-   * scan(options {
+   * table.scan(options {
    *   Limit: number,
    *   ExclusiveStartKey: DynamoDBJSONKey,
    * }) -> Promise<{
@@ -603,7 +603,7 @@ class DynamoDBTable {
    * ```coffeescript [specscript]
    * type JSONObject = Object<[key string]: string|number|binary|Array|Object>
    *
-   * scanIteratorJSON(options?: {
+   * table.scanIteratorJSON(options?: {
    *   BatchLimit?: number,
    * }) -> AsyncIterator<JSONObject>
    * ```
@@ -642,7 +642,7 @@ class DynamoDBTable {
    *     string|number|binary|Array<DynamoDBJSONObject>|DynamoDBJSONObject,
    * }>
    *
-   * query(
+   * table.query(
    *   keyConditionExpression string, // hashKey = :a AND sortKey < :b
    *   values JSONKey|DynamoDBJSONKey,
    *   options? {
@@ -774,7 +774,7 @@ class DynamoDBTable {
    *     string|number|binary|Array<DynamoDBJSONObject>|DynamoDBJSONObject,
    * }>
    *
-   * queryIterator(
+   * table.queryIterator(
    *   keyConditionExpression string,
    *   queryValues JSONObject,
    *   options? {
@@ -852,7 +852,7 @@ class DynamoDBTable {
    * ```coffeescript [specscript]
    * type JSONObject = Object<[key string]: string|number|binary|Array|Object>
    *
-   * queryIteratorJSON(
+   * table.queryIteratorJSON(
    *   keyConditionExpression string,
    *   queryValues JSONObject,
    *   options? {
