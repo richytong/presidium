@@ -115,7 +115,7 @@ class DynamoDBGlobalSecondaryIndex {
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * inspect() -> Promise<indexData object>
+   * index.inspect() -> Promise<indexData object>
    * ```
    */
   async inspect() {
@@ -133,7 +133,7 @@ class DynamoDBGlobalSecondaryIndex {
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * create() -> Promise<indexData object>
+   * index.create() -> Promise<indexData object>
    * ```
    */
   async create() {
@@ -153,7 +153,7 @@ class DynamoDBGlobalSecondaryIndex {
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * waitForIndexStatus(status string) -> Promise<>
+   * index.waitForIndexStatus(status string) -> Promise<>
    * ```
    */
   async waitForIndexStatus(status) {
@@ -183,7 +183,7 @@ class DynamoDBGlobalSecondaryIndex {
    *     string|number|binary|Array<DynamoDBJSONObject>|DynamoDBJSONObject,
    * }>
    *
-   * query(
+   * index.query(
    *   keyConditionExpression string, // hashKey = :a AND sortKey < :b
    *   values JSONKey|DynamoDBJSONKey,
    *   options? {
@@ -300,7 +300,7 @@ class DynamoDBGlobalSecondaryIndex {
    *     string|number|binary|Array<DynamoDBJSONObject>|DynamoDBJSONObject,
    * }>
    *
-   * queryIterator(
+   * index.queryIterator(
    *   keyConditionExpression string,
    *   queryValues JSONObject,
    *   options? {
@@ -381,7 +381,7 @@ class DynamoDBGlobalSecondaryIndex {
    * ```coffeescript [specscript]
    * type JSONObject = Object<[key string]: string|number|binary|Array|Object>
    *
-   * queryIteratorJSON(
+   * index.queryIteratorJSON(
    *   keyConditionExpression string,
    *   queryValues JSONObject,
    *   options? {
