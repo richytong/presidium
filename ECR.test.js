@@ -3,7 +3,7 @@ const assert = require('assert')
 const ECR = require('./ECR')
 const AwsCredentials = require('./internal/AwsCredentials')
 
-const test = new Test('ECR', async function () {
+const test = new Test('ECR', async function integration() {
   const awsCreds = await AwsCredentials('default').catch(error => {
     if (error.code == 'ENOENT') {
       const accessKeyId = process.env.AWS_ACCESS_KEY_ID
@@ -21,7 +21,33 @@ const test = new Test('ECR', async function () {
     ...awsCreds,
   })
 
-  const { authorizationToken } = await ecr.getAuthorizationToken()
+  // clean
+  await ecr.deleteRepository('test-repo/p1').catch(() => {})
+
+  {
+    const response = await ecr.createRepository('test-repo/p1', {
+      tags: [{ Key: 'a', Value: '1' }],
+      imageTagMutability: 'IMMUTABLE',
+      imageScanningConfiguration: {
+        scanOnPush: true
+      },
+      encryptionConfiguration: {
+        encryptionType: 'AES256',
+      }
+    })
+    assert.equal(response.repository.repositoryName, 'test-repo/p1')
+    assert.equal(response.repository.imageTagMutability, 'IMMUTABLE')
+    assert.equal(response.repository.imageScanningConfiguration.scanOnPush, true)
+    assert.equal(response.repository.encryptionConfiguration.encryptionType, 'AES256')
+  }
+
+  {
+    const response = await ecr.deleteRepository('test-repo/p1')
+    assert.equal(response.repository.repositoryName, 'test-repo/p1')
+    assert.equal(response.repository.imageTagMutability, 'IMMUTABLE')
+  }
+
+  const authorizationToken = await ecr.getAuthorizationToken()
   assert.equal(typeof authorizationToken, 'string')
 }).case()
 
