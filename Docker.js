@@ -236,32 +236,35 @@ Docker.prototype.buildImage = async function (image, path, options) {
  * https://docs.docker.com/registry/deploying/
  */
 Docker.prototype.pushImage = function (image, repository, options = {}) {
-  const headers = {
-    'X-Registry-Auth': options.authToken ?? pipe(options, [
-      pick([
-        'username',
-        'password',
-        'email',
-        'serveraddress',
-        'identitytoken',
-      ]),
-      stringifyJSON,
-      Buffer.from,
-      buffer => buffer.toString('base64'),
-    ])
+
+  const authOptions = pick(options, [
+    'username',
+    'password',
+    'email',
+    'serveraddress',
+    'identitytoken'
+  ])
+
+  if (options.authToken) {
+    const decoded = Buffer.from(options.authToken, 'base64').toString('utf8')
+    const [username, password] = decoded.split(':')
+    authOptions.username = username
+    authOptions.password = password
   }
 
-  return pipe(image, [
-    all({
-      imagename: pipe([
-        name => name.split(':')[0],
-        curry.arity(2, pathJoin, repository, __),
-      ]),
-      search: name => querystring.stringify({ tag: name.split(':')[1] }),
-    }),
-    ({ imagename, search }) =>
-      this.http.post(`/images/${imagename}/push?${search}`, { headers }),
-  ])
+  const headers = {
+    'X-Registry-Auth':
+      Buffer.from(JSON.stringify(authOptions)).toString('base64')
+  }
+
+  const [name, tag] = image.split(':')
+  const remoteImageName = `${repository}/${name}`
+  const queryParams = `tag=${encodeURIComponent(tag)}`
+
+  return this.http.post(
+    `/images/${remoteImageName}/push?${queryParams}`,
+    { headers }
+  )
 }
 
 /**
