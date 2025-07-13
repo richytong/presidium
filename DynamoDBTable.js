@@ -116,21 +116,68 @@ class DynamoDBTable {
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * type JSONObject = Object<[key string]: string|number|binary|Array|Object>
-   * type DynamoDBJSONObject = Object<[key string]: {
-   *   ['S'|'N'|'B'|'L'|'M']:
-   *     string|number|binary|Array<DynamoDBJSONObject>|DynamoDBJSONObject,
-   * }>
+   * type DynamoDBJSONObject = Object<
+   *   { 'S': string }
+   *   |{ 'N': number }
+   *   |{ 'B': Buffer }
+   *   |{ 'L': Array<DynamoDBJSONObject> }
+   *   |{ 'M': Object<DynamoDBJSONObject> }
+   * >
    *
-   * table.putItem(
-   *   item JSONObject|DynamoDBJSONObject,
-   *   options {
-   *     ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
-   *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
-   *     ReturnValues: 'NONE'|'ALL_OLD',
-   *   }
-   * ) -> Promise<{
+   * table.putItem(item DynamoDBJSONObject, options {
+   *   ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
+   *   ReturnItemCollectionMetrics: 'SIZE'|'NONE',
+   *   ReturnValues: 'NONE'|'ALL_OLD',
+   * }) -> Promise<{
    *   Attributes: {...},
+   *   ConsumedCapacity: {
+   *     CapacityUnits: number,
+   *     TableName: string
+   *   }
+   * }>
+   * ```
+   *
+   * @description
+   * Write an item to a DynamoDB table using DyanmoDB JSON.
+   *
+   * ```javascript
+   * await userTable.putItem({
+   *   id: { S: '1' },
+   *   name: { S: 'John' },
+   *   age: { N: 32 },
+   * })
+   * ```
+   *
+   * @note
+   * [AWS DynamoDB putItem](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#putItem-property)
+   */
+  putItem(Item, options = {}) {
+    return this.client.putItem({
+      TableName: this.name,
+      Item,
+      ...options,
+    }).promise().catch(error => {
+      error.tableName = this.name
+      error.method = 'putItem'
+      error.Item = Item
+      throw error
+    })
+  }
+
+  /**
+   * @name putItemJSON
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
+   * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
+   *
+   * table.putItemJSON(item JSONObject, options {
+   *   ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
+   *   ReturnItemCollectionMetrics: 'SIZE'|'NONE',
+   *   ReturnValues: 'NONE'|'ALL_OLD',
+   * }) -> Promise<{
+   *   attributes: JSONObject,
    *   ConsumedCapacity: {
    *     CapacityUnits: number,
    *     TableName: string,
@@ -139,40 +186,35 @@ class DynamoDBTable {
    * ```
    *
    * @description
-   * Write an item to a DynamoDB table. Accepts DynamoDB JSON and JSON formats.
+   * Write an item to a DynamoDB table using JSON format.
    *
    * ```javascript
-   * // insert or update an item using DynamoDB JSON
-   * await userTable.putItem({
-   *   id: { S: '1' },
-   *   name: { S: 'John' },
-   *   age: { N: 32 },
-   * })
-   *
-   * // insert or update an item using JSON
-   * await userTable.putItem({
+   * await userTable.putItemJSON({
    *   id: '1',
    *   name: 'John',
-   *   age: 32,
+   *   age: 32
    * })
    * ```
    *
    * @note
    * [AWS DynamoDB putItem](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#putItem-property)
    */
-  putItem(item, options = {}) {
+  putItemJSON(item, options = {}) {
     return this.client.putItem({
       TableName: this.name,
-      Item:
-        Dynamo.isDynamoDBJSON(item)
-        ? item
-        : map(item, Dynamo.AttributeValue),
+      Item: map(item, Dynamo.AttributeValue),
       ...options,
     }).promise().catch(error => {
       error.tableName = this.name
-      error.method = 'putItem'
+      error.method = 'putItemJSON'
       error.item = item
       throw error
+    }).then(result => {
+      if (result.Attributes) {
+        result.attributes = map(result.Attributes, Dynamo.attributeValueToJSON)
+        delete result.Attributes
+      }
+      return result
     })
   }
 
@@ -181,57 +223,48 @@ class DynamoDBTable {
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * type JSONKey = {
-   *   [hashKey string]: string|number|binary,
-   *   [sortKey string]: string|number|binary,
-   * }
    * type DynamoDBJSONKey = {
-   *   [hashKey string]: { ['S'|'N'|'B']: string|number|binary },
-   *   [sortKey string]: { ['S'|'N'|'B']: string|number|binary },
+   *   [hashKey string]: { ['S'|'N'|'B']: string|number|Buffer },
+   *   [sortKey string]: { ['S'|'N'|'B']: string|number|Buffer }
    * }
-   * type DynamoDBJSONObject = Object<[key string]: {
-   *   ['S'|'N'|'B'|'L'|'M']:
-   *     string|number|binary|Array<DynamoDBJSONObject>|DynamoDBJSONObject,
-   * }>
+   * type DynamoDBJSONObject = Object<
+   *   { 'S': string }
+   *   |{ 'N': number }
+   *   |{ 'B': Buffer }
+   *   |{ 'L': Array<DynamoDBJSONObject> }
+   *   |{ 'M': Object<DynamoDBJSONObject> }
+   * >
    *
-   * table.getItem(key JSONKey|DynamoDBJSONKey) -> Promise<{
-   *   Item: DynamoDBJSONObject,
-   * }>
+   * table.getItem(key DynamoDBJSONKey) -> Promise<{ Item: DynamoDBJSONObject }>
    * ```
    *
    * @description
-   * Retrieve an item from a DynamoDB table. Accepts DynamoDB JSON and JSON formats.
+   * Retrieve an item from a DynamoDB table using DynamoDB JSON format.
    *
    * ```javascript
-   * { // get an item using DynamoDB JSON
-   *   const res = await userTable.getItem({ id: { S: '1' } })
-   *   console.log(res) // { Item: { id: { S: '1' }, name: { S: 'John' } } }
-   * }
-   *
-   * { // get an item using JSON
-   *   const res = await userTable.getItem({ id: '1' })
-   *   console.log(res) // { Item: { id: { S: '1' }, name: { S: 'John' } } }
-   * }
+   * const res = await userTable.getItem({ id: { S: '1' } })
+   * console.log(res) // { Item: { id: { S: '1' }, name: { S: 'John' } } }
    * ```
    *
    * @note
    * [AWS DynamoDB getItem](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#getItem-property)
    */
-  getItem(key) {
+  getItem(Key) {
     return this.client.getItem({
       TableName: this.name,
-      Key: Dynamo.isDynamoDBJSON(key) ? key : map(key, Dynamo.AttributeValue),
+      Key
     }).promise().then(result => {
       if (result.Item == null) {
-        const error = new Error(`Item not found for ${JSON.stringify(key)}`)
+        const error = new Error(`Item not found for ${JSON.stringify(Key)}`)
         error.tableName = this.name
         throw error
       }
+
       return result
     }).catch(error => {
-      error.tableName = this.name
+      error.TableName = this.name
       error.method = 'getItem'
-      error.key = key
+      error.Key = Key
       throw error
     })
   }
@@ -242,32 +275,21 @@ class DynamoDBTable {
    * @synopsis
    * ```coffeescript [specscript]
    * type JSONKey = {
-   *   [hashKey string]: string|number|binary,
-   *   [sortKey string]: string|number|binary,
+   *   [hashKey string]: string|number|Buffer,
+   *   [sortKey string]: string|number|Buffer
    * }
-   * type JSONObject = Object<[key string]: string|number|binary|Array|Object>
+   * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
+   * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
    *
-   * type DynamoDBJSONKey = {
-   *   [hashKey string]: { ['S'|'N'|'B']: string|number|binary },
-   *   [sortKey string]: { ['S'|'N'|'B']: string|number|binary },
-   * }
-   *
-   * table.getItemJSON(key JSONKey|DynamoDBJSONKey) -> Promise<JSONObject>
+   * table.getItemJSON(key JSONKey) -> Promise<{ item: JSONObject }>
    * ```
    *
    * @description
-   * Retrieve an item in JSON format from a DynamoDB table. Accepts DynamoDB JSON and JSON formats.
+   * Retrieve an item from a DynamoDB table using JSON format.
    *
    * ```javascript
-   * { // get a user using DynamoDB JSON
-   *   const user = await userTable.getItemJSON({ id: { S: '1' } })
-   *   console.log(user) // { id: '1', name: 'John' }
-   * }
-   *
-   * { // get a user using JSON
-   *   const user = await userTable.getItemJSON({ id: '1' })
-   *   console.log(user) // { id: '1', name: 'John' }
-   * }
+   * const user = await userTable.getItemJSON({ id: '1' })
+   * console.log(user) // { id: '1', name: 'John' }
    * ```
    *
    * @note
@@ -276,19 +298,19 @@ class DynamoDBTable {
   getItemJSON(key) {
     return this.client.getItem({
       TableName: this.name,
-      Key: Dynamo.isDynamoDBJSON(key) ? key : map(key, Dynamo.AttributeValue),
-    }).promise().then(pipe([
-      result => {
-        if (result.Item == null) {
-          const error = new Error(`Item not found for ${JSON.stringify(key)}`)
-          error.tableName = this.name
-          throw error
-        }
-        return result.Item
-      },
-      map(Dynamo.attributeValueToJSON),
-    ])).catch(error => {
-      error.tableName = this.name
+      Key: map(key, Dynamo.AttributeValue),
+    }).promise().then(result => {
+      if (result.Item == null) {
+        const error = new Error(`Item not found for ${JSON.stringify(key)}`)
+        error.tableName = this.name
+        throw error
+      }
+
+      result.item = map(result.Item, Dynamo.attributeValueToJSON)
+      delete result.Item
+      return result
+    }).catch(error => {
+      error.TableName = this.name
       error.method = 'getItemJSON'
       error.key = key
       throw error
@@ -300,46 +322,111 @@ class DynamoDBTable {
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * type JSONKey = {
-   *   [hashKey string]: string|number|binary,
-   *   [sortKey string]: string|number|binary,
-   * }
    * type DynamoDBJSONKey = {
-   *   [hashKey string]: { ['S'|'N'|'B']: string|number|binary },
-   *   [sortKey string]: { ['S'|'N'|'B']: string|number|binary },
+   *   [hashKey string]: { ['S'|'N'|'B']: string|number|Buffer },
+   *   [sortKey string]: { ['S'|'N'|'B']: string|number|Buffer }
    * }
    *
-   * type JSONObject = Object<[key string]: string|number|binary|Array|Object>
-   * type DynamoDBJSONObject = Object<[key string]: {
-   *   ['S'|'N'|'B'|'L'|'M']:
-   *     string|number|binary|Array<DynamoDBJSONObject>|DynamoDBJSONObject,
-   * }>
+   * type DynamoDBJSONObject = Object<
+   *   { 'S': string }
+   *   |{ 'N': number }
+   *   |{ 'B': Buffer }
+   *   |{ 'L': Array<DynamoDBJSONObject> }
+   *   |{ 'M': Object<DynamoDBJSONObject> }
+   * >
    *
    * table.updateItem(
-   *   key JSONKey|DynamoDBJSONKey,
-   *   updates JSONObject|DynamoDBJSONObject,
+   *   Key DynamoDBJSONKey,
+   *   Updates DynamoDBJSONObject,
    *   options {
    *     ConditionExpression: string, // 'attribute_exists(username)'
    *     ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
    *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *     ReturnValues: 'NONE'|'ALL_OLD'|'UPDATED_OLD'|'ALL_NEW'|'UPDATED_NEW',
-   *   },
-   * ) -> Promise<{ Attributes: object }>
+   *   }
+   * ) -> Promise<{ Attributes: DynamoDBJSONObject }>
+   * ```
+   *
+   * @description
+   * Update an item in a DynamoDB table using DynamoDB JSON format.
+   *
+   * ```javascript
+   * await userTable.updateItem({ id: { S: '1' } }, {
+   *   name: { S: 'James' },
+   *   height: { N: 180 },
+   *   heightUnits: { S: 'cm' },
+   * })
+   * ```
+   *
+   * @note
+   * [aws-sdk DynamoDB updateItem](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#updateItem-property)
+   */
+  updateItem(Key, Updates, options = {}) {
+    const updates = map(Updates, Dynamo.attributeValueToJSON)
+
+    return this.client.updateItem({
+      TableName: this.name,
+      Key,
+
+      UpdateExpression: pipe(updates, [
+        Object.entries,
+        map(([key, value]) => `#${hashJSON(key)} = :${hashJSON(value)}`),
+        join(', '),
+        expression => `set ${expression}`,
+      ]),
+
+      ExpressionAttributeNames:
+        map.entries(updates, ([key, value]) => [
+          `#${hashJSON(key)}`,
+          key,
+        ]),
+
+      ExpressionAttributeValues:
+        map.entries(updates, ([key, value]) => [
+          `:${hashJSON(value)}`,
+          Dynamo.AttributeValue(value),
+        ]),
+
+      ...options,
+    }).promise().catch(error => {
+      error.tableName = this.name
+      error.method = 'updateItem'
+      error.Key = Key
+      error.Updates = Updates
+      throw error
+    })
+  }
+
+  /**
+   * @name updateItemJSON
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * type JSONKey = {
+   *   [hashKey string]: string|number|Buffer,
+   *   [sortKey string]: string|number|Buffer
+   * }
+   *
+   * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
+   * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
+   *
+   * table.updateItemJSON(
+   *   key JSONKey,
+   *   updates JSONObject,
+   *   options {
+   *     ConditionExpression: string, // 'attribute_exists(username)'
+   *     ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
+   *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
+   *     ReturnValues: 'NONE'|'ALL_OLD'|'UPDATED_OLD'|'ALL_NEW'|'UPDATED_NEW',
+   *   }
+   * ) -> Promise<{ attributes: JSONObject }>
    * ```
    *
    * @description
    * Update an item in a DynamoDB table. Accepts DynamoDB JSON and JSON formats.
    *
    * ```javascript
-   * // update a user's name and height using DynamoDB JSON
-   * await userTable.updateItem({ id: { S: '1' } }, {
-   *   name: { S: 'George' },
-   *   height: { N: 180 },
-   *   heightUnits: { S: 'cm' },
-   * })
-   *
-   * // update a user's name and height using JSON
-   * await userTable.updateItem({ id: '1' }, {
+   * await userTable.updateItemJSON({ id: '1' }, {
    *   name: 'George',
    *   height: 180,
    *   heightUnits: 'cm',
@@ -349,17 +436,12 @@ class DynamoDBTable {
    * @note
    * [aws-sdk DynamoDB updateItem](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#updateItem-property)
    */
-  updateItem(key, updates, options = {}) {
-    const jsonUpdates =
-      Dynamo.isDynamoDBJSON(updates)
-      ? map(updates, Dynamo.attributeValueToJSON)
-      : updates
-
+  updateItemJSON(key, updates, options = {}) {
     return this.client.updateItem({
       TableName: this.name,
-      Key: Dynamo.isDynamoDBJSON(key) ? key : map(key, Dynamo.AttributeValue),
+      Key: map(key, Dynamo.AttributeValue),
 
-      UpdateExpression: pipe(jsonUpdates, [
+      UpdateExpression: pipe(updates, [
         Object.entries,
         map(([key, value]) => `#${hashJSON(key)} = :${hashJSON(value)}`),
         join(', '),
@@ -367,13 +449,13 @@ class DynamoDBTable {
       ]),
 
       ExpressionAttributeNames:
-        map.entries(jsonUpdates, ([key, value]) => [
+        map.entries(updates, ([key, value]) => [
           `#${hashJSON(key)}`,
           key,
         ]),
 
       ExpressionAttributeValues:
-        map.entries(jsonUpdates, ([key, value]) => [
+        map.entries(updates, ([key, value]) => [
           `:${hashJSON(value)}`,
           Dynamo.AttributeValue(value),
         ]),
@@ -381,10 +463,16 @@ class DynamoDBTable {
       ...options,
     }).promise().catch(error => {
       error.tableName = this.name
-      error.method = 'updateItem'
+      error.method = 'updateItemJSON'
       error.key = key
-      error.jsonUpdates = jsonUpdates
+      error.updates = updates
       throw error
+    }).then(result => {
+      if (result.Attributes) {
+        result.attributes = map(result.Attributes, Dynamo.attributeValueToJSON)
+        delete result.Attributes
+      }
+      return result
     })
   }
 
@@ -393,52 +481,48 @@ class DynamoDBTable {
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * type JSONKey = {
-   *   [hashKey string]: string|number|binary,
-   *   [sortKey string]: string|number|binary,
-   * }
    * type DynamoDBJSONKey = {
-   *   [hashKey string]: { ['S'|'N'|'B']: string|number|binary },
-   *   [sortKey string]: { ['S'|'N'|'B']: string|number|binary },
+   *   [hashKey string]: { ['S'|'N'|'B']: string|number|Buffer },
+   *   [sortKey string]: { ['S'|'N'|'B']: string|number|Buffer }
    * }
    *
-   * type JSONIncrementObject = Object<[key string]: number>
-   * type DynamoDBJSONIncrementObject = Object<[key string]: { N: number }>
+   * type DynamoDBJSONIncrementObject = Object<{ N: number }>
+   *
+   * type DynamoDBJSONObject = Object<
+   *   { 'S': string }
+   *   |{ 'N': number }
+   *   |{ 'B': Buffer }
+   *   |{ 'L': Array<DynamoDBJSONObject> }
+   *   |{ 'M': Object<DynamoDBJSONObject> }
+   * >
    *
    * table.incrementItem(
-   *   key JSONKey|DynamoDBJSONKey,
-   *   incrementUpdates JSONIncrementObject|DynamoDBJSONIncrementObject,
+   *   key DynamoDBJSONKey,
+   *   incrementUpdates DynamoDBJSONIncrementObject,
    *   options {
    *     ConditionExpression: string, // 'attribute_exists(username)'
    *     ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
    *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *     ReturnValues: 'NONE'|'ALL_OLD'|'UPDATED_OLD'|'ALL_NEW'|'UPDATED_NEW',
-   *   },
-   * ) -> Promise<{ Attributes: object }>
+   *   }
+   * ) -> Promise<{ Attributes: DynamoDBJSONObject }>
    * ```
    *
    * @description
    * Increment the attributes of an item in a DynamoDB table. Negative numbers will decrement the attribute of the item. Accepts DynamoDB JSON and JSON formats.
    *
    * ```javascript
-   * // increase user's age by 1 using DynamoDB JSON
    * await userTable.incrementItem({ id: { S: '1' } }, { age: { N: 1 } })
-   *
-   * // increase user's age by 1 using JSON
-   * await userTable.incrementItem({ id: '1' }, { age: 1 })
    * ```
    */
-  incrementItem(key, incrementUpdates, options = {}) {
-    const jsonIncrementUpdates =
-      Dynamo.isDynamoDBJSON(incrementUpdates)
-      ? map(incrementUpdates, Dynamo.attributeValueToJSON)
-      : incrementUpdates
+  incrementItem(Key, IncrementUpdates, options = {}) {
+    const incrementUpdates = map(IncrementUpdates, Dynamo.attributeValueToJSON)
 
     return this.client.updateItem({
       TableName: this.name,
-      Key: Dynamo.isDynamoDBJSON(key) ? key : map(key, Dynamo.AttributeValue),
+      Key,
 
-      UpdateExpression: pipe(jsonIncrementUpdates, [
+      UpdateExpression: pipe(incrementUpdates, [
         Object.entries,
         map(([key, value]) => `#${hashJSON(key)} :${hashJSON(value)}`),
         join(', '),
@@ -446,26 +530,98 @@ class DynamoDBTable {
       ]),
 
       ExpressionAttributeNames:
-        map.entries(jsonIncrementUpdates, ([key, value]) => [
+        map.entries(incrementUpdates, ([key, value]) => [
           `#${hashJSON(key)}`,
           key,
         ]),
 
       ExpressionAttributeValues:
-        map.entries(jsonIncrementUpdates, ([key, value]) => [
+        map.entries(incrementUpdates, ([key, value]) => [
           `:${hashJSON(value)}`,
           Dynamo.AttributeValue(value),
         ]),
 
       ...options,
-    }).promise().then(all({
-      dynamodb: identity,
-    })).catch(error => {
+    }).promise().catch(error => {
       error.tableName = this.name
       error.method = 'incrementItem'
-      error.key = key
-      error.jsonIncrementUpdates = jsonIncrementUpdates
+      error.Key = Key
+      error.IncrementUpdates = IncrementUpdates
       throw error
+    })
+  }
+
+  /**
+   * @name incrementItemJSON
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * type JSONKey = {
+   *   [hashKey string]: string|number|Buffer,
+   *   [sortKey string]: string|number|Buffer
+   * }
+   *
+   * type JSONIncrementObject = Object<number>
+   *
+   * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
+   * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
+   *
+   * table.incrementItemJSON(
+   *   key JSONKey,
+   *   incrementUpdates JSONIncrementObject,
+   *   options {
+   *     ConditionExpression: string, // 'attribute_exists(username)'
+   *     ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
+   *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
+   *     ReturnValues: 'NONE'|'ALL_OLD'|'UPDATED_OLD'|'ALL_NEW'|'UPDATED_NEW',
+   *   }
+   * ) -> Promise<{ attributes: JSONObject }>
+   * ```
+   *
+   * @description
+   * Increment the attributes of an item in a DynamoDB table. Negative numbers will decrement the attribute of the item. Accepts DynamoDB JSON and JSON formats.
+   *
+   * ```javascript
+   * await userTable.incrementItemJSON({ id: '1' }, { age: 1 })
+   * ```
+   */
+  incrementItemJSON(key, incrementUpdates, options = {}) {
+    return this.client.updateItem({
+      TableName: this.name,
+      Key: Dynamo.isDynamoDBJSON(key) ? key : map(key, Dynamo.AttributeValue),
+
+      UpdateExpression: pipe(incrementUpdates, [
+        Object.entries,
+        map(([key, value]) => `#${hashJSON(key)} :${hashJSON(value)}`),
+        join(', '),
+        expression => `add ${expression}`,
+      ]),
+
+      ExpressionAttributeNames:
+        map.entries(incrementUpdates, ([key, value]) => [
+          `#${hashJSON(key)}`,
+          key,
+        ]),
+
+      ExpressionAttributeValues:
+        map.entries(incrementUpdates, ([key, value]) => [
+          `:${hashJSON(value)}`,
+          Dynamo.AttributeValue(value),
+        ]),
+
+      ...options,
+    }).promise().catch(error => {
+      error.tableName = this.name
+      error.method = 'incrementItemJSON'
+      error.key = key
+      error.incrementUpdates = incrementUpdates
+      throw error
+    }).then(result => {
+      if (result.Attributes) {
+        result.attributes = map(result.Attributes, Dynamo.attributeValueToJSON)
+        delete result.Attributes
+      }
+      return result
     })
   }
 
@@ -474,46 +630,95 @@ class DynamoDBTable {
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * type JSONKey = {
-   *   [hashKey string]: string|number|binary,
-   *   [sortKey string]: string|number|binary,
-   * }
    * type DynamoDBJSONKey = {
-   *   [hashKey string]: { ['S'|'N'|'B']: string|number|binary },
-   *   [sortKey string]: { ['S'|'N'|'B']: string|number|binary },
+   *   [hashKey string]: { ['S'|'N'|'B']: string|number|Buffer },
+   *   [sortKey string]: { ['S'|'N'|'B']: string|number|Buffer }
    * }
    *
+   * type DynamoDBJSONObject = Object<
+   *   { 'S': string }
+   *   |{ 'N': number }
+   *   |{ 'B': Buffer }
+   *   |{ 'L': Array<DynamoDBJSONObject> }
+   *   |{ 'M': Object<DynamoDBJSONObject> }
+   * >
+   *
    * table.deleteItem(
-   *   key JSONKey|DynamoDBJSONKey,
+   *   key DynamoDBJSONKey,
    *   options {
    *     ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
    *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *     ReturnValues: 'NONE'|'ALL_OLD',
-   *   },
-   * ) -> Promise<{ Item: DynamoDBJSONObject }>
+   *   }
+   * ) -> Promise<{ Attributes: DynamoDBJSONObject }>
    * ```
    *
    * @description
-   * Delete an item from a DynamoDB table. Accepts DynamoDB JSON and JSON formats.
+   * Delete an item from a DynamoDB table using DynamoDB JSON.
    *
    * ```javascript
-   * // increase delete user with id '1' using DynamoDB JSON
    * await userTable.deleteItem({ id: { S: '1' } })
-   *
-   * // increase delete user with id '1' using JSON
-   * await userTable.deleteItem({ id: '1' })
    * ```
    */
-  deleteItem(key, options) {
+  deleteItem(Key, options) {
     return this.client.deleteItem({
       TableName: this.name,
-      Key: Dynamo.isDynamoDBJSON(key) ? key : map(key, Dynamo.AttributeValue),
+      Key,
       ...options,
     }).promise().catch(error => {
       error.tableName = this.name
       error.method = 'deleteItem'
+      error.Key = Key
+      throw error
+    })
+  }
+
+  /**
+   * @name deleteItemJSON
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * type JSONKey = {
+   *   [hashKey string]: string|number|Buffer,
+   *   [sortKey string]: string|number|Buffer,
+   * }
+   *
+   * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
+   * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
+   *
+   * table.deleteItemJSON(
+   *   key JSONKey,
+   *   options {
+   *     ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
+   *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
+   *     ReturnValues: 'NONE'|'ALL_OLD',
+   *   }
+   * ) -> Promise<{ attributes: JSONObject }>
+   * ```
+   *
+   * @description
+   * Delete an item from a DynamoDB table using JSON format.
+   *
+   * ```javascript
+   * await userTable.deleteItemJSON({ id: '1' })
+   * ```
+   */
+  deleteItemJSON(key, options) {
+    return this.client.deleteItem({
+      TableName: this.name,
+      Key: map(key, Dynamo.AttributeValue),
+      ...options,
+    }).promise().catch(error => {
+      error.tableName = this.name
+      error.method = 'deleteItemJSON'
       error.key = key
       throw error
+    }).then(result => {
+      if (result.Attributes) {
+        result.attributes = map(result.Attributes, Dynamo.attributeValueToJSON)
+        delete result.Attributes
+      }
+      return result
     })
   }
 
@@ -522,23 +727,26 @@ class DynamoDBTable {
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * type DynamoDBJSONObject = Object<[key string]: {
-   *   ['S'|'N'|'B'|'L'|'M']:
-   *     string|number|binary|Array<DynamoDBJSONObject>|DynamoDBJSONObject,
-   * }>
+   * type DynamoDBJSONObject = Object<
+   *   { 'S': string }
+   *   |{ 'N': number }
+   *   |{ 'B': Buffer }
+   *   |{ 'L': Array<DynamoDBJSONObject> }
+   *   |{ 'M': Object<DynamoDBJSONObject> }
+   * >
    * type DynamoDBJSONKey = {
-   *   [hashKey string]: { ['S'|'N'|'B']: string|number|binary },
-   *   [sortKey string]: { ['S'|'N'|'B']: string|number|binary },
+   *   [hashKey string]: { ['S'|'N'|'B']: string|number|Buffer },
+   *   [sortKey string]: { ['S'|'N'|'B']: string|number|Buffer }
    * }
    *
    * table.scan(options {
    *   Limit: number,
-   *   ExclusiveStartKey: DynamoDBJSONKey,
+   *   ExclusiveStartKey: DynamoDBJSONKey
    * }) -> Promise<{
    *   Items: Array<DynamoDBJSONObject>>
    *   Count: number,
    *   ScannedCount: number,
-   *   LastEvaluatedKey: DynamoDBJSONKey,
+   *   LastEvaluatedKey: DynamoDBJSONKey
    * }>
    * ```
    *
@@ -570,10 +778,13 @@ class DynamoDBTable {
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * type DynamoDBJSONObject = Object<[key string]: {
-   *   ['S'|'N'|'B'|'L'|'M']:
-   *     string|number|binary|Array<DynamoDBJSONObject>|DynamoDBJSONObject,
-   * }>
+   * type DynamoDBJSONObject = Object<
+   *   { 'S': string }
+   *   |{ 'N': number }
+   *   |{ 'B': Buffer }
+   *   |{ 'L': Array<DynamoDBJSONObject> }
+   *   |{ 'M': Object<DynamoDBJSONObject> }
+   * >
    *
    * scanIterator(options {
    *   BatchLimit: number,
@@ -601,9 +812,10 @@ class DynamoDBTable {
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * type JSONObject = Object<[key string]: string|number|binary|Array|Object>
+   * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
+   * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
    *
-   * table.scanIteratorJSON(options: {
+   * table.scanIteratorJSON(options {
    *   BatchLimit: number,
    * }) -> AsyncIterator<JSONObject>
    * ```
@@ -629,68 +841,55 @@ class DynamoDBTable {
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * type JSONKey = {
-   *   [hashKey string]: string|number|binary,
-   *   [sortKey string]: string|number|binary,
-   * }
    * type DynamoDBJSONKey = {
-   *   [hashKey string]: { ['S'|'N'|'B']: string|number|binary },
-   *   [sortKey string]: { ['S'|'N'|'B']: string|number|binary },
+   *   [hashKey string]: { ['S'|'N'|'B']: string|number|Buffer },
+   *   [sortKey string]: { ['S'|'N'|'B']: string|number|Buffer }
    * }
-   * type DynamoDBJSONObject = Object<[key string]: {
-   *   ['S'|'N'|'B'|'L'|'M']:
-   *     string|number|binary|Array<DynamoDBJSONObject>|DynamoDBJSONObject,
-   * }>
+   *
+   * type DynamoDBJSONObject = Object<
+   *   { 'S': string }
+   *   |{ 'N': number }
+   *   |{ 'B': Buffer }
+   *   |{ 'L': Array<DynamoDBJSONObject> }
+   *   |{ 'M': Object<DynamoDBJSONObject> }
+   * >
    *
    * table.query(
    *   keyConditionExpression string, // hashKey = :a AND sortKey < :b
-   *   values JSONKey|DynamoDBJSONKey,
+   *   Values DynamoDBJSONObject,
    *   options {
    *     Limit: number,
    *     ExclusiveStartKey: DynamoDBJSONKey,
    *     ScanIndexForward: boolean, // default true for ASC
    *     ProjectionExpression: string, // 'fieldA,fieldB,fieldC'
    *     FilterExpression: string, // 'fieldA >= :someValue'
-   *     ConsistentRead: boolean, // true to perform a strongly consistent read (eventually consistent by default)
+   *     ConsistentRead: boolean // true to perform a strongly consistent read (eventually consistent by default)
    *   },
    * ) -> Promise<{ Items: Array<DynamoDBJSONObject> }>
    * ```
    *
    * @description
-   * Query a DynamoDB table. Use the hash and sort keys as query parameters and to construct the key condition expression.
+   * Query a DynamoDB table using DynamoDB JSON format.
    *
-   * The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
+   * Use the hash and sort keys as query parameters and to construct the key condition expression. The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
    *
    * ```javascript
    * // userVersionTable has hashKey `id` and sortKey `version`
    *
-   * { // query userVersions using DynamoDB JSON
-   *   const userVersions = await userVersionTable.query(
-   *     'id = :id AND version > :version',
-   *     { id: '1', version: 0 },
-   *     { ScanIndexForward: false },
-   *   )
-   *   console.log(userVersions)
-   *   // [
-   *   //   { id: { S: '1' }, version: { N: 3 } },
-   *   //   { id: { S: '1' }, version: { N: 2 } },
-   *   //   ...
-   *   // ]
-   * }
+   * const response = await userVersionTable.query(
+   *   'id = :id AND version > :version',
+   *   { id: { S: '1' }, version: { N: '0' } },
+   *   { ScanIndexForward: false },
+   * )
    *
-   * { // query userVersions using JSON
-   *   const userVersions = await userVersionTable.query(
-   *     'id = :id AND version > :version',
-   *     { id: '1', version: 0 },
-   *     { ScanIndexForward: false },
-   *   )
-   *   console.log(userVersions)
-   *   // [
-   *   //   { id: { S: '1' }, version: { N: 3 } },
-   *   //   { id: { S: '1' }, version: { N: 2 } },
-   *   //   ...
-   *   // ]
-   * }
+   * console.log(response)
+   * // {
+   * //   Items: [
+   * //     { id: { S: '1' }, version: { N: '3' } },
+   * //     { id: { S: '1' }, version: { N: '2' } },
+   * //     // ...
+   * //   ]
+   * // }
    * ```
    *
    * Options:
@@ -701,7 +900,9 @@ class DynamoDBTable {
    *   * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`
    *   * `ConsistentRead` - true to perform a strongly consistent read (eventually consistent by default). Consumes more RCUs.
    */
-  query(keyConditionExpression, values, options = {}) {
+  query(keyConditionExpression, Values, options = {}) {
+    const values = map(Values, Dynamo.attributeValueToJSON)
+
     const keyConditionStatements = keyConditionExpression.trim().split(/\s+AND\s+/)
     let statementsIndex = -1
     while (++statementsIndex < keyConditionStatements.length) {
@@ -764,19 +965,149 @@ class DynamoDBTable {
   }
 
   /**
-   * @name queryIterator
+   * @name queryJSON
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * type JSONObject = Object<[key string]: string|number|binary|Array|Object>
-   * type DynamoDBJSONObject = Object<[key string]: {
-   *   ['S'|'N'|'B'|'L'|'M']:
-   *     string|number|binary|Array<DynamoDBJSONObject>|DynamoDBJSONObject,
-   * }>
+   * type DynamoDBJSONKey = {
+   *   [hashKey string]: { ['S'|'N'|'B']: string|number|Buffer },
+   *   [sortKey string]: { ['S'|'N'|'B']: string|number|Buffer }
+   * }
    *
-   * table.queryIterator(
+   * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
+   * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
+   *
+   * table.queryJSON(
+   *   keyConditionExpression string, // hashKey = :a AND sortKey < :b
+   *   values JSONObject,
+   *   options {
+   *     Limit: number,
+   *     ExclusiveStartKey: DynamoDBJSONKey,
+   *     ScanIndexForward: boolean, // default true for ASC
+   *     ProjectionExpression: string, // 'fieldA,fieldB,fieldC'
+   *     FilterExpression: string, // 'fieldA >= :someValue'
+   *     ConsistentRead: boolean // true to perform a strongly consistent read (eventually consistent by default)
+   *   },
+   * ) -> Promise<{ items: Array<JSONObject> }>
+   * ```
+   *
+   * @description
+   * Query a DynamoDB table using JSON format.
+   *
+   * Use the hash and sort keys as query parameters and to construct the key condition expression. The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
+   *
+   * ```javascript
+   * // userVersionTable has hashKey `id` and sortKey `version`
+   *
+   * const response = await userVersionTable.queryJSON(
+   *   'id = :id AND version > :version',
+   *   { id: '1', version: 0 },
+   *   { ScanIndexForward: false },
+   * )
+   *
+   * console.log(response)
+   * // {
+   * //   items: [
+   * //     { id: '1', version: 3 },
+   * //     { id: '1', version: 2 },
+   * //     // ...
+   * //   ]
+   * // }
+   * ```
+   *
+   * Options:
+   *   * `Limit` - Maximum number of items (hard limited by total size of response)
+   *   * `ExclusiveStartKey` - Key after which to start reading
+   *   * `ScanIndexForward` - true to sort items in ascending order
+   *   * `ProjectionExpression` - list of attributes to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`
+   *   * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`
+   *   * `ConsistentRead` - true to perform a strongly consistent read (eventually consistent by default). Consumes more RCUs.
+   */
+  queryJSON(keyConditionExpression, values, options = {}) {
+    const keyConditionStatements = keyConditionExpression.trim().split(/\s+AND\s+/)
+    let statementsIndex = -1
+    while (++statementsIndex < keyConditionStatements.length) {
+      if (keyConditionStatements[statementsIndex].includes('BETWEEN')) {
+        keyConditionStatements[statementsIndex] +=
+          ` AND ${keyConditionStatements.splice(statementsIndex + 1, 1)}`
+      }
+    }
+
+    const filterExpressionStatements =
+      options.FilterExpression == null ? []
+      : options.FilterExpression.trim().split(/\s+AND\s+/)
+    statementsIndex = -1
+    while (++statementsIndex < filterExpressionStatements.length) {
+      if (filterExpressionStatements[statementsIndex].includes('BETWEEN')) {
+        filterExpressionStatements[statementsIndex] +=
+          ` AND ${filterExpressionStatements.splice(statementsIndex + 1, 1)}`
+      }
+    }
+
+    const ExpressionAttributeNames = createExpressionAttributeNames({
+      keyConditionStatements,
+      filterExpressionStatements,
+      ...options,
+    })
+
+    const ExpressionAttributeValues = createExpressionAttributeValues({ values })
+
+    const KeyConditionExpression = createKeyConditionExpression({
+      keyConditionStatements,
+    })
+
+    const FilterExpression = createFilterExpression({
+      filterExpressionStatements,
+    })
+
+    return this.client.query({
+      TableName: this.name,
+      ExpressionAttributeNames,
+      ExpressionAttributeValues,
+      KeyConditionExpression,
+
+      ScanIndexForward: options.ScanIndexForward ?? true,
+
+      ...filterExpressionStatements.length > 0 ? { FilterExpression } : {},
+
+      ...options.Limit ? { Limit: options.Limit } : {},
+
+      ...options.ExclusiveStartKey ? {
+        ExclusiveStartKey: options.ExclusiveStartKey,
+      } : {},
+
+      ...options.ProjectionExpression ? {
+        ProjectionExpression: options.ProjectionExpression
+          .split(',').map(field => `#${hashJSON(field)}`).join(','),
+      } : {},
+
+      ...options.ConsistentRead ? { ConsistentRead: options.ConsistentRead } : {},
+    }).promise().then(result => {
+      result.items = map(result.Items, map(Dynamo.attributeValueToJSON))
+      delete result.Items
+      return result
+    })
+  }
+
+  /**
+   * @name queryItemsIterator
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
+   * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
+   *
+   * type DynamoDBJSONObject = Object<
+   *   { 'S': string }
+   *   |{ 'N': number }
+   *   |{ 'B': Buffer }
+   *   |{ 'L': Array<DynamoDBJSONObject> }
+   *   |{ 'M': Object<DynamoDBJSONObject> }
+   * >
+   *
+   * table.queryItemsIterator(
    *   keyConditionExpression string,
-   *   queryValues JSONObject,
+   *   Values DynamoDBJSONObject,
    *   options {
    *     BatchLimit: number,
    *     Limit: number,
@@ -793,7 +1124,7 @@ class DynamoDBTable {
    * ```javascript
    * // userVersionTable has hashKey `id` and sortKey `version`
    *
-   * const iter = userVersionTable.queryIterator(
+   * const iter = userVersionTable.queryItemsIterator(
    *   'id = :id AND version > :version',
    *   { id: '1', version: 0 },
    *   { ScanIndexForward: true },
@@ -813,7 +1144,7 @@ class DynamoDBTable {
    *   * `Limit` - Max number of items to yield from returned iterator
    *   * `ScanIndexForward` - true to sort items in ascending order
    */
-  async * queryIterator(keyConditionExpression, queryValues, options = {}) {
+  async * queryItemsIterator(keyConditionExpression, Values, options = {}) {
     const BatchLimit = options.BatchLimit ?? 1000
     const Limit = options.Limit ?? Infinity
     const ScanIndexForward = options.ScanIndexForward ?? true
@@ -821,7 +1152,7 @@ class DynamoDBTable {
     let numYielded = 0
     let response = await this.query(
       keyConditionExpression,
-      queryValues,
+      Values,
       {
         ScanIndexForward,
         Limit: Math.min(BatchLimit, Limit - numYielded)
@@ -833,7 +1164,7 @@ class DynamoDBTable {
     while (response.LastEvaluatedKey != null && numYielded < Limit) {
       response = await this.query(
         keyConditionExpression,
-        queryValues,
+        Values,
         {
           ScanIndexForward,
           Limit: Math.min(BatchLimit, Limit - numYielded),
@@ -846,19 +1177,20 @@ class DynamoDBTable {
   }
 
   /**
-   * @name queryIteratorJSON
+   * @name queryItemsIteratorJSON
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * type JSONObject = Object<[key string]: string|number|binary|Array|Object>
+   * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
+   * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
    *
-   * table.queryIteratorJSON(
+   * table.queryItemsIteratorJSON(
    *   keyConditionExpression string,
-   *   queryValues JSONObject,
+   *   values JSONObject,
    *   options {
    *     BatchLimit: number,
    *     Limit: number,
-   *     ScanIndexForward: boolean, // default true for ASC
+   *     ScanIndexForward: boolean // default true for ASC
    *   }
    * ) -> AsyncIterator<JSONObject>
    * ```
@@ -871,7 +1203,7 @@ class DynamoDBTable {
    * ```javascript
    * // userVersionTable has hashKey `id` and sortKey `version`
    *
-   * const iter = userVersionTable.queryIteratorJSON(
+   * const iter = userVersionTable.queryItemsIteratorJSON(
    *   'id = :id AND version > :version',
    *   { id: '1', version: 0 },
    *   { ScanIndexForward: true },
@@ -891,8 +1223,36 @@ class DynamoDBTable {
    *   * `Limit` - Max number of items to yield from returned iterator
    *   * `ScanIndexForward` - true to sort items in ascending order
    */
-  queryIteratorJSON(...args) {
-    return map(this.queryIterator(...args), map(Dynamo.attributeValueToJSON))
+  async * queryItemsIteratorJSON(keyConditionExpression, values, options = {}) {
+    const BatchLimit = options.BatchLimit ?? 1000
+    const Limit = options.Limit ?? Infinity
+    const ScanIndexForward = options.ScanIndexForward ?? true
+
+    let numYielded = 0
+    let response = await this.queryJSON(
+      keyConditionExpression,
+      values,
+      {
+        ScanIndexForward,
+        Limit: Math.min(BatchLimit, Limit - numYielded)
+      },
+    )
+    yield* response.items
+    numYielded += response.items.length
+
+    while (response.LastEvaluatedKey != null && numYielded < Limit) {
+      response = await this.queryJSON(
+        keyConditionExpression,
+        values,
+        {
+          ScanIndexForward,
+          Limit: Math.min(BatchLimit, Limit - numYielded),
+          ExclusiveStartKey: response.LastEvaluatedKey,
+        },
+      )
+      yield* response.items
+      numYielded += response.items.length
+    }
   }
 }
 

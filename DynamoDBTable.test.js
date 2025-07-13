@@ -30,20 +30,35 @@ const test = new Test('DynamoDBTable', async function integration() {
     assert.equal(message, 'table-exists')
   })
 
-  await testTable.putItem({ id: '1', name: 'john' })
-  await testTable.putItem({ id: '2', name: 'henry' })
-  await testTable.putItem({ id: '3', name: 'jude' })
-  assert.rejects(
-    testTable.putItem({ somekey: 'hey' }),
+  await testTable.putItem({ id: { S: '1' }, name: { S: 'john' } })
+  await testTable.putItemJSON({ id: '2', name: 'henry' })
+  assert.deepEqual(
+    await testTable.putItemJSON({ id: '3', name: 'jude' }, {
+      ReturnValues: 'ALL_OLD',
+    }),
+    {}
+  )
+
+  await assert.rejects(
+    testTable.putItem({ somekey: { S: 'hey' } }),
     {
       name: 'ValidationException',
       message: 'One of the required keys was not given a value',
       tableName: 'test-tablename',
-    },
+    }
+  )
+
+  await assert.rejects(
+    testTable.putItemJSON({ somekey: 'hey' }),
+    {
+      name: 'ValidationException',
+      message: 'One of the required keys was not given a value',
+      tableName: 'test-tablename',
+    }
   )
 
   assert.deepEqual(
-    await testTable.getItem({ id: '1' }),
+    await testTable.getItem({ id: { S: '1' } }),
     {
       Item: {
         id: { S: '1' },
@@ -63,16 +78,16 @@ const test = new Test('DynamoDBTable', async function integration() {
   )
 
   assert.deepEqual(
-    await testTable.getItemJSON({ id: '2' }),
-    { id: '2', name: 'henry' },
+    await testTable.getItemJSON({ id: '1' }),
+    { item: { id: '1', name: 'john' } },
   )
 
   assert.deepEqual(
-    await testTable.getItemJSON({ id: { S: '2' } }),
-    { id: '2', name: 'henry' },
+    await testTable.getItemJSON({ id: '2' }),
+    { item: { id: '2', name: 'henry' } },
   )
 
-  await testTable.updateItem({ id: '2' }, { age: 36 }, {
+  await testTable.updateItem({ id: { S: '2' } }, { age: { N: 36 } }, {
     ReturnConsumedCapacity: 'TOTAL',
     ReturnItemCollectionMetrics: 'SIZE',
     ReturnValues: 'ALL_NEW',
@@ -84,19 +99,43 @@ const test = new Test('DynamoDBTable', async function integration() {
     })
     assert.equal(res.ConsumedCapacity.CapacityUnits, 1)
   })
+
   assert.deepEqual(
     await testTable.getItemJSON({ id: '2' }),
-    { id: '2', name: 'henry', age: 36 },
+    { item: { id: '2', name: 'henry', age: 36 } },
   )
 
+  await testTable.updateItemJSON({ id: '2' }, { age: 36 }, {
+    ReturnConsumedCapacity: 'TOTAL',
+    ReturnItemCollectionMetrics: 'SIZE',
+    ReturnValues: 'ALL_NEW',
+  }).then(res => {
+    assert.deepEqual(res.attributes, {
+      id: '2',
+      name: 'henry',
+      age: '36',
+    })
+    assert.equal(res.ConsumedCapacity.CapacityUnits, 1)
+  })
+
   await assert.rejects(
-    () => testTable.updateItem({ id: '2' }, { param: 'wont-be-set' }, {
+    () => testTable.updateItem({ id: { S: '2' } }, { param: { S: 'wont-be-set' } }, {
       ConditionExpression: 'attribute_not_exists(age)',
     }),
     {
       name: 'ConditionalCheckFailedException',
       message: 'The conditional request failed',
-    },
+    }
+  )
+
+  await assert.rejects(
+    () => testTable.updateItemJSON({ id: '2' }, { param: 'wont-be-set' }, {
+      ConditionExpression: 'attribute_not_exists(age)',
+    }),
+    {
+      name: 'ConditionalCheckFailedException',
+      message: 'The conditional request failed',
+    }
   )
 
   await testTable.scan().then(res => {
@@ -144,19 +183,50 @@ const test = new Test('DynamoDBTable', async function integration() {
     assert.equal(items.length, 3)
   }
 
-  await testTable.incrementItem({ id: '2' }, { age: 1 })
   assert.deepEqual(
-    await testTable.getItemJSON({ id: '2' }),
-    { id: '2', name: 'henry', age: 37 },
+    await testTable.incrementItem({ id: { S: '2' } }, { age: { N: 1 } }, {
+      ReturnValues: 'ALL_NEW',
+    }),
+    {
+      Attributes: {
+        id: { S: '2' },
+        name: { S: 'henry' },
+        age: { N: 37 }
+      }
+    }
   )
 
-  await testTable.incrementItem({ id: '2' }, { age: 2 })
   assert.deepEqual(
-    await testTable.getItemJSON({ id: '2' }),
-    { id: '2', name: 'henry', age: 39 },
+    await testTable.incrementItemJSON({ id: '2' }, { age: 2 }, {
+      ReturnValues: 'ALL_NEW',
+    }),
+    {
+      attributes: {
+        id: '2',
+        name: 'henry',
+        age: 39
+      }
+    }
   )
 
-  await testTable.deleteItem({ id: '2' })
+  assert.deepEqual(
+    await testTable.getItemJSON({ id: '2' }),
+    { item: { id: '2', name: 'henry', age: 39 } },
+  )
+
+  assert.deepEqual(
+    await testTable.deleteItemJSON({ id: '2' }, {
+      ReturnValues: 'ALL_OLD',
+    }),
+    {
+      attributes: {
+        id: '2',
+        name: 'henry',
+        age: 39
+      }
+    }
+  )
+
   await assert.rejects(
     () => testTable.getItemJSON({ id: '2' }),
     new Error('Item not found for {"id":"2"}'),
@@ -175,22 +245,22 @@ const test = new Test('DynamoDBTable', async function integration() {
   })
   await userVersionTable.ready
 
-  await userVersionTable.putItem({
+  await userVersionTable.putItemJSON({
     id: '1',
     version: 0,
     createTime: 1,
   })
-  await userVersionTable.putItem({
+  await userVersionTable.putItemJSON({
     id: '1',
     version: 1,
     createTime: 2,
   })
-  await userVersionTable.putItem({
+  await userVersionTable.putItemJSON({
     id: '1',
     version: 2,
     createTime: 3,
   })
-  await userVersionTable.putItem({
+  await userVersionTable.putItemJSON({
     id: '1',
     version: 3,
     createTime: 4,
@@ -198,7 +268,7 @@ const test = new Test('DynamoDBTable', async function integration() {
 
   await userVersionTable.query(
     'id = :id AND version > :version',
-    { id: '1', version: 0 },
+    { id: { S: '1' }, version: { N: '0' } },
     { ScanIndexForward: true, ConsistentRead: true },
   ).then(res => {
     assert.equal(res.Items.length, 3)
@@ -211,9 +281,24 @@ const test = new Test('DynamoDBTable', async function integration() {
     assert.equal(res.Items[2].version.N, '3')
   })
 
-  await userVersionTable.query(
+  await userVersionTable.queryJSON(
     'id = :id AND version > :version',
     { id: '1', version: 0 },
+    { ScanIndexForward: true, ConsistentRead: true },
+  ).then(res => {
+    assert.equal(res.items.length, 3)
+    assert.equal(res.Count, 3)
+    for (const item of res.items) {
+      assert(!Dynamo.isDynamoDBJSON(item))
+    }
+    assert.equal(res.items[0].version, 1)
+    assert.equal(res.items[1].version, 2)
+    assert.equal(res.items[2].version, 3)
+  })
+
+  await userVersionTable.query(
+    'id = :id AND version > :version',
+    { id: { S: '1' }, version: { N: '0' } },
     { ScanIndexForward: true, ProjectionExpression: 'id,createTime' },
   ).then(res => {
     assert.equal(res.Items.length, 3)
@@ -228,7 +313,7 @@ const test = new Test('DynamoDBTable', async function integration() {
 
   await userVersionTable.query(
     'id = :id AND version > :version',
-    { id: '1', version: 0, createTime: 2 },
+    { id: { S: '1' }, version: { N: '0' }, createTime: { N: '2' } },
     {
       ScanIndexForward: true,
       FilterExpression: 'createTime > :createTime',
@@ -245,9 +330,9 @@ const test = new Test('DynamoDBTable', async function integration() {
   })
 
   {
-    const iter = userVersionTable.queryIterator(
+    const iter = userVersionTable.queryItemsIterator(
       'id = :id AND version > :version',
-      { id: '1', version: 0 },
+      { id: { S: '1' }, version: { N: '0' } },
       { ScanIndexForward: true, BatchLimit: 1 },
     )
     const items = []
@@ -262,23 +347,7 @@ const test = new Test('DynamoDBTable', async function integration() {
   }
 
   {
-    const iter = userVersionTable.queryIterator(
-      'id = :id AND version > :version',
-      { id: '1', version: 0 },
-      { ScanIndexForward: false, BatchLimit: 1, Limit: 2 },
-    )
-    const items = []
-    for await (const item of iter) {
-      assert(Dynamo.isDynamoDBJSON(item))
-      items.push(item)
-    }
-    assert.equal(items.length, 2)
-    assert.equal(items[0].version.N, '3')
-    assert.equal(items[1].version.N, '2')
-  }
-
-  {
-    const iter = userVersionTable.queryIteratorJSON(
+    const iter = userVersionTable.queryItemsIteratorJSON(
       'id = :id AND version > :version',
       { id: '1', version: 0 },
       { ScanIndexForward: true, BatchLimit: 1 },
@@ -295,7 +364,40 @@ const test = new Test('DynamoDBTable', async function integration() {
   }
 
   {
-    const iter = userVersionTable.queryIteratorJSON(
+    const iter = userVersionTable.queryItemsIterator(
+      'id = :id AND version > :version',
+      { id: { S: '1' }, version: { N: '0' } },
+      { ScanIndexForward: false, BatchLimit: 1, Limit: 2 },
+    )
+    const items = []
+    for await (const item of iter) {
+      assert(Dynamo.isDynamoDBJSON(item))
+      items.push(item)
+    }
+    assert.equal(items.length, 2)
+    assert.equal(items[0].version.N, '3')
+    assert.equal(items[1].version.N, '2')
+  }
+
+  {
+    const iter = userVersionTable.queryItemsIteratorJSON(
+      'id = :id AND version > :version',
+      { id: '1', version: 0 },
+      { ScanIndexForward: true, BatchLimit: 1 },
+    )
+    const items = []
+    for await (const item of iter) {
+      assert(!Dynamo.isDynamoDBJSON(item))
+      items.push(item)
+    }
+    assert.equal(items.length, 3)
+    assert.equal(items[0].version, 1)
+    assert.equal(items[1].version, 2)
+    assert.equal(items[2].version, 3)
+  }
+
+  {
+    const iter = userVersionTable.queryItemsIteratorJSON(
       'id = :id AND version > :version',
       { id: '1', version: 0 },
       { ScanIndexForward: false, BatchLimit: 1, Limit: 2 },
