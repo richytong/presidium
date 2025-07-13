@@ -63,7 +63,7 @@ const test = new Test('S3Bucket', (...args) => new S3Bucket(...args))
     const headRes = await testBucket.headObject(key)
     assert.equal(headRes.ContentLength, 6)
     const res = await testBucket.getObjectStream(key)
-    assert.equal(res.headers.ContentLength, 6)
+    assert.equal(res.ContentLength, 6)
   }
 
   {
@@ -91,6 +91,14 @@ const test = new Test('S3Bucket', (...args) => new S3Bucket(...args))
   }
 
   {
+    const response = await testBucket.listObjects({ Prefix: 'c', Delimiter: '/' })
+    console.log(response)
+    assert.equal(response.Contents.length, 1)
+    assert.equal(response.Contents[0].Key, 'c')
+    assert.equal(response.Prefix, 'c')
+  }
+
+  {
     const response = await testBucket.deleteAllObjects({ BatchSize: 1 })
     assert.deepEqual(response.Deleted, [
       { Key: 'binary' },
@@ -101,7 +109,10 @@ const test = new Test('S3Bucket', (...args) => new S3Bucket(...args))
     assert.deepEqual(response.Errors, [])
   }
 
-  const deleted = await testBucket.delete()
+  {
+    const deleted = await testBucket.delete()
+    assert.deepEqual(deleted, {})
+  }
 })
 
 if (process.argv[1] == __filename) {
