@@ -5,12 +5,16 @@ const Dynamo = require('./internal/Dynamo')
 const DynamoDBTable = require('./DynamoDBTable')
 
 const test = new Test('DynamoDBTable', async function integration() {
-  this.dynamo = new Dynamo({
-    endpoint: 'http://localhost:8000/',
-    region: 'default-region',
-  })
-  await this.dynamo.deleteTable('test-tablename').catch(() => {})
-  await this.dynamo.waitFor('test-tablename', 'tableNotExists')
+  {
+    const testTable = new DynamoDBTable({
+      name: 'test-tablename',
+      endpoint: 'http://localhost:8000/',
+      key: [{ id: 'string' }],
+      autoReady: false
+    })
+    await testTable.delete().catch(() => {})
+    await testTable.waitForNotExists()
+  }
 
   const testTable = new DynamoDBTable({
     name: 'test-tablename',
@@ -44,7 +48,6 @@ const test = new Test('DynamoDBTable', async function integration() {
     {
       name: 'ValidationException',
       message: 'One of the required keys was not given a value',
-      tableName: 'test-tablename',
     }
   )
 
@@ -53,7 +56,6 @@ const test = new Test('DynamoDBTable', async function integration() {
     {
       name: 'ValidationException',
       message: 'One of the required keys was not given a value',
-      tableName: 'test-tablename',
     }
   )
 
@@ -412,8 +414,12 @@ const test = new Test('DynamoDBTable', async function integration() {
     assert.equal(items[1].version, 2)
   }
 
+  testTable.closeConnections()
+  userVersionTable.closeConnections()
   await testTable.delete()
+  await testTable.waitForNotExists()
   await userVersionTable.delete()
+  await userVersionTable.waitForNotExists()
 }).case()
 
 if (process.argv[1] == __filename) {

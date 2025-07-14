@@ -3,7 +3,14 @@ const { identity } = require('rubico/x')
 require('aws-sdk/lib/maintenance_mode_message').suppress = true
 const Dynamo = require('./internal/Dynamo')
 const HTTP = require('./HTTP')
+const userAgent = require('./userAgent')
+const AwsAuthorizationHeader = require('./internal/AwsAuthorizationHeader')
+const AmzDate = require('./internal/AmzDate')
+const Readable = require('./Readable')
+const AwsError = require('./internal/AwsError')
+const sha256 = require('./internal/sha256')
 const hashJSON = require('./internal/hashJSON')
+const sleep = require('./internal/sleep')
 const join = require('./internal/join')
 const createExpressionAttributeNames =
   require('./internal/createExpressionAttributeNames')
@@ -61,24 +68,92 @@ class DynamoDBTable {
   constructor(options) {
     this.name = options.name
     this.key = options.key
-    // this.http = new HTTP() // TODO
-    this.dynamo = new Dynamo({
-      ...pick(options, [
-        'accessKeyId',
-        'secretAccessKey',
-        'endpoint',
-      ]),
-      region: options.region ?? 'default-region',
+
+    this.accessKeyId = options.accessKeyId ?? ''
+    this.secretAccessKey = options.secretAccessKey ?? ''
+    this.region = options.region ?? ''
+    this.apiVersion = '2012-08-10'
+
+    if (options.endpoint) {
+      const endpointUrl = new URL(options.endpoint)
+      this.endpoint = endpointUrl.host
+      this.protocol = endpointUrl.protocol.replace(/:$/, '')
+    } else {
+      this.endpoint = `dynamodb.${this.region}.amazonaws.com`
+      this.protocol = 'http'
+    }
+
+    this.BillingMode = options.BillingMode ?? 'PAY_PER_REQUEST'
+    if (this.BillingMode == 'PROVISIONED') {
+      this.ProvisionedThroughput = options.ProvisionedThroughput ?? {
+        ReadCapacityUnits: 5,
+        WriteCapacityUnits: 5
+      }
+    }
+
+    this.http = new HTTP(`${this.protocol}://${this.endpoint}`)
+
+    this.autoReady = options.autoReady ?? true
+    if (this.autoReady) {
+      this.ready = this.exists().then(async () => {
+        await this.waitForActive()
+        return { message: 'table-exists' }
+      }).catch(async error => {
+        await this.create()
+        await this.waitForActive()
+        return { message: 'created-table' }
+      })
+    }
+  }
+
+  /**
+   * @name _awsRequest
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * module http 'https://nodejs.org/api/http.html'
+   *
+   * table._awsRequest(
+   *   method string,
+   *   url string,
+   *   action string,
+   *   payload string
+   * ) -> response Promise<http.ServerResponse>
+   * ```
+   */
+  _awsRequest(method, url, action, payload) {
+    const amzDate = AmzDate()
+    const amzTarget = `DynamoDB_${this.apiVersion.replace(/-/g, '')}.${action}`
+
+    const headers = {
+      'Accept-Encoding': 'identity',
+      'Content-Length': Buffer.byteLength(payload, 'utf8'),
+      'User-Agent': userAgent,
+      'Content-Type': 'application/x-amz-json-1.0',
+      'X-Amz-Date': amzDate,
+      'X-Amz-Target': amzTarget
+    }
+
+    headers['Authorization'] = AwsAuthorizationHeader({
+      accessKeyId: this.accessKeyId,
+      secretAccessKey: this.secretAccessKey,
+      region: this.region,
+      method,
+      endpoint: this.endpoint,
+      protocol: this.protocol,
+      canonicalUri: '/',
+      serviceName: 'dynamodb',
+      payloadHash: sha256(payload),
+      expires: 300,
+      queryParams: {},
+      headers: {
+        'Host': this.endpoint,
+        'X-Amz-Date': amzDate,
+        'X-Amz-Target': amzTarget
+      }
     })
-    this.client = this.dynamo.client
-    this.ready = this.exists().then(async () => {
-      await this.dynamo.waitFor(this.name, 'tableExists')
-      return { message: 'table-exists' }
-    }).catch(async () => {
-      await this.dynamo.createTable(this.name, options.key)
-      await this.dynamo.waitFor(this.name, 'tableExists')
-      return { message: 'created-table' }
-    })
+
+    return this.http[method](url, { headers, body: payload })
   }
 
   /**
@@ -86,11 +161,114 @@ class DynamoDBTable {
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * table.exists() -> Promise<>
+   * table.exists() -> data Promise<>
    * ```
    */
   async exists() {
-    await this.dynamo.describeTable(this.name)
+    const payload = JSON.stringify({
+      TableName: this.name
+    })
+    const response = await this._awsRequest('POST', '/', 'DescribeTable', payload)
+
+    if (response.ok) {
+      return undefined
+    }
+    throw new AwsError(await Readable.Text(response))
+  }
+
+  /**
+   * @name create
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * table.create() -> data Promise<>
+   * ```
+   */
+  async create() {
+    let payload = {
+      TableName: this.name,
+      KeySchema: Dynamo.KeySchema(this.key),
+      AttributeDefinitions: Dynamo.AttributeDefinitions(this.key),
+      BillingMode: this.BillingMode,
+    }
+    if (payload.BillingMode == 'PROVISIONED') {
+      payload.ProvisionedThroughput = this.ProvisionedThroughput
+    }
+    payload = JSON.stringify(payload)
+
+    const response = await this._awsRequest('POST', '/', 'CreateTable', payload)
+
+    if (response.ok) {
+      return Readable.JSON(response)
+    }
+    throw new AwsError(await Readable.Text(response))
+  }
+
+  /**
+   * @name waitForActive
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * table.waitForActive() -> data Promise<>
+   * ```
+   */
+  async waitForActive() {
+    const payload = JSON.stringify({
+      TableName: this.name
+    })
+    let response = await this._awsRequest('POST', '/', 'DescribeTable', payload)
+
+    if (response.ok) {
+      let data = await Readable.JSON(response)
+      while (data.Table.TableStatus != 'ACTIVE') {
+        await sleep(1000)
+        response = await this._awsRequest('POST', '/', 'DescribeTable', payload)
+        if (response.ok) {
+          data = await Readable.JSON(response)
+        } else {
+          throw new AwsError(await Readable.Text(response))
+        }
+      }
+      return undefined
+    }
+    throw new AwsError(await Readable.Text(response))
+  }
+
+  /**
+   * @name waitForNotExists
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * table.waitForNotExists() -> data Promise<>
+   * ```
+   */
+  async waitForNotExists() {
+    const payload = JSON.stringify({
+      TableName: this.name
+    })
+
+    let response = await this._awsRequest('POST', '/', 'DescribeTable', payload)
+    let responseText = await Readable.Text(response)
+
+    while (!responseText.includes('ResourceNotFoundException')) {
+      await sleep(1000)
+      response = await this._awsRequest('POST', '/', 'DescribeTable', payload)
+      responseText = await Readable.Text(response)
+    }
+
+    return undefined
+  }
+
+  /**
+   * @name close
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * table.closeConnections() -> ()
+   * ```
+   */
+  closeConnections() {
+    this.http.closeConnections()
   }
 
   /**
@@ -98,7 +276,7 @@ class DynamoDBTable {
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * table.delete() -> Promise<>
+   * table.delete() -> data Promise<>
    * ```
    *
    * @description
@@ -109,8 +287,15 @@ class DynamoDBTable {
    * ```
    */
   async delete() {
-    await this.dynamo.deleteTable(this.name)
-    await this.dynamo.waitFor(this.name, 'tableNotExists')
+    const payload = JSON.stringify({
+      TableName: this.name
+    })
+    const response = await this._awsRequest('POST', '/', 'DeleteTable', payload)
+
+    if (response.ok) {
+      return Readable.JSON(response)
+    }
+    throw new AwsError(await Readable.Text(response))
   }
 
   /**
@@ -130,7 +315,7 @@ class DynamoDBTable {
    *   ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
    *   ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *   ReturnValues: 'NONE'|'ALL_OLD',
-   * }) -> Promise<{
+   * }) -> data Promise<{
    *   Attributes: {...},
    *   ConsumedCapacity: {
    *     CapacityUnits: number,
@@ -153,17 +338,18 @@ class DynamoDBTable {
    * @note
    * [AWS DynamoDB putItem](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#putItem-property)
    */
-  putItem(Item, options = {}) {
-    return this.client.putItem({
+  async putItem(Item, options = {}) {
+    const payload = JSON.stringify({
       TableName: this.name,
       Item,
-      ...options,
-    }).promise().catch(error => {
-      error.tableName = this.name
-      error.method = 'putItem'
-      error.Item = Item
-      throw error
+      ...options
     })
+    const response = await this._awsRequest('POST', '/', 'PutItem', payload)
+
+    if (response.ok) {
+      return Readable.JSON(response)
+    }
+    throw new AwsError(await Readable.Text(response))
   }
 
   /**
@@ -178,7 +364,7 @@ class DynamoDBTable {
    *   ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
    *   ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *   ReturnValues: 'NONE'|'ALL_OLD',
-   * }) -> Promise<{
+   * }) -> data Promise<{
    *   attributes: JSONObject,
    *   ConsumedCapacity: {
    *     CapacityUnits: number,
@@ -201,23 +387,25 @@ class DynamoDBTable {
    * @note
    * [AWS DynamoDB putItem](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#putItem-property)
    */
-  putItemJSON(item, options = {}) {
-    return this.client.putItem({
+  async putItemJSON(item, options = {}) {
+    const payload = JSON.stringify({
       TableName: this.name,
       Item: map(item, Dynamo.AttributeValue),
       ...options,
-    }).promise().catch(error => {
-      error.tableName = this.name
-      error.method = 'putItemJSON'
-      error.item = item
-      throw error
-    }).then(result => {
-      if (result.Attributes) {
-        result.attributes = map(result.Attributes, Dynamo.attributeValueToJSON)
-        delete result.Attributes
-      }
-      return result
     })
+    const response = await this._awsRequest('POST', '/', 'PutItem', payload)
+
+    if (response.ok) {
+      const data = await Readable.JSON(response)
+
+      if (data.Attributes) {
+        data.attributes = map(data.Attributes, Dynamo.attributeValueToJSON)
+        delete data.Attributes
+      }
+
+      return data
+    }
+    throw new AwsError(await Readable.Text(response))
   }
 
   /**
@@ -237,7 +425,8 @@ class DynamoDBTable {
    *   |{ 'M': Object<DynamoDBJSONObject> }
    * >
    *
-   * table.getItem(key DynamoDBJSONKey) -> Promise<{ Item: DynamoDBJSONObject }>
+   * table.getItem(key DynamoDBJSONKey) ->
+   *   data Promise<{ Item: DynamoDBJSONObject }>
    * ```
    *
    * @description
@@ -251,24 +440,22 @@ class DynamoDBTable {
    * @note
    * [AWS DynamoDB getItem](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#getItem-property)
    */
-  getItem(Key) {
-    return this.client.getItem({
+  async getItem(Key) {
+    const payload = JSON.stringify({
       TableName: this.name,
       Key
-    }).promise().then(result => {
-      if (result.Item == null) {
-        const error = new Error(`Item not found for ${JSON.stringify(Key)}`)
-        error.tableName = this.name
-        throw error
+    })
+    const response = await this._awsRequest('POST', '/', 'GetItem', payload)
+
+    if (response.ok) {
+      const data = await Readable.JSON(response)
+      if (data.Item == null) {
+        throw new AwsError(`Item not found for ${JSON.stringify(Key)}`)
       }
 
-      return result
-    }).catch(error => {
-      error.TableName = this.name
-      error.method = 'getItem'
-      error.Key = Key
-      throw error
-    })
+      return data
+    }
+    throw new AwsError(await Readable.Text(response))
   }
 
   /**
@@ -283,7 +470,7 @@ class DynamoDBTable {
    * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
    * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
    *
-   * table.getItemJSON(key JSONKey) -> Promise<{ item: JSONObject }>
+   * table.getItemJSON(key JSONKey) -> data Promise<{ item: JSONObject }>
    * ```
    *
    * @description
@@ -297,26 +484,24 @@ class DynamoDBTable {
    * @note
    * [AWS DynamoDB getItem](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#getItem-property)
    */
-  getItemJSON(key) {
-    return this.client.getItem({
+  async getItemJSON(key) {
+    const payload = JSON.stringify({
       TableName: this.name,
-      Key: map(key, Dynamo.AttributeValue),
-    }).promise().then(result => {
-      if (result.Item == null) {
-        const error = new Error(`Item not found for ${JSON.stringify(key)}`)
-        error.tableName = this.name
-        throw error
+      Key: map(key, Dynamo.AttributeValue)
+    })
+    const response = await this._awsRequest('POST', '/', 'GetItem', payload)
+
+    if (response.ok) {
+      const data = await Readable.JSON(response)
+      if (data.Item == null) {
+        throw new AwsError(`Item not found for ${JSON.stringify(key)}`)
       }
 
-      result.item = map(result.Item, Dynamo.attributeValueToJSON)
-      delete result.Item
-      return result
-    }).catch(error => {
-      error.TableName = this.name
-      error.method = 'getItemJSON'
-      error.key = key
-      throw error
-    })
+      data.item = map(data.Item, Dynamo.attributeValueToJSON)
+      delete data.Item
+      return data
+    }
+    throw new AwsError(await Readable.Text(response))
   }
 
   /**
@@ -346,7 +531,7 @@ class DynamoDBTable {
    *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *     ReturnValues: 'NONE'|'ALL_OLD'|'UPDATED_OLD'|'ALL_NEW'|'UPDATED_NEW',
    *   }
-   * ) -> Promise<{ Attributes: DynamoDBJSONObject }>
+   * ) -> data Promise<{ Attributes: DynamoDBJSONObject }>
    * ```
    *
    * @description
@@ -363,10 +548,10 @@ class DynamoDBTable {
    * @note
    * [aws-sdk DynamoDB updateItem](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#updateItem-property)
    */
-  updateItem(Key, Updates, options = {}) {
+  async updateItem(Key, Updates, options = {}) {
     const updates = map(Updates, Dynamo.attributeValueToJSON)
 
-    return this.client.updateItem({
+    const payload = JSON.stringify({
       TableName: this.name,
       Key,
 
@@ -390,13 +575,13 @@ class DynamoDBTable {
         ]),
 
       ...options,
-    }).promise().catch(error => {
-      error.tableName = this.name
-      error.method = 'updateItem'
-      error.Key = Key
-      error.Updates = Updates
-      throw error
     })
+    const response = await this._awsRequest('POST', '/', 'UpdateItem', payload)
+
+    if (response.ok) {
+      return Readable.JSON(response)
+    }
+    throw new AwsError(await Readable.Text(response))
   }
 
   /**
@@ -421,7 +606,7 @@ class DynamoDBTable {
    *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *     ReturnValues: 'NONE'|'ALL_OLD'|'UPDATED_OLD'|'ALL_NEW'|'UPDATED_NEW',
    *   }
-   * ) -> Promise<{ attributes: JSONObject }>
+   * ) -> data Promise<{ attributes: JSONObject }>
    * ```
    *
    * @description
@@ -438,8 +623,8 @@ class DynamoDBTable {
    * @note
    * [aws-sdk DynamoDB updateItem](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#updateItem-property)
    */
-  updateItemJSON(key, updates, options = {}) {
-    return this.client.updateItem({
+  async updateItemJSON(key, updates, options = {}) {
+    const payload = JSON.stringify({
       TableName: this.name,
       Key: map(key, Dynamo.AttributeValue),
 
@@ -463,19 +648,20 @@ class DynamoDBTable {
         ]),
 
       ...options,
-    }).promise().catch(error => {
-      error.tableName = this.name
-      error.method = 'updateItemJSON'
-      error.key = key
-      error.updates = updates
-      throw error
-    }).then(result => {
-      if (result.Attributes) {
-        result.attributes = map(result.Attributes, Dynamo.attributeValueToJSON)
-        delete result.Attributes
-      }
-      return result
     })
+    const response = await this._awsRequest('POST', '/', 'UpdateItem', payload)
+
+    if (response.ok) {
+      const data = await Readable.JSON(response)
+
+      if (data.Attributes) {
+        data.attributes = map(data.Attributes, Dynamo.attributeValueToJSON)
+        delete data.Attributes
+      }
+
+      return data
+    }
+    throw new AwsError(await Readable.Text(response))
   }
 
   /**
@@ -507,7 +693,7 @@ class DynamoDBTable {
    *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *     ReturnValues: 'NONE'|'ALL_OLD'|'UPDATED_OLD'|'ALL_NEW'|'UPDATED_NEW',
    *   }
-   * ) -> Promise<{ Attributes: DynamoDBJSONObject }>
+   * ) -> data Promise<{ Attributes: DynamoDBJSONObject }>
    * ```
    *
    * @description
@@ -517,10 +703,10 @@ class DynamoDBTable {
    * await userTable.incrementItem({ id: { S: '1' } }, { age: { N: 1 } })
    * ```
    */
-  incrementItem(Key, IncrementUpdates, options = {}) {
+  async incrementItem(Key, IncrementUpdates, options = {}) {
     const incrementUpdates = map(IncrementUpdates, Dynamo.attributeValueToJSON)
 
-    return this.client.updateItem({
+    const payload = JSON.stringify({
       TableName: this.name,
       Key,
 
@@ -544,13 +730,13 @@ class DynamoDBTable {
         ]),
 
       ...options,
-    }).promise().catch(error => {
-      error.tableName = this.name
-      error.method = 'incrementItem'
-      error.Key = Key
-      error.IncrementUpdates = IncrementUpdates
-      throw error
     })
+    const response = await this._awsRequest('POST', '/', 'UpdateItem', payload)
+
+    if (response.ok) {
+      return Readable.JSON(response)
+    }
+    throw new AwsError(await Readable.Text(response))
   }
 
   /**
@@ -577,7 +763,7 @@ class DynamoDBTable {
    *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *     ReturnValues: 'NONE'|'ALL_OLD'|'UPDATED_OLD'|'ALL_NEW'|'UPDATED_NEW',
    *   }
-   * ) -> Promise<{ attributes: JSONObject }>
+   * ) -> data Promise<{ attributes: JSONObject }>
    * ```
    *
    * @description
@@ -587,10 +773,10 @@ class DynamoDBTable {
    * await userTable.incrementItemJSON({ id: '1' }, { age: 1 })
    * ```
    */
-  incrementItemJSON(key, incrementUpdates, options = {}) {
-    return this.client.updateItem({
+  async incrementItemJSON(key, incrementUpdates, options = {}) {
+    const payload = JSON.stringify({
       TableName: this.name,
-      Key: Dynamo.isDynamoDBJSON(key) ? key : map(key, Dynamo.AttributeValue),
+      Key: map(key, Dynamo.AttributeValue),
 
       UpdateExpression: pipe(incrementUpdates, [
         Object.entries,
@@ -612,19 +798,20 @@ class DynamoDBTable {
         ]),
 
       ...options,
-    }).promise().catch(error => {
-      error.tableName = this.name
-      error.method = 'incrementItemJSON'
-      error.key = key
-      error.incrementUpdates = incrementUpdates
-      throw error
-    }).then(result => {
-      if (result.Attributes) {
-        result.attributes = map(result.Attributes, Dynamo.attributeValueToJSON)
-        delete result.Attributes
-      }
-      return result
     })
+    const response = await this._awsRequest('POST', '/', 'UpdateItem', payload)
+
+    if (response.ok) {
+      const data = await Readable.JSON(response)
+
+      if (data.Attributes) {
+        data.attributes = map(data.Attributes, Dynamo.attributeValueToJSON)
+        delete data.Attributes
+      }
+
+      return data
+    }
+    throw new AwsError(await Readable.Text(response))
   }
 
   /**
@@ -652,7 +839,7 @@ class DynamoDBTable {
    *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *     ReturnValues: 'NONE'|'ALL_OLD',
    *   }
-   * ) -> Promise<{ Attributes: DynamoDBJSONObject }>
+   * ) -> data Promise<{ Attributes: DynamoDBJSONObject }>
    * ```
    *
    * @description
@@ -662,17 +849,18 @@ class DynamoDBTable {
    * await userTable.deleteItem({ id: { S: '1' } })
    * ```
    */
-  deleteItem(Key, options) {
-    return this.client.deleteItem({
+  async deleteItem(Key, options) {
+    const payload = JSON.stringify({
       TableName: this.name,
       Key,
       ...options,
-    }).promise().catch(error => {
-      error.tableName = this.name
-      error.method = 'deleteItem'
-      error.Key = Key
-      throw error
     })
+    const response = await this._awsRequest('POST', '/', 'DeleteItem', payload)
+
+    if (response.ok) {
+      return Readable.JSON(response)
+    }
+    throw new AwsError(await Readable.Text(response))
   }
 
   /**
@@ -695,7 +883,7 @@ class DynamoDBTable {
    *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *     ReturnValues: 'NONE'|'ALL_OLD',
    *   }
-   * ) -> Promise<{ attributes: JSONObject }>
+   * ) -> data Promise<{ attributes: JSONObject }>
    * ```
    *
    * @description
@@ -705,23 +893,25 @@ class DynamoDBTable {
    * await userTable.deleteItemJSON({ id: '1' })
    * ```
    */
-  deleteItemJSON(key, options) {
-    return this.client.deleteItem({
+  async deleteItemJSON(key, options) {
+    const payload = JSON.stringify({
       TableName: this.name,
       Key: map(key, Dynamo.AttributeValue),
       ...options,
-    }).promise().catch(error => {
-      error.tableName = this.name
-      error.method = 'deleteItemJSON'
-      error.key = key
-      throw error
-    }).then(result => {
-      if (result.Attributes) {
-        result.attributes = map(result.Attributes, Dynamo.attributeValueToJSON)
-        delete result.Attributes
-      }
-      return result
     })
+    const response = await this._awsRequest('POST', '/', 'DeleteItem', payload)
+
+    if (response.ok) {
+      const data = await Readable.JSON(response)
+
+      if (data.Attributes) {
+        data.attributes = map(data.Attributes, Dynamo.attributeValueToJSON)
+        delete data.Attributes
+      }
+
+      return data
+    }
+    throw new AwsError(await Readable.Text(response))
   }
 
   /**
@@ -744,7 +934,7 @@ class DynamoDBTable {
    * table.scan(options {
    *   Limit: number,
    *   ExclusiveStartKey: DynamoDBJSONKey
-   * }) -> Promise<{
+   * }) -> data Promise<{
    *   Items: Array<DynamoDBJSONObject>>
    *   Count: number,
    *   ScannedCount: number,
@@ -760,19 +950,20 @@ class DynamoDBTable {
    * console.log(userItems) // [{ id: { S: '1' }, name: { S: 'John' } }, ...]
    * ```
    */
-  scan(options = {}) {
-    return this.client.scan({
+  async scan(options = {}) {
+    const payload = JSON.stringify({
       TableName: this.name,
       Limit: options.Limit ?? 1000,
-      ...options.ExclusiveStartKey ? {
-        ExclusiveStartKey: options.ExclusiveStartKey,
-      } : {},
-    }).promise().catch(error => {
-      error.tableName = this.name
-      error.method = 'scan'
-      error.options = options
-      throw error
+      ...options.ExclusiveStartKey
+        ? { ExclusiveStartKey: options.ExclusiveStartKey }
+        : {},
     })
+    const response = await this._awsRequest('POST', '/', 'Scan', payload)
+
+    if (response.ok) {
+      return Readable.JSON(response)
+    }
+    throw new AwsError(await Readable.Text(response))
   }
 
   /**
@@ -790,7 +981,7 @@ class DynamoDBTable {
    *
    * scanIterator(options {
    *   BatchLimit: number,
-   * }) -> AsyncIterator<DynamoDBJSONObject>
+   * }) -> iter AsyncIterator<DynamoDBJSONObject>
    * ```
    *
    * @description
@@ -819,7 +1010,7 @@ class DynamoDBTable {
    *
    * table.scanIteratorJSON(options {
    *   BatchLimit: number,
-   * }) -> AsyncIterator<JSONObject>
+   * }) -> iter AsyncIterator<JSONObject>
    * ```
    *
    * @description
@@ -867,7 +1058,7 @@ class DynamoDBTable {
    *     FilterExpression: string, // 'fieldA >= :someValue'
    *     ConsistentRead: boolean // true to perform a strongly consistent read (eventually consistent by default)
    *   },
-   * ) -> Promise<{ Items: Array<DynamoDBJSONObject> }>
+   * ) -> data Promise<{ Items: Array<DynamoDBJSONObject> }>
    * ```
    *
    * @description
@@ -902,7 +1093,7 @@ class DynamoDBTable {
    *   * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`
    *   * `ConsistentRead` - true to perform a strongly consistent read (eventually consistent by default). Consumes more RCUs.
    */
-  query(keyConditionExpression, Values, options = {}) {
+  async query(keyConditionExpression, Values, options = {}) {
     const values = map(Values, Dynamo.attributeValueToJSON)
 
     const keyConditionStatements = keyConditionExpression.trim().split(/\s+AND\s+/)
@@ -941,7 +1132,7 @@ class DynamoDBTable {
       filterExpressionStatements,
     })
 
-    return this.client.query({
+    const payload = JSON.stringify({
       TableName: this.name,
       ExpressionAttributeNames,
       ExpressionAttributeValues,
@@ -953,17 +1144,23 @@ class DynamoDBTable {
 
       ...options.Limit ? { Limit: options.Limit } : {},
 
-      ...options.ExclusiveStartKey ? {
-        ExclusiveStartKey: options.ExclusiveStartKey,
-      } : {},
+      ...options.ExclusiveStartKey
+        ? { ExclusiveStartKey: options.ExclusiveStartKey }
+        : {},
 
       ...options.ProjectionExpression ? {
         ProjectionExpression: options.ProjectionExpression
           .split(',').map(field => `#${hashJSON(field)}`).join(','),
       } : {},
 
-      ...options.ConsistentRead ? { ConsistentRead: options.ConsistentRead } : {},
-    }).promise()
+      ...options.ConsistentRead ? { ConsistentRead: options.ConsistentRead } : {}
+    })
+    const response = await this._awsRequest('POST', '/', 'Query', payload)
+
+    if (response.ok) {
+      return Readable.JSON(response)
+    }
+    throw new AwsError(await Readable.Text(response))
   }
 
   /**
@@ -1025,7 +1222,7 @@ class DynamoDBTable {
    *   * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`
    *   * `ConsistentRead` - true to perform a strongly consistent read (eventually consistent by default). Consumes more RCUs.
    */
-  queryJSON(keyConditionExpression, values, options = {}) {
+  async queryJSON(keyConditionExpression, values, options = {}) {
     const keyConditionStatements = keyConditionExpression.trim().split(/\s+AND\s+/)
     let statementsIndex = -1
     while (++statementsIndex < keyConditionStatements.length) {
@@ -1062,7 +1259,7 @@ class DynamoDBTable {
       filterExpressionStatements,
     })
 
-    return this.client.query({
+    const payload = JSON.stringify({
       TableName: this.name,
       ExpressionAttributeNames,
       ExpressionAttributeValues,
@@ -1074,21 +1271,26 @@ class DynamoDBTable {
 
       ...options.Limit ? { Limit: options.Limit } : {},
 
-      ...options.ExclusiveStartKey ? {
-        ExclusiveStartKey: options.ExclusiveStartKey,
-      } : {},
+      ...options.ExclusiveStartKey
+        ? { ExclusiveStartKey: options.ExclusiveStartKey }
+        : {},
 
       ...options.ProjectionExpression ? {
         ProjectionExpression: options.ProjectionExpression
           .split(',').map(field => `#${hashJSON(field)}`).join(','),
       } : {},
 
-      ...options.ConsistentRead ? { ConsistentRead: options.ConsistentRead } : {},
-    }).promise().then(result => {
-      result.items = map(result.Items, map(Dynamo.attributeValueToJSON))
-      delete result.Items
-      return result
+      ...options.ConsistentRead ? { ConsistentRead: options.ConsistentRead } : {}
     })
+    const response = await this._awsRequest('POST', '/', 'Query', payload)
+
+    if (response.ok) {
+      const data = await Readable.JSON(response)
+      data.items = map(data.Items, map(Dynamo.attributeValueToJSON))
+      delete data.Items
+      return data
+    }
+    throw new AwsError(await Readable.Text(response))
   }
 
   /**
