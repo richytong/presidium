@@ -1,6 +1,6 @@
 require('rubico/global')
 const EventEmitter = require('events')
-const WebSocket = require('ws')
+const WebSocket = require('./WebSocket')
 const sha256 = require('./internal/sha256')
 const AwsPresignedUrlV4 = require('./internal/AwsPresignedUrlV4')
 const Crc32 = require('./internal/Crc32')
@@ -20,7 +20,7 @@ const MINIMUM_MESSAGE_LENGTH = PRELUDE_LENGTH + CHECKSUM_LENGTH * 2
 /**
  * @name TranscribeStream
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * new TranscribeStream(options {
  *   accessKeyId: string,
@@ -128,7 +128,7 @@ class TranscribeStream extends EventEmitter {
   /**
    * @name sendAudioChunk
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * myTranscribeStream.sendAudioChunk(
    *   chunk Buffer, // chunk is binary and assumed to be properly encoded in the specified mediaEncoding
@@ -183,7 +183,7 @@ class TranscribeStream extends EventEmitter {
 /**
  * @name marshalHeaders
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * marshalHeaders(headers Object<
  *   [headerName string]: {
@@ -218,7 +218,9 @@ const marshalHeaders = function (headers) {
 }
 
 /**
- * @synopsis
+ * @name unmarshalMessage
+ *
+ * @docs
  * ```coffeescript [specscript]
  * unmarshalMessage(chunk ArrayBuffer) -> message {
  *   headers: DataView,
@@ -248,7 +250,9 @@ const unmarshalMessage = function (chunk) {
 }
 
 /**
- * @synopsis
+ * @name marshalStringHeaderValue
+ *
+ * @docs
  * ```coffeescript [specscript]
  * marshalStringHeaderValue(value string) -> bytes Uint8Array
  * ```
@@ -264,7 +268,9 @@ const marshalStringHeaderValue = function (value) {
 }
 
 /**
- * @synopsis
+ * @name unmarshalHeaders
+ *
+ * @docs
  * ```coffeescript [specscript]
  * unmarshalHeaders(headersView DataView) -> headers Object
  * ```

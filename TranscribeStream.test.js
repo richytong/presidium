@@ -7,7 +7,7 @@ const assert = require('assert')
 const TranscribeStream = require('./TranscribeStream')
 const AwsCredentials = require('./internal/AwsCredentials')
 
-const test = new Test('TranscribeStream', async function () {
+const test = new Test('TranscribeStream', async function integration() {
   const awsCreds = await AwsCredentials('default').catch(error => {
     if (error.code == 'ENOENT') {
       const accessKeyId = process.env.AWS_ACCESS_KEY_ID
