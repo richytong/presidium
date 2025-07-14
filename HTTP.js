@@ -86,7 +86,7 @@ class HTTP {
    *   method: string,
    *   headers: object,
    *   body: Buffer|TypedArray|string,
-   * }) -> Promise<response http.ServerResponse>
+   * }) -> response Promise<http.ServerResponse>
    * ```
    */
   request(options) {
@@ -192,6 +192,10 @@ class HTTP {
     return this.request(requestOptions)
   }
 
+  GET(...args) {
+    return this.get(...args)
+  }
+
   head(relativeUrl, options = {}) {
     const requestOptions = {
       ...this.requestOptions,
@@ -207,6 +211,10 @@ class HTTP {
       body: options.body,
     }
     return this.request(requestOptions)
+  }
+
+  HEAD(...args) {
+    return this.head(...args)
   }
 
   post(relativeUrl, options = {}) {
@@ -226,6 +234,10 @@ class HTTP {
     return this.request(requestOptions)
   }
 
+  POST(...args) {
+    return this.post(...args)
+  }
+
   put(relativeUrl, options = {}) {
     const requestOptions = {
       ...this.requestOptions,
@@ -241,6 +253,10 @@ class HTTP {
       body: options.body,
     }
     return this.request(requestOptions)
+  }
+
+  PUT(...args) {
+    return this.put(...args)
   }
 
   patch(relativeUrl, options = {}) {
@@ -260,6 +276,10 @@ class HTTP {
     return this.request(requestOptions)
   }
 
+  PATCH(...args) {
+    return this.patch(...args)
+  }
+
   delete(relativeUrl, options = {}) {
     const requestOptions = {
       ...this.requestOptions,
@@ -277,6 +297,10 @@ class HTTP {
     return this.request(requestOptions)
   }
 
+  DELETE(...args) {
+    return this.delete(...args)
+  }
+
   connect(options = {}) {
     const requestOptions = {
       ...this.requestOptions,
@@ -289,6 +313,10 @@ class HTTP {
     const request = this.client.request(requestOptions)
     request.end(options.body)
     return request
+  }
+
+  CONNECT(...args) {
+    return this.connect(...args)
   }
 
   options(relativeUrl, options2 = {}) {
@@ -308,6 +336,10 @@ class HTTP {
     return this.request(requestOptions)
   }
 
+  OPTIONS(...args) {
+    return this.options(...args)
+  }
+
   trace(relativeUrl, options = {}) {
     const requestOptions = {
       ...this.requestOptions,
@@ -323,6 +355,10 @@ class HTTP {
       body: options.body,
     }
     return this.request(requestOptions)
+  }
+
+  TRACE(...args) {
+    return this.trace(...args)
   }
 
 }

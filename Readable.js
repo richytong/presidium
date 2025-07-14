@@ -1,21 +1,24 @@
-const ReadStream = {}
+const Readable = {}
 
 /**
- * @name ReadStream.Buffer
+ * @name Readable.Buffer
  *
  * @synopsis
  * ```coffeescript [specscript]
  * module stream
  *
- * ReadStream.Buffer(readable stream.Readable) -> Promise<Buffer>
+ * Readable.Buffer(readable stream.Readable) -> Promise<Buffer>
  * ```
  *
  * ```javascript
- * const buffer = await ReadStream.Buffer(readable)
+ * const buffer = await Readable.Buffer(readable)
  * ```
  */
-ReadStream.Buffer = function ReadStreamBuffer(readable) {
+Readable.Buffer = function Readable(readable) {
   return new Promise((resolve, reject) => {
+    if (readable._readableState.ended) {
+      reject(new Error('readable ended'))
+    }
     const chunks = []
     readable.on('data', chunk => {
       chunks.push(chunk)
@@ -28,23 +31,27 @@ ReadStream.Buffer = function ReadStreamBuffer(readable) {
 }
 
 /**
- * @name ReadStream.Text
+ * @name Readable.Text
  *
  * @synopsis
  * ```coffeescript [specscript]
  * module stream
  *
- * ReadStream.Text(readable stream.Readable) -> Promise<string>
+ * Readable.Text(readable stream.Readable) -> Promise<string>
  * ```
  *
  * ```javascript
- * const text = await ReadStream.Text(readable)
+ * const text = await Readable.Text(readable)
  * ```
  */
-ReadStream.Text = function ReadStreamText(readable) {
+Readable.Text = function Readable(readable) {
   return new Promise((resolve, reject) => {
+    if (readable._readableState.ended) {
+      reject(new Error('readable ended'))
+    }
     const chunks = []
     readable.on('data', chunk => {
+      console.log('data', chunk)
       chunks.push(chunk)
     })
     readable.on('end', () => {
@@ -55,21 +62,24 @@ ReadStream.Text = function ReadStreamText(readable) {
 }
 
 /**
- * @name ReadStream.JSON
+ * @name Readable.JSON
  *
  * @synopsis
  * ```coffeescript [specscript]
  * module stream
  *
- * ReadStream.JSON(readable stream.Readable) -> Promise<object>
+ * Readable.JSON(readable stream.Readable) -> Promise<object>
  * ```
  *
  * ```javascript
- * const data = await ReadStream.JSON(readable)
+ * const data = await Readable.JSON(readable)
  * ```
  */
-ReadStream.JSON = function ReadStreamJSON(readable) {
+Readable.JSON = function Readable(readable) {
   return new Promise((resolve, reject) => {
+    if (readable._readableState.ended) {
+      reject(new Error('readable ended'))
+    }
     const chunks = []
     readable.on('data', chunk => {
       chunks.push(chunk)
@@ -85,4 +95,4 @@ ReadStream.JSON = function ReadStreamJSON(readable) {
   })
 }
 
-module.exports = ReadStream
+module.exports = Readable
