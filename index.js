@@ -1,4 +1,4 @@
-const Http = require('./Http')
+const HTTP = require('./HTTP')
 const WebSocketServer = require('./WebSocketServer')
 const Dynamo = require('./Dynamo')
 const DynamoTable = require('./DynamoTable')
@@ -22,7 +22,7 @@ const AutoScaling = require('./AutoScaling')
 const ECR = require('./ECR')
 
 const Presidium = {
-  Http,
+  HTTP,
   WebSocketServer,
   Dynamo,
   DynamoTable,

@@ -4,16 +4,16 @@ const http = require('http')
 const zlib = require('zlib')
 const { Readable } = require('stream')
 const { connect } = require('net')
-const Http = require('./Http')
-const RequestBuffer = require('./RequestBuffer')
+const HTTP = require('./HTTP')
+const ReadStream = require('./ReadStream')
 
-const test1 = new Test('Http GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and TRACE', async () => {
+const test1 = new Test('HTTP GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and TRACE', async () => {
   const server = http.createServer(async (request, response) => {
     if (request.url == '/invalid-json') {
       response.write('{"greeting":"Hello Wor')
       response.end()
     } else if (request.url == '/echo') {
-      const buffer = await RequestBuffer(request)
+      const buffer = await ReadStream.Buffer(request)
       const requestBodyString = buffer.toString('utf8')
       const requestBodyJSON = requestBodyString.length == 0 ? {} : JSON.parse(requestBodyString)
       delete request.headers['content-length']
@@ -23,14 +23,14 @@ const test1 = new Test('Http GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and T
       })
       response.end(JSON.stringify({ greeting: 'Hello World', ...requestBodyJSON }))
     } else if (request.url == '/echo-binary') {
-      const buffer = await RequestBuffer(request)
+      const buffer = await ReadStream.Buffer(request)
       delete request.headers['content-length']
       response.writeHead(200, {
         ...request.headers,
       })
       response.end(buffer)
     } else if (request.url == '/echo-text') {
-      const buffer = await RequestBuffer(request)
+      const buffer = await ReadStream.Buffer(request)
       const text = buffer.toString('utf8')
       delete request.headers['content-length']
       response.writeHead(200, {
@@ -50,26 +50,26 @@ const test1 = new Test('Http GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and T
     console.log('server listening on port 3000')
   })
 
-  const _http = new Http('http://username:password@localhost:3000/')
+  const _http = new HTTP('http://username:password@localhost:3000/')
   assert.equal(typeof _http.requestHeaders['Authorization'], 'string')
 
   {
     const url = new URL('http://localhost:3000/')
     url.username = 'username'
     url.password = 'password'
-    const httpParsedUrl = new Http(url)
+    const httpParsedUrl = new HTTP(url)
     assert.equal(httpParsedUrl.baseUrl.host, 'localhost:3000')
     assert.equal(httpParsedUrl.baseUrl.protocol, 'http:')
     assert.equal(typeof httpParsedUrl.requestHeaders['Authorization'], 'string')
-    assert.throws(() => new Http(null), TypeError('baseUrl invalid'))
-    const httpUrlToString = new Http({
+    assert.throws(() => new HTTP(null), TypeError('baseUrl invalid'))
+    const httpUrlToString = new HTTP({
       toString() {
         return 'http://localhost:3000/'
       }
     })
     assert.equal(httpUrlToString.baseUrl.host, 'localhost:3000')
     assert.equal(httpUrlToString.baseUrl.protocol, 'http:')
-    assert.throws(() => new Http(Object.create(null)), TypeError('baseUrl invalid'))
+    assert.throws(() => new HTTP(Object.create(null)), TypeError('baseUrl invalid'))
   }
 
   {
@@ -284,7 +284,7 @@ const test2 = new Test('HTTP CONNECT', async () => {
     proxy.on('error', reject)
   })
 
-  const _http = new Http('http://localhost:3001/')
+  const _http = new HTTP('http://localhost:3001/')
   const request = _http.connect({ path: 'www.google.com:80' })
   const chunks = []
 

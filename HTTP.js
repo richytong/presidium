@@ -4,7 +4,7 @@ const path = require('path')
 const stream = require('stream')
 
 /**
- * @name Http
+ * @name HTTP
  *
  * @synopsis
  * ```coffeescript [specscript]
@@ -36,11 +36,11 @@ const stream = require('stream')
  *   uniqueHeaders: Array<string>,
  * }
  *
- * new Http(baseUrl string, requestOptions) -> http Http
- * new Http(requestOptions) -> http Http
+ * new HTTP(baseUrl string, requestOptions) -> http HTTP
+ * new HTTP(requestOptions) -> http HTTP
  * ```
  */
-class Http {
+class HTTP {
   constructor(baseUrl, requestOptions = {}) {
     if (typeof baseUrl == 'string') {
       this.baseUrl = new URL(baseUrl)
@@ -327,4 +327,7 @@ class Http {
 
 }
 
-module.exports = Http
+HTTP.Server = (...args) => http.createServer(...args)
+HTTP.SecureServer = (...args) => https.createServer(...args)
+
+module.exports = HTTP

@@ -12,7 +12,7 @@ globalThis.DynamoDB = require('./DynamoDB')
 
 globalThis.EC2 = require('./EC2')
 globalThis.ECR = require('./ECR')
-globalThis.Http = require('./Http')
+globalThis.HTTP = require('./HTTP')
 globalThis.WebSocket = require('./WebSocket')
 globalThis.NpmToken = require('./NpmToken')
 globalThis.AwsCredentials = require('./AwsCredentials')

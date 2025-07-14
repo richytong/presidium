@@ -7,7 +7,7 @@ const identity = require('rubico/x/identity')
 const size = require('rubico/x/size')
 const flatten = require('rubico/x/flatten')
 const defaultsDeep = require('rubico/x/defaultsDeep')
-const Http = require('./Http')
+const HTTP = require('./HTTP')
 const Archive = require('./Archive')
 const querystring = require('querystring')
 const stringifyJSON = require('./internal/stringifyJSON')
@@ -35,7 +35,7 @@ const Docker = function () {
     maxSockets: Infinity,
   })
 
-  this.http = new Http('http://0.0.0.0/v1.40', { agent })
+  this.http = new HTTP('http://0.0.0.0/v1.40', { agent })
 
   return this
 }

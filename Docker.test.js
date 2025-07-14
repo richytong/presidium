@@ -34,10 +34,10 @@ const test = Test.all([
       serveraddress: 'localhost:5000',
     })
     assert.equal(response.status, 200)
-    const body = await pipe([
+    const body = await pipe(response, [
       reduce((a, b) => a + b, ''),
       JSON.parse,
-    ])(response.body)
+    ])
     this.identitytoken = get('IdentityToken')(body)
     assert.equal(this.identitytoken, '')
   }),
@@ -47,8 +47,8 @@ const test = Test.all([
     { // pull node-15:alpine
       const response = await docker.pullImage('node:15-alpine')
       assert.equal(response.status, 200)
-      response.body.pipe(process.stdout)
-      await new Promise(resolve => response.body.on('end', resolve))
+      response.pipe(process.stdout)
+      await new Promise(resolve => response.on('end', resolve))
     }
 
     {
@@ -63,9 +63,9 @@ EXPOSE 8888`,
         platform: 'linux/x86_64',
       })
       assert.equal(response.status, 200)
-      response.body.pipe(process.stdout)
+      response.pipe(process.stdout)
       await new Promise(resolve => {
-        response.body.on('end', resolve)
+        response.on('end', resolve)
       })
     }
     {
@@ -80,18 +80,18 @@ EXPOSE 8888`,
         tag: 'ayo',
         repo: 'localhost:5000/presidium-test',
       })
-      response.body.pipe(process.stdout)
+      response.pipe(process.stdout)
       await new Promise(resolve => {
-        response.body.on('end', resolve)
+        response.on('end', resolve)
       })
     }
     {
       const response = await docker.pushImage('presidium-test:ayo', 'localhost:5000', {
         identitytoken: this.identitytoken,
       })
-      response.body.pipe(process.stdout)
+      response.pipe(process.stdout)
       await new Promise(resolve => {
-        response.body.on('end', resolve)
+        response.on('end', resolve)
       })
     }
     {

@@ -6,7 +6,6 @@ const DockerImage = require('./DockerImage')
 const Docker = require('./Docker')
 const identity = require('rubico/x/identity')
 const join = require('./internal/join')
-const Http = require('./Http')
 
 const passthrough = target => transform(Transducer.passthrough, target)
 

@@ -2,6 +2,7 @@ require('rubico/global')
 const { identity } = require('rubico/x')
 require('aws-sdk/lib/maintenance_mode_message').suppress = true
 const Dynamo = require('./internal/Dynamo')
+const HTTP = require('./HTTP')
 const hashJSON = require('./internal/hashJSON')
 const join = require('./internal/join')
 const createExpressionAttributeNames =
@@ -60,6 +61,7 @@ class DynamoDBTable {
   constructor(options) {
     this.name = options.name
     this.key = options.key
+    // this.http = new HTTP() // TODO
     this.dynamo = new Dynamo({
       ...pick(options, [
         'accessKeyId',

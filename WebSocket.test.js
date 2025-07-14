@@ -1,5 +1,5 @@
 const Test = require('thunk-test')
-const Http = require('./Http')
+const HTTP = require('./HTTP')
 const assert = require('assert')
 const WebSocket = require('./WebSocket')
 
@@ -13,7 +13,7 @@ const test = new Test('WebSocket', async function integration() {
       didRequest = true
     })
 
-    const http = new Http('http://localhost:7357')
+    const http = new HTTP('http://localhost:7357')
     const response = await http.get('http://localhost:7357')
     assert(didRequest)
     assert.equal(response.status, 200)
@@ -33,7 +33,7 @@ const test = new Test('WebSocket', async function integration() {
 
     const server = new WebSocket.Server(socket => {
       socket.on('message', message => {
-        assert.equal(server.clients.size, 1)
+        assert.equal(server.connections.length, 1)
         messages.push(message.toString('utf8'))
         socket.send('pong')
       })

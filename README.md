@@ -7,17 +7,17 @@
 
 A library for creating web services.
 
-## Handle Http
+## Handle HTTP
 ```javascript
-const { HttpServer, Http } = require('presidium')
+const { HTTP } = require('presidium')
 
-new HttpServer((request, response) => {
+new HTTP.Server((request, response) => {
   response.writeHead(200, { 'Content-Type': 'application/json' })
   response.write(JSON.stringify({ greeting: 'Hello World' }))
   response.end()
 }).listen(3000)
 
-const http = new Http('http://localhost:3000/')
+const http = new HTTP('http://localhost:3000/')
 
 http.get('/')
   .then(response => response.json())
