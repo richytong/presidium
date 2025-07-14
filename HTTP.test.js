@@ -7,7 +7,9 @@ const { connect } = require('net')
 const HTTP = require('./HTTP')
 const Readable = require('./Readable')
 
-const test1 = new Test('HTTP GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and TRACE', async () => {
+const { Agent } = http
+
+const test1 = new Test('HTTP GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and TRACE', async function integration() {
   const server = http.createServer(async (request, response) => {
     if (request.url == '/invalid-json') {
       response.write('{"greeting":"Hello Wor')
@@ -381,7 +383,7 @@ const test1 = new Test('HTTP GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and T
   server.close()
 }).case()
 
-const test2 = new Test('HTTP connect', async () => {
+const test2 = new Test('HTTP connect', async function integration() {
   const proxy = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' })
     res.end('okay')
@@ -435,7 +437,7 @@ const test2 = new Test('HTTP connect', async () => {
   proxy.close()
 }).case()
 
-const test3 = new Test('HTTP CONNECT', async () => {
+const test3 = new Test('HTTP CONNECT', async function integration() {
   const proxy = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' })
     res.end('okay')
@@ -489,10 +491,35 @@ const test3 = new Test('HTTP CONNECT', async () => {
   proxy.close()
 }).case()
 
+const test4 = new Test('HTTP closeConnections', async function integration() {
+  const server = HTTP.Server()
+  server.on('request', (request, response) => {
+    response.writeHead(200, {
+      'Content-Type': 'text/plain'
+    })
+    response.end('OK')
+  })
+  server.listen(7357)
+
+  const agent = new Agent({ keepAlive: true })
+  const http = new HTTP('http://localhost:7357', { agent })
+
+  const response = await http.GET('/')
+  assert.equal(response.status, 200)
+  assert.equal(await response.text(), 'OK')
+  agent.destroy()
+  http.closeConnections()
+  for (const socket of http._sockets) {
+    assert(socket.destroyed)
+  }
+  server.close()
+}).case()
+
 const test = Test.all([
   test1,
   test2,
-  test3
+  test3,
+  test4
 ])
 
 if (process.argv[1] == __filename) {

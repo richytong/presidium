@@ -72,6 +72,8 @@ class HTTP {
       const encodedCredentials = Buffer.from(credentials).toString('base64')
       this.requestHeaders['Authorization'] = `Basic ${encodedCredentials}`
     }
+
+    this._sockets = new Set()
   }
 
   /**
@@ -152,6 +154,10 @@ class HTTP {
         })
 
         resolve(response)
+      })
+
+      request.on('socket', socket => {
+        this._sockets.add(socket)
       })
 
       request.on('error', reject)
@@ -361,6 +367,19 @@ class HTTP {
     return this.trace(...args)
   }
 
+  /**
+   * @name closeConnections
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * http.closeConnections() -> ()
+   * ```
+   */
+  closeConnections() {
+    this._sockets.forEach(socket => {
+      socket.destroy()
+    })
+  }
 }
 
 HTTP.Server = (...args) => http.createServer(...args)
