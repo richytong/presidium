@@ -4,18 +4,18 @@ const objectFilterKeys = require('./objectFilterKeys')
 const toArray = require('./toArray')
 
 /**
- * @name AWSEC2DescribeInstancesFilters
+ * @name createEC2DescribeInstancesFilters
  *
  * @synopsis
  * ```coffeescript [specscript]
  * import EC2ListInstancesDescribeFilterOptions from './EC2ListInstancesDescribeFilterOptions.ss'
  *
- * AWSEC2DescribeInstancesFilters(
+ * createEC2DescribeInstancesFilters(
  *   options EC2ListInstancesDescribeFilterOptions.map(value => value|Array<value>)
- * ) -> awsEC2DescribeInstancesFilters Array<{ Name: string, Values: Array }>
+ * ) -> ec2DescribeInstancesFilters Array<{ Name: string, Values: Array }>
  * ```
  */
-const AWSEC2DescribeInstancesFilters = pipe([
+const createEC2DescribeInstancesFilters = pipe([
   options => ({
     'affinity': options.affinity,
     'architecture': options.architecture,
@@ -137,4 +137,4 @@ const AWSEC2DescribeInstancesFilters = pipe([
   },
 ])
 
-module.exports = AWSEC2DescribeInstancesFilters
+module.exports = createEC2DescribeInstancesFilters
