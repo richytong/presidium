@@ -74,57 +74,67 @@ const myTypeAgeIndex = new DynamoDB.GlobalSecondaryIndex({
 })
 await myTypeAgeIndex.ready
 
-await myTable.putItem({ id: '1', name: 'John', type: 'person' })
-await myTable.updateItem({ id: '1' }, { age: 32 })
+await myTable.putItem({ id: { S: '1' }, name: { S: 'John' }, type: { S: 'person' } })
+await myTable.updateItem({ id: { S: '1' } }, { age: { N: '32' } })
 
-await myTable.putItem({ id: '2', name: 'Joe', age: 19, type: 'person' })
-await myTable.putItem({ id: '3', name: 'Jane', age: 33, type: 'person' })
+await myTable.putItemJSON({ id: '2', name: 'Joe', age: 19, type: 'person' })
+await myTable.putItemJSON({ id: '3', name: 'Jane', age: 33, type: 'person' })
 
-const getItemResponse = await myTable.getItem({ id: '1' }),
-console.log(getItemResponse)
-// { Item: { id: { S: '1' }, name: { S: 'John' }, age: { N: '32' } } }
-
-const jsonItem = await myTable.getItemJSON({ id: '1' })
-console.log(jsonItem)
-// { id: '1', name: 'John', age: 32 }
-
-const queryResponse = await myTypeAgeIndex.query(
-  'type = :type AND age < :age',
-  { type: 'person', age: 100 },
-  { Limit: 2, ScanIndexForward: true },
-)
-console.log(queryResponse)
-// {
-//   Items: [
-//     { id: { S: '1' }, name: { S: 'John' }, age: { N: '32' }, type: { S: 'person' } },
-//     { id: { S: '2' }, name: { S: 'Joe' }, age: { N: '19' }, type: { S: 'person' } },
-//   ],
-//   Count: 2,
-//   ScannedCount: 2,
-// }
-
-const iter = myTypeAgeIndex.queryIterator(
-  'type = :type AND age < :age',
-  { type: 'person', age: 100 },
-  { ScanIndexForward: true },
-)
-for await (const item of iter) {
-  console.log(item)
-  // { id: { S: '2' }, name: { S: 'Joe' }, age: { N: '19' }, type: { S: 'person' } },
-  // { id: { S: '1' }, name: { S: 'John' }, age: { N: '32' }, type: { S: 'person' } },
-  // { id: { S: '3' }, name: { S: 'Jane' }, age: { N: '33' }, type: { S: 'person' } },
+{
+  const response = await myTable.getItem({ id: '1' }),
+  console.log(response)
+  // { Item: { id: { S: '1' }, name: { S: 'John' }, age: { N: '32' } } }
 }
 
-const jsonIter = myTypeAgeIndex.queryIteratorJSON(
-  'type = :type AND age < :age',
-  { type: 'person', age: 100 },
-  { ScanIndexForward: true },
-)
-for await (const jsonItem of iter) {
-  console.log(jsonItem)
-  // { id: '2', name: 'Joe', age: 19, type: 'person' }
-  // { id: '1', name: 'John', age: 32, type: 'person' }
-  // { id: '3', name: 'Jane', age: 33, type: 'person' }
+{
+  const response = await myTable.getItemJSON({ id: '1' })
+  console.log(response)
+  // { item: { id: '1', name: 'John', age: 32 } }
+}
+
+{
+  const response = await myTypeAgeIndex.query(
+    'type = :type AND age < :age',
+    { type: 'person', age: 100 },
+    { Limit: 2, ScanIndexForward: true },
+  )
+  console.log(response)
+  // {
+  //   Items: [
+  //     { id: { S: '1' }, name: { S: 'John' }, age: { N: '32' }, type: { S: 'person' } },
+  //     { id: { S: '2' }, name: { S: 'Joe' }, age: { N: '19' }, type: { S: 'person' } },
+  //   ],
+  //   Count: 2,
+  //   ScannedCount: 2,
+  // }
+}
+
+{
+  const ItemIterator = myTypeAgeIndex.queryItemsIterator(
+    'type = :type AND age < :age',
+    { type: 'person', age: 100 },
+    { ScanIndexForward: true },
+  )
+  for await (const Item of ItemIterator) {
+    console.log(Item)
+    // { id: { S: '2' }, name: { S: 'Joe' }, age: { N: '19' }, type: { S: 'person' } },
+    // { id: { S: '1' }, name: { S: 'John' }, age: { N: '32' }, type: { S: 'person' } },
+    // { id: { S: '3' }, name: { S: 'Jane' }, age: { N: '33' }, type: { S: 'person' } },
+  }
+}
+
+{
+  const itemsIterator = myTypeAgeIndex.queryItemsIteratorJSON(
+    'type = :type AND age < :age',
+    { type: 'person', age: 100 },
+    { ScanIndexForward: true },
+  )
+  for await (const item of itemsIterator) {
+    console.log(item)
+    // { id: '2', name: 'Joe', age: 19, type: 'person' }
+    // { id: '1', name: 'John', age: 32, type: 'person' }
+    // { id: '3', name: 'Jane', age: 33, type: 'person' }
+  }
 }
 ```
 
@@ -153,9 +163,9 @@ await myStream.ready
 
 for await (const record of myStream) {
   console.log(record)
-  // { dynamodb: { NewImage: {...}, OldImage: {...} }, ... }
-  // { dynamodb: { NewImage: {...}, OldImage: {...} }, ... }
-  // { dynamodb: { NewImage: {...}, OldImage: {...} }, ... }
+  // { dynamodb: { NewImage: {...}, OldImage: {...} }, oldImageJSON: {...}, newImageJSON: {...} }
+  // { dynamodb: { NewImage: {...}, OldImage: {...} }, oldImageJSON: {...}, newImageJSON: {...} }
+  // { dynamodb: { NewImage: {...}, OldImage: {...} }, oldImageJSON: {...}, newImageJSON: {...} }
 }
 ```
 
@@ -179,9 +189,10 @@ await myBucket.putObject('some-key', '{"hello":"world"}', {
   ContentType: 'application/json',
 })
 
-console.log(
-  await myBucket.getObject('some-key'),
-) // { Etag: ..., Body: '{"hello":"world"}', ContentType: 'application/json' }
+{
+  const response = await myBucket.getObject('some-key')
+  console.log(response) // { Etag: '...', Body: '{"hello":"world"}', ContentType: 'application/json' }
+}
 
 await myBucket.deleteAllObjects()
 await myBucket.delete()
