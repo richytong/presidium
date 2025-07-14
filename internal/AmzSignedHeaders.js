@@ -7,7 +7,7 @@
  * ```
  */
 const AmzSignedHeaders = function (headers) {
-  return Object.keys(headers).map(key => key.toLowerCase()).sort()
+  return Object.keys(headers).map(key => key.toLowerCase()).sort().join(';')
 }
 
 module.exports = AmzSignedHeaders

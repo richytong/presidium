@@ -6,11 +6,11 @@ const AmzCanonicalHeaders = require('./AmzCanonicalHeaders')
 const AmzSignature = require('./AmzSignature')
 
 /**
- * @name AwsPresignedUrlV4
+ * @name AwsAuthorizationHeader
  *
  * @synopsis
  * ```coffeescript [specscript]
- * AwsPresignedUrlV4(options {
+ * AwsAuthorizationHeader(options {
  *   accessKeyId: string,
  *   secretAccessKey: string,
  *   region: string,
@@ -26,7 +26,7 @@ const AmzSignature = require('./AmzSignature')
  * }) -> url string
  * ```
  */
-const AwsPresignedUrlV4 = function (options) {
+const AwsAuthorizationHeader = function (options) {
   const {
     accessKeyId,
     secretAccessKey,
@@ -42,9 +42,11 @@ const AwsPresignedUrlV4 = function (options) {
     headers = {},
   } = options
 
-  headers.Host = endpoint // host is required
+  if (!headers.Host) {
+    headers.Host = endpoint // host is required
+  }
 
-  const amzDate = AmzDate()
+  const amzDate = headers['X-Amz-Date'] ?? AmzDate()
   const datestamp = amzDate.split('T')[0]
   const algorithm = 'AWS4-HMAC-SHA256'
 
@@ -60,26 +62,21 @@ const AwsPresignedUrlV4 = function (options) {
     credentialScope,
   ].join('/')
 
-  let canonicalQueryString = ''
-
-  // aws request parameters
-  canonicalQueryString += `X-Amz-Algorithm=${encodeURIComponent(algorithm)}`
-  canonicalQueryString += `&X-Amz-Credential=${encodeURIComponent(credential)}`
-  canonicalQueryString += `&X-Amz-Date=${encodeURIComponent(amzDate)}`
-  canonicalQueryString += `&X-Amz-Expires=${encodeURIComponent(expires)}`
-  canonicalQueryString += `&X-Amz-SignedHeaders=${encodeURIComponent(AmzSignedHeaders(headers))}`
-
+  const queryParamPairs = []
   for (const key in queryParams) {
     const value = queryParams[key]
-    canonicalQueryString += `&${encodeURIComponent(key)}=${encodeURIComponent(value)}`
+    queryParamPairs.push(key, value)
   }
+  const canonicalQueryString = queryParamPairs.join('&')
+
+  const signedHeaders = AmzSignedHeaders(headers)
 
   const canonicalRequest = [
     method,
     canonicalUri,
     canonicalQueryString,
     AmzCanonicalHeaders(headers),
-    AmzSignedHeaders(headers),
+    signedHeaders,
     payloadHash,
   ].join('\n')
 
@@ -90,11 +87,11 @@ const AwsPresignedUrlV4 = function (options) {
     crypto.createHash('sha256').update(canonicalRequest, 'utf8').digest('hex')
   ].join('\n')
 
-  canonicalQueryString += `&X-Amz-Signature=${AmzSignature({
+  const signature = AmzSignature({
     secretAccessKey, datestamp, region, serviceName, stringToSign,
-  })}`
+  })
 
-  return `${protocol}://${endpoint}${canonicalUri}?${canonicalQueryString}`
+  return `${algorithm} Credential=${credential}, SignedHeaders=${signedHeaders}, Signature=${signature}`
 }
 
-module.exports = AwsPresignedUrlV4
+module.exports = AwsAuthorizationHeader
