@@ -16,9 +16,6 @@ const Readable = {}
  */
 Readable.Buffer = function Readable(readable) {
   return new Promise((resolve, reject) => {
-    if (readable._readableState.ended) {
-      reject(new Error('readable ended'))
-    }
     const chunks = []
     readable.on('data', chunk => {
       chunks.push(chunk)
@@ -46,12 +43,8 @@ Readable.Buffer = function Readable(readable) {
  */
 Readable.Text = function Readable(readable) {
   return new Promise((resolve, reject) => {
-    if (readable._readableState.ended) {
-      reject(new Error('readable ended'))
-    }
     const chunks = []
     readable.on('data', chunk => {
-      console.log('data', chunk)
       chunks.push(chunk)
     })
     readable.on('end', () => {
@@ -77,9 +70,6 @@ Readable.Text = function Readable(readable) {
  */
 Readable.JSON = function Readable(readable) {
   return new Promise((resolve, reject) => {
-    if (readable._readableState.ended) {
-      reject(new Error('readable ended'))
-    }
     const chunks = []
     readable.on('data', chunk => {
       chunks.push(chunk)
