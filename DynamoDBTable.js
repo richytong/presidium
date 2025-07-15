@@ -95,14 +95,27 @@ class DynamoDBTable {
 
     this.autoReady = options.autoReady ?? true
     if (this.autoReady) {
-      this.ready = this.exists().then(async () => {
-        await this.waitForActive()
-        return { message: 'table-exists' }
-      }).catch(async error => {
-        await this.create()
-        await this.waitForActive()
-        return { message: 'created-table' }
-      })
+      this.ready = this._readyPromise()
+    }
+  }
+
+  /**
+   * @name _readyPromise
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * table._readyPromise() -> ready Promise<>
+   * ```
+   */
+  async _readyPromise() {
+    try {
+      await this.exists()
+      await this.waitForActive()
+      return { message: 'table-exists' }
+    } catch (error) {
+      await this.create()
+      await this.waitForActive()
+      return { message: 'created-table' }
     }
   }
 
