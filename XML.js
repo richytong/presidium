@@ -1,4 +1,14 @@
 /**
+ * @name XML
+ *
+ * @docs
+ * ```coffeescript [specscript]
+ * XML object
+ * ```
+ */
+const XML = {}
+
+/**
  * @name _parseTags
  *
  * @docs
@@ -114,12 +124,6 @@ function _parseTags(xml) {
           break
 
         } else { // child element
-          // const text = xml.slice(textStart, i).trim()
-          // console.log('child text', text, { textStart, i })
-          // if (text) {
-          // $children.push(text)
-          // }
-
           const child = node()
           $children.push(child)
           textStart = i
@@ -148,6 +152,23 @@ function _parseTags(xml) {
  *
  * @docs
  * ```coffeescript [specscript]
+ * type AST = {
+ *   $name: string,
+ *   $children: Array<string|AST>,
+ *   ...attributes
+ * }
+ *
+ * type RootAST = {
+ *   $preamble: {
+ *     version: string,
+ *     encoding: string
+ *   },
+ *   $name: string,
+ *   $children: Array<string|AST>,
+ *   ...attributes
+ * }
+ *
+ * parseXML(xml string) -> ast RootAST
  * ```
  */
 function parseXML(xml) {
@@ -175,4 +196,6 @@ function parseXML(xml) {
   return ast
 }
 
-module.exports = parseXML
+XML.parse = parseXML
+
+module.exports = XML

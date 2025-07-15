@@ -1,17 +1,17 @@
 const assert = require('assert')
-const parseXML = require('./parseXML')
+const XML = require('./XML')
 
-describe('parseXML', () => {
+describe('XML', () => {
   it('Parses the XML optional preamble', async () => {
     assert.deepEqual(
-      parseXML('<?xml version="1.0" encoding="UTF-8"?>'),
+      XML.parse('<?xml version="1.0" encoding="UTF-8"?>'),
       { $preamble: { version: '1.0', encoding: 'UTF-8' } }
     )
   })
 
   it('Parses XML tags 1', async () => {
     assert.deepEqual(
-      parseXML(`
+      XML.parse(`
 <Test a="1">
   <Sub>Content</Sub>
 </Test>
@@ -32,7 +32,7 @@ describe('parseXML', () => {
 
   it('Parses XML tags 2', async () => {
     assert.deepEqual(
-      parseXML(
+      XML.parse(
         '<D><Sub c="3"> <Sub>a</Sub> Content</Sub>  <Sub2 d="/////">    <Sub3 e="nested"> </Sub3>  </Sub2> </D>'
       ),
       {
@@ -67,7 +67,7 @@ describe('parseXML', () => {
 
   it('Parses XML tags 3', async () => {
     assert.deepEqual(
-      parseXML(
+      XML.parse(
         `
 <?xml version="1.0" encoding="UTF-8"?>
 <Root>
@@ -120,28 +120,28 @@ describe('parseXML', () => {
 
   it('Throws SyntaxError for malformed tag', async () => {
     assert.throws(
-      () => parseXML('asdf'),
+      () => XML.parse('asdf'),
       new SyntaxError('Malformed tag')
     )
   })
 
   it('Throws SyntaxError for unquoted tag', async () => {
     assert.throws(
-      () => parseXML('<Test a=1 />'),
+      () => XML.parse('<Test a=1 />'),
       new SyntaxError('Expected quote for attribute value')
     )
   })
 
   it('Throws SyntaxError for mismatched tag', async () => {
     assert.throws(
-      () => parseXML('<Test></Test2>'),
+      () => XML.parse('<Test></Test2>'),
       new SyntaxError('Mismatched </Test2> – expected </Test>')
     )
   })
 
   it('Throws SyntaxError for extra content after root tag', async () => {
     assert.throws(
-      () => parseXML('<Test></Test>extra'),
+      () => XML.parse('<Test></Test>extra'),
       new SyntaxError('Extra content')
     )
   })
