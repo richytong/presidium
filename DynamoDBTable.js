@@ -142,7 +142,7 @@ class DynamoDBTable {
       method,
       endpoint: this.endpoint,
       protocol: this.protocol,
-      canonicalUri: '/',
+      canonicalUri: url,
       serviceName: 'dynamodb',
       payloadHash: sha256(payload),
       expires: 300,
