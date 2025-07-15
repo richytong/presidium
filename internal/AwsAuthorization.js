@@ -14,13 +14,13 @@ const AmzSignature = require('./AmzSignature')
  *   accessKeyId: string,
  *   secretAccessKey: string,
  *   region: string,
- *   method: string, // GET
- *   endpoint: string, // transcribestreaming.${region}.amazonaws.com:8443
- *   protocol: string, // wss
- *   canonicalUri: string, // /stream-transcription-websocket
- *   serviceName: string, // transcribe
+ *   method: string, # GET
+ *   endpoint: string, # transcribestreaming.${region}.amazonaws.com:8443
+ *   protocol: string, # wss
+ *   canonicalUri: string, # /stream-transcription-websocket
+ *   serviceName: string, # transcribe
  *   payloadHash: string,
- *   expires: number, // 300
+ *   expires: number, # 300
  *   queryParams: URLSearchParams,
  *   headers: Object,
  * }) -> headerField string
