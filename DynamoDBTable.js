@@ -148,6 +148,13 @@ class DynamoDBTable {
       'X-Amz-Target': amzTarget
     }
 
+    const amzHeaders = {}
+    for (const key in headers) {
+      if (key.toLowerCase().startsWith('x-amz')) {
+        amzHeaders[key] = headers[key]
+      }
+    }
+
     headers['Authorization'] = AwsAuthorization({
       accessKeyId: this.accessKeyId,
       secretAccessKey: this.secretAccessKey,
@@ -163,8 +170,7 @@ class DynamoDBTable {
       queryParams: new URLSearchParams(),
       headers: {
         'Host': this.endpoint,
-        'X-Amz-Date': amzDate,
-        'X-Amz-Target': amzTarget
+        ...amzHeaders
       }
     })
 
