@@ -6,11 +6,11 @@ const AmzCanonicalHeaders = require('./AmzCanonicalHeaders')
 const AmzSignature = require('./AmzSignature')
 
 /**
- * @name AwsAuthorizationHeader
+ * @name AwsAuthorization
  *
  * @synopsis
  * ```coffeescript [specscript]
- * AwsAuthorizationHeader(options {
+ * AwsAuthorization(options {
  *   accessKeyId: string,
  *   secretAccessKey: string,
  *   region: string,
@@ -20,13 +20,13 @@ const AmzSignature = require('./AmzSignature')
  *   canonicalUri: string, // /stream-transcription-websocket
  *   serviceName: string, // transcribe
  *   payloadHash: string,
- *   expires?: number, // 300
- *   queryParams?: Object,
- *   headers?: Object,
- * }) -> url string
+ *   expires: number, // 300
+ *   queryParams: URLSearchParams,
+ *   headers: Object,
+ * }) -> headerField string
  * ```
  */
-const AwsAuthorizationHeader = function (options) {
+const AwsAuthorization = function (options) {
   const {
     accessKeyId,
     secretAccessKey,
@@ -41,10 +41,6 @@ const AwsAuthorizationHeader = function (options) {
     queryParams = {},
     headers = {},
   } = options
-
-  if (!headers.Host) {
-    headers.Host = endpoint // host is required
-  }
 
   const amzDate = headers['X-Amz-Date'] ?? AmzDate()
   const datestamp = amzDate.split('T')[0]
@@ -62,12 +58,7 @@ const AwsAuthorizationHeader = function (options) {
     credentialScope,
   ].join('/')
 
-  const queryParamPairs = []
-  for (const key in queryParams) {
-    const value = queryParams[key]
-    queryParamPairs.push(key, value)
-  }
-  const canonicalQueryString = queryParamPairs.join('&')
+  const canonicalQueryString = queryParams.toString()
 
   const signedHeaders = AmzSignedHeaders(headers)
 
@@ -94,4 +85,4 @@ const AwsAuthorizationHeader = function (options) {
   return `${algorithm} Credential=${credential}, SignedHeaders=${signedHeaders}, Signature=${signature}`
 }
 
-module.exports = AwsAuthorizationHeader
+module.exports = AwsAuthorization

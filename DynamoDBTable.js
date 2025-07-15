@@ -4,7 +4,7 @@ require('aws-sdk/lib/maintenance_mode_message').suppress = true
 const Dynamo = require('./internal/Dynamo')
 const HTTP = require('./HTTP')
 const userAgent = require('./userAgent')
-const AwsAuthorizationHeader = require('./internal/AwsAuthorizationHeader')
+const AwsAuthorization = require('./internal/AwsAuthorization')
 const AmzDate = require('./internal/AmzDate')
 const Readable = require('./Readable')
 const AwsError = require('./internal/AwsError')
@@ -126,6 +126,7 @@ class DynamoDBTable {
     const amzTarget = `DynamoDB_${this.apiVersion.replace(/-/g, '')}.${action}`
 
     const headers = {
+      'Host': this.endpoint,
       'Accept-Encoding': 'identity',
       'Content-Length': Buffer.byteLength(payload, 'utf8'),
       'User-Agent': userAgent,
@@ -134,7 +135,7 @@ class DynamoDBTable {
       'X-Amz-Target': amzTarget
     }
 
-    headers['Authorization'] = AwsAuthorizationHeader({
+    headers['Authorization'] = AwsAuthorization({
       accessKeyId: this.accessKeyId,
       secretAccessKey: this.secretAccessKey,
       region: this.region,
@@ -145,7 +146,7 @@ class DynamoDBTable {
       serviceName: 'dynamodb',
       payloadHash: sha256(payload),
       expires: 300,
-      queryParams: {},
+      queryParams: new URLSearchParams(),
       headers: {
         'Host': this.endpoint,
         'X-Amz-Date': amzDate,
@@ -168,7 +169,8 @@ class DynamoDBTable {
     const payload = JSON.stringify({
       TableName: this.name
     })
-    const response = await this._awsRequest('POST', '/', 'DescribeTable', payload)
+    const response =
+      await this._awsRequest('POST', '/', 'DescribeTable', payload)
 
     if (response.ok) {
       return undefined
