@@ -1,6 +1,7 @@
 require('rubico/global')
 const { identity } = require('rubico/x')
 require('aws-sdk/lib/maintenance_mode_message').suppress = true
+const crypto = require('crypto')
 const Dynamo = require('./internal/Dynamo')
 const HTTP = require('./HTTP')
 const userAgent = require('./userAgent')
@@ -8,7 +9,6 @@ const AwsAuthorization = require('./internal/AwsAuthorization')
 const AmzDate = require('./internal/AmzDate')
 const Readable = require('./Readable')
 const AwsError = require('./internal/AwsError')
-const sha256 = require('./internal/sha256')
 const hashJSON = require('./internal/hashJSON')
 const sleep = require('./internal/sleep')
 const join = require('./internal/join')
@@ -157,7 +157,8 @@ class DynamoDBTable {
       protocol: this.protocol,
       canonicalUri: url,
       serviceName: 'dynamodb',
-      payloadHash: sha256(payload),
+      payloadHash:
+        crypto.createHash('sha256').update(payload, 'utf8').digest('hex'),
       expires: 300,
       queryParams: new URLSearchParams(),
       headers: {
