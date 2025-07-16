@@ -148,7 +148,7 @@ function _parseTags(xml) {
 }
 
 /**
- * @name parseXML
+ * @name XML.parse
  *
  * @docs
  * ```coffeescript [specscript]
@@ -168,10 +168,10 @@ function _parseTags(xml) {
  *   ...attributes
  * }
  *
- * parseXML(xml string) -> ast RootAST
+ * XML.parse(xml string) -> ast RootAST
  * ```
  */
-function parseXML(xml) {
+XML.parse = function parse(xml) {
   xml = xml.replace(/\n/g, '')
   xml = xml.trim()
   const ast = {}
@@ -195,7 +195,5 @@ function parseXML(xml) {
 
   return ast
 }
-
-XML.parse = parseXML
 
 module.exports = XML
