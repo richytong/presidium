@@ -282,7 +282,7 @@ class DynamoDBTable {
   }
 
   /**
-   * @name close
+   * @name closeConnections
    *
    * @docs
    * ```coffeescript [specscript]
