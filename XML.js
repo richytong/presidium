@@ -190,7 +190,7 @@ XML.parse = function parse(xml) {
   }
 
   if (xml) {
-    return { ...ast, ..._parseTags(xml) }
+    Object.assign(ast, _parseTags(xml))
   }
 
   return ast
