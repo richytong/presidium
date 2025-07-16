@@ -8,7 +8,7 @@ const TranscribeStream = require('./TranscribeStream')
 const AwsCredentials = require('./AwsCredentials')
 
 const test = new Test('TranscribeStream', async function integration() {
-  const awsCreds = await AwsCredentials('default')
+  const awsCreds = await AwsCredentials('presidium')
   awsCreds.region = 'us-east-1' // only valid region for transcribe
 
   const testTranscribeStream = new TranscribeStream({
