@@ -5,20 +5,10 @@ const WaveFile = require('wavefile').WaveFile
 const Test = require('thunk-test')
 const assert = require('assert')
 const TranscribeStream = require('./TranscribeStream')
-const AwsCredentials = require('./internal/AwsCredentials')
+const AwsCredentials = require('./AwsCredentials')
 
 const test = new Test('TranscribeStream', async function integration() {
-  const awsCreds = await AwsCredentials('default').catch(error => {
-    if (error.code == 'ENOENT') {
-      const accessKeyId = process.env.AWS_ACCESS_KEY_ID
-      const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY
-      if (accessKeyId == null || secretAccessKey == null) {
-        throw new Error('No AWS credential file or environment variables')
-      }
-      return { accessKeyId, secretAccessKey }
-    }
-    throw error
-  })
+  const awsCreds = await AwsCredentials('default')
   awsCreds.region = 'us-east-1' // only valid region for transcribe
 
   const testTranscribeStream = new TranscribeStream({

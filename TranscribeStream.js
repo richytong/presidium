@@ -1,7 +1,7 @@
 require('rubico/global')
 const EventEmitter = require('events')
+const crypto = require('crypto')
 const WebSocket = require('./WebSocket')
-const sha256 = require('./internal/sha256')
 const AwsPresignedUrlV4 = require('./internal/AwsPresignedUrlV4')
 const Crc32 = require('./internal/Crc32')
 
@@ -93,7 +93,7 @@ class TranscribeStream extends EventEmitter {
       protocol: 'wss',
       canonicalUri: '/stream-transcription-websocket',
       serviceName: 'transcribe',
-      payloadHash: sha256(''),
+      payloadHash: crypto.createHash('sha256').update('', 'utf8').digest('hex'),
       expires: 300,
       queryParams: {
         'language-code': languageCode,
