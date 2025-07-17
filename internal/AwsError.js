@@ -13,9 +13,9 @@ class AwsError extends Error {
     super()
 
     if (message.startsWith('<?xml')) {
-      const ast = XML.parse(message)
-      this.name = ast.$children.find(child => child.$name == 'Code')?.$children[0] ?? 'AwsError'
-      this.message = ast.$children.find(child => child.$name == 'Message')?.$children[0] ?? ''
+      const data = XML.parse(message)
+      this.name = data.Error.Code
+      this.message = data.Error.Message
     } else {
       try {
         const data = JSON.parse(message)
