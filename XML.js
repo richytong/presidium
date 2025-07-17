@@ -149,10 +149,6 @@ function _parseTags(xml) {
  * ```
  */
 function normalize(node) {
-  if (typeof node == 'string') {
-    return node
-  }
-
   const result = {}
   for (const key in node) {
     const value = node[key]
@@ -174,17 +170,23 @@ function normalize(node) {
   }
 
   for (const child of node.$children) {
-    const key = child.$name
-    const value = normalize(child)
+    console.log('result', result)
+    console.log('child', child)
 
-    if (Object.prototype.hasOwnProperty.call(result, key)) {
-      if (Array.isArray(result[key])) {
-        result[key].push(value)
-      } else {
-        result[key] = [result[key], value]
-      }
+    if (typeof child == 'string') {
     } else {
-      result[key] = value
+      const key = child.$name
+      const value = normalize(child)
+
+      if (Object.prototype.hasOwnProperty.call(result, key)) {
+        if (Array.isArray(result[key])) {
+          result[key].push(value)
+        } else {
+          result[key] = [result[key], value]
+        }
+      } else {
+        result[key] = value
+      }
     }
   }
 

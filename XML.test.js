@@ -216,8 +216,6 @@ describe('XML', () => {
   <Test2>a <Test3></Test3></Test2>
 </Test>
     `.trim()
-    console.log(JSON.stringify(XML.parse(xml, { ast: true })))
-    // process.exit()
     const data = XML.parse(xml)
     assert.deepEqual(data, { Test: { Test2: ['a', { Test3: '' }] } })
   })
