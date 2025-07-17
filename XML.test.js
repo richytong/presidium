@@ -210,7 +210,7 @@ describe('XML', () => {
     assert.deepEqual(data, { Test: 'test' })
   })
 
-  xit('Parses XML tags 6', async () => {
+  it('Parses XML tags 6', async () => {
     const xml = `
 <Test>
   <Test2>a <Test3></Test3></Test2>
@@ -219,7 +219,7 @@ describe('XML', () => {
     console.log(JSON.stringify(XML.parse(xml, { ast: true })))
     // process.exit()
     const data = XML.parse(xml)
-    assert.deepEqual(data, { Test: { Test2: ['a', { Test3: null }] } })
+    assert.deepEqual(data, { Test: { Test2: ['a', { Test3: '' }] } })
   })
 
   it('Throws SyntaxError for malformed tag', async () => {

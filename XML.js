@@ -25,118 +25,110 @@ const XML = {}
  * ```
  */
 function _parseTags(xml) {
-  xml = xml.trim();
-  let i = 0;
+  xml = xml.trim()
+  let i = 0
 
-  const ws   = /\s/;        // whitespace characters
-  const name = /[^\s/>]/;   // a single “name” rune
+  const ws   = /\s/
+  const name = /[^\s/>]/
 
-  /* ------------------------------------------------------------- */
-  /* helpers                                                       */
-  /* ------------------------------------------------------------- */
   function skipWS() {
-    while (ws.test(xml[i])) i++;
+    while (ws.test(xml[i])) {
+      i++
+    }
   }
 
-  /* ------------------------------------------------------------- */
-  /* recursive-descent element parser                              */
-  /* ------------------------------------------------------------- */
   function node() {
-    if (xml[i] !== '<' || xml[i + 1] === '/') {
-      throw new SyntaxError('Malformed tag');
+    if (xml[i] != '<' || xml[i + 1] == '/') {
+      throw new SyntaxError('Malformed tag')
     }
 
-    /* ---------- open-tag ---------- */
-    i++;                                 // skip '<'
-    const tagStart = i;
-    while (name.test(xml[i])) i++;
-    const $name = xml.slice(tagStart, i); // tag name
+    i++
+    const tagStart = i
+    while (name.test(xml[i])) i++
+    const $name = xml.slice(tagStart, i)
 
-    /* ---------- attributes -------- */
-    const attributes = {};
-    skipWS();
+    const attributes = {}
+    skipWS()
 
-    while (xml[i] !== '>' && xml[i] !== '/') {
-      const keyStart = i;
-      while (!ws.test(xml[i]) && xml[i] !== '=') i++;
-      const key = xml.slice(keyStart, i);
+    while (xml[i] != '>' && xml[i] != '/') {
+      const keyStart = i
+      while (!ws.test(xml[i]) && xml[i] != '=') {
+        i++
+      }
+      const key = xml.slice(keyStart, i)
 
-      skipWS();
+      skipWS()
 
-      if (xml[i] === '=') {
-        i++;
-        skipWS();
+      if (xml[i] == '=') {
+        i++
+        skipWS()
 
-        const q = xml[i];
-        if (q !== '"' && q !== "'") {
-          throw new SyntaxError('Expected quote for attribute value');
+        const q = xml[i]
+        if (q != '"' && q != "'") {
+          throw new SyntaxError('Expected quote for attribute value')
         }
 
-        i++;                         // skip opening quote
-        const valStart = i;
-        while (xml[i] !== q) i++;
-        attributes[key] = xml.slice(valStart, i);
-        i++;                         // skip closing quote
+        i++
+        const valStart = i
+        while (xml[i] !== q) i++
+        attributes[key] = xml.slice(valStart, i)
+        i++
       }
 
-      skipWS();
+      skipWS()
     }
 
-    /* ---------- self-closing? ----- */
-    if (xml[i] === '/') {
-      i += 2;                        // skip "/>"
-      return { $name, ...attributes, $children: [] };
+    if (xml[i] == '/') {
+      i += 2
+      return { $name, ...attributes, $children: [] }
     }
 
-    i++;                             // skip '>'
+    i++
 
-    /* ---------- children / text --- */
-    const $children = [];
-    let textStart = i;
+    const $children = []
+    let textStart = i
 
     while (true) {
-      if (xml[i] === '<') {
+      if (xml[i] == '<') {
 
-        /* ‼️ NEW: flush text that appears **before** a child or closing tag */
-        const raw = xml.slice(textStart, i);
-        const trimmed = raw.trim();
-        if (trimmed) $children.push(trimmed);
+        const raw = xml.slice(textStart, i)
+        const trimmed = raw.trim()
+        if (trimmed) $children.push(trimmed)
 
-        if (xml[i + 1] === '/') {            //   </tag>
-          i += 2;                            // skip '</'
-          const closeStart = i;
-          while (xml[i] !== '>') i++;
-          const closeTag = xml.slice(closeStart, i);
-          if (closeTag !== $name) {
+        if (xml[i + 1] === '/') {
+          i += 2
+          const closeStart = i
+          while (xml[i] != '>') {
+            i++
+          }
+          const closeTag = xml.slice(closeStart, i)
+          if (closeTag != $name) {
             throw new SyntaxError(
               `Mismatched </${closeTag}> – expected </${$name}>`
-            );
+            )
           }
-          i++;                               // skip '>'
-          break;                             // element done
+          i++
+          break
         }
 
-        /* ---------- nested element ----- */
-        const child = node();
-        $children.push(child);
-        textStart = i;                       // reset text buffer start
+        const child = node()
+        $children.push(child)
+        textStart = i
 
       } else {
-        i++;                                 // plain character, keep scanning
+        i++
       }
     }
 
     return { $name, ...attributes, $children };
   }
 
-  /* ------------------------------------------------------------- */
-  /* kick-off and final sanity check                               */
-  /* ------------------------------------------------------------- */
-  const root = node();
-  if (i !== xml.length) {
-    throw new SyntaxError('Extra content');
+  const root = node()
+  if (i != xml.length) {
+    throw new SyntaxError('Extra content')
   }
-  return root;
+
+  return root
 }
 
 /**
