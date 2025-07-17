@@ -225,6 +225,74 @@ function _convert(tree) {
   return { [rootKey]: normalize(tree) }
 }
 
+const sAttributes = Symbol('attributes')
+
+/**
+ * @name _convert2
+ *
+ * @docs
+ * ```coffeescript [specscript]
+ * type AST = {
+ *   $preamble: object,
+ *   $name: string,
+ *   $children: Array<string|AST>,
+ *   ...attributes
+ * }
+ *
+ * _convert2(ast AST) -> data object
+ * ```
+ */
+function _convert2(ast) {
+  const { $preamble, $name, $children, ...attributes } = ast
+
+  const result = {}
+
+  if ($children) {
+    for (const child of $children) {
+      if (typeof child == 'string') {
+        if (result[$name]) { // loses attributes
+          console.log('test')
+          result[$name] = [result[$name], child]
+        } else {
+          result[$name] = child
+        }
+      } else if (child.$name) {
+        if (result[$name]) {
+          // console.log('child.$name', child.$name)
+          // console.log('typeof result[$name]', typeof result[$name], result[$name])
+          if (typeof result[$name] == 'string') {
+            if (Array.isArray(result[$name])) {
+              result[$name].push(_convert2(child))
+            } else {
+              // console.log('string', child, _convert2(child))
+              result[$name] = [result[$name], _convert2(child)]
+            }
+          } else if (child.$name in result[$name]) { // create array under child.$name
+            if (Array.isArray(result[$name][child.$name])) {
+              result[$name][child.$name].push(_convert2(child)[child.$name])
+            } else {
+              result[$name][child.$name] = [
+                result[$name][child.$name],
+                _convert2(child)[child.$name]
+              ]
+            }
+          } else {
+            result[$name] = Object.assign(result[$name], _convert2(child))
+            Object.assign(result[$name], attributes)
+          }
+        } else {
+          result[$name] = _convert2(child)
+          Object.assign(result[$name], attributes)
+        }
+      } else {
+        throw new TypeError('Invalid child')
+      }
+    }
+  }
+
+  return result
+}
+
 /**
  * @name XML.parse
  *
@@ -281,7 +349,7 @@ XML.parse = function parse(xml, options = {}) {
     return ast
   }
 
-  return _convert(ast)
+  return _convert2(ast)
 }
 
 module.exports = XML
