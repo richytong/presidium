@@ -287,15 +287,17 @@ describe('XML', () => {
     })
   })
 
-  it('Parses XML tags 13 (loses attributes for single text child)', async () => {
+  it('Parses XML tags 13', async () => {
     const xml = `
 <?xml version="1.0" encoding="UTF-8"?>
 <LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">us-west-1</LocationConstraint>
     `.trim()
 
     const data = XML.parse(xml)
+    const region = new String('us-west-1')
+    region.xmlns = 'http://s3.amazonaws.com/doc/2006-03-01/'
     assert.deepEqual(data, {
-      LocationConstraint: 'us-west-1'
+      LocationConstraint: region
     })
   })
 

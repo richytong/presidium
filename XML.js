@@ -132,6 +132,23 @@ function _parseTags(xml) {
 }
 
 /**
+ * @name _String
+ *
+ * @docs
+ * ```coffeescript [specscript]
+ * _String(value string, attributes object) -> string|String { ...attributes }
+ * ```
+ */
+function _String(value, attributes) {
+  if (Object.keys(attributes).length > 0) {
+    const result = new String(value)
+    Object.assign(result, attributes)
+    return result
+  }
+  return value
+}
+
+/**
  * @name _convert
  *
  * @docs
@@ -165,12 +182,12 @@ function _convert(ast) {
 
         if (result[$name]) {
           if (Array.isArray(result[$name])) {
-            result[$name].push(child)
+            result[$name].push(_String(child, attributes))
           } else {
-            result[$name] = [result[$name], child]
+            result[$name] = [result[$name], _String(child, attributes)]
           }
         } else {
-          result[$name] = child
+          result[$name] = _String(child, attributes)
         }
 
       } else { // child ast
