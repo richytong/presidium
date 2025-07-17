@@ -3,7 +3,7 @@ const EventEmitter = require('events')
 const crypto = require('crypto')
 const WebSocket = require('./WebSocket')
 const AwsPresignedUrlV4 = require('./internal/AwsPresignedUrlV4')
-const Crc32 = require('./internal/Crc32')
+const CRC32 = require('./internal/CRC32')
 
 // All prelude components are unsigned, 32-bit integers
 const PRELUDE_MEMBER_LENGTH = 4
@@ -158,7 +158,7 @@ class TranscribeStream extends EventEmitter {
     const length = headersBytes.byteLength + chunk.byteLength + 16
     const bytes = new Uint8Array(length)
     const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-    const checksum = new Crc32()
+    const checksum = new CRC32()
 
     view.setUint32(0, length, false)
     view.setUint32(4, headersBytes.byteLength, false)
