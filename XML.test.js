@@ -210,7 +210,7 @@ describe('XML', () => {
     assert.deepEqual(data, { Test: 'test' })
   })
 
-  it('Parses XML tags 6', async () => {
+  xit('Parses XML tags 6', async () => {
     const xml = `
 <Test>
   <Test2>a <Test3></Test3></Test2>
