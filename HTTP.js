@@ -164,10 +164,12 @@ class HTTP {
       if (
         Buffer.isBuffer(body)
         || ArrayBuffer.isView(body)
-        || typeof body == 'string'
       ) {
         request.end(body)
-      } else if (stream.isReadable(body)) {
+      } else if (typeof body == 'string') {
+        request.end(Buffer.from(body, 'utf8'))
+      }
+      else if (stream.isReadable(body)) {
         body.pipe(request)
       } else if (body == null) {
         request.end()
