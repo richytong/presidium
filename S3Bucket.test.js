@@ -2,35 +2,50 @@ const assert = require('assert')
 const Test = require('thunk-test')
 const _S3 = require('./internal/_S3')
 const S3Bucket = require('./S3Bucket')
+const AwsCredentials = require('./AwsCredentials')
 
-const test = new Test('S3Bucket', (...args) => new S3Bucket(...args))
+const test1 = new Test('S3Bucket', async function integration1() {
+  const awsCreds = await AwsCredentials('presidium')
+  awsCreds.region = 'us-east-1'
 
-.before(async function () {
-  this._s3 = new _S3({
-    accessKeyId: 'minioadmin',
-    secretAccessKey: 'minioadmin',
-    endpoint: 'http://localhost:9000',
+  // const n = Math.floor(100000 + Math.random() * 900000)
+  const n = 1
+  const bucketName = `test-bucket-presidium-${n}`
+
+  {
+    const testBucket = new S3Bucket({
+      name: bucketName,
+      ...awsCreds,
+      autoReady: false
+    })
+
+    await testBucket.deleteAllObjects().catch(() => {})
+    await testBucket.delete().catch(() => {})
+    testBucket.closeConnections()
+  }
+
+  {
+    const testBucket = new S3Bucket({
+      name: bucketName,
+      ...awsCreds
+    })
+    const { message } = await testBucket.ready
+    assert.equal(message, 'created-bucket')
+    testBucket.closeConnections()
+  }
+
+  const testBucket = new S3Bucket({
+    name: bucketName,
+    ...awsCreds
   })
-  try {
-    await new S3Bucket({
-      name: 'test-bucket',
-      accessKeyId: 'minioadmin',
-      secretAccessKey: 'minioadmin',
-      endpoint: 'http://localhost:9000',
-    }).deleteAllObjects()
-    await this._s3.deleteBucket('test-bucket')
-  } catch {}
-})
 
-.case({
-  name: 'test-bucket',
-  accessKeyId: 'minioadmin',
-  secretAccessKey: 'minioadmin',
-  endpoint: 'http://localhost:9000/',
-}, async function (testBucket) {
-  await testBucket.ready
+  {
+    const { message } = await testBucket.ready
+    assert.equal(message, 'bucket-exists')
+  }
 
   await testBucket.deleteAllObjects()
+
   await testBucket.deleteObject('binary')
 
   await testBucket.putObject('a', JSON.stringify({ id: 'a' }), {
@@ -47,19 +62,24 @@ const test = new Test('S3Bucket', (...args) => new S3Bucket(...args))
   assert(s3Objects.Contents[0].Key == 'a')
   assert(s3Objects.Contents[1].Key == 'b')
   assert(s3Objects.Contents[2].Key == 'c')
-  await testBucket.putObject('binary', Buffer.from('binary'))
+
+  {
+    const response = await testBucket.putObject('binary', Buffer.from('binary'))
+    assert.equal(typeof response.ETag, 'string')
+  }
+
   const binary = await testBucket.getObject('binary')
-  assert(binary.ContentType == 'application/octet-stream')
+  assert.equal(binary.ContentType, 'application/octet-stream')
   assert.deepEqual(binary.Body, Buffer.from('binary'))
 
-  const res = await testBucket.upload('buffer', Buffer.from('buffer'))
+  const res = await testBucket.putObject('buffer', Buffer.from('buffer'))
   const buffer = await testBucket.getObject('buffer')
   assert(buffer.ContentType == 'application/octet-stream')
   assert.deepEqual(buffer.Body, Buffer.from('buffer'))
 
   {
     const key = 'buffer2'
-    await testBucket.upload(key, Buffer.from('buffer'))
+    await testBucket.putObject(key, Buffer.from('buffer'))
     const headRes = await testBucket.headObject(key)
     assert.equal(headRes.ContentLength, 6)
     const res = await testBucket.getObjectStream(key)
@@ -92,7 +112,6 @@ const test = new Test('S3Bucket', (...args) => new S3Bucket(...args))
 
   {
     const response = await testBucket.listObjects({ Prefix: 'c', Delimiter: '/' })
-    console.log(response)
     assert.equal(response.Contents.length, 1)
     assert.equal(response.Contents[0].Key, 'c')
     assert.equal(response.Prefix, 'c')
@@ -113,10 +132,121 @@ const test = new Test('S3Bucket', (...args) => new S3Bucket(...args))
     const deleted = await testBucket.delete()
     assert.deepEqual(deleted, {})
   }
-})
+
+  testBucket.closeConnections()
+}).case()
+
+const test2 = new Test('S3Bucket', async function integration2() {
+  const awsCreds = await AwsCredentials('presidium')
+  awsCreds.region = 'us-east-1'
+  const bucketName = 'test-bucket-presidium-2'
+
+  {
+    const testBucket2 = new S3Bucket({
+      name: bucketName,
+      ACL: 'public-read',
+      ObjectOwnership: 'BucketOwnerPreferred',
+      BlockPublicAccess: false,
+      BlockPublicACLs: false,
+      IgnorePublicAcls: false,
+      RestrictPublicBuckets: false,
+      RequestPayer: 'Requester',
+      autoReady: false,
+      ...awsCreds,
+    })
+
+    await testBucket2.deleteAllObjects().catch(() => {})
+    await testBucket2.delete().catch(() => {})
+    testBucket2.closeConnections()
+  }
+
+  {
+    const testBucket2 = new S3Bucket({
+      name: bucketName,
+      ACL: 'public-read',
+      ObjectOwnership: 'BucketOwnerPreferred',
+      BlockPublicAccess: false,
+      BlockPublicACLs: false,
+      IgnorePublicAcls: false,
+      RestrictPublicBuckets: false,
+      RequestPayer: 'Requester',
+      ...awsCreds
+    })
+    const { message } = await testBucket2.ready
+    assert.equal(message, 'created-bucket')
+    testBucket2.closeConnections()
+  }
+
+  const testBucket2 = new S3Bucket({
+    name: bucketName,
+    ACL: 'public-read',
+    ObjectOwnership: 'BucketOwnerPreferred',
+    BlockPublicAccess: false,
+    BlockPublicACLs: false,
+    IgnorePublicAcls: false,
+    RestrictPublicBuckets: false,
+    RequestPayer: 'Requester',
+    ...awsCreds
+  })
+
+  {
+    const { message } = await testBucket2.ready
+    assert.equal(message, 'bucket-exists')
+  }
+
+  { // ACL option
+    const key = 'test/acl'
+    const data1 = await testBucket2.putObject(key, 'test', {
+      ACL: 'aws-exec-read'
+    })
+    assert.equal(typeof data1.ETag, 'string')
+
+    const data2 = await testBucket2.getObject(key)
+    assert.equal(data2.ContentType, 'application/octet-stream')
+
+    const data3 = await testBucket2.getObjectACL(key)
+    assert.equal(data3.Grants.length, 2)
+    for (const Grant of data3.Grants) {
+      assert.equal(Grant.Grantee.Type, 'CanonicalUser')
+    }
+    assert.equal(data3.Grants[0].Permission, 'FULL_CONTROL')
+    assert.equal(data3.Grants[1].Permission, 'READ')
+  }
+
+  { // ACL option 2
+    const key = 'test/acl2'
+    const data1 = await testBucket2.putObject(key, 'test', {
+      ACL: 'public-read-write'
+    }) // should not error
+    assert.equal(typeof data1.ETag, 'string')
+
+    const data2 = await testBucket2.getObject(key)
+    assert.equal(data2.ContentType, 'application/octet-stream')
+
+    const data3 = await testBucket2.getObjectACL(key)
+  }
+
+  { // CacheControl option
+    const key = 'test/cache-control'
+    const data1 = await testBucket2.putObject(key, 'test', {
+      CacheControl: 'nocache'
+    })
+    const data2 = await testBucket2.getObject(key)
+    assert.equal(data2.CacheControl, 'nocache')
+  }
+
+  testBucket2.closeConnections()
+}).case()
+
+const test = Test.all([
+  test1,
+  test2
+])
 
 if (process.argv[1] == __filename) {
   test()
+  // test0()
+  // test2()
 }
 
 module.exports = test
