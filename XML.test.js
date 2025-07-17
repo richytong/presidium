@@ -4,7 +4,7 @@ const XML = require('./XML')
 describe('XML', () => {
   it('Parses the XML optional preamble', async () => {
     assert.deepEqual(
-      XML.parse('<?xml version="1.0" encoding="UTF-8"?>'),
+      XML.parse('<?xml version="1.0" encoding="UTF-8"?>', { ast: true }),
       { $preamble: { version: '1.0', encoding: 'UTF-8' } }
     )
   })
@@ -15,7 +15,7 @@ describe('XML', () => {
 <Test a="1">
   <Sub>Content</Sub>
 </Test>
-      `),
+      `, { ast: true }),
       {
         $name: 'Test',
         a: '1',
@@ -33,7 +33,8 @@ describe('XML', () => {
   it('Parses XML tags 2', async () => {
     assert.deepEqual(
       XML.parse(
-        '<D><Sub c="3"> <Sub>a</Sub> Content</Sub>  <Sub2 d="/////">    <Sub3 e="nested"> </Sub3>  </Sub2> </D>'
+        '<D><Sub c="3"> <Sub>a</Sub> Content</Sub>  <Sub2 d="/////">    <Sub3 e="nested"> </Sub3>  </Sub2> </D>',
+        { ast: true }
       ),
       {
         $name: 'D',
@@ -78,7 +79,8 @@ describe('XML', () => {
     </Sub2>
   </Test>
 </Root>
-        `.trim()
+        `.trim(),
+        { ast: true }
       ),
       {
         $preamble: { version: '1.0', encoding: 'UTF-8' },
@@ -116,6 +118,108 @@ describe('XML', () => {
       }
     )
 
+  })
+
+  it('Parses XML tags 4', async () => {
+    const data = XML.parse(`
+<?xml version="1.0" encoding="UTF-8"?>
+<AccessControlPolicy xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <Owner>
+    <ID>370c43724c254f9494e4e7b36be4b774e1be6e75c7c6060e79aee71c6641a5c2</ID>
+    <DisplayName>name1</DisplayName>
+  </Owner>
+
+  <AccessControlList>
+    <Grant>
+      <Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser">
+        <ID>370c43724c254f9494e4e7b36be4b774e1be6e75c7c6060e79aee71c6641a5c2</ID>
+        <DisplayName>name1</DisplayName>
+      </Grantee>
+      <Permission>FULL_CONTROL1</Permission>
+    </Grant>
+
+    <Grant>
+      <Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser">
+        <ID>370c43724c254f9494e4e7b36be4b774e1be6e75c7c6060e79aee71c6641a5c3</ID>
+        <DisplayName>name2</DisplayName>
+      </Grantee>
+      <Permission>FULL_CONTROL2</Permission>
+    </Grant>
+
+    <Grant>
+      <Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser">
+        <ID>370c43724c254f9494e4e7b36be4b774e1be6e75c7c6060e79aee71c6641a5c4</ID>
+        <DisplayName>name3</DisplayName>
+      </Grantee>
+      <Permission>FULL_CONTROL3</Permission>
+    </Grant>
+  </AccessControlList>
+</AccessControlPolicy>
+    `.trim())
+
+    assert.deepEqual(data, {
+      AccessControlPolicy: {
+        xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/',
+        Owner: {
+          ID: '370c43724c254f9494e4e7b36be4b774e1be6e75c7c6060e79aee71c6641a5c2',
+          DisplayName: 'name1'
+        },
+
+        AccessControlList: {
+          Grant: [
+            {
+              Grantee: {
+                'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+                'xsi:type': 'CanonicalUser',
+                ID: '370c43724c254f9494e4e7b36be4b774e1be6e75c7c6060e79aee71c6641a5c2',
+                DisplayName: 'name1'
+              },
+              Permission: 'FULL_CONTROL1'
+            },
+
+            {
+              Grantee: {
+                'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+                'xsi:type': 'CanonicalUser',
+                ID: '370c43724c254f9494e4e7b36be4b774e1be6e75c7c6060e79aee71c6641a5c3',
+                DisplayName: 'name2'
+              },
+              Permission: 'FULL_CONTROL2'
+            },
+
+            {
+              Grantee: {
+                'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+                'xsi:type': 'CanonicalUser',
+                ID: '370c43724c254f9494e4e7b36be4b774e1be6e75c7c6060e79aee71c6641a5c4',
+                DisplayName: 'name3'
+              },
+              Permission: 'FULL_CONTROL3'
+            }
+          ]
+        }
+      }
+    })
+  })
+
+  it('Parses XML tags 5', async () => {
+    const xml = `
+<Test>test</Test>
+    `.trim()
+    const data = XML.parse(xml)
+    assert.deepEqual(data, { Test: 'test' })
+  })
+
+  it('Parses XML tags 6', async () => {
+    const xml = `
+<Test>
+  <Test2>a <Test3></Test3></Test2>
+</Test>
+    `.trim()
+    console.log(JSON.stringify(XML.parse(xml, { ast: true })))
+    // process.exit()
+    const data = XML.parse(xml)
+    assert.deepEqual(data, { Test: { Test2: ['a', { Test3: null }] } })
   })
 
   it('Throws SyntaxError for malformed tag', async () => {

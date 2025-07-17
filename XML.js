@@ -148,7 +148,67 @@ function _parseTags(xml) {
 }
 
 /**
- * @name XML.parse
+ * @name normalize
+ *
+ * @docs
+ * ```coffeescript [specscript]
+ * type AST = {
+ *   $name: string,
+ *   $children: Array<string|AST>,
+ *   ...attributes
+ * }
+ *
+ * type NestedArray = Array<NestedObject|NestedArray|string>
+ * type NestedObject = Object<NestedObject|NestedArray|string>
+ *
+ * normalize(node string|AST) -> data NestedObject|string
+ * ```
+ */
+function normalize(node) {
+  if (typeof node == 'string') {
+    return node
+  }
+
+  const result = {}
+  for (const key in node) {
+    const value = node[key]
+    if (!key.startsWith('$')) {
+      result[key] = value
+    }
+  }
+
+  if (!node.$children || node.$children.length === 0) {
+    return Object.keys(result).length > 0 ? result : null
+  }
+
+  if (
+    node.$children.length == 1 &&
+    typeof node.$children[0] == 'string' &&
+    Object.keys(result).length == 0
+  ) {
+    return node.$children[0]
+  }
+
+  for (const child of node.$children) {
+    const key = child.$name
+    const value = normalize(child)
+
+    if (Object.prototype.hasOwnProperty.call(result, key)) {
+      if (Array.isArray(result[key])) {
+        result[key].push(value)
+      } else {
+        result[key] = [result[key], value]
+      }
+    } else {
+      result[key] = value
+    }
+  }
+
+  return result
+}
+
+/**
+ * @name _convert
  *
  * @docs
  * ```coffeescript [specscript]
@@ -168,10 +228,48 @@ function _parseTags(xml) {
  *   ...attributes
  * }
  *
- * XML.parse(xml string) -> ast RootAST
+ * type NestedArray = Array<NestedObject|NestedArray|string>
+ * type NestedObject = Object<NestedObject|NestedArray|string>
+ *
+ * _convert(tree RootAST) -> data NestedObject
  * ```
  */
-XML.parse = function parse(xml) {
+function _convert(tree) {
+  const rootKey = tree.$name
+  return { [rootKey]: normalize(tree) }
+}
+
+/**
+ * @name XML.parse
+ *
+ * @docs
+ * ```coffeescript [specscript]
+ * attributes Object<string>
+ *
+ * type AST = {
+ *   $name: string,
+ *   $children: Array<string|AST>,
+ *   ...attributes
+ * }
+ *
+ * type RootAST = {
+ *   $preamble: {
+ *     version: string,
+ *     encoding: string
+ *   },
+ *   $name: string,
+ *   $children: Array<string|AST>,
+ *   ...attributes
+ * }
+ *
+ * type NestedArray = Array<NestedObject|NestedArray|string>
+ * type NestedObject = Object<NestedObject|NestedArray|string>
+ *
+ * XML.parse(xml string) -> data NestedObject
+ * XML.parse(xml string, options { ast: true }) -> ast RootAST
+ * ```
+ */
+XML.parse = function parse(xml, options = {}) {
   xml = xml.replace(/\n/g, '')
   xml = xml.trim()
   const ast = {}
@@ -193,7 +291,11 @@ XML.parse = function parse(xml) {
     Object.assign(ast, _parseTags(xml))
   }
 
-  return ast
+  if (options.ast) {
+    return ast
+  }
+
+  return _convert(ast)
 }
 
 module.exports = XML
