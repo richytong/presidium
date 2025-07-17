@@ -121,7 +121,7 @@ describe('XML', () => {
   })
 
   it('Parses XML tags 4', async () => {
-    const data = XML.parse(`
+    const xml = `
 <?xml version="1.0" encoding="UTF-8"?>
 <AccessControlPolicy xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
   <Owner>
@@ -155,7 +155,9 @@ describe('XML', () => {
     </Grant>
   </AccessControlList>
 </AccessControlPolicy>
-    `.trim())
+    `.trim()
+
+    const data = XML.parse(xml)
 
     assert.deepEqual(data, {
       AccessControlPolicy: {
@@ -213,19 +215,64 @@ describe('XML', () => {
   it('Parses XML tags 6', async () => {
     const xml = `
 <Test>
-  <Test2>a <Test3></Test3></Test2>
+  <Test2>a</Test2>
+  <Test2>b</Test2>
+  <Test2>c</Test2>
 </Test>
     `.trim()
     const data = XML.parse(xml)
-    assert.deepEqual(data, { Test: { Test2: ['a', { Test3: '' }] } })
+    assert.deepEqual(data, { Test: { Test2: ['a', 'b', 'c'] } })
   })
 
   it('Parses XML tags 7', async () => {
     const xml = `
-<Test>test</Test>
+<Test>
+  <Test2>a <Test3></Test3></Test2>
+</Test>
     `.trim()
+
     const data = XML.parse(xml)
-    assert.deepEqual(data, { Test: 'test' })
+    assert.deepEqual(data, { Test: { Test2: ['a', { Test3: '' }] } })
+  })
+
+  it('Parses XML tags 8', async () => {
+    const xml = `
+<Test>
+  <Test2>a <Test3></Test3> b </Test2>
+</Test>
+    `.trim()
+
+    const data = XML.parse(xml)
+    assert.deepEqual(data, { Test: { Test2: ['a', { Test3: '' }, 'b'] } })
+  })
+
+  it('Parses XML tags 9', async () => {
+    const xml = `
+<Test></Test>
+    `.trim()
+
+    const data = XML.parse(xml)
+    assert.deepEqual(data, { Test: '' })
+  })
+
+  it('Parses XML tags 10', async () => {
+    const xml = `
+<Test a="1"></Test>
+    `.trim()
+
+    const data = XML.parse(xml)
+    assert.deepEqual(data, { Test: { a: '1' } })
+  })
+
+  it('Parses XML tags 11', async () => {
+    const xml = `
+<Test>
+  <Test2><Test3></Test3> b </Test2>
+</Test>
+    `.trim()
+
+    const data = XML.parse(xml)
+    assert.deepEqual(data, { Test: { Test2: [{ Test3: '' }, 'b'] } })
   })
 
   it('Throws SyntaxError for malformed tag', async () => {

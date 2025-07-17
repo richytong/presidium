@@ -132,103 +132,7 @@ function _parseTags(xml) {
 }
 
 /**
- * @name normalize
- *
- * @docs
- * ```coffeescript [specscript]
- * type AST = {
- *   $name: string,
- *   $children: Array<string|AST>,
- *   ...attributes
- * }
- *
- * type NestedArray = Array<NestedObject|NestedArray|string>
- * type NestedObject = Object<NestedObject|NestedArray|string>
- *
- * normalize(node string|AST) -> data NestedObject|string
- * ```
- */
-function normalize(node) {
-  const result = {}
-  for (const key in node) {
-    const value = node[key]
-    if (!key.startsWith('$')) {
-      result[key] = value
-    }
-  }
-
-  if (!node.$children || node.$children.length === 0) {
-    return Object.keys(result).length > 0 ? result : null
-  }
-
-  if (
-    node.$children.length == 1 &&
-    typeof node.$children[0] == 'string' &&
-    Object.keys(result).length == 0
-  ) {
-    return node.$children[0]
-  }
-
-  for (const child of node.$children) {
-    console.log('result', result)
-    console.log('child', child)
-
-    if (typeof child == 'string') {
-    } else {
-      const key = child.$name
-      const value = normalize(child)
-
-      if (Object.prototype.hasOwnProperty.call(result, key)) {
-        if (Array.isArray(result[key])) {
-          result[key].push(value)
-        } else {
-          result[key] = [result[key], value]
-        }
-      } else {
-        result[key] = value
-      }
-    }
-  }
-
-  return result
-}
-
-/**
  * @name _convert
- *
- * @docs
- * ```coffeescript [specscript]
- * type AST = {
- *   $name: string,
- *   $children: Array<string|AST>,
- *   ...attributes
- * }
- *
- * type RootAST = {
- *   $preamble: {
- *     version: string,
- *     encoding: string
- *   },
- *   $name: string,
- *   $children: Array<string|AST>,
- *   ...attributes
- * }
- *
- * type NestedArray = Array<NestedObject|NestedArray|string>
- * type NestedObject = Object<NestedObject|NestedArray|string>
- *
- * _convert(tree RootAST) -> data NestedObject
- * ```
- */
-function _convert(tree) {
-  const rootKey = tree.$name
-  return { [rootKey]: normalize(tree) }
-}
-
-const sAttributes = Symbol('attributes')
-
-/**
- * @name _convert2
  *
  * @docs
  * ```coffeescript [specscript]
@@ -239,54 +143,64 @@ const sAttributes = Symbol('attributes')
  *   ...attributes
  * }
  *
- * _convert2(ast AST) -> data object
+ * _convert(ast AST) -> data object
  * ```
  */
-function _convert2(ast) {
+function _convert(ast) {
   const { $preamble, $name, $children, ...attributes } = ast
 
   const result = {}
 
-  if ($children) {
+  if ($children.length == 0) {
+
+    if (Object.keys(attributes).length > 0) {
+      result[$name] = attributes
+    } else {
+      result[$name] = ''
+    }
+
+  } else {
     for (const child of $children) {
-      if (typeof child == 'string') {
-        if (result[$name]) { // loses attributes
-          console.log('test')
-          result[$name] = [result[$name], child]
+      if (typeof child == 'string') { // child string
+
+        if (result[$name]) {
+          if (Array.isArray(result[$name])) {
+            result[$name].push(child)
+          } else {
+            result[$name] = [result[$name], child]
+          }
         } else {
           result[$name] = child
         }
-      } else if (child.$name) {
+
+      } else { // child ast
         if (result[$name]) {
-          // console.log('child.$name', child.$name)
-          // console.log('typeof result[$name]', typeof result[$name], result[$name])
+
           if (typeof result[$name] == 'string') {
-            if (Array.isArray(result[$name])) {
-              result[$name].push(_convert2(child))
-            } else {
-              // console.log('string', child, _convert2(child))
-              result[$name] = [result[$name], _convert2(child)]
-            }
+            result[$name] = [result[$name], _convert(child)]
           } else if (child.$name in result[$name]) { // create array under child.$name
+
             if (Array.isArray(result[$name][child.$name])) {
-              result[$name][child.$name].push(_convert2(child)[child.$name])
+              result[$name][child.$name].push(_convert(child)[child.$name])
             } else {
               result[$name][child.$name] = [
                 result[$name][child.$name],
-                _convert2(child)[child.$name]
+                _convert(child)[child.$name]
               ]
             }
+
           } else {
-            result[$name] = Object.assign(result[$name], _convert2(child))
+            result[$name] = Object.assign(result[$name], _convert(child))
             Object.assign(result[$name], attributes)
           }
+
         } else {
-          result[$name] = _convert2(child)
+          result[$name] = _convert(child)
           Object.assign(result[$name], attributes)
         }
-      } else {
-        throw new TypeError('Invalid child')
+
       }
+
     }
   }
 
@@ -349,7 +263,7 @@ XML.parse = function parse(xml, options = {}) {
     return ast
   }
 
-  return _convert2(ast)
+  return _convert(ast)
 }
 
 module.exports = XML
