@@ -275,6 +275,30 @@ describe('XML', () => {
     assert.deepEqual(data, { Test: { Test2: [{ Test3: '' }, 'b'] } })
   })
 
+  it('Parses XML tags 12', async () => {
+    const xml = `
+<?xml version="1.0" encoding="UTF-8"?>
+<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/"/>
+    `.trim()
+
+    const data = XML.parse(xml)
+    assert.deepEqual(data, {
+      LocationConstraint: { xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/' }
+    })
+  })
+
+  it('Parses XML tags 13 (loses attributes for single text child)', async () => {
+    const xml = `
+<?xml version="1.0" encoding="UTF-8"?>
+<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">us-west-1</LocationConstraint>
+    `.trim()
+
+    const data = XML.parse(xml)
+    assert.deepEqual(data, {
+      LocationConstraint: 'us-west-1'
+    })
+  })
+
   it('Throws SyntaxError for malformed tag', async () => {
     assert.throws(
       () => XML.parse('asdf'),
