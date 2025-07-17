@@ -1,17 +1,17 @@
 /**
- * @name Crc32
+ * @name CRC32
  *
  * @synopsis
  * ```coffeescript [specscript]
- * new Crc32() -> Crc32
+ * new CRC32() -> crc32 CRC32
  * ```
  */
-const Crc32 = function () {
+const CRC32 = function () {
   this.checksum = 0xffffffff
   return this
 }
 
-Crc32.prototype.update = function (chunk) {
+CRC32.prototype.update = function (chunk) {
   for (const byte of chunk) {
     this.checksum =
       (this.checksum >>> 8) ^ lookupTable[(this.checksum ^ byte) & 0xff]
@@ -19,7 +19,7 @@ Crc32.prototype.update = function (chunk) {
   return this
 }
 
-Crc32.prototype.digest = function () {
+CRC32.prototype.digest = function () {
   return (this.checksum ^ 0xffffffff) >>> 0
 }
 
@@ -90,4 +90,4 @@ const lookupTable = Uint32Array.from([
   0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D,
 ])
 
-module.exports = Crc32
+module.exports = CRC32
