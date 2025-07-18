@@ -1,8 +1,13 @@
 const assert = require('assert')
 const Test = require('thunk-test')
+const crypto = require('crypto')
 const _S3 = require('./internal/_S3')
 const S3Bucket = require('./S3Bucket')
 const AwsCredentials = require('./AwsCredentials')
+const CRC32 = require('./internal/CRC32')
+const crc32c = require('fast-crc32c')
+const convertUint32ToBase64 = require('./internal/convertUint32ToBase64')
+const { CrtCrc64Nvme } = require('@aws-sdk/crc64-nvme-crt')
 
 const test1 = new Test('S3Bucket', async function integration1() {
   const awsCreds = await AwsCredentials('presidium')
@@ -226,13 +231,87 @@ const test2 = new Test('S3Bucket', async function integration2() {
     const data3 = await testBucket2.getObjectACL(key)
   }
 
-  { // CacheControl option
+  { // CacheControl, ContentDisposition, ContentEncoding, ContentLanguage, ContentLength, ContentMD5, ContentType options
     const key = 'test/cache-control'
     const data1 = await testBucket2.putObject(key, 'test', {
-      CacheControl: 'nocache'
+      CacheControl: 'nocache',
+      ContentDisposition: 'inline',
+      ContentEncoding: 'gzip',
+      ContentLanguage: 'en-US',
+      ContentLength: '4',
+      ContentMD5: crypto.createHash('md5').update('test', 'utf8').digest('base64'), // should not error
+      ContentType: 'text/plain',
     })
     const data2 = await testBucket2.getObject(key)
     assert.equal(data2.CacheControl, 'nocache')
+    assert.equal(data2.ContentDisposition, 'inline')
+    assert.equal(data2.ContentEncoding, 'gzip')
+    assert.equal(data2.ContentLanguage, 'en-US')
+    assert.equal(data2.ContentLength, '4')
+    assert.equal(data2.ContentType, 'text/plain')
+  }
+
+  { // ChecksumAlgorithm, ChecksumCRC32 options
+    const key = 'test/checksum-crc32'
+    const body = 'test-checksum-crc32'
+
+    const crc32 = new CRC32()
+    crc32.update(Buffer.from(body, 'utf8'))
+    const base64Checksum = convertUint32ToBase64(crc32.checksum)
+
+    const data1 = await testBucket2.putObject(key, body, {
+      ChecksumAlgorithm: 'ChecksumCRC32',
+      ChecksumCRC32: base64Checksum
+    })
+    assert.equal(data1.ChecksumType, 'FULL_OBJECT')
+    assert.equal(data1.ChecksumCRC32, base64Checksum)
+
+    const data2 = await testBucket2.getObject(key, {
+      ChecksumMode: 'Enabled'
+    })
+    assert.equal(data2.ChecksumCRC32, base64Checksum)
+  }
+
+  { // ChecksumAlgorithm, ChecksumCRC32C options
+    const key = 'test/checksum-crc32c'
+    const body = 'test-checksum-crc32c'
+
+    const checksum = crc32c.calculate(body)
+    const base64Checksum = convertUint32ToBase64(checksum)
+
+    const data1 = await testBucket2.putObject(key, body, {
+      ChecksumAlgorithm: 'ChecksumCRC32C',
+      ChecksumCRC32C: base64Checksum
+    })
+    assert.equal(data1.ChecksumType, 'FULL_OBJECT')
+    assert.equal(data1.ChecksumCRC32C, base64Checksum)
+
+    const data2 = await testBucket2.getObject(key, {
+      ChecksumMode: 'Enabled'
+    })
+    assert.equal(data2.ChecksumCRC32C, base64Checksum)
+  }
+
+  { // ChecksumAlgorithm, ChecksumCRC64NVME options
+    const key = 'test/checksum-crc64nvme'
+    const body = 'test-checksum-crc64nvme'
+
+    const crc64 = new CrtCrc64Nvme()
+    crc64.update(Buffer.from(body, 'utf8'))
+    const result = await crc64.digest()
+    const base64Checksum = Buffer.from(result).toString('base64')
+
+    const data1 = await testBucket2.putObject(key, body, {
+      ChecksumAlgorithm: 'ChecksumCRC64NVME',
+      ChecksumCRC64NVME: base64Checksum
+    })
+    assert.equal(data1.ChecksumType, 'FULL_OBJECT')
+    assert.equal(data1.ChecksumCRC64NVME, base64Checksum)
+
+    const data2 = await testBucket2.getObject(key, {
+      ChecksumMode: 'Enabled'
+    })
+    assert.equal(data2.ChecksumCRC64NVME, base64Checksum)
   }
 
   testBucket2.closeConnections()
@@ -244,9 +323,9 @@ const test = Test.all([
 ])
 
 if (process.argv[1] == __filename) {
-  test()
+  // test()
   // test0()
-  // test2()
+  test2()
 }
 
 module.exports = test
