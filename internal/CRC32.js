@@ -1,3 +1,5 @@
+const _Buffer = require('./_Buffer')
+
 /**
  * @name CRC32
  *
@@ -20,14 +22,13 @@ class CRC32 {
    * ```
    */
   update(chunk) {
-    if (!Buffer.isBuffer(chunk)) {
-      throw new TypeError('chunk must be a Buffer')
-    }
+    const buffer = _Buffer(chunk)
 
     for (const byte of chunk) {
       this._value =
         (this._value >>> 8) ^ CRC32_TABLE[(this._value ^ byte) & 0xff]
     }
+
     return this
   }
 
