@@ -6,24 +6,46 @@
  * new CRC32() -> crc32 CRC32
  * ```
  */
-const CRC32 = function () {
-  this.checksum = 0xffffffff
-  return this
-}
-
-CRC32.prototype.update = function (chunk) {
-  for (const byte of chunk) {
-    this.checksum =
-      (this.checksum >>> 8) ^ lookupTable[(this.checksum ^ byte) & 0xff]
+class CRC32 {
+  constructor() {
+    this._value = 0xffffffff
   }
-  return this
+
+  /**
+   * @name update
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * crc32.update(chunk Buffer) -> crc32 CRC32
+   * ```
+   */
+  update(chunk) {
+    if (!Buffer.isBuffer(chunk)) {
+      throw new TypeError('chunk must be a Buffer')
+    }
+
+    for (const byte of chunk) {
+      this._value =
+        (this._value >>> 8) ^ CRC32_TABLE[(this._value ^ byte) & 0xff]
+    }
+    return this
+  }
+
+  /**
+   * @name checksum
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * crc32.checksum -> number
+   * ```
+   */
+  get checksum() {
+    return (this._value ^ 0xffffffff) >>> 0
+  }
+
 }
 
-CRC32.prototype.digest = function () {
-  return (this.checksum ^ 0xffffffff) >>> 0
-}
-
-const lookupTable = Uint32Array.from([
+const CRC32_TABLE = Uint32Array.from([
   0x00000000, 0x77073096, 0xEE0E612C, 0x990951BA,
   0x076DC419, 0x706AF48F, 0xE963A535, 0x9E6495A3,
   0x0EDB8832, 0x79DCB8A4, 0xE0D5E91E, 0x97D2D988,
