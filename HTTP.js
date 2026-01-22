@@ -57,7 +57,7 @@ class HTTP {
       throw new TypeError('baseUrl invalid')
     }
 
-    this.client = this.baseUrl.protocol == 'https' ? https : http
+    this.client = this.baseUrl.protocol == 'https:' ? https : http
     this.requestOptions = {
       hostname: this.baseUrl.hostname,
       protocol: this.baseUrl.protocol,

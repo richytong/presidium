@@ -84,7 +84,7 @@ class S3Bucket {
     } else {
       this.endpoint0 = `${this.name}.s3.amazonaws.com`
       this.endpoint1 = `${this.name}.s3.${this.region}.amazonaws.com`
-      this.protocol = 'http'
+      this.protocol = 'https'
     }
 
     this._s3 = new _S3({
@@ -649,7 +649,6 @@ class S3Bucket {
       headers['If-None-Match'] = options.IfNoneMatch
     }
 
-    // TODO
     if (options.GrantFullControl) {
       headers['X-Amz-Grant-Full-Control'] = options.GrantFullControl
     }

@@ -369,6 +369,28 @@ const test2 = new Test('S3Bucket', async function integration2() {
     )
   }
 
+  { // GrantFullControl, GrantRead, GrantReadACP, GrantWriteACP options
+    const key = 'test/if-match-option'
+    await testBucket2.putObject(key, 'test', {
+      GrantFullControl: 'uri=http://acs.amazonaws.com/groups/global/AllUsers',
+      GrantRead: 'uri=http://acs.amazonaws.com/groups/global/AllUsers',
+      GrantReadACP: 'uri=http://acs.amazonaws.com/groups/global/AllUsers',
+      GrantWriteACP: 'uri=http://acs.amazonaws.com/groups/global/AllUsers',
+    })
+    await testBucket2.getObject(key)
+    // no error
+  }
+
+  { // ServerSideEncryption option
+    const key = 'test/if-match-option'
+    const data1 = await testBucket2.putObject(key, 'test', {
+      ServerSideEncryption: 'aws:kms',
+    })
+    assert.equal(data1.ServerSideEncryption, 'aws:kms')
+    const data2 = await testBucket2.getObject(key)
+    assert.equal(data2.ServerSideEncryption, 'aws:kms')
+  }
+
   testBucket2.closeConnections()
 }).case()
 
