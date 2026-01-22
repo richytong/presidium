@@ -483,7 +483,6 @@ class S3Bucket {
    *     ChecksumSHA1: string,
    *     ChecksumSHA256: string,
    *     Expires: Date|DateString|TimestampSeconds,
-   *     IfMatch: string,
    *     IfNoneMatch: '*',
    *     GrantFullControl: string,
    *     GrantRead: string,
@@ -549,7 +548,6 @@ class S3Bucket {
    *   * `ChecksumSHA1` - the base64-encoded, 160-bit SHA-1 digest of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
    *   * `ChecksumSHA256` - the base64-encoded, 256-bit SHA-256 digest of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
    *   * `Expires` - the date/time after which the object is considered stale. For more information, see [Expires](https://www.rfc-editor.org/rfc/rfc7234#section-5.3).
-   *   * `IfMatch` - if the entity tag (ETag) in the response is different than the one specified in this option, Amazon S3 responds with HTTP status code `412 Precondition Failed`. For more information, see [If-Match](https://datatracker.ietf.org/doc/html/rfc7232#section-3.1).
    *   * `IfNoneMatch` - uploads the object only if the object key name does not already exist in the bucket. Otherwise, Amazon S3 responds with `412 Precondition Failed`. If a conflicting operation occurs during the upload, Amazon S3 responds with `409 ConditionalRequestConflict`. For more information, see [RFC 7232](https://datatracker.ietf.org/doc/html/rfc7232) and [Add preconditions to S3 operations with conditional requests](https://docs.aws.amazon.com/AmazonS3/latest/userguide/conditional-requests.html).
    *   * `GrantFullControl` - gives the grantee READ, READ_ACP, and WRITE_ACP permissions on the object.
    *   * `GrantRead` - allows the grantee to read the object data and its metadata.
@@ -647,13 +645,11 @@ class S3Bucket {
     if (options.Expires) {
       headers['Expires'] = options.Expires
     }
-    if (options.IfMatch) {
-      headers['If-Match'] = options.IfMatch
-    }
     if (options.IfNoneMatch) {
       headers['If-None-Match'] = options.IfNoneMatch
     }
 
+    // TODO
     if (options.GrantFullControl) {
       headers['X-Amz-Grant-Full-Control'] = options.GrantFullControl
     }
@@ -795,7 +791,7 @@ class S3Bucket {
 
       return data
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**

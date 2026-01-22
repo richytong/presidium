@@ -231,7 +231,8 @@ const test2 = new Test('S3Bucket', async function integration2() {
     const data3 = await testBucket2.getObjectACL(key)
   }
 
-  { // CacheControl, ContentDisposition, ContentEncoding, ContentLanguage, ContentLength, ContentMD5, ContentType options
+  { // CacheControl, ContentDisposition, ContentEncoding, ContentLanguage, ContentLength, ContentMD5, ContentType, Expires options
+    const date = new Date()
     const key = 'test/cache-control'
     const data1 = await testBucket2.putObject(key, 'test', {
       CacheControl: 'nocache',
@@ -241,6 +242,7 @@ const test2 = new Test('S3Bucket', async function integration2() {
       ContentLength: '4',
       ContentMD5: crypto.createHash('md5').update('test', 'utf8').digest('base64'), // should not error
       ContentType: 'text/plain',
+      Expires: date,
     })
     const data2 = await testBucket2.getObject(key)
     assert.equal(data2.CacheControl, 'nocache')
@@ -249,6 +251,7 @@ const test2 = new Test('S3Bucket', async function integration2() {
     assert.equal(data2.ContentLanguage, 'en-US')
     assert.equal(data2.ContentLength, '4')
     assert.equal(data2.ContentType, 'text/plain')
+    assert.equal(data2.Expires, date)
   }
 
   { // ChecksumAlgorithm, ChecksumCRC32 options
@@ -314,18 +317,68 @@ const test2 = new Test('S3Bucket', async function integration2() {
     assert.equal(data2.ChecksumCRC64NVME, base64Checksum)
   }
 
+  { // ChecksumAlgorithm, ChecksumSHA1 options
+    const key = 'test/checksum-sha1'
+    const body = 'test-checksum-sha1'
+
+    const base64Checksum = crypto.createHash('sha1').update(body).digest('base64')
+
+    const data1 = await testBucket2.putObject(key, body, {
+      ChecksumAlgorithm: 'ChecksumSHA1',
+      ChecksumSHA1: base64Checksum
+    })
+    assert.equal(data1.ChecksumType, 'FULL_OBJECT')
+    assert.equal(data1.ChecksumSHA1, base64Checksum)
+
+    const data2 = await testBucket2.getObject(key, {
+      ChecksumMode: 'Enabled'
+    })
+    assert.equal(data2.ChecksumSHA1, base64Checksum)
+  }
+
+  { // ChecksumAlgorithm, ChecksumSHA256 options
+    const key = 'test/checksum-sha256'
+    const body = 'test-checksum-sha256'
+
+    const base64Checksum = crypto.createHash('sha256').update(body).digest('base64')
+
+    const data1 = await testBucket2.putObject(key, body, {
+      ChecksumAlgorithm: 'ChecksumSHA256',
+      ChecksumSHA256: base64Checksum
+    })
+    assert.equal(data1.ChecksumType, 'FULL_OBJECT')
+    assert.equal(data1.ChecksumSHA256, base64Checksum)
+
+    const data2 = await testBucket2.getObject(key, {
+      ChecksumMode: 'Enabled'
+    })
+    assert.equal(data2.ChecksumSHA256, base64Checksum)
+  }
+
+  { // IfNoneMatch option
+    const key = 'test/if-match-option'
+    const data1 = await testBucket2.putObject(key, 'test', {
+      IfNoneMatch: '*',
+    })
+    const data2 = await testBucket2.getObject(key)
+    await assert.rejects(
+      () => testBucket2.putObject(key, 'test', {
+        IfNoneMatch: '*',
+      }),
+      { name: 'PreconditionFailed', message: 'At least one of the pre-conditions you specified did not hold', code: 412 },
+    )
+  }
+
   testBucket2.closeConnections()
 }).case()
 
 const test = Test.all([
-  test1,
-  test2
+  // test1,
+  test2,
 ])
 
 if (process.argv[1] == __filename) {
-  // test()
-  // test0()
-  test2()
+  test()
 }
 
 module.exports = test

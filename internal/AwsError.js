@@ -9,21 +9,24 @@ const XML = require('../XML')
  * ```
  */
 class AwsError extends Error {
-  constructor(message) {
+  constructor(message, code = 500) {
     super()
 
     if (message.startsWith('<?xml')) {
       const data = XML.parse(message)
       this.name = data.Error.Code
       this.message = data.Error.Message
+      this.code = code
     } else {
       try {
         const data = JSON.parse(message)
         this.name = data.__type.split('#')[1]
         this.message = data.Message
+        this.code = code
       } catch (_error) {
         this.name = 'AwsError'
         this.message = message
+        this.code = code
       }
     }
   }

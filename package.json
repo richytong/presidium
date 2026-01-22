@@ -41,7 +41,9 @@
     "lint": "eslint ."
   },
   "devDependencies": {
+    "@aws-sdk/crc64-nvme-crt": "^3.848.0",
     "eslint": "^7.13.0",
+    "fast-crc32c": "^2.0.0",
     "glob": "^7.1.6",
     "mocha": "^10.8.2",
     "nyc": "^17.1.0",

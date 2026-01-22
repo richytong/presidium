@@ -152,22 +152,21 @@ class TranscribeStream extends EventEmitter {
       ':content-type': {
         type: 'string',
         value: 'application/octet-stream',
-      },
-      // hey: { type: 'string', value: 'yo' },
+      }
     })
     const length = headersBytes.byteLength + chunk.byteLength + 16
     const bytes = new Uint8Array(length)
     const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-    const checksum = new CRC32()
+    const crc32 = new CRC32()
 
     view.setUint32(0, length, false)
     view.setUint32(4, headersBytes.byteLength, false)
-    view.setUint32(8, checksum.update(bytes.subarray(0, 8)).digest(), false)
+    view.setUint32(8, crc32.update(Buffer.from(bytes.subarray(0, 8))).checksum, false)
     bytes.set(headersBytes, 12)
     bytes.set(chunk, headersBytes.byteLength + 12)
     view.setUint32(
       length - 4,
-      checksum.update(bytes.subarray(8, length - 4)).digest(),
+      crc32.update(Buffer.from(bytes.subarray(8, length - 4))).checksum,
       false
     )
     this.websocket.send(bytes)
