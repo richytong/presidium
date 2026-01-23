@@ -370,7 +370,7 @@ const test2 = new Test('S3Bucket', async function integration2() {
   }
 
   { // GrantFullControl, GrantRead, GrantReadACP, GrantWriteACP options
-    const key = 'test/if-match-option'
+    const key = 'test/grant-read-write-full-control-option'
     await testBucket2.putObject(key, 'test', {
       GrantFullControl: 'uri=http://acs.amazonaws.com/groups/global/AllUsers',
       GrantRead: 'uri=http://acs.amazonaws.com/groups/global/AllUsers',
@@ -381,14 +381,61 @@ const test2 = new Test('S3Bucket', async function integration2() {
     // no error
   }
 
-  { // ServerSideEncryption option
-    const key = 'test/if-match-option'
+  { // ServerSideEncryption, SSEKMSKeyId, SSEKMSEncryptionContext option
+    const key = 'test/ServerSideEncryption-SSEKMSKeyId-SSEKMSEncryptionContext-option'
+    const encryptionContext = { a: '1' }
     const data1 = await testBucket2.putObject(key, 'test', {
       ServerSideEncryption: 'aws:kms',
+      SSEKMSKeyId: 'alias/presidium-test',
+      SSEKMSEncryptionContext: Buffer.from(JSON.stringify(encryptionContext), 'utf8').toString('base64'),
     })
     assert.equal(data1.ServerSideEncryption, 'aws:kms')
+    assert.equal(data1.SSEKMSKeyId, 'arn:aws:kms:us-east-1:095798571722:key/c0bb3d73-0b3f-47c3-8eb6-8567b6d22265')
+    const encryptionContext1 = JSON.parse(Buffer.from(data1.SSEKMSEncryptionContext, 'base64').toString('utf8'))
+    assert.equal(encryptionContext1.a, '1')
     const data2 = await testBucket2.getObject(key)
     assert.equal(data2.ServerSideEncryption, 'aws:kms')
+    assert.equal(data2.SSEKMSKeyId, 'arn:aws:kms:us-east-1:095798571722:key/c0bb3d73-0b3f-47c3-8eb6-8567b6d22265')
+    const encryptionContext2 = JSON.parse(Buffer.from(data1.SSEKMSEncryptionContext, 'base64').toString('utf8'))
+    assert.equal(encryptionContext2.a, '1')
+  }
+
+  { // StorageClass option
+    const key = 'test/StorageClass-option'
+    await testBucket2.putObject(key, 'test', {
+      StorageClass: 'REDUCED_REDUNDANCY',
+    })
+    const data2 = await testBucket2.getObject(key)
+    assert.equal(data2.StorageClass, 'REDUCED_REDUNDANCY')
+  }
+
+  { // WebsiteRedirectLocation option
+    const key = 'test/WebsiteRedirectLocation-option'
+    const data1 = await testBucket2.putObject(key, 'test', {
+      WebsiteRedirectLocation: '/test',
+    })
+    const data2 = await testBucket2.getObject(key)
+    assert.equal(data2.WebsiteRedirectLocation, '/test')
+  }
+
+  { // SSECustomerAlgorithm, SSECustomerKey
+    const key = 'test/SSECustomerAlgorithm-SSECustomerKey-option'
+    const SSECustomerKey = '8spSZEuMkTTwG5Taq1lObxkaJiSOxHmkkPK9Q+WzN5k='
+    const SSECustomerKeyMD5 = 'CFvXiGVeD8YIPWCv+UJEBA=='
+    const data1 = await testBucket2.putObject(key, 'test', {
+      SSECustomerAlgorithm: 'AES256',
+      SSECustomerKey,
+      SSECustomerKeyMD5,
+    })
+    assert.equal(data1.SSECustomerAlgorithm, 'AES256')
+    assert.equal(data1.SSECustomerKeyMD5, SSECustomerKeyMD5)
+    const data2 = await testBucket2.getObject(key, {
+      SSECustomerAlgorithm: 'AES256',
+      SSECustomerKey,
+      SSECustomerKeyMD5,
+    })
+    assert.equal(data2.SSECustomerAlgorithm, 'AES256')
+    assert.equal(data2.SSECustomerKeyMD5, SSECustomerKeyMD5)
   }
 
   testBucket2.closeConnections()
