@@ -261,6 +261,7 @@ class S3 {
    * ```
    */
   deleteObjects(bucketname, keys, options) {
+    console.log('_s3 deleteObjects', keys)
     const { Quiet = false, ...optionsRest } = options ?? {}
     return this.client.deleteObjects({
       Bucket: bucketname,
@@ -537,6 +538,13 @@ class S3 {
    */
   listObjectsV2(bucketname, options) {
     return this.client.listObjectsV2({
+      Bucket: bucketname,
+      ...options,
+    }).promise()
+  }
+
+  listObjectVersions(bucketname, options) {
+    return this.client.listObjectVersions({
       Bucket: bucketname,
       ...options,
     }).promise()

@@ -144,7 +144,8 @@ const test1 = new Test('S3Bucket', async function integration1() {
 const test2 = new Test('S3Bucket', async function integration2() {
   const awsCreds = await AwsCredentials('presidium')
   awsCreds.region = 'us-east-1'
-  const bucketName = 'test-bucket-presidium-2'
+  const bucketName = `test-bucket-presidium-${Date.now()}`
+  // const bucketName = `test-bucket-presidium-2`
 
   {
     const testBucket2 = new S3Bucket({
@@ -154,29 +155,14 @@ const test2 = new Test('S3Bucket', async function integration2() {
       BlockPublicAccess: false,
       BlockPublicACLs: false,
       BlockPublicPolicy: false,
-      IgnorePublicAcls: false,
+      IgnorePublicACLs: false,
       RestrictPublicBuckets: false,
       RequestPayer: 'Requester',
-      autoReady: false,
-      ...awsCreds,
-    })
-
-    await testBucket2.deleteAllObjects().catch(() => {})
-    await testBucket2.delete().catch(() => {})
-    testBucket2.closeConnections()
-  }
-
-  {
-    const testBucket2 = new S3Bucket({
-      name: bucketName,
-      ACL: 'public-read',
-      ObjectOwnership: 'BucketOwnerPreferred',
-      BlockPublicAccess: false,
-      BlockPublicACLs: false,
-      BlockPublicPolicy: false,
-      IgnorePublicAcls: false,
-      RestrictPublicBuckets: false,
-      RequestPayer: 'Requester',
+      ObjectLockEnabled: true,
+      ObjectLockDefaultRetentionMode: 'COMPLIANCE',
+      ObjectLockDefaultRetentionYears: 10,
+      VersioningMfaDelete: 'Disabled',
+      VersioningStatus: 'Enabled',
       ...awsCreds
     })
     const { message } = await testBucket2.ready
@@ -191,9 +177,14 @@ const test2 = new Test('S3Bucket', async function integration2() {
     BlockPublicAccess: false,
     BlockPublicACLs: false,
     BlockPublicPolicy: false,
-    IgnorePublicAcls: false,
+    IgnorePublicACLs: false,
     RestrictPublicBuckets: false,
     RequestPayer: 'Requester',
+    ObjectLockEnabled: true,
+    ObjectLockDefaultRetentionMode: 'COMPLIANCE',
+    ObjectLockDefaultRetentionYears: 10,
+    VersioningMfaDelete: 'Disabled',
+    VersioningStatus: 'Enabled',
     ...awsCreds
   })
 
@@ -229,15 +220,17 @@ const test2 = new Test('S3Bucket', async function integration2() {
     assert.deepEqual(policy.Statement, policy2.Statement)
   }
 
-  { // ACL option
+  { // ACL option + VersionId in response
     const key = 'test/acl'
     const data1 = await testBucket2.putObject(key, 'test', {
       ACL: 'aws-exec-read'
     })
     assert.equal(typeof data1.ETag, 'string')
+    assert.equal(typeof data1.VersionId, 'string')
 
     const data2 = await testBucket2.getObject(key)
     assert.equal(data2.ContentType, 'application/octet-stream')
+    assert.equal(typeof data2.VersionId, 'string')
 
     const data3 = await testBucket2.getObjectACL(key)
     assert.equal(data3.Grants.length, 2)
@@ -399,7 +392,7 @@ const test2 = new Test('S3Bucket', async function integration2() {
     )
   }
 
-  { // GrantFullControl, GrantRead, GrantReadACP, GrantWriteACP options
+  { // GrantFullControl, GrantRead, GrantReadACP, GrantWriteACP optionss
     const key = 'test/grant-read-write-full-control-option'
     await testBucket2.putObject(key, 'test', {
       GrantFullControl: 'uri=http://acs.amazonaws.com/groups/global/AllUsers',
@@ -411,7 +404,7 @@ const test2 = new Test('S3Bucket', async function integration2() {
     // no error
   }
 
-  { // ServerSideEncryption, SSEKMSKeyId, SSEKMSEncryptionContext option
+  { // ServerSideEncryption, SSEKMSKeyId, SSEKMSEncryptionContext options
     const key = 'test/ServerSideEncryption-SSEKMSKeyId-SSEKMSEncryptionContext-option'
     const encryptionContext = { a: '1' }
     const data1 = await testBucket2.putObject(key, 'test', {
@@ -430,7 +423,7 @@ const test2 = new Test('S3Bucket', async function integration2() {
     assert.equal(encryptionContext2.a, '1')
   }
 
-  { // ServerSideEncryption, SSEKMSKeyId, BucketKeyEnabled option
+  { // ServerSideEncryption, SSEKMSKeyId, BucketKeyEnabled options
     const key = 'test/ServerSideEncryption-SSEKMSKeyId-BucketKeyEnabled-option'
     const encryptionContext = { a: '1' }
     const data1 = await testBucket2.putObject(key, 'test', {
@@ -465,7 +458,7 @@ const test2 = new Test('S3Bucket', async function integration2() {
     assert.equal(data2.WebsiteRedirectLocation, '/test')
   }
 
-  { // SSECustomerAlgorithm, SSECustomerKey
+  { // SSECustomerAlgorithm, SSECustomerKey options
     const key = 'test/SSECustomerAlgorithm-SSECustomerKey-option'
     const SSECustomerKey = '8spSZEuMkTTwG5Taq1lObxkaJiSOxHmkkPK9Q+WzN5k='
     const SSECustomerKeyMD5 = 'CFvXiGVeD8YIPWCv+UJEBA=='
@@ -483,6 +476,34 @@ const test2 = new Test('S3Bucket', async function integration2() {
     })
     assert.equal(data2.SSECustomerAlgorithm, 'AES256')
     assert.equal(data2.SSECustomerKeyMD5, SSECustomerKeyMD5)
+  }
+
+  { // Tagging option
+    const key = 'test/Tagging-option'
+    const Tagging = 'a=1&b=test'
+    await testBucket2.putObject(key, 'test', {
+      Tagging,
+    })
+    const data2 = await testBucket2.getObject(key)
+    assert.equal(data2.TagCount, 2)
+  }
+
+  { // ObjectLockMode, ObjectLockRetainUntilDate, ObjectLockLegalHoldStatus
+    const key = 'test/ObjectLockMode-ObjectLockRetainUntilDate-ObjectLockLegalHoldStatus-options'
+    const ObjectLockMode = 'COMPLIANCE'
+    let ObjectLockRetainUntilDate = new Date()
+    ObjectLockRetainUntilDate.setFullYear(ObjectLockRetainUntilDate.getFullYear() + 10)
+    ObjectLockRetainUntilDate = ObjectLockRetainUntilDate.toISOString()
+    const ObjectLockLegalHoldStatus = 'ON'
+    await testBucket2.putObject(key, 'test', {
+      ObjectLockMode,
+      ObjectLockRetainUntilDate,
+      ObjectLockLegalHoldStatus,
+    })
+    const data2 = await testBucket2.getObject(key)
+    assert.equal(data2.ObjectLockMode, ObjectLockMode)
+    assert.equal(data2.ObjectLockRetainUntilDate, ObjectLockRetainUntilDate)
+    assert.equal(data2.ObjectLockLegalHoldStatus, ObjectLockLegalHoldStatus)
   }
 
   testBucket2.closeConnections()

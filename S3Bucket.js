@@ -23,6 +23,17 @@ const XML = require('./XML')
  *   secretAccessKey: string,
  *   region: string,
  *   endpoint: string
+ *   BlockPublicACLs: boolean,
+ *   IgnorePublicACLs: boolean,
+ *   BlockPublicPolicy: boolean,
+ *   RestrictPublicBuckets: boolean,
+ *   RequestPayer: 'Requester'|'BucketOwner',
+ *   ObjectLockEnabled: boolean,
+ *   ObjectLockDefaultRetentionMode: 'COMPLIANCE'|'GOVERNANCE',
+ *   ObjectLockDefaultRetentionDays: number,
+ *   ObjectLockDefaultRetentionYears: number,
+ *   VersioningMfaDelete: 'Enabled'|'Disabled',
+ *   VersioningStatus: 'Enabled'|'Suspended',
  * }) -> bucket S3Bucket
  * ```
  *
@@ -44,10 +55,23 @@ const XML = require('./XML')
  * ```
  *
  * Options:
- *   * `name` - globally unique name of the Amazon S3 Bucket.
+ *   * `name` - globally unique name of the AWS S3 Bucket.
  *   * `accessKeyId` - long term credential (ID) of an [IAM](https://aws.amazon.com/iam/) user.
  *   * `secretAccessKey` - long term credential (secret) of an [IAM](https://aws.amazon.com/iam/) user.
  *   * `region` - geographic location of data center cluster, e.g. `us-east-1` or `us-west-2`. [Full list of AWS regions](https://docs.aws.amazon.com/global-infrastructure/latest/regions/aws-regions.html#available-regions)
+ *   * `BlockPublicACLs` - if `false`, AWS S3 does not block public access control lists (ACLs) for this bucket and objects in this bucket. Default `true`.
+ *   * `IgnorePublicACLs` - if `false`, AWS S3 does not ignore public access control lists (ACLs) for this bucket and objects in this bucket. Default `true`.
+ *   * `BlockPublicPolicy` - if `false`, AWS S3 does not block public bucket policies for this bucket. Default `true`.
+ *   * `RestrictPublicBuckets` - if `false`, AWS S3 does not restrict public bucket policies for this bucket. Default `true`.
+ *   * `RequestPayer` - the payer for requests to the AWS S3 bucket. Defaults to `BucketOwner`.
+ *   * `ObjectLockEnabled` - if `false`, AWS S3 disables Object Lock for this bucket.
+ *   * `ObjectLockDefaultRetentionMode` - the default Object Lock mode (`'GOVERNANCE'` or `'COMPLIANCE'`) for this bucket.
+ *     * `'COMPLIANCE'` - no one, including the root user, can delete a locked object.
+ *     * `'GOVERNANCE'` - users with special permissions can delete a locked object.
+ *   * `ObjectLockDefaultRetentionDays` - number of days that a locked object is protected by Object Lock for this bucket.
+ *   * `ObjectLockDefaultRetentionYears` - number of years that a locked object is protected by Object Lock for this bucket.
+ *   * `VersioningMfaDelete` - if `'Enabled'`, AWS S3 requires multifactor authentication (MFA) before permanently deleting object versions or change bucket versioning states for this bucket. Defaults to `'Disabled'`.
+ *   * `VersioningStatus` - if `'Enabled'`, AWS S3 enables versioning for objects in this bucket, and all objects added to the bucket receive a unique Version ID. If `'Suspended'`, existing object versions remain in the bucket, new objects receive a `null` Version ID, and overwrites of objects behave as they would in an unversioned bucket. Defaults to `'Suspended'`.
  *
  * Methods:
  *   * [putObject](#putobject)
@@ -105,10 +129,21 @@ class S3Bucket {
     }
 
     this.BlockPublicACLs = options.BlockPublicACLs ?? true
-    this.IgnorePublicAcls = options.IgnorePublicAcls ?? true
+    this.IgnorePublicACLs = options.IgnorePublicACLs ?? true
     this.BlockPublicPolicy = options.BlockPublicPolicy ?? true
     this.RestrictPublicBuckets = options.RestrictPublicBuckets ?? true
     this.RequestPayer = options.RequestPayer ?? 'BucketOwner'
+
+    this.ObjectLockEnabled = options.ObjectLockEnabled ?? true
+    this.ObjectLockDefaultRetentionMode =
+      options.ObjectLockDefaultRetentionMode ?? 'COMPLIANCE'
+    this.ObjectLockDefaultRetentionDays =
+      options.ObjectLockDefaultRetentionDays ?? 0
+    this.ObjectLockDefaultRetentionYears =
+      options.ObjectLockDefaultRetentionYears ?? 10
+
+    this.VersioningMfaDelete = options.VersioningMfaDelete ?? 'Disabled'
+    this.VersioningStatus = options.VersioningStatus ?? 'Suspended'
 
     this.autoReady = options.autoReady ?? true
     if (this.autoReady) {
@@ -147,6 +182,10 @@ class S3Bucket {
         await this.create()
         await this.putPublicAccessBlock()
         await this.putRequestPayment()
+        await this.putVersioning()
+        if (this.ObjectLockEnabled) {
+          await this.putObjectLockConfiguration()
+        }
         return { message: 'created-bucket' }
       } else {
         throw error
@@ -192,6 +231,14 @@ class S3Bucket {
       }
     }
 
+    const authorizationHeaders = {
+      'Host': this.endpoint0,
+      ...headers['Content-MD5'] ? {
+        'Content-MD5': headers['Content-MD5']
+      } : {},
+      ...amzHeaders
+    }
+
     headers['Authorization'] = AwsAuthorization({
       accessKeyId: this.accessKeyId,
       secretAccessKey: this.secretAccessKey,
@@ -204,10 +251,7 @@ class S3Bucket {
       payloadHash,
       expires: 300,
       queryParams: urlData.searchParams,
-      headers: {
-        'Host': this.endpoint0,
-        ...amzHeaders
-      }
+      headers: authorizationHeaders,
     })
 
     return this.http0[method](url, { headers, body })
@@ -361,6 +405,7 @@ class S3Bucket {
     const headers = {}
 
     const body = `
+<?xml version="1.0" encoding="UTF-8"?>
 <PublicAccessBlockConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
    <BlockPublicAcls>${this.BlockPublicACLs}</BlockPublicAcls>
    <IgnorePublicAcls>${this.IgnorePublicACLs}</IgnorePublicAcls>
@@ -393,6 +438,7 @@ class S3Bucket {
     const headers = {}
 
     const body = `
+<?xml version="1.0" encoding="UTF-8"?>
 <RequestPaymentConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
   <Payer>${this.RequestPayer}</Payer>
 </RequestPaymentConfiguration>
@@ -401,6 +447,77 @@ class S3Bucket {
     headers['Content-MD5'] = crypto.createHash('md5').update(body).digest('base64')
 
     const response = await this._awsRequest1('PUT', '/?requestPayment', headers, body)
+
+    if (response.ok) {
+      return {}
+    }
+    throw new AwsError(await Readable.Text(response))
+  }
+
+  /**
+   * @name putObjectLockConfiguration
+   *
+   * @docs
+   * Apply an AWS S3 bucket policy to an AWS S3 bucket.
+   *
+   * ```coffeescript [specscript]
+   * putObjectLockConfiguration() -> Promise<{}>
+   * ```
+   */
+  async putObjectLockConfiguration() {
+    const headers = {}
+
+    const body = `
+<?xml version="1.0" encoding="UTF-8"?>
+<ObjectLockConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+   <ObjectLockEnabled>Enabled</ObjectLockEnabled>
+   <Rule>
+      <DefaultRetention>
+         <Mode>${this.ObjectLockDefaultRetentionMode}</Mode>
+         ${
+           this.ObjectLockDefaultRetentionYears > 0
+           ? `<Years>${this.ObjectLockDefaultRetentionYears}</Years>`
+           : `<Days>${this.ObjectLockDefaultRetentionDays}</Days>`
+         }
+      </DefaultRetention>
+   </Rule>
+</ObjectLockConfiguration>
+    `.trim()
+
+    headers['Content-MD5'] = crypto.createHash('md5').update(body).digest('base64')
+
+    const response = await this._awsRequest0('PUT', '/?object-lock', headers, body)
+
+    if (response.ok) {
+      return {}
+    }
+    throw new AwsError(await Readable.Text(response))
+  }
+
+  /**
+   * @name putVersioning
+   *
+   * @docs
+   * Apply an AWS S3 bucket policy to an AWS S3 bucket.
+   *
+   * ```coffeescript [specscript]
+   * putVersioning() -> Promise<{}>
+   * ```
+   */
+  async putVersioning() {
+    const headers = {}
+
+    const body = `
+<?xml version="1.0" encoding="UTF-8"?>
+<VersioningConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+   <MfaDelete>${this.VersioningMfaDelete}</MfaDelete>
+   <Status>${this.VersioningStatus}</Status>
+</VersioningConfiguration>
+    `.trim()
+
+    headers['Content-MD5'] = crypto.createHash('md5').update(body).digest('base64')
+
+    const response = await this._awsRequest0('PUT', '/?versioning', headers, body)
 
     if (response.ok) {
       return {}
@@ -688,7 +805,10 @@ class S3Bucket {
 
     if (options.ContentMD5) {
       headers['Content-MD5'] = options.ContentMD5
+    } else {
+      headers['Content-MD5'] = crypto.createHash('md5').update(body).digest('base64')
     }
+
     if (options.ContentType) {
       headers['Content-Type'] = options.ContentType
     } else {
@@ -773,7 +893,6 @@ class S3Bucket {
         options.BucketKeyEnabled
     }
 
-    // TODO
     if (options.Tagging) {
       headers['X-Amz-Tagging'] = options.Tagging
     }
@@ -798,7 +917,7 @@ class S3Bucket {
       if (response.headers['etag']) {
         data.ETag = response.headers['etag']
       }
-      if (response.headers['x-amz-expiration']) {
+      if (response.headers['x-amz-expiration']) { // TODO https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html; Sample Response for general purpose buckets: Expiration rule created using lifecycle configuration
         data.Expiration = response.headers['x-amz-expiration']
       }
 
@@ -1704,11 +1823,49 @@ class S3Bucket {
         response.Deleted ??= []
         response.Deleted = response.Deleted.concat(response1.Deleted)
       }
-      if (response1.Errors) {
-        response.Errors ??= []
-        response.Errors = response.Errors.concat(response1.Errors)
+
+      if (response1.Errors?.length > 0) {
+        const errors = response1.Errors.map(({ Key, VersionId, Code, Message }) => {
+          if (VersionId) {
+            return new Error(`${Key} (VersionId ${VersionId}): ${Code}: ${Message}`)
+          }
+          return new Error(`${Key}: ${Code}: ${Message}`)
+        })
+        throw new AggregateError(errors)
       }
+
     }
+
+    let versions = await this.listObjectVersions({ MaxKeys: BatchSize }).then(get('Versions'))
+
+    while (versions.length > 0) {
+console.log(versions.map(pick(['Key', 'VersionId'])))
+
+      const response1 = await this.deleteObjects(
+        versions.map(pick(['Key', 'VersionId'])),
+        deleteObjectsOptions
+      )
+      console.log('deleteObjects response1', response1)
+      versions = await this.listObjectVersions({ MaxKeys: BatchSize }).then(get('Versions'))
+
+      if (response1.Deleted) {
+        response.Deleted ??= []
+        response.Deleted = response.Deleted.concat(response1.Deleted)
+      }
+
+      if (response1.Errors?.length > 0) {
+        const errors = response1.Errors.map(({ Key, VersionId, Code, Message }) => {
+          if (VersionId) {
+            return new Error(`${Key} (VersionId ${VersionId}): ${Code}: ${Message}`)
+          }
+          return new Error(`${Key}: ${Code}: ${Message}`)
+        })
+        throw new AggregateError(errors)
+      }
+
+    }
+
+console.log('done', response)
 
     return response
   }
@@ -1812,6 +1969,21 @@ class S3Bucket {
     return this._s3.listObjectsV2(this.name, options).catch(error => {
       if (error.retryable) {
         return this.listObjects(options)
+      }
+      throw error
+    })
+  }
+
+  /**
+   * @name listObjectVersions
+   *
+   * @docs
+   * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html
+   */
+  listObjectVersions(options) {
+    return this._s3.listObjectVersions(this.name, options).catch(error => {
+      if (error.retryable) {
+        return this.listObjectVersions(options)
       }
       throw error
     })
