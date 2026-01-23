@@ -600,7 +600,6 @@ class S3Bucket {
    *   SSEKMSKeyId: string,
    *   SSEKMSEncryptionContext: string,
    *   BucketKeyEnabled: boolean,
-   *   RequestCharged: 'requester'
    * }>
    * ```
    *
@@ -662,7 +661,6 @@ class S3Bucket {
    *   * `SSEKMSKeyId` - the [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) Key ID, Key ARN, or Key Alias used for object encryption.
    *   * `SSEKMSEncryptionContext` - additional [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) contextual information used for object encryption. The value for this header is a base64-encoded string of a UTF-8 encoded JSON value containing the encryption context as key-value pairs. This value is stored as object metadata and is passed automatically to AWS KMS for future `GetObject` operations on the object. For more information, see [Encryption context](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html#encryption-context) from the _Amazon S3 User Guide_.
    *   * `BucketKeyEnabled` - indicates that Amazon S3 used the Amazon S3 bucket key for object encryption with [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) keys (SSE-KMS).
-   *   * `RequestCharged` - indicates that the requester was successfully charged for the request.
    */
   async putObject(key, body, options = {}) {
     const headers = {}
@@ -770,12 +768,12 @@ class S3Bucket {
         options.SSEKMSEncryptionContext
     }
 
-    // TODO
     if (options.BucketKeyEnabled) {
       headers['X-Amz-Server-Side-Encryption-Bucket-Key-Enabled'] =
         options.BucketKeyEnabled
     }
 
+    // TODO
     if (options.Tagging) {
       headers['X-Amz-Tagging'] = options.Tagging
     }
@@ -854,9 +852,6 @@ class S3Bucket {
         data.BucketKeyEnabled =
           response.headers['x-amz-server-side-encryption-bucket-key-enabled'] == 'true'
       }
-      if (response.headers['x-amz-request-charged']) {
-        data.RequestCharged = response.headers['x-amz-request-charged']
-      }
 
       return data
     }
@@ -928,7 +923,6 @@ class S3Bucket {
    *   StorageClass: 'STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'
    *                 |'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS'
    *                 |'GLACIER_IR'|'SNOW'|'EXPRESS_ONEZONE',
-   *   RequestCharged: 'requester',
    *   ReplicationStatus: 'COMPLETE'|'PENDING'|'FAILED'|'REPLICA'|'COMPLETED',
    *   PartsCount: number,
    *   TagCount: number,
@@ -993,7 +987,6 @@ class S3Bucket {
    *   * `SSEKMSKeyId` - the [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) Key ID, Key ARN, or Key Alias used for object encryption.
    *   * `BucketKeyEnabled` - indicates that Amazon S3 used the Amazon S3 bucket key for object encryption with [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) keys (SSE-KMS).
    *   * `StorageClass` - the [storage class](https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html) associated with the object. Defaults to `STANDARD`.
-   *   * `RequestCharged` - indicates that the requester was successfully charged for the request.
    *   * `ReplicationStatus` - the progress of replicating objects between buckets. For more information, see [Replicating objects within and across Regions](https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication.html).
    *   * `PartsCount` - the parts count of the object. This value is only returned if the `PartNumber` option was specified and the object was uploaded as a multipart upload. For more information, see [Uploading and copying objects using multipart upload in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html) from the _Amazon S3 User Guide_.
    *   * `TagCount` - the number of tags on the object.
@@ -1203,9 +1196,6 @@ class S3Bucket {
       if (response.headers['x-amz-storage-class']) {
         data.StorageClass = response.headers['x-amz-storage-class']
       }
-      if (response.headers['x-amz-request-charged']) {
-        data.RequestCharged = response.headers['x-amz-request-charged']
-      }
 
       if (response.headers['x-amz-replication-status']) {
         data.ReplicationStatus = response.headers['x-amz-replication-status']
@@ -1279,10 +1269,6 @@ class S3Bucket {
 
     if (response.ok) {
       const data = {}
-
-      if (response.headers['x-amz-request-charged']) {
-        data.RequestCharged = response.headers['x-amz-request-charged']
-      }
 
       const text = await Readable.Text(response)
       const xmlData = XML.parse(text)
@@ -1363,7 +1349,6 @@ class S3Bucket {
    *   StorageClass: 'STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'
    *                 |'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS'
    *                 |'GLACIER_IR'|'SNOW'|'EXPRESS_ONEZONE',
-   *   RequestCharged: 'requester',
    *   ReplicationStatus: 'COMPLETE'|'PENDING'|'FAILED'|'REPLICA'|'COMPLETED',
    *   PartsCount: number,
    *   ObjectLockMode: GOVERNANCE'|'COMPLIANCE,
@@ -1427,7 +1412,6 @@ class S3Bucket {
    *   * `SSEKMSKeyId` - the [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) Key ID, Key ARN, or Key Alias used for object encryption.
    *   * `BucketKeyEnabled` - indicates that Amazon S3 used the Amazon S3 bucket key for object encryption with [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) keys (SSE-KMS).
    *   * `StorageClass` - the [storage class](https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html) associated with the object. Defaults to `STANDARD`.
-   *   * `RequestCharged` - indicates that the requester was successfully charged for the request.
    *   * `ReplicationStatus` - the progress of replicating objects between buckets. For more information, see [Replicating objects within and across Regions](https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication.html).
    *   * `PartsCount` - the parts count of the object. This value is only returned if the `PartNumber` option was specified and the object was uploaded as a multipart upload. For more information, see [Uploading and copying objects using multipart upload in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html) from the _Amazon S3 User Guide_.
    *   * `ObjectLockMode` - the object lock mode. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
@@ -1499,7 +1483,6 @@ class S3Bucket {
    *   StorageClass: 'STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'
    *                 |'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS'
    *                 |'GLACIER_IR'|'SNOW'|'EXPRESS_ONEZONE',
-   *   RequestCharged: 'requester',
    *   ReplicationStatus: 'COMPLETE'|'PENDING'|'FAILED'|'REPLICA'|'COMPLETED',
    *   PartsCount: number,
    *   ObjectLockMode: GOVERNANCE'|'COMPLIANCE,
@@ -1576,7 +1559,6 @@ class S3Bucket {
    *   * `SSEKMSKeyId` - the [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) Key ID, Key ARN, or Key Alias used for object encryption.
    *   * `BucketKeyEnabled` - indicates that Amazon S3 used the bucket key for object encryption with [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) keys (SSE-KMS).
    *   * `StorageClass` - the [storage class](https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html) associated with the object. Defaults to `STANDARD`.
-   *   * `RequestCharged` - indicates that the requester was successfully charged for the request.
    *   * `ReplicationStatus` - the progress of replicating objects between buckets. For more information, see [Replicating objects within and across Regions](https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication.html).
    *   * `PartsCount` - the parts count of the object. This value is only returned if the `PartNumber` option was specified and the object was uploaded as a multipart upload. For more information, see [Uploading and copying objects using multipart upload in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html) from the _Amazon S3 User Guide_.
    *   * `ObjectLockMode` - the object lock mode. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
@@ -1602,7 +1584,6 @@ class S3Bucket {
    * }) -> response Promise<{
    *   DeleteMarker: boolean,
    *   VersionId: string,
-   *   RequestCharged: 'requester',
    * }>
    * ```
    *
@@ -1618,7 +1599,6 @@ class S3Bucket {
    * Response:
    *   * `DeleteMarker` - if `true`, the current version or specified object version that was permanently deleted was a [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) before deletion.
    *   * `VersionId` - version ID of the [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) created as a result of the DELETE operation.
-   *   * `RequestCharged` - indicates that the requester was successfully charged for the request.
    */
   deleteObject(key, options) {
     return this._s3.deleteObject(this.name, key, options)
@@ -1645,7 +1625,6 @@ class S3Bucket {
    *     DeleteMarker: boolean,
    *     DeleteMarkerVersionId: string
    *   }>,
-   *   RequestCharged: 'requester',
    *   Errors: Array<{
    *     Key: string,
    *     VersionId: string,
@@ -1665,7 +1644,6 @@ class S3Bucket {
    *     * `VersionId` - the version ID of the deleted object.
    *     * `DeleteMarker` - if `true`, the current version or specified object version that was permanently deleted was a [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) before deletion.
    *     * `DeleteMarkerVersionId` - version ID of the [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) created as a result of the DELETE operation, or if a specific object version was deleted, the version ID of the deleted object version.
-   *   * `RequestCharged` - indicates that the requester was successfully charged for the request.
    *   * `Errors` - container for a failed delete.
    *     * `Key` - the name of the object of the attempted delete.
    *     * `VersionId` - the version ID of the object of the attempted delete.
@@ -1698,7 +1676,6 @@ class S3Bucket {
    *     DeleteMarker: boolean,
    *     DeleteMarkerVersionId: string,
    *   }>,
-   *   RequestCharged: 'requester',
    *   Errors: Array<{
    *     Key: string,
    *     VersionId: string,
@@ -1726,9 +1703,6 @@ class S3Bucket {
       if (response1.Deleted) {
         response.Deleted ??= []
         response.Deleted = response.Deleted.concat(response1.Deleted)
-      }
-      if (response1.RequestCharged) {
-        response.RequestCharged = response1.RequestCharged
       }
       if (response1.Errors) {
         response.Errors ??= []
@@ -1785,7 +1759,6 @@ class S3Bucket {
    *   ContinuationToken: string,
    *   NextContinuationToken: string,
    *   StartAfter: string,
-   *   RequestCharged: 'requester'
    * }>
    * ```
    *
@@ -1833,7 +1806,6 @@ class S3Bucket {
    *   * `ContinuationToken` - the value of `ContinuationToken` specified in the request.
    *   * `NextContinuationToken` - indicates there are more keys available in the bucket to be listed. To continue the list, this value should be used as the `ContinuationToken` for the next list objects request.
    *   * `StartAfter` - the value of `StartAfter` specified in the request.
-   *   * `RequestCharged` - indicates that the requester was successfully charged for the request.
    *
    */
   listObjects(options) {
