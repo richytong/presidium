@@ -409,13 +409,94 @@ class S3Bucket {
   }
 
   /**
+   * @name putPolicy
+   *
+   * @docs
+   * Apply an AWS S3 bucket policy to an AWS S3 bucket.
+   *
+   * ```coffeescript [specscript]
+   * putPolicy(options {
+   *   policy: object,
+   * }) -> Promise<{}>
+   * ```
+   *
+   * Example policy:
+   * ```
+   * {
+   *   "Version": "2012-10-17",
+   *   "Statement": [
+   *     {
+   *       "Effect": "Allow",
+   *       "Principal": {
+   *         "AWS": "arn:aws:iam::AccountA-ID:root"
+   *       },
+   *       "Action": "sts:AssumeRole"
+   *     }
+   *   ]
+   * }
+   * ```
+   */
+  async putPolicy(options) {
+    const { policy } = options
+
+    const body = JSON.stringify(policy)
+
+    const response = await this._awsRequest0('PUT', '/?policy', {}, body)
+
+    if (response.ok) {
+      return {}
+    }
+    throw new AwsError(await Readable.Text(response))
+  }
+
+  /**
+   * @name getPolicy
+   *
+   * @docs
+   * Apply an AWS S3 bucket policy to an AWS S3 bucket.
+   *
+   * ```coffeescript [specscript]
+   * getPolicy() -> BucketPolicy Promise<{
+   *   Version: string,
+   *   Id: string,
+   *   Statement: Array,
+   * }>
+   * ```
+   *
+   * Example policy:
+   * ```
+   * {
+   *   "Version": "2012-10-17",
+   *   "Statement": [
+   *     {
+   *       "Effect": "Allow",
+   *       "Principal": {
+   *         "AWS": "arn:aws:iam::AccountA-ID:root"
+   *       },
+   *       "Action": "sts:AssumeRole"
+   *     }
+   *   ]
+   * }
+   * ```
+   */
+  async getPolicy() {
+    const response = await this._awsRequest0('GET', '/?policy', {}, '')
+
+    if (response.ok) {
+      const data = await Readable.JSON(response)
+      return data
+    }
+    throw new AwsError(await Readable.Text(response))
+  }
+
+  /**
    * @name closeConnections
    *
    * @docs
    * Close underlying TCP connections.
    *
    * ```coffeescript [specscript]
-   * table.closeConnections() -> ()
+   * closeConnections() -> ()
    * ```
    */
   closeConnections() {
@@ -432,7 +513,6 @@ class S3Bucket {
    * ```coffeescript [specscript]
    * bucket.delete(options {
    *   Id: string,
-   *   ExpectedBucketOwner: string
    * }) -> response Promise<{}>
    * ```
    *
@@ -442,7 +522,6 @@ class S3Bucket {
    *
    * Options:
    *   * `Id` - the ID of the [analytics configuration](https://docs.aws.amazon.com/AmazonS3/latest/userguide/analytics-storage-class.html).
-   *   * `ExpectedBucketOwner` - the AWS account ID of the expected bucket owner. If the provided account ID does not match the actual owner of the bucket, Amazon S3 responds with HTTP status code `403 Forbidden`.
    */
   async delete(options = {}) {
     const response = await this._awsRequest1('DELETE', '/', {}, '')
@@ -500,12 +579,11 @@ class S3Bucket {
    *     SSEKMSKeyId: string,
    *     SSEKMSEncryptionContext: string,
    *     BucketKeyEnabled: boolean,
-   *     RequestPayer: string,
+   *     RequestPayer: 'Requester'|'BucketOwner'
    *     Tagging: string, # key1=value1&key2=value2
    *     ObjectLockMode: 'GOVERNANCE'|'COMPLIANCE',
    *     ObjectLockRetainUntilDate: Date|DateString|TimestampSeconds,
    *     ObjectLockLegalHoldStatus: 'ON'|'OFF',
-   *     ExpectedBucketOwner: string # aws account id '123456789000'
    *   }
    * ) -> response Promise<{
    *   Expiration: string,
@@ -563,12 +641,10 @@ class S3Bucket {
    *   * `SSEKMSKeyId` - the [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) Key ID, Key ARN, or Key Alias used for object encryption. If a KMS key doesn't exist in the same account, this value must be the Key ARN.
    *   * `SSEKMSEncryptionContext` - additional [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) contextual information used for object encryption. The value for this header is a base64-encoded string of a UTF-8 encoded JSON value containing the encryption context as key-value pairs. This value is stored as object metadata and is passed automatically to AWS KMS for future `GetObject` operations on the object. For more information, see [Encryption context](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html#encryption-context) from the _Amazon S3 User Guide_.
    *   * `BucketKeyEnabled` - if `true`, Amazon S3 uses the Amazon S3 bucket key for object encryption with [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) keys (SSE-KMS).
-   *   * `RequestPayer` - confirms that the requester knows that they will be charged for the request. Bucket owners do not need to specify this parameter for their requests.
    *   * `Tagging` - the [tag-set](https://docs.aws.amazon.com/whitepapers/latest/tagging-best-practices/what-are-tags.html) for the object encoded as URL query paramters (e.g. "Key1=Value1&Key2=Value2).
    *   * `ObjectLockMode` - the object lock mode. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
    *   * `ObjectLockRetainUntilDate` - the date/time when the object's Object Lock expires. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
    *   * `ObjectLockLegalHoldStatus` - if `true`, a legal hold will be applied to the object. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
-   *   * `ExpectedBucketOwner` - the AWS account ID of the expected bucket owner. If the provided account ID does not match the actual owner of the bucket, Amazon S3 responds with HTTP status code `403 Forbidden`.
    *
    * Response:
    *   * `Expiration` - if the expiration is configured for the object (see [PutBucketLifecycleConfiguration](https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketLifecycleConfiguration.html) from the _Amazon S3 User Guide_), this header will be present in the response. Includes the `expiry-date` and `rule-id` key-value pairs that provide information about object expiration. The value of the `rule-id` is URL-encoded.
@@ -699,9 +775,6 @@ class S3Bucket {
       headers['X-Amz-Server-Side-Encryption-Bucket-Key-Enabled'] =
         options.BucketKeyEnabled
     }
-    if (options.RequestPayer) {
-      headers['X-Amz-Request-Payer'] = options.RequestPayer
-    }
 
     if (options.Tagging) {
       headers['X-Amz-Tagging'] = options.Tagging
@@ -717,10 +790,6 @@ class S3Bucket {
     if (options.ObjectLockLegalHoldStatus) {
       headers['X-Amz-Object-Lock-Legal-Hold'] =
         options.ObjectLockLegalHoldStatus
-    }
-
-    if (options.ExpectedBucketOwner) {
-      headers['X-Amz-Expected-Bucket-Owner'] = options.ExpectedBucketOwner
     }
 
     const response = await this._awsRequest1('PUT', `/${key}`, headers, body)
@@ -822,9 +891,7 @@ class S3Bucket {
    *     SSECustomerAlgorithm: string,
    *     SSECustomerKey: Buffer|TypedArray|Blob|string,
    *     SSECustomerKeyMD5: string,
-   *     RequestPayer: 'requester',
    *     PartNumber: number,
-   *     ExpectedBucketOwner: string,
    *     ChecksumMode: 'ENABLED',
    *   },
    * ) -> Promise<{
@@ -891,9 +958,7 @@ class S3Bucket {
    *   * `SSECustomerAlgorithm` - the server-side encryption algorithm used for object encryption. For more information, see [Using server-side encryption with Amazon S3 managed keys (SSE-S3)](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingServerSideEncryption.html) from the _Amazon S3 User Guide_.
    *   * `SSECustomerKey` - the customer-provided encryption key used for object encryption. For more information, see [Using server-side encryption with Amazon S3 managed keys (SSE-S3)](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingServerSideEncryption.html) from the _Amazon S3 User Guide_.
    *   * `SSECustomerKeyMD5` - the 128-bit MD5 digest of the encryption key according to [RFC 1321](https://www.ietf.org/rfc/rfc1321.txt). Amazon S3 uses this header to check for message integrity. For more information, see [Using server-side encryption with Amazon S3 managed keys (SSE-S3)](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingServerSideEncryption.html) from the _Amazon S3 User Guide_.
-   *   * `RequestPayer` - confirms that the requester knows that they will be charged for the request. Bucket owners do not need to specify this parameter for their requests.
    *   * `PartNumber` - part number of the object being read. For more information, see [Uploading and copying objects using multipart upload in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html) from the _Amazon S3 User Guide_.
-   *   * `ExpectedBucketOwner` - the AWS account ID of the expected bucket owner. If the provided account ID does not match the actual owner of the bucket, Amazon S3 responds with HTTP status code `403 Forbidden`.
    *   * `ChecksumMode` - required to retrieve the [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object.
    *
    * Response:
@@ -970,13 +1035,6 @@ class S3Bucket {
     if (options.SSECustomerKeyMD5) {
       headers['X-Amz-Server-Side-Encryption-Customer-Key-MD5'] =
         options.SSECustomerKeyMD5
-    }
-
-    if (options.RequestPayer) {
-      headers['X-Amz-Request-Payer'] = options.RequestPayer
-    }
-    if (options.ExpectedBucketOwner) {
-      headers['X-Amz-Expected-Bucket-Owner'] = options.ExpectedBucketOwner
     }
 
     if (options.ChecksumMode) {
@@ -1189,8 +1247,6 @@ class S3Bucket {
    *
    * ```coffeescript [specscript]
    * bucket.getObjectACL(key string, options {
-   *   RequestPayer: 'requester',
-   *   ExpectedBucketOwner: string,
    * }) -> data Promise<{
    *   Grants: Array<{
    *     Grantee: {
@@ -1205,13 +1261,6 @@ class S3Bucket {
    */
   async getObjectACL(key, options = {}) {
     const headers = {}
-
-    if (options.RequestPayer) {
-      headers['X-Amz-Request-Payer'] = options.RequestPayer
-    }
-    if (options.ExpectedBucketOwner) {
-      headers['X-Amz-Expected-Bucket-Owner'] = options.ExpectedBucketOwner
-    }
 
     const searchParams = new URLSearchParams()
 
@@ -1277,9 +1326,7 @@ class S3Bucket {
    *     SSECustomerAlgorithm: string,
    *     SSECustomerKey: Buffer|TypedArray|Blob|string,
    *     SSECustomerKeyMD5: string,
-   *     RequestPayer: 'requester',
    *     PartNumber: number,
-   *     ExpectedBucketOwner: string,
    *     ChecksumMode: 'ENABLED',
    *   },
    * ) -> response Promise<{
@@ -1345,9 +1392,7 @@ class S3Bucket {
    *   * `SSECustomerAlgorithm` - the server-side encryption algorithm used for object encryption. For more information, see [Using server-side encryption with Amazon S3 managed keys (SSE-S3)](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingServerSideEncryption.html) from the _Amazon S3 User Guide_.
    *   * `SSECustomerKey` - the customer-provided encryption key used for object encryption. For more information, see [Using server-side encryption with Amazon S3 managed keys (SSE-S3)](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingServerSideEncryption.html) from the _Amazon S3 User Guide_.
    *   * `SSECustomerKeyMD5` - the 128-bit MD5 digest of the encryption key according to [RFC 1321](https://www.ietf.org/rfc/rfc1321.txt). Amazon S3 uses this header to check for message integrity. For more information, see [Using server-side encryption with Amazon S3 managed keys (SSE-S3)](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingServerSideEncryption.html) from the _Amazon S3 User Guide_.
-   *   * `RequestPayer` - confirms that the requester knows that they will be charged for the request. Bucket owners do not need to specify this parameter for their requests.
    *   * `PartNumber` - part number of the object being read. For more information, see [Uploading and copying objects using multipart upload in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html) from the _Amazon S3 User Guide_.
-   *   * `ExpectedBucketOwner` - the AWS account ID of the expected bucket owner. If the provided account ID does not match the actual owner of the bucket, Amazon S3 responds with HTTP status code `403 Forbidden`.
    *   * `ChecksumMode` - required to retrieve the [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object.
    *
    * Response:
@@ -1418,9 +1463,7 @@ class S3Bucket {
    *   SSECustomerAlgorithm: string,
    *   SSECustomerKey: Buffer|TypedArray|Blob|string,
    *   SSECustomerKeyMD5: string,
-   *   RequestPayer: 'requester',
    *   PartNumber: number,
-   *   ExpectedBucketOwner: string,
    *   ChecksumMode: 'ENABLED',
    * }) -> response stream.Readable {
    *   DeleteMarker: boolean,
@@ -1498,9 +1541,7 @@ class S3Bucket {
    *   * `SSECustomerAlgorithm` - the server-side encryption algorithm used for object encryption. For more information, see [Using server-side encryption with Amazon S3 managed keys (SSE-S3)](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingServerSideEncryption.html) from the _Amazon S3 User Guide_.
    *   * `SSECustomerKey` - the customer-provided encryption key used for object encryption. For more information, see [Using server-side encryption with Amazon S3 managed keys (SSE-S3)](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingServerSideEncryption.html) from the _Amazon S3 User Guide_.
    *   * `SSECustomerKeyMD5` - the 128-bit MD5 digest of the encryption key according to [RFC 1321](https://www.ietf.org/rfc/rfc1321.txt). Amazon S3 uses this header to check for message integrity. For more information, see [Using server-side encryption with Amazon S3 managed keys (SSE-S3)](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingServerSideEncryption.html) from the _Amazon S3 User Guide_.
-   *   * `RequestPayer` - confirms that the requester knows that they will be charged for the request. Bucket owners do not need to specify this parameter for their requests.
    *   * `PartNumber` - part number of the object being read. For more information, see [Uploading and copying objects using multipart upload in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html) from the _Amazon S3 User Guide_.
-   *   * `ExpectedBucketOwner` - the AWS account ID of the expected bucket owner. If the provided account ID does not match the actual owner of the bucket, Amazon S3 responds with HTTP status code `403 Forbidden`.
    *   * `ChecksumMode` - required to retrieve the [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object.
    *
    * Response:
@@ -1557,9 +1598,7 @@ class S3Bucket {
    * bucket.deleteObject(key string, options {
    *   MFA: string,
    *   VersionId: string,
-   *   RequestPayer: 'requester',
    *   BypassGovernanceRetention: boolean,
-   *   ExpectedBucketOwner: string,
    * }) -> response Promise<{
    *   DeleteMarker: boolean,
    *   VersionId: string,
@@ -1574,9 +1613,7 @@ class S3Bucket {
    * Options:
    *   * `MFA` - the concatenation of the authentication device's serial number, a space, and the value displayed on the authentication device. Required to permanently delete a versioned object if versioning is configured with Multifactor Authentication (MFA) delete enabled. For more information, see [Configuring MFA delete](https://docs.aws.amazon.com/AmazonS3/latest/userguide/MultiFactorAuthenticationDelete.html) from the _Amazon S3 User Guide_.
    *   * `VersionId` - the specific version of the object. For more information, see [Retaining multiple versions of objects with S3 Versioning](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html) from the _Amazon S3 User Guide_.
-   *   * `RequestPayer` - confirms that the requester knows that they will be charged for the request. Bucket owners do not need to specify this parameter for their requests.
    *   * `BypassGovernanceRetention` - if `true`, S3 Object Lock bypasses [Governance mode](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html#object-lock-retention-modes) restrictions to process this operation. Requires the `s3:BypassGovernanceRetention` permission.
-   *   * `ExpectedBucketOwner` - the AWS account ID of the expected bucket owner. If the provided account ID does not match the actual owner of the bucket, Amazon S3 responds with HTTP status code `403 Forbidden`.
    *
    * Response:
    *   * `DeleteMarker` - if `true`, the current version or specified object version that was permanently deleted was a [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) before deletion.
@@ -1599,9 +1636,7 @@ class S3Bucket {
    *   options {
    *     Quiet: boolean,
    *     BypassGovernanceRetention: boolean,
-   *     ExpectedBucketOwner: string,
    *     MFA: string,
-   *     RequestPayer: 'requester'
    *   }
    * ) -> response Promise<{
    *   Deleted: Array<{
@@ -1622,9 +1657,7 @@ class S3Bucket {
    * Options:
    *   * `Quiet` - if `true`, enables quiet mode for the request. In quiet mode, the response includes only keys where the delete operation encountered an error. For a successful delete operation in quiet mode, the operation does not return any information about the delete in the response.
    *   * `BypassGovernanceRetention` - if `true`, S3 Object Lock bypasses [Governance mode](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html#object-lock-retention-modes) restrictions to process this operation. Requires the `s3:BypassGovernanceRetention` permission.
-   *   * `ExpectedBucketOwner` - the AWS account ID of the expected bucket owner. If the provided account ID does not match the actual owner of the bucket, Amazon S3 responds with HTTP status code `403 Forbidden`.
    *   * `MFA` - the concatenation of the authentication device's serial number, a space, and the value displayed on the authentication device. Required to permanently delete a versioned object if versioning is configured with Multifactor Authentication (MFA) delete enabled. For more information, see [Configuring MFA delete](https://docs.aws.amazon.com/AmazonS3/latest/userguide/MultiFactorAuthenticationDelete.html) from the _Amazon S3 User Guide_.
-   *   * `RequestPayer` - confirms that the requester knows that they will be charged for the request. Bucket owners do not need to specify this parameter for their requests.
    *
    * Response:
    *   * `Deleted` - container for a successful delete.
@@ -1656,9 +1689,7 @@ class S3Bucket {
    * bucket.deleteAllObjects(options {
    *   Quiet: boolean,
    *   BypassGovernanceRetention: boolean,
-   *   ExpectedBucketOwner: string,
    *   MFA: string,
-   *   RequestPayer: 'requester',
    *   BatchSize: number
    * }) -> response Promise<{
    *   Deleted: Array<{
@@ -1723,8 +1754,6 @@ class S3Bucket {
    *   ContinuationToken: string,
    *   FetchOwner: boolean,
    *   StartAfter: string,
-   *   RequestPayer: 'requester',
-   *   ExpectedBucketOwner: string,
    *   OptionalObjectAttributes: ['RestoreStatus']
    * }) -> response Promise<{
    *   IsTruncated: boolean,
@@ -1776,8 +1805,6 @@ class S3Bucket {
    *   * `ContinuationToken` - indicates to Amazon S3 that the list is being continued on this bucket with a token. Used to paginate list results.
    *   * `FetchOwner` - if `true`, the `Owner` field indicating the owner of the object will be present with each key in the response.
    *   * `StartAfter` - the key after which Amazon S3 will start listing in [lexicographical order](https://help.splunk.com/en/splunk-cloud-platform/search/spl2-search-manual/sort-and-order/lexicographical-order).
-   *   * `RequestPayer` - confirms that the requester knows that they will be charged for the request. Bucket owners do not need to specify this parameter for their requests.
-   *   * `ExpectedBucketOwner` - the AWS account ID of the expected bucket owner. If the provided account ID does not match the actual owner of the bucket, Amazon S3 responds with HTTP status code `403 Forbidden`.
    *   * `OptionalObjectAttributes` - optional fields to be returned in the response.
    *
    * Response:

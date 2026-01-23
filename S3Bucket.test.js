@@ -153,6 +153,7 @@ const test2 = new Test('S3Bucket', async function integration2() {
       ObjectOwnership: 'BucketOwnerPreferred',
       BlockPublicAccess: false,
       BlockPublicACLs: false,
+      BlockPublicPolicy: false,
       IgnorePublicAcls: false,
       RestrictPublicBuckets: false,
       RequestPayer: 'Requester',
@@ -172,6 +173,7 @@ const test2 = new Test('S3Bucket', async function integration2() {
       ObjectOwnership: 'BucketOwnerPreferred',
       BlockPublicAccess: false,
       BlockPublicACLs: false,
+      BlockPublicPolicy: false,
       IgnorePublicAcls: false,
       RestrictPublicBuckets: false,
       RequestPayer: 'Requester',
@@ -188,6 +190,7 @@ const test2 = new Test('S3Bucket', async function integration2() {
     ObjectOwnership: 'BucketOwnerPreferred',
     BlockPublicAccess: false,
     BlockPublicACLs: false,
+    BlockPublicPolicy: false,
     IgnorePublicAcls: false,
     RestrictPublicBuckets: false,
     RequestPayer: 'Requester',
@@ -197,6 +200,33 @@ const test2 = new Test('S3Bucket', async function integration2() {
   {
     const { message } = await testBucket2.ready
     assert.equal(message, 'bucket-exists')
+  }
+
+  { // putPolicy, getPolicy
+    const policy = {
+      "Version": "2008-10-17",
+      "Id": "Policy1380877762691",
+      "Statement": [
+        {
+          "Sid": "Stmt1380877761162",
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "*"
+          },
+          "Action": "s3:GetObject",
+          "Resource": `arn:aws:s3:::${bucketName}/*`,
+        }
+      ]
+    }
+
+    await testBucket2.putPolicy({
+      policy,
+    })
+
+    const policy2 = await testBucket2.getPolicy()
+    assert.equal(policy.Version, policy2.Version)
+    assert.equal(policy.Id, policy2.Id)
+    assert.deepEqual(policy.Statement, policy2.Statement)
   }
 
   { // ACL option
@@ -454,18 +484,6 @@ const test2 = new Test('S3Bucket', async function integration2() {
     assert.equal(data2.SSECustomerAlgorithm, 'AES256')
     assert.equal(data2.SSECustomerKeyMD5, SSECustomerKeyMD5)
   }
-
-  /*
-  { // RequestPayer option
-    const key = 'test/RequestPayer-option'
-    const data1 = await testBucket2.putObject(key, 'test', {
-      RequestPayer: 'requester',
-    })
-    assert.equal(data1.RequestCharged, 'requester')
-    const data2 = await testBucket2.getObject(key)
-    assert.equal(data2.RequestCharged, 'requester')
-  }
-  */
 
   testBucket2.closeConnections()
 }).case()
