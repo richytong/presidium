@@ -694,6 +694,7 @@ class S3Bucket {
         options.SSEKMSEncryptionContext
     }
 
+    // TODO
     if (options.BucketKeyEnabled) {
       headers['X-Amz-Server-Side-Encryption-Bucket-Key-Enabled'] =
         options.BucketKeyEnabled
@@ -782,7 +783,7 @@ class S3Bucket {
 
       if (response.headers['x-amz-server-side-encryption-bucket-key-enabled']) {
         data.BucketKeyEnabled =
-          response.headers['x-amz-server-side-encryption-bucket-key-enabled']
+          response.headers['x-amz-server-side-encryption-bucket-key-enabled'] == 'true'
       }
       if (response.headers['x-amz-request-charged']) {
         data.RequestCharged = response.headers['x-amz-request-charged']
@@ -821,7 +822,7 @@ class S3Bucket {
    *     SSECustomerAlgorithm: string,
    *     SSECustomerKey: Buffer|TypedArray|Blob|string,
    *     SSECustomerKeyMD5: string,
-   *     RequestPayer: requester,
+   *     RequestPayer: 'requester',
    *     PartNumber: number,
    *     ExpectedBucketOwner: string,
    *     ChecksumMode: 'ENABLED',
@@ -1138,7 +1139,7 @@ class S3Bucket {
 
       if (response.headers['x-amz-server-side-encryption-bucket-key-enabled']) {
         data.BucketKeyEnabled =
-          response.headers['x-amz-server-side-encryption-bucket-key-enabled']
+          response.headers['x-amz-server-side-encryption-bucket-key-enabled'] == 'true'
       }
 
       if (response.headers['x-amz-storage-class']) {
@@ -1276,7 +1277,7 @@ class S3Bucket {
    *     SSECustomerAlgorithm: string,
    *     SSECustomerKey: Buffer|TypedArray|Blob|string,
    *     SSECustomerKeyMD5: string,
-   *     RequestPayer: requester,
+   *     RequestPayer: 'requester',
    *     PartNumber: number,
    *     ExpectedBucketOwner: string,
    *     ChecksumMode: 'ENABLED',
@@ -1417,7 +1418,7 @@ class S3Bucket {
    *   SSECustomerAlgorithm: string,
    *   SSECustomerKey: Buffer|TypedArray|Blob|string,
    *   SSECustomerKeyMD5: string,
-   *   RequestPayer: requester,
+   *   RequestPayer: 'requester',
    *   PartNumber: number,
    *   ExpectedBucketOwner: string,
    *   ChecksumMode: 'ENABLED',
@@ -1556,7 +1557,7 @@ class S3Bucket {
    * bucket.deleteObject(key string, options {
    *   MFA: string,
    *   VersionId: string,
-   *   RequestPayer: requester,
+   *   RequestPayer: 'requester',
    *   BypassGovernanceRetention: boolean,
    *   ExpectedBucketOwner: string,
    * }) -> response Promise<{
@@ -1600,7 +1601,7 @@ class S3Bucket {
    *     BypassGovernanceRetention: boolean,
    *     ExpectedBucketOwner: string,
    *     MFA: string,
-   *     RequestPayer: requester
+   *     RequestPayer: 'requester'
    *   }
    * ) -> response Promise<{
    *   Deleted: Array<{
@@ -1657,7 +1658,7 @@ class S3Bucket {
    *   BypassGovernanceRetention: boolean,
    *   ExpectedBucketOwner: string,
    *   MFA: string,
-   *   RequestPayer: requester,
+   *   RequestPayer: 'requester',
    *   BatchSize: number
    * }) -> response Promise<{
    *   Deleted: Array<{
@@ -1722,7 +1723,7 @@ class S3Bucket {
    *   ContinuationToken: string,
    *   FetchOwner: boolean,
    *   StartAfter: string,
-   *   RequestPayer: requester,
+   *   RequestPayer: 'requester',
    *   ExpectedBucketOwner: string,
    *   OptionalObjectAttributes: ['RestoreStatus']
    * }) -> response Promise<{

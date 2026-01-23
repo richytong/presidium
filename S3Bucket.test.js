@@ -400,6 +400,23 @@ const test2 = new Test('S3Bucket', async function integration2() {
     assert.equal(encryptionContext2.a, '1')
   }
 
+  { // ServerSideEncryption, SSEKMSKeyId, BucketKeyEnabled option
+    const key = 'test/ServerSideEncryption-SSEKMSKeyId-BucketKeyEnabled-option'
+    const encryptionContext = { a: '1' }
+    const data1 = await testBucket2.putObject(key, 'test', {
+      ServerSideEncryption: 'aws:kms',
+      SSEKMSKeyId: 'alias/presidium-test',
+      BucketKeyEnabled: true,
+    })
+    assert.equal(data1.ServerSideEncryption, 'aws:kms')
+    assert.equal(data1.SSEKMSKeyId, 'arn:aws:kms:us-east-1:095798571722:key/c0bb3d73-0b3f-47c3-8eb6-8567b6d22265')
+    assert.strictEqual(data1.BucketKeyEnabled, true)
+    const data2 = await testBucket2.getObject(key)
+    assert.equal(data2.ServerSideEncryption, 'aws:kms')
+    assert.equal(data2.SSEKMSKeyId, 'arn:aws:kms:us-east-1:095798571722:key/c0bb3d73-0b3f-47c3-8eb6-8567b6d22265')
+    assert.strictEqual(data2.BucketKeyEnabled, true)
+  }
+
   { // StorageClass option
     const key = 'test/StorageClass-option'
     await testBucket2.putObject(key, 'test', {
@@ -437,6 +454,18 @@ const test2 = new Test('S3Bucket', async function integration2() {
     assert.equal(data2.SSECustomerAlgorithm, 'AES256')
     assert.equal(data2.SSECustomerKeyMD5, SSECustomerKeyMD5)
   }
+
+  /*
+  { // RequestPayer option
+    const key = 'test/RequestPayer-option'
+    const data1 = await testBucket2.putObject(key, 'test', {
+      RequestPayer: 'requester',
+    })
+    assert.equal(data1.RequestCharged, 'requester')
+    const data2 = await testBucket2.getObject(key)
+    assert.equal(data2.RequestCharged, 'requester')
+  }
+  */
 
   testBucket2.closeConnections()
 }).case()
