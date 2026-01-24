@@ -33,7 +33,7 @@
     "bcrypt": "^5.1.0",
     "minimatch": "^9.0.3",
     "presidium-websocket": "^0.4.1",
-    "rubico": "^2.6.5",
+    "rubico": "^2.7.7",
     "tar-stream": "^2.1.4"
   },
   "scripts": {
