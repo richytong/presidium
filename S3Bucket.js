@@ -1533,8 +1533,241 @@ class S3Bucket {
    *   * `ObjectLockRetainUntilDate` - the date/time when the object's Object Lock expires. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
    *   * `ObjectLockLegalHoldStatus` - indicates the status of the legal hold applied to the object. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
    */
-  headObject(key, options) {
-    return this._s3.headObject(this.name, key, options)
+  async headObject(key, options = {}) {
+    const headers = {}
+
+    if (options.IfMatch) {
+      headers['If-Match'] = options.IfMatch
+    }
+    if (options.IfModifiedSince) {
+      headers['If-Modified-Since'] = options.IfModifiedSince
+    }
+
+    if (options.IfNoneMatch) {
+      headers['If-None-Match'] = options.IfNoneMatch
+    }
+    if (options.IfUnmodifiedSince) {
+      headers['If-Unmodified-Since'] = options.IfUnmodifiedSince
+    }
+
+    if (options.Range) {
+      headers['Range'] = options.Range
+    }
+
+    if (options.SSECustomerAlgorithm) {
+      headers['X-Amz-Server-Side-Encryption-Customer-Algorithm'] =
+        options.SSECustomerAlgorithm
+    }
+
+    if (options.SSECustomerKey) {
+      headers['X-Amz-Server-Side-Encryption-Customer-Key'] =
+        options.SSECustomerKey
+    }
+
+    if (options.SSECustomerKeyMD5) {
+      headers['X-Amz-Server-Side-Encryption-Customer-Key-MD5'] =
+        options.SSECustomerKeyMD5
+    }
+
+    if (options.ChecksumMode) {
+      headers['X-Amz-Checksum-Mode'] = options.ChecksumMode
+    }
+
+    const searchParams = new URLSearchParams()
+
+    if (options.PartNumber) {
+      searchParams.set('partNumber', options.PartNumber)
+    }
+
+    if (options.ResponseCacheControl) {
+      searchParams.set('response-cache-control', options.ResponseCacheControl)
+    }
+
+    if (options.ResponseContentDisposition) {
+      searchParams.set(
+        'response-content-disposition',
+        options.ResponseContentDisposition
+      )
+    }
+
+    if (options.ResponseContentEncoding) {
+      searchParams.set(
+        'response-content-encoding',
+        options.ResponseContentEncoding
+      )
+    }
+
+    if (options.ResponseContentLanguage) {
+      searchParams.set(
+        'response-content-language',
+        options.ResponseContentLanguage
+      )
+    }
+
+    if (options.ResponseContentType) {
+      searchParams.set('response-content-type', options.ResponseContentType)
+    }
+    if (options.ResponseExpires) {
+      searchParams.set('response-expires', options.ResponseExpires)
+    }
+    if (options.VersionId) {
+      searchParams.set('versionId', options.VersionId)
+    }
+
+    const response = await this._awsRequest1(
+      'HEAD',
+      searchParams.size > 0
+        ? `/${key}?${searchParams.toString()}`
+        : `/${key}`,
+      headers,
+      ''
+    )
+
+    if (response.ok) {
+      const data = {}
+
+      if (response.headers['x-amz-delete-marker']) {
+        data.DeleteMarker = response.headers['x-amz-delete-marker']
+      }
+      if (response.headers['accept-ranges']) {
+        data.AcceptRanges = response.headers['accept-ranges']
+      }
+
+      if (response.headers['x-amz-expiration']) {
+        data.Expiration = response.headers['x-amz-expiration']
+      }
+      if (response.headers['x-amz-restore']) {
+        data.Restore = response.headers['x-amz-restore']
+      }
+
+      if (response.headers['x-amz-archive-status']) {
+        data.ArchiveStatus = response.headers['x-amz-archive-status']
+      }
+
+      if (response.headers['last-modified']) {
+        data.LastModified = response.headers['last-modified']
+      }
+      if (response.headers['content-length']) {
+        data.ContentLength = response.headers['content-length']
+      }
+
+      if (response.headers['etag']) {
+        data.ETag = response.headers['etag']
+      }
+      if (response.headers['x-amz-checksum-crc32']) {
+        data.ChecksumCRC32 = response.headers['x-amz-checksum-crc32']
+      }
+
+      if (response.headers['x-amz-checksum-crc32c']) {
+        data.ChecksumCRC32C = response.headers['x-amz-checksum-crc32c']
+      }
+      if (response.headers['x-amz-checksum-crc64nvme']) {
+        data.ChecksumCRC64NVME = response.headers['x-amz-checksum-crc64nvme']
+      }
+
+      if (response.headers['x-amz-checksum-sha1']) {
+        data.ChecksumSHA1 = response.headers['x-amz-checksum-sha1']
+      }
+      if (response.headers['x-amz-checksum-sha256']) {
+        data.ChecksumSHA256 = response.headers['x-amz-checksum-sha256']
+      }
+
+      if (response.headers['x-amz-checksum-type']) {
+        data.ChecksumType = response.headers['x-amz-checksum-type']
+      }
+
+      if (response.headers['x-amz-missing-meta']) {
+        data.MissingMeta = response.headers['x-amz-missing-meta']
+      }
+      if (response.headers['x-amz-version-id']) {
+        data.VersionId = response.headers['x-amz-version-id']
+      }
+
+      if (response.headers['cache-control']) {
+        data.CacheControl = response.headers['cache-control']
+      }
+      if (response.headers['content-disposition']) {
+        data.ContentDisposition = response.headers['content-disposition']
+      }
+
+      if (response.headers['content-encoding']) {
+        data.ContentEncoding = response.headers['content-encoding']
+      }
+      if (response.headers['content-language']) {
+        data.ContentLanguage = response.headers['content-language']
+      }
+
+      if (response.headers['content-range']) {
+        data.ContentRange = response.headers['content-range']
+      }
+      if (response.headers['content-type']) {
+        data.ContentType = response.headers['content-type']
+      }
+      if (response.headers['expires']) {
+        data.Expires = response.headers['expires']
+      }
+
+      if (response.headers['x-amz-website-redirect-location']) {
+        data.WebsiteRedirectLocation =
+          response.headers['x-amz-website-redirect-location']
+      }
+      if (response.headers['x-amz-server-side-encryption']) {
+        data.ServerSideEncryption =
+          response.headers['x-amz-server-side-encryption']
+      }
+
+      if (response.headers['x-amz-server-side-encryption-customer-algorithm']) {
+        data.SSECustomerAlgorithm =
+          response.headers['x-amz-server-side-encryption-customer-algorithm']
+      }
+
+      if (response.headers['x-amz-server-side-encryption-customer-key-md5']) {
+        data.SSECustomerKeyMD5 =
+          response.headers['x-amz-server-side-encryption-customer-key-md5']
+      }
+
+      if (response.headers['x-amz-server-side-encryption-aws-kms-key-id']) {
+        data.SSEKMSKeyId =
+          response.headers['x-amz-server-side-encryption-aws-kms-key-id']
+      }
+
+      if (response.headers['x-amz-server-side-encryption-bucket-key-enabled']) {
+        data.BucketKeyEnabled =
+          response.headers['x-amz-server-side-encryption-bucket-key-enabled'] == 'true'
+      }
+
+      if (response.headers['x-amz-storage-class']) {
+        data.StorageClass = response.headers['x-amz-storage-class']
+      }
+
+      if (response.headers['x-amz-replication-status']) {
+        data.ReplicationStatus = response.headers['x-amz-replication-status']
+      }
+      if (response.headers['x-amz-mp-parts-count']) {
+        data.PartsCount = response.headers['x-amz-mp-parts-count']
+      }
+
+      if (response.headers['x-amz-tagging-count']) {
+        data.TagCount = response.headers['x-amz-tagging-count']
+      }
+
+      if (response.headers['x-amz-object-lock-mode']) {
+        data.ObjectLockMode = response.headers['x-amz-object-lock-mode']
+      }
+      if (response.headers['x-amz-object-lock-retain-until-date']) {
+        data.ObjectLockRetainUntilDate =
+          response.headers['x-amz-object-lock-retain-until-date']
+      }
+      if (response.headers['x-amz-object-lock-legal-hold']) {
+        data.ObjectLockLegalHoldStatus =
+          response.headers['x-amz-object-lock-legal-hold']
+      }
+
+      return data
+    }
+    throw new AwsError(await Readable.Text(response))
+
+    // return this._s3.headObject(this.name, key, options)
   }
 
   /**

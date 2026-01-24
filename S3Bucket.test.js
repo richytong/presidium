@@ -320,6 +320,10 @@ const test3 = new Test('S3Bucket', async function integration3() {
     assert.equal(data2.ContentType, 'application/octet-stream')
     assert.equal(typeof data2.VersionId, 'string')
 
+    const data4 = await testBucket3.headObject(key)
+    assert.equal(data4.ContentType, 'application/octet-stream')
+    assert.equal(typeof data4.VersionId, 'string')
+
     const data3 = await testBucket3.getObjectACL(key)
     assert.equal(data3.Grants.length, 2)
     for (const Grant of data3.Grants) {
@@ -338,6 +342,9 @@ const test3 = new Test('S3Bucket', async function integration3() {
 
     const data2 = await testBucket3.getObject(key)
     assert.equal(data2.ContentType, 'application/octet-stream')
+
+    const data4 = await testBucket3.headObject(key)
+    assert.equal(data4.ContentType, 'application/octet-stream')
 
     const data3 = await testBucket3.getObjectACL(key)
   }
@@ -363,6 +370,15 @@ const test3 = new Test('S3Bucket', async function integration3() {
     assert.equal(data2.ContentLength, '4')
     assert.equal(data2.ContentType, 'text/plain')
     assert.equal(data2.Expires, date)
+
+    const data3 = await testBucket3.headObject(key)
+    assert.equal(data3.CacheControl, 'nocache')
+    assert.equal(data3.ContentDisposition, 'inline')
+    assert.equal(data3.ContentEncoding, 'gzip')
+    assert.equal(data3.ContentLanguage, 'en-US')
+    assert.equal(data3.ContentLength, '4')
+    assert.equal(data3.ContentType, 'text/plain')
+    assert.equal(data3.Expires, date)
   }
 
   { // ChecksumAlgorithm, ChecksumCRC32 options
@@ -384,6 +400,11 @@ const test3 = new Test('S3Bucket', async function integration3() {
       ChecksumMode: 'Enabled'
     })
     assert.equal(data2.ChecksumCRC32, base64Checksum)
+
+    const data3 = await testBucket3.headObject(key, {
+      ChecksumMode: 'Enabled'
+    })
+    assert.equal(data3.ChecksumCRC32, base64Checksum)
   }
 
   { // ChecksumAlgorithm, ChecksumCRC32C options
@@ -404,6 +425,11 @@ const test3 = new Test('S3Bucket', async function integration3() {
       ChecksumMode: 'Enabled'
     })
     assert.equal(data2.ChecksumCRC32C, base64Checksum)
+
+    const data3 = await testBucket3.headObject(key, {
+      ChecksumMode: 'Enabled'
+    })
+    assert.equal(data3.ChecksumCRC32C, base64Checksum)
   }
 
   { // ChecksumAlgorithm, ChecksumCRC64NVME options
@@ -426,6 +452,11 @@ const test3 = new Test('S3Bucket', async function integration3() {
       ChecksumMode: 'Enabled'
     })
     assert.equal(data2.ChecksumCRC64NVME, base64Checksum)
+
+    const data3 = await testBucket3.headObject(key, {
+      ChecksumMode: 'Enabled'
+    })
+    assert.equal(data3.ChecksumCRC64NVME, base64Checksum)
   }
 
   { // ChecksumAlgorithm, ChecksumSHA1 options
@@ -445,6 +476,11 @@ const test3 = new Test('S3Bucket', async function integration3() {
       ChecksumMode: 'Enabled'
     })
     assert.equal(data2.ChecksumSHA1, base64Checksum)
+
+    const data3 = await testBucket3.headObject(key, {
+      ChecksumMode: 'Enabled'
+    })
+    assert.equal(data3.ChecksumSHA1, base64Checksum)
   }
 
   { // ChecksumAlgorithm, ChecksumSHA256 options
@@ -464,6 +500,11 @@ const test3 = new Test('S3Bucket', async function integration3() {
       ChecksumMode: 'Enabled'
     })
     assert.equal(data2.ChecksumSHA256, base64Checksum)
+
+    const data3 = await testBucket3.headObject(key, {
+      ChecksumMode: 'Enabled'
+    })
+    assert.equal(data3.ChecksumSHA256, base64Checksum)
   }
 
   { // IfNoneMatch option
@@ -471,7 +512,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
     const data1 = await testBucket3.putObject(key, 'test', {
       IfNoneMatch: '*',
     })
-    const data2 = await testBucket3.getObject(key)
+    await testBucket3.getObject(key)
     await assert.rejects(
       () => testBucket3.putObject(key, 'test', {
         IfNoneMatch: '*',
@@ -492,11 +533,14 @@ const test3 = new Test('S3Bucket', async function integration3() {
     assert.equal(data1.SSEKMSKeyId, 'arn:aws:kms:us-east-1:095798571722:key/c0bb3d73-0b3f-47c3-8eb6-8567b6d22265')
     const encryptionContext1 = JSON.parse(Buffer.from(data1.SSEKMSEncryptionContext, 'base64').toString('utf8'))
     assert.equal(encryptionContext1.a, '1')
+
     const data2 = await testBucket3.getObject(key)
     assert.equal(data2.ServerSideEncryption, 'aws:kms')
     assert.equal(data2.SSEKMSKeyId, 'arn:aws:kms:us-east-1:095798571722:key/c0bb3d73-0b3f-47c3-8eb6-8567b6d22265')
-    const encryptionContext2 = JSON.parse(Buffer.from(data1.SSEKMSEncryptionContext, 'base64').toString('utf8'))
-    assert.equal(encryptionContext2.a, '1')
+
+    const data3 = await testBucket3.headObject(key)
+    assert.equal(data3.ServerSideEncryption, 'aws:kms')
+    assert.equal(data3.SSEKMSKeyId, 'arn:aws:kms:us-east-1:095798571722:key/c0bb3d73-0b3f-47c3-8eb6-8567b6d22265')
   }
 
   { // ServerSideEncryption, SSEKMSKeyId, BucketKeyEnabled options
@@ -510,10 +554,16 @@ const test3 = new Test('S3Bucket', async function integration3() {
     assert.equal(data1.ServerSideEncryption, 'aws:kms')
     assert.equal(data1.SSEKMSKeyId, 'arn:aws:kms:us-east-1:095798571722:key/c0bb3d73-0b3f-47c3-8eb6-8567b6d22265')
     assert.strictEqual(data1.BucketKeyEnabled, true)
+
     const data2 = await testBucket3.getObject(key)
     assert.equal(data2.ServerSideEncryption, 'aws:kms')
     assert.equal(data2.SSEKMSKeyId, 'arn:aws:kms:us-east-1:095798571722:key/c0bb3d73-0b3f-47c3-8eb6-8567b6d22265')
     assert.strictEqual(data2.BucketKeyEnabled, true)
+
+    const data3 = await testBucket3.headObject(key)
+    assert.equal(data3.ServerSideEncryption, 'aws:kms')
+    assert.equal(data3.SSEKMSKeyId, 'arn:aws:kms:us-east-1:095798571722:key/c0bb3d73-0b3f-47c3-8eb6-8567b6d22265')
+    assert.strictEqual(data3.BucketKeyEnabled, true)
   }
 
   { // StorageClass option
@@ -521,8 +571,12 @@ const test3 = new Test('S3Bucket', async function integration3() {
     await testBucket3.putObject(key, 'test', {
       StorageClass: 'REDUCED_REDUNDANCY',
     })
+
     const data2 = await testBucket3.getObject(key)
     assert.equal(data2.StorageClass, 'REDUCED_REDUNDANCY')
+
+    const data3 = await testBucket3.headObject(key)
+    assert.equal(data3.StorageClass, 'REDUCED_REDUNDANCY')
   }
 
   { // WebsiteRedirectLocation option
@@ -530,8 +584,12 @@ const test3 = new Test('S3Bucket', async function integration3() {
     const data1 = await testBucket3.putObject(key, 'test', {
       WebsiteRedirectLocation: '/test',
     })
+
     const data2 = await testBucket3.getObject(key)
     assert.equal(data2.WebsiteRedirectLocation, '/test')
+
+    const data3 = await testBucket3.headObject(key)
+    assert.equal(data3.WebsiteRedirectLocation, '/test')
   }
 
   { // SSECustomerAlgorithm, SSECustomerKey options
@@ -545,6 +603,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
     })
     assert.equal(data1.SSECustomerAlgorithm, 'AES256')
     assert.equal(data1.SSECustomerKeyMD5, SSECustomerKeyMD5)
+
     const data2 = await testBucket3.getObject(key, {
       SSECustomerAlgorithm: 'AES256',
       SSECustomerKey,
@@ -552,6 +611,14 @@ const test3 = new Test('S3Bucket', async function integration3() {
     })
     assert.equal(data2.SSECustomerAlgorithm, 'AES256')
     assert.equal(data2.SSECustomerKeyMD5, SSECustomerKeyMD5)
+
+    const data3 = await testBucket3.headObject(key, {
+      SSECustomerAlgorithm: 'AES256',
+      SSECustomerKey,
+      SSECustomerKeyMD5,
+    })
+    assert.equal(data3.SSECustomerAlgorithm, 'AES256')
+    assert.equal(data3.SSECustomerKeyMD5, SSECustomerKeyMD5)
   }
 
   { // Tagging option
@@ -560,19 +627,30 @@ const test3 = new Test('S3Bucket', async function integration3() {
     await testBucket3.putObject(key, 'test', {
       Tagging,
     })
+
     const data2 = await testBucket3.getObject(key)
     assert.equal(data2.TagCount, 2)
     assert.equal(data2.AcceptRanges, 'bytes')
+
+    const data3 = await testBucket3.headObject(key)
+    assert.equal(data3.TagCount, 2)
+    assert.equal(data3.AcceptRanges, 'bytes')
   }
 
   { // Range
     const key = 'test/Range'
     await testBucket3.putObject(key, 'test')
+
     const data2 = await testBucket3.getObject(key, {
       Range: 'bytes=0-1'
     })
     assert.equal(data2.AcceptRanges, 'bytes')
     assert.equal(Buffer.from(data2.Body, 'utf8').length, 2)
+
+    const data3 = await testBucket3.headObject(key, {
+      Range: 'bytes=0-1'
+    })
+    assert.equal(data3.AcceptRanges, 'bytes')
   }
 
   { // GrantFullControl, GrantRead, GrantReadACP, GrantWriteACP optionss
@@ -584,6 +662,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
       GrantWriteACP: 'uri=http://acs.amazonaws.com/groups/global/AllUsers',
     })
     await testBucket3.getObject(key)
+    await testBucket3.headObject(key)
     // no error
   }
 
