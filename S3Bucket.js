@@ -1135,7 +1135,7 @@ class S3Bucket {
    *   * `SSEKMSKeyId` - the [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) Key ID, Key ARN, or Key Alias used for object encryption.
    *   * `BucketKeyEnabled` - indicates that Amazon S3 used the Amazon S3 bucket key for object encryption with [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) keys (SSE-KMS).
    *   * `StorageClass` - the [storage class](https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html) associated with the object. Defaults to `STANDARD`.
-   *   * `ReplicationStatus` - the progress of replicating objects between buckets. For more information, see [Replicating objects within and across Regions](https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication.html).
+   *   * `ReplicationStatus` - (TODO) the progress of replicating objects between buckets. For more information, see [Replicating objects within and across Regions](https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication.html).
    *   * `PartsCount` - (TODO) the parts count of the object. This value is only returned if the `PartNumber` option was specified and the object was uploaded as a multipart upload. For more information, see [Uploading and copying objects using multipart upload in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html) from the _Amazon S3 User Guide_.
    *   * `TagCount` - the number of tags on the object.
    *   * `ObjectLockMode` - the object lock mode. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
@@ -1347,12 +1347,17 @@ class S3Bucket {
         data.StorageClass = response.headers['x-amz-storage-class']
       }
 
+      /* TODO
       if (response.headers['x-amz-replication-status']) {
         data.ReplicationStatus = response.headers['x-amz-replication-status']
       }
+      */
+
+      /* TODO
       if (response.headers['x-amz-mp-parts-count']) {
         data.PartsCount = response.headers['x-amz-mp-parts-count']
       }
+      */
 
       if (response.headers['x-amz-tagging-count']) {
         data.TagCount = response.headers['x-amz-tagging-count']
@@ -1560,7 +1565,7 @@ class S3Bucket {
    *   * `SSEKMSKeyId` - the [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) Key ID, Key ARN, or Key Alias used for object encryption.
    *   * `BucketKeyEnabled` - indicates that Amazon S3 used the Amazon S3 bucket key for object encryption with [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) keys (SSE-KMS).
    *   * `StorageClass` - the [storage class](https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html) associated with the object. Defaults to `STANDARD`.
-   *   * `ReplicationStatus` - the progress of replicating objects between buckets. For more information, see [Replicating objects within and across Regions](https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication.html).
+   *   * `ReplicationStatus` - (TODO) the progress of replicating objects between buckets. For more information, see [Replicating objects within and across Regions](https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication.html).
    *   * `PartsCount` - (TODO) the parts count of the object. This value is only returned if the `PartNumber` option was specified and the object was uploaded as a multipart upload. For more information, see [Uploading and copying objects using multipart upload in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html) from the _Amazon S3 User Guide_.
    *   * `ObjectLockMode` - the object lock mode. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
    *   * `ObjectLockRetainUntilDate` - the date/time when the object's Object Lock expires. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
@@ -1775,12 +1780,17 @@ class S3Bucket {
         data.StorageClass = response.headers['x-amz-storage-class']
       }
 
+      /* TODO
       if (response.headers['x-amz-replication-status']) {
         data.ReplicationStatus = response.headers['x-amz-replication-status']
       }
+      */
+
+      /* TODO
       if (response.headers['x-amz-mp-parts-count']) {
         data.PartsCount = response.headers['x-amz-mp-parts-count']
       }
+      */
 
       if (response.headers['x-amz-tagging-count']) {
         data.TagCount = response.headers['x-amz-tagging-count']
