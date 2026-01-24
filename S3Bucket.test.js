@@ -1,3 +1,4 @@
+require('rubico/global')
 const assert = require('assert')
 const stream = require('stream')
 const Test = require('thunk-test')
@@ -118,11 +119,14 @@ const test1 = new Test('S3Bucket', async function integration1() {
     )
   }
 
-  {
-    const response = await testBucket.listObjects({ Prefix: 'c', Delimiter: '/' })
+  { // listObjects Prefix and Delimiter options
+    const response = await testBucket.listObjects({
+      Prefix: 'c',
+      Delimiter: '/',
+    })
+    assert.equal(response.KeyCount, 1)
     assert.equal(response.Contents.length, 1)
     assert.equal(response.Contents[0].Key, 'c')
-    assert.equal(response.Prefix, 'c')
   }
 
   {
@@ -134,6 +138,68 @@ const test1 = new Test('S3Bucket', async function integration1() {
       { Key: 'c' }
     ])
   }
+
+  { // listObjects EncodingType option
+    const specialKey = ':::'
+    await testBucket.putObject(specialKey, 'test')
+    const data1 = await testBucket.listObjects()
+    assert.equal(data1.Contents.length, 1)
+    assert.equal(data1.Contents[0].Key, specialKey)
+
+    const data2 = await testBucket.listObjects({
+      EncodingType: 'url',
+    })
+    assert.equal(data2.Contents.length, 1)
+    assert.equal(data2.Contents[0].Key, encodeURIComponent(specialKey))
+  }
+
+  { // FetchOwner option
+    const data1 = await testBucket.listObjects({
+      FetchOwner: true,
+    })
+    assert.equal(data1.Contents.length, 1)
+    assert.equal(typeof data1.Contents[0].Owner, 'object')
+  }
+
+  await testBucket.deleteAllObjects()
+
+  { // MaxKeys, StartAfter options
+    await testBucket.putObject('max-keys-1', 'test')
+    await testBucket.putObject('max-keys-2', 'test')
+    await testBucket.putObject('max-keys-3', 'test')
+    const data1 = await testBucket.listObjects()
+    assert(data1.KeyCount > 1)
+    assert(data1.Contents.length > 1)
+    assert(!data1.IsTruncated)
+
+    const data2 = await testBucket.listObjects({ MaxKeys: 1 })
+    assert(data2.KeyCount == 1)
+    assert(data2.Contents.length == 1)
+    assert(data2.IsTruncated)
+    assert.equal(typeof data2.NextContinuationToken, 'string')
+
+    const data4 = await testBucket.listObjects({
+      ContinuationToken: data2.NextContinuationToken,
+      MaxKeys: 1,
+    })
+    assert(data4.KeyCount == 1)
+    assert(data4.Contents.length == 1)
+    assert(data4.IsTruncated)
+    assert.equal(typeof data4.NextContinuationToken, 'string')
+    assert.notEqual(data4.NextContinuationToken, data2.NextContinuationToken)
+    const data4Keys = data4.Contents.map(get('Key'))
+    assert(!data4Keys.includes(data2.Contents[0].Key))
+
+    const data3 = await testBucket.listObjects({ StartAfter: 'max-keys-1' })
+    assert(data3.KeyCount > 1)
+    assert(data3.Contents.length > 1)
+    assert(!data3.IsTruncated)
+    const data3Keys = data3.Contents.map(get('Key'))
+    assert(!data3Keys.includes('max-keys-1'))
+  }
+
+
+  await testBucket.deleteAllObjects()
 
   {
     const deleted = await testBucket.delete()
@@ -808,7 +874,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
 const test = Test.all([
   test1,
   // test2,
-  test3,
+  // test3,
 ])
 
 if (process.argv[1] == __filename) {

@@ -38,7 +38,7 @@ const AwsAuthorization = function (options) {
     serviceName,
     payloadHash,
     expires = 300,
-    queryParams = {},
+    queryParams = new URLSearchParams(),
     headers = {},
   } = options
 
@@ -58,6 +58,7 @@ const AwsAuthorization = function (options) {
     credentialScope,
   ].join('/')
 
+  queryParams.sort()
   const canonicalQueryString = queryParams.toString()
 
   const signedHeaders = AmzSignedHeaders(headers)

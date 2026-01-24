@@ -916,7 +916,7 @@ class S3Bucket {
         options.ObjectLockLegalHoldStatus
     }
 
-    const response = await this._awsRequest1('PUT', `/${key}`, headers, body)
+    const response = await this._awsRequest1('PUT', `/${encodeURIComponent(key)}`, headers, body)
 
     if (response.ok) {
       const data = {}
@@ -1234,8 +1234,8 @@ class S3Bucket {
     const response = await this._awsRequest1(
       'GET',
       searchParams.size > 0
-        ? `/${key}?${searchParams.toString()}`
-        : `/${key}`,
+        ? `/${encodeURIComponent(key)}?${searchParams.toString()}`
+        : `/${encodeURIComponent(key)}`,
       headers,
       ''
     )
@@ -2133,7 +2133,6 @@ class S3Bucket {
    *   ContinuationToken: string,
    *   FetchOwner: boolean,
    *   StartAfter: string,
-   *   OptionalObjectAttributes: ['RestoreStatus']
    * }) -> response Promise<{
    *   IsTruncated: boolean,
    *   Contents: Array<{
@@ -2149,21 +2148,10 @@ class S3Bucket {
    *       DisplayName: string,
    *       ID: string
    *     },
-   *     RestoreStatus: {
-   *       IsRestoreInProgress: boolean,
-   *       RestoreExpiryDate: Date|DateString|TimestampSeconds
-   *     }
    *   }>,
-   *   Name: string,
-   *   Prefix: string,
-   *   Delimiter: string,
-   *   MaxKeys: number,
    *   CommonPrefixes: Array<{ Prefix: string }>,
-   *   EncodingType: 'url',
    *   KeyCount: number,
-   *   ContinuationToken: string,
    *   NextContinuationToken: string,
-   *   StartAfter: string,
    * }>
    * ```
    *
@@ -2183,7 +2171,6 @@ class S3Bucket {
    *   * `ContinuationToken` - indicates to Amazon S3 that the list is being continued on this bucket with a token. Used to paginate list results.
    *   * `FetchOwner` - if `true`, the `Owner` field indicating the owner of the object will be present with each key in the response.
    *   * `StartAfter` - the key after which Amazon S3 will start listing in [lexicographical order](https://help.splunk.com/en/splunk-cloud-platform/search/spl2-search-manual/sort-and-order/lexicographical-order).
-   *   * `OptionalObjectAttributes` - optional fields to be returned in the response.
    *
    * Response:
    *   * `IsTruncated` - set to `true` if there are more keys available in the bucket to retrieve.
@@ -2197,29 +2184,75 @@ class S3Bucket {
    *     * `Owner` - the owner of the object.
    *       * `DisplayName` - the display name of the owner.
    *       * `ID` - the ID of the owner.
-   *     * `RestoreStatus` - the restoration status of an object. For more information, see [Working with archived objects](https://docs.aws.amazon.com/AmazonS3/latest/userguide/archived-objects.html) from the _Amazon S3 User Guide_.
-   *       * `IsRestoreInProgress` - if `true`, object restoration is in progress.
-   *       * `RestoreExpiryDate` - indicates when the restored copy will expire. This value is populated only if the object has already been restored.
-   *   * `Name` - the bucket name.
-   *   * `Prefix` - limits the response to keys that begin with the specified prefix.
-   *   * `Delimiter` - character used to group keys. For more information, see [Organizing objects using prefixes](https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-prefixes.html) from the _Amazon S3 User Guide_.
-   *   * `MaxKeys` - maximum number of keys returned in the response. Defaults to `1000`.
    *   * `CommonPrefixes` - common prefixes of keys returned in place of the actual keys. Used to browse keys hierachically. For more information, see [Organizing objects using prefixes](https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-prefixes.html) from the _Amazon S3 User Guide_.
    *     * `Prefix` - the value for a common prefix.
-   *   * `EncodingType` - encoding type of the [object keys](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html) in the response. If specified as `url`, object keys in the response use [percent-encoding](https://datatracker.ietf.org/doc/html/rfc3986#section-2.1).
    *   * `KeyCount` - actual number of keys in the response.
-   *   * `ContinuationToken` - the value of `ContinuationToken` specified in the request.
    *   * `NextContinuationToken` - indicates there are more keys available in the bucket to be listed. To continue the list, this value should be used as the `ContinuationToken` for the next list objects request.
-   *   * `StartAfter` - the value of `StartAfter` specified in the request.
    *
    */
-  listObjects(options) {
-    return this._s3.listObjectsV2(this.name, options).catch(error => {
-      if (error.retryable) {
-        return this.listObjects(options)
+  async listObjects(options = {}) {
+    const headers = {}
+
+    const searchParams = new URLSearchParams()
+
+    if (options.ContinuationToken) {
+      searchParams.set('continuation-token', options.ContinuationToken)
+    }
+
+    if (options.Delimiter) {
+      searchParams.set('delimiter', options.Delimiter)
+    }
+    if (options.EncodingType) {
+      searchParams.set('encoding-type', options.EncodingType)
+    }
+
+    if (options.FetchOwner) {
+      searchParams.set('fetch-owner', options.FetchOwner)
+    }
+    if (options.MaxKeys) {
+      searchParams.set('max-keys', options.MaxKeys)
+    }
+
+    if (options.Prefix) {
+      searchParams.set('prefix', options.Prefix)
+    }
+    if (options.StartAfter) {
+      searchParams.set('start-after', options.StartAfter)
+    }
+
+    const response = await this._awsRequest1(
+      'GET',
+      searchParams.size > 0
+        ? `/?list-type=2&${searchParams.toString()}`
+        : '/?list-type=2',
+      headers,
+      ''
+    )
+
+    if (response.ok) {
+      const text = await Readable.Text(response)
+      const xmlData = XML.parse(text)
+
+      const data = {}
+
+      data.Contents = xmlData.ListBucketResult.Contents ?? []
+      if (!Array.isArray(data.Contents)) {
+        data.Contents = [data.Contents]
       }
-      throw error
-    })
+
+      data.IsTruncated =
+        xmlData.ListBucketResult.IsTruncated == 'true' ? true : false
+
+      if (xmlData.ListBucketResult.CommonPrefixes) {
+        data.CommonPrefixes = xmlData.ListBucketResult.CommonPrefixes
+      }
+      data.KeyCount = xmlData.ListBucketResult.KeyCount
+      data.NextContinuationToken = xmlData.ListBucketResult.NextContinuationToken
+
+      return data
+    }
+
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
