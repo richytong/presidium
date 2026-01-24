@@ -386,6 +386,9 @@ const test3 = new Test('S3Bucket', async function integration3() {
     // current version should be last version before delete marker, or data2.VersionId
     const data6 = await testBucket3.getObject(key)
     assert.equal(data6.VersionId, data2.VersionId)
+    const data7 = await testBucket3.headObject(key)
+    assert.equal(data7.VersionId, data2.VersionId)
+
   }
 
   { // ACL option + VersionId in response
