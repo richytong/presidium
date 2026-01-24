@@ -472,7 +472,7 @@ class DynamoDBTable {
     if (response.ok) {
       const data = await Readable.JSON(response)
       if (data.Item == null) {
-        throw new AwsError(`Item not found for ${JSON.stringify(Key)}`)
+        throw new Error(`Item not found for ${JSON.stringify(Key)}`)
       }
 
       return data
@@ -516,7 +516,7 @@ class DynamoDBTable {
     if (response.ok) {
       const data = await Readable.JSON(response)
       if (data.Item == null) {
-        throw new AwsError(`Item not found for ${JSON.stringify(key)}`)
+        throw new Error(`Item not found for ${JSON.stringify(key)}`)
       }
 
       data.item = map(data.Item, Dynamo.attributeValueToJSON)
