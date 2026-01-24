@@ -806,7 +806,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
 }).case()
 
 const test = Test.all([
-  // test1,
+  test1,
   // test2,
   test3,
 ])

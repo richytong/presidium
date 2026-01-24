@@ -345,8 +345,7 @@ class S3Bucket {
           : null
       }
     }
-    const text = await Readable.Text(response)
-    throw new AwsError(text, response.status)
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -421,6 +420,7 @@ class S3Bucket {
     const response = await this._awsRequest1('PUT', '/?publicAccessBlock', headers, body)
 
     if (response.ok) {
+      await Readable.Text(response)
       return {}
     }
     throw new AwsError(await Readable.Text(response), response.status)
@@ -451,6 +451,7 @@ class S3Bucket {
     const response = await this._awsRequest1('PUT', '/?requestPayment', headers, body)
 
     if (response.ok) {
+      await Readable.Text(response)
       return {}
     }
     throw new AwsError(await Readable.Text(response), response.status)
@@ -491,6 +492,7 @@ class S3Bucket {
     const response = await this._awsRequest0('PUT', '/?object-lock', headers, body)
 
     if (response.ok) {
+      await Readable.Text(response)
       return {}
     }
     throw new AwsError(await Readable.Text(response), response.status)
@@ -522,6 +524,7 @@ class S3Bucket {
     const response = await this._awsRequest0('PUT', '/?versioning', headers, body)
 
     if (response.ok) {
+      await Readable.Text(response)
       return {}
     }
     throw new AwsError(await Readable.Text(response), response.status)
@@ -563,6 +566,7 @@ class S3Bucket {
     const response = await this._awsRequest0('PUT', '/?policy', {}, body)
 
     if (response.ok) {
+      await Readable.Text(response)
       return {}
     }
     throw new AwsError(await Readable.Text(response), response.status)
@@ -646,6 +650,7 @@ class S3Bucket {
     const response = await this._awsRequest1('DELETE', '/', {}, '')
 
     if (response.ok) {
+      await Readable.Text(response)
       return {}
     }
     throw new AwsError(await Readable.Text(response), response.status)
@@ -979,6 +984,7 @@ class S3Bucket {
           response.headers['x-amz-server-side-encryption-bucket-key-enabled'] == 'true'
       }
 
+      await Readable.Text(response)
       return data
     }
     throw new AwsError(await Readable.Text(response), response.status)
@@ -1807,6 +1813,7 @@ class S3Bucket {
           response.headers['x-amz-object-lock-legal-hold']
       }
 
+      await Readable.Text(response)
       return data
     }
 
@@ -1890,6 +1897,7 @@ class S3Bucket {
         data.VersionId = response.headers['x-amz-version-id']
       }
 
+      await Readable.Text(response)
       return data
     }
     throw new AwsError(await Readable.Text(response), response.status)
@@ -1905,7 +1913,6 @@ class S3Bucket {
    * bucket.deleteObjects(
    *   keys Array<string|{ Key: string, VersionId: string }>,
    *   options {
-   *     Quiet: boolean,
    *     BypassGovernanceRetention: boolean,
    *     MFA: string,
    *   }
@@ -1925,7 +1932,6 @@ class S3Bucket {
    * ```
    *
    * Options:
-   *   * `Quiet` - if `true`, enables quiet mode for the request. In quiet mode, the response includes only keys where the delete operation encountered an error. For a successful delete operation in quiet mode, the operation does not return any information about the delete in the response.
    *   * `BypassGovernanceRetention` - if `true`, S3 Object Lock bypasses [Governance mode](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html#object-lock-retention-modes) restrictions to process this operation. Requires the `s3:BypassGovernanceRetention` permission.
    *   * `MFA` - the concatenation of the authentication device's serial number, a space, and the value displayed on the authentication device. Required to permanently delete a versioned object if versioning is configured with Multifactor Authentication (MFA) delete enabled. For more information, see [Configuring MFA delete](https://docs.aws.amazon.com/AmazonS3/latest/userguide/MultiFactorAuthenticationDelete.html) from the _Amazon S3 User Guide_.
    *
@@ -1944,8 +1950,57 @@ class S3Bucket {
    * await myBucket.deleteObjects(['my-key-1', 'my-key-2'])
    * ```
    */
-  deleteObjects(keys, options) {
-    return this._s3.deleteObjects(this.name, keys, options)
+  async deleteObjects(keys, options = {}) {
+    const headers = {}
+
+    /* TODO
+    if (options.MFA) {
+      headers['X-Amz-MFA'] = options.MFA
+    }
+    */
+
+    /* TODO
+    if (options.BypassGovernanceRetention) {
+      headers['X-Amz-Bypass-Governance-Retention'] = options.BypassGovernanceRetention
+    }
+    */
+
+    const body = `
+<?xml version="1.0" encoding="UTF-8"?>
+<Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  ${
+    keys.map(key => typeof key == 'string' ? `
+   <Object>
+      <Key>${key}</Key>
+   </Object>
+    `.trim() : `
+   <Object>
+      <Key>${key.Key}</Key>
+      <VersionId>${key.VersionId}</VersionId>
+   </Object>
+    `.trim()).join('\n')
+  }
+</Delete>
+    `.trim()
+
+    headers['Content-MD5'] = crypto.createHash('md5').update(body).digest('base64')
+
+    const response = await this._awsRequest1('POST', '/?delete', headers, body)
+
+    if (response.ok) {
+      const text = await Readable.Text(response)
+      const xmlData = XML.parse(text)
+
+      const data = {}
+      data.Deleted = xmlData.DeleteResult.Deleted ?? []
+      data.Errors = xmlData.DeleteResult.Errors ?? []
+
+      return data
+    }
+
+    throw new AwsError(await Readable.Text(response), response.status)
+
+    // return this._s3.deleteObjects(this.name, keys, options)
   }
 
   /**
@@ -1996,7 +2051,7 @@ class S3Bucket {
         response.Deleted = response.Deleted.concat(response1.Deleted)
       }
 
-      if (response1.Errors?.length > 0) {
+      if (response1.Errors.length > 0) {
         const errors = response1.Errors.map(({ Key, VersionId, Code, Message }) => {
           if (VersionId) {
             return new Error(`${Key} (VersionId ${VersionId}): ${Code}: ${Message}`)
@@ -2022,7 +2077,7 @@ class S3Bucket {
         response.Deleted = response.Deleted.concat(response1.Deleted)
       }
 
-      if (response1.Errors?.length > 0) {
+      if (response1.Errors.length > 0) {
         const errors = response1.Errors.map(({ Key, VersionId, Code, Message }) => {
           if (VersionId) {
             return new Error(`${Key} (VersionId ${VersionId}): ${Code}: ${Message}`)
@@ -2048,7 +2103,7 @@ class S3Bucket {
         response.Deleted = response.Deleted.concat(response1.Deleted)
       }
 
-      if (response1.Errors?.length > 0) {
+      if (response1.Errors.length > 0) {
         const errors = response1.Errors.map(({ Key, VersionId, Code, Message }) => {
           if (VersionId) {
             return new Error(`${Key} (VersionId ${VersionId}): ${Code}: ${Message}`)
