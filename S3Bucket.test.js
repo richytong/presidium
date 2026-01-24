@@ -1,4 +1,5 @@
 const assert = require('assert')
+const stream = require('stream')
 const Test = require('thunk-test')
 const crypto = require('crypto')
 const _S3 = require('./internal/_S3')
@@ -306,6 +307,15 @@ const test3 = new Test('S3Bucket', async function integration3() {
     assert.equal(policy.Version, policy2.Version)
     assert.equal(policy.Id, policy2.Id)
     assert.deepEqual(policy.Statement, policy2.Statement)
+  }
+
+  { // Stream option
+    const key = 'test/Stream'
+    await testBucket3.putObject(key, 'test')
+    const data2 = await testBucket3.getObject(key, {
+      Stream: true,
+    })
+    assert(data2.Body instanceof stream.Readable)
   }
 
   { // ACL option + VersionId in response

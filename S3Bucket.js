@@ -992,6 +992,7 @@ class S3Bucket {
    * bucket.getObject(
    *   key string,
    *   options {
+   *     Stream: boolean,
    *     IfMatch: string,
    *     IfModifiedSince: Date|DateString|TimestampSeconds,
    *     IfNoneMatch: string,
@@ -1054,10 +1055,31 @@ class S3Bucket {
    * ```
    *
    * ```javascript
-   * await myBucket.getObject('my-key')
+   * const data = await myBucket.getObject('my-key')
+   * ```
+   *
+   * ```javascript
+   * function myHTTPHandler(request, response) {
+   *   const myObjectStream = await myBucket.getObject('my-file-key', {
+   *     Stream: true,
+   *     Range: 'bytes=0-1000000',
+   *   })
+   *
+   *   myObjectStream.on('data', chunk => {
+   *     response.write(chunk)
+   *   })
+   *   myObjectStream.on('close', () => {
+   *     response.end()
+   *   })
+   *   myObjectStream.on('error', error => {
+   *     console.error(error)
+   *     response.end()
+   *   })
+   * }
    * ```
    *
    * Options:
+   *   * `Stream` - if `true`, response body is returned as a Node.js ReadableStream
    *   * `IfMatch` - if the entity tag (ETag) in the response is different than the one specified in this option, Amazon S3 responds with HTTP status code `412 Precondition Failed`. For more information, see [If-Match](https://datatracker.ietf.org/doc/html/rfc7232#section-3.1).
    *   * `IfModifiedSince` - if the object has not been modified since the time specified in this option, Amazon S3 responds with HTTP status code `304 Not Modified`. If the `IfNoneMatch` option is specified, this option is ignored. For more information, see [If-Modified-Since](https://datatracker.ietf.org/doc/html/rfc7232#section-3.3).
    *   * `IfNoneMatch` - if the object has the same entity tag (ETag) as the one specified in this option, Amazon S3 responds with HTTP status code `304 Not Modified`. For more information, see [If-None-Match](https://datatracker.ietf.org/doc/html/rfc7232#section-3.2).
@@ -1341,7 +1363,11 @@ class S3Bucket {
           response.headers['x-amz-object-lock-legal-hold']
       }
 
-      data.Body = await Readable.Buffer(response)
+      if (options.Stream) {
+        data.Body = response
+      } else {
+        data.Body = await Readable.Buffer(response)
+      }
 
       return data
     }
@@ -1770,153 +1796,7 @@ class S3Bucket {
     // return this._s3.headObject(this.name, key, options)
   }
 
-  /**
-   * @name getObjectStream
-   *
-   * @docs
-   * Retrieve a [Readable Stream](https://nodejs.org/api/stream.html#class-streamreadable) of an object from the Amazon S3 Bucket.
-   *
-   * ```coffeescript [specscript]
-   * module stream 'https://nodejs.org/api/stream.html'
-   *
-   * bucket.getObjectStream(key string, options {
-   *   IfMatch: string,
-   *   IfModifiedSince: Date|DateString|TimestampSeconds,
-   *   IfNoneMatch: string,
-   *   IfUnmodifiedSince: Date|DateString|TimestampSeconds,
-   *   Range: string, # 'bytes=0-9'
-   *   ResponseCacheControl: string,
-   *   ResponseContentDisposition: string,
-   *   ResponseContentEncoding: string,
-   *   ResponseContentLanguage: string,
-   *   ResponseContentType: string,
-   *   ResponseExpires: Date|Date.toString()|number,
-   *   VersionId: string,
-   *   SSECustomerAlgorithm: string,
-   *   SSECustomerKey: Buffer|TypedArray|Blob|string,
-   *   SSECustomerKeyMD5: string,
-   *   PartNumber: number,
-   *   ChecksumMode: 'ENABLED',
-   * }) -> response stream.Readable {
-   *   DeleteMarker: boolean,
-   *   AcceptRanges: 'bytes',
-   *   Expiration: string,
-   *   Restore: string,
-   *   ArchiveStatus: 'ARCHIVE_ACCESS|DEEP_ARCHIVE_ACCESS',
-   *   LastModified: Date,
-   *   ContentLength: number,
-   *   ETag: string,
-   *   ChecksumCRC32: string,
-   *   ChecksumCRC32C: string,
-   *   ChecksumCRC64NVME: string,
-   *   ChecksumSHA1: string,
-   *   ChecksumSHA256: string,
-   *   MissingMeta: number,
-   *   VersionId: string,
-   *   CacheControl: string,
-   *   ContentDisposition: string,
-   *   ContentEncoding: string,
-   *   ContentLanguage: string,
-   *   ContentRange: string,
-   *   ContentType: string,
-   *   Expires: Date,
-   *   ExpiresString: string,
-   *   WebsiteRedirectLocation: string,
-   *   ServerSideEncryption: 'AES256'|'aws:kms'|'aws:kms:dsse',
-   *   Metadata: Object<string>,
-   *   SSECustomerAlgorithm: string,
-   *   SSECustomerKeyMD5: string,
-   *   SSEKMSKeyId: string,
-   *   BucketKeyEnabled: boolean,
-   *   StorageClass: 'STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'
-   *                 |'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS'
-   *                 |'GLACIER_IR'|'SNOW'|'EXPRESS_ONEZONE',
-   *   ReplicationStatus: 'COMPLETE'|'PENDING'|'FAILED'|'REPLICA'|'COMPLETED',
-   *   PartsCount: number,
-   *   ObjectLockMode: GOVERNANCE'|'COMPLIANCE,
-   *   ObjectLockRetainUntilDate: Date|DateString|TimestampSecond
-   *   ObjectLockLegalHoldStatus: 'ON'|'OFF'
-   * }
-   * ```
-   *
-   * ```javascript
-   * const myObjectStream = await myBucket.getObjectStream('my-file-key', {
-   *   Range: 'bytes=0-1000000',
-   * })
-   *
-   * myObjectStream.on('data', chunk => {
-   *   response.write(chunk)
-   * })
-   * myObjectStream.on('close', () => {
-   *   response.end()
-   * })
-   * myObjectStream.on('error', error => {
-   *   console.error(error)
-   *   response.end()
-   * })
-   * ```
-   *
-   * Options:
-   *   * `IfMatch` - if the entity tag (ETag) in the response is different than the one specified in this option, Amazon S3 responds with HTTP status code `412 Precondition Failed`. For more information, see [If-Match](https://datatracker.ietf.org/doc/html/rfc7232#section-3.1).
-   *   * `IfModifiedSince` - if the object has not been modified since the time specified in this option, Amazon S3 responds with HTTP status code `304 Not Modified`. If the `IfNoneMatch` option is specified, this option is ignored. For more information, see [If-Modified-Since](https://datatracker.ietf.org/doc/html/rfc7232#section-3.3).
-   *   * `IfNoneMatch` - if the object has the same entity tag (ETag) as the one specified in this option, Amazon S3 responds with HTTP status code `304 Not Modified`. For more information, see [If-None-Match](https://datatracker.ietf.org/doc/html/rfc7232#section-3.2).
-   *   * `IfUnmodifiedSince` - if the object has been modified since the time specified in this option, Amazon S3 responds with HTTP status code `412 Precondition Failed`. If the `IfMatch` option is specified, this option is ignored. For more information, see [If-Unmodified-Since](https://datatracker.ietf.org/doc/html/rfc7232#section-3.4).
-   *   * `Range` - a ranges-specifier string of format `bytes={lower_byte}-{upper_byte}`. AWS S3 downloads only the byte range of the object specified by the ranges-specifier.
-   *   * `ResponseCacheControl` - sets the [Cache-Control](https://www.rfc-editor.org/rfc/rfc9111#section-5.2) header of the response.
-   *   * `ResponseContentDisposition` - sets the [Content-Disposition](https://www.rfc-editor.org/rfc/rfc6266) header of the response.
-   *   * `ResponseContentEncoding` - sets the [Content-Encoding](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.4) header of the response.
-   *   * `ResponseContentLanguage` - sets the [Content-Language](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.5) header of the response.
-   *   * `ResponseContentType` - sets the [Content-Type](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.3) header of the response.
-   *   * `ResponseExpires` - sets the [Expires](https://www.rfc-editor.org/rfc/rfc7234#section-5.3) header of the response.
-   *   * `VersionId` - the specific version of the object. If the version of the object specified by this option is a [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html), Amazon S3 responds with HTTP status code `405 Method Not Allowed`. For more information, see [Retaining multiple versions of objects with S3 Versioning](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html) from the _Amazon S3 User Guide_.
-   *   * `SSECustomerAlgorithm` - the server-side encryption algorithm used for object encryption. For more information, see [Using server-side encryption with Amazon S3 managed keys (SSE-S3)](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingServerSideEncryption.html) from the _Amazon S3 User Guide_.
-   *   * `SSECustomerKey` - the customer-provided encryption key used for object encryption. For more information, see [Using server-side encryption with Amazon S3 managed keys (SSE-S3)](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingServerSideEncryption.html) from the _Amazon S3 User Guide_.
-   *   * `SSECustomerKeyMD5` - the 128-bit MD5 digest of the encryption key according to [RFC 1321](https://www.ietf.org/rfc/rfc1321.txt). Amazon S3 uses this header to check for message integrity. For more information, see [Using server-side encryption with Amazon S3 managed keys (SSE-S3)](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingServerSideEncryption.html) from the _Amazon S3 User Guide_.
-   *   * `PartNumber` - part number of the object being read. For more information, see [Uploading and copying objects using multipart upload in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html) from the _Amazon S3 User Guide_.
-   *   * `ChecksumMode` - required to retrieve the [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object.
-   *
-   * Response:
-   *   * `DeleteMarker` - if `true`, the current version or specified object version that was permanently deleted was a [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) before deletion.
-   *   * `AcceptRanges` - If present, the object is capable of supporting range requests via the `Range` option. Always `'bytes'`.
-   *   * `Expiration` - if the expiration is configured for the object (see [PutBucketLifecycleConfiguration](https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketLifecycleConfiguration.html) from the _Amazon S3 User Guide_), this header will be present in the response. Includes the `expiry-date` and `rule-id` key-value pairs that provide information about object expiration. The value of the `rule-id` is URL-encoded.
-   *   * `Restore` - provides information about the object restoration action and expiration time of the restored object copy. For more information, see [Restoring an archived object](https://docs.aws.amazon.com/AmazonS3/latest/userguide/restoring-objects.html) from the _Amazon S3 User Guide_.
-   *   * `ArchiveStatus` - archive status of the object.
-   *   * `LastModified` - date/time when the object was last modified.
-   *   * `ContentLength` - indicates the object's data length as a non-negative integer number of bytes. For more information, see [Content-Length](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.6).
-   *   * `ETag` - the entity tag or hash of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
-   *   * `ChecksumCRC32` - the base64-encoded, 32-bit CRC-32 [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
-   *   * `ChecksumCRC32C` - the base64-encoded, 32-bit CRC-32C [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
-   *   * `ChecksumCRC64NVME` - the base64-encoded, 64-bit CRC-64NVME [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
-   *   * `ChecksumSHA1` - the base64-encoded, 160-bit SHA-1 digest of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
-   *   * `ChecksumSHA256` - the base64-encoded, 256-bit SHA-256 digest of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
-   *   * `MissingMeta` - the number of metadata entries not returned in the headers that are prefixed with `x-amz-meta-`. For more information, see [Working with object metadata](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingMetadata.html) from the _Amazon S3 User Guide_.
-   *   * `VersionId` - the specific version of the object. For more information, see [Retaining multiple versions of objects with S3 Versioning](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html) from the _Amazon S3 User Guide_.
-   *   * `CacheControl` - lists directives for caches along the request/response chain. For more information, see [Cache-Control](https://www.rfc-editor.org/rfc/rfc9111#section-5.2).
-   *   * `ContentDisposition` - conveys additional information about how to process the response payload. For more information, see [Content-Disposition](https://www.rfc-editor.org/rfc/rfc6266#section-4).
-   *   * `ContentEncoding` - indicates what content coding(s) have been applied to the object in order to obtain data in the media type referenced by the `ContentType` option. For more information, see [Content-Encoding](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.4).
-   *   * `ContentLanguage` - describes the natural language(s) of the intended audience for the object. For more information, see [Content-Language](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.5)
-   *   * `ContentRange` - the portion of the object returned in the response. For more information, see [Content-Range](https://datatracker.ietf.org/doc/html/rfc7233#section-4.2)
-   *   * `ContentType` - indicates the media type of the object. For more information, see [Content-Type](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.3).
-   *   * `Expires` - deprecated in favor of `ExpiresString`.
-   *   * `ExpiresString` - the date/time after which the object is considered stale. For more information, see [Expires](https://www.rfc-editor.org/rfc/rfc7234#section-5.3).
-   *   * `WebsiteRedirectLocation` - if a bucket is configured as a website, redirects requests for this object to another object in the same bucket or to an external URL. Amazon S3 stores the value of this header in the object metadata. For information about object metadata, see [Working with object metadata](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingMetadata.html) from the _Amazon S3 User Guide_.
-   *   * `ServerSideEncryption` - the server-side encryption algorithm used for object encryption. For more information, see [Using server-side encryption with Amazon S3 managed keys (SSE-S3)](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingServerSideEncryption.html) from the _Amazon S3 User Guide_.
-   *   * `Metadata` - [metadata](https://www.ibm.com/think/topics/metadata) about the object.
-   *   * `SSECustomerAlgorithm` - the server-side encryption algorithm used for object encryption. For more information, see [Using server-side encryption with Amazon S3 managed keys (SSE-S3)](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingServerSideEncryption.html) from the _Amazon S3 User Guide_.
-   *   * `SSECustomerKeyMD5` - the 128-bit MD5 digest of the encryption key according to [RFC 1321](https://www.ietf.org/rfc/rfc1321.txt). Amazon S3 uses this header to check for message integrity. For more information, see [Using server-side encryption with Amazon S3 managed keys (SSE-S3)](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingServerSideEncryption.html) from the _Amazon S3 User Guide_.
-   *   * `SSEKMSKeyId` - the [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) Key ID, Key ARN, or Key Alias used for object encryption.
-   *   * `BucketKeyEnabled` - indicates that Amazon S3 used the bucket key for object encryption with [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) keys (SSE-KMS).
-   *   * `StorageClass` - the [storage class](https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html) associated with the object. Defaults to `STANDARD`.
-   *   * `ReplicationStatus` - the progress of replicating objects between buckets. For more information, see [Replicating objects within and across Regions](https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication.html).
-   *   * `PartsCount` - the parts count of the object. This value is only returned if the `PartNumber` option was specified and the object was uploaded as a multipart upload. For more information, see [Uploading and copying objects using multipart upload in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html) from the _Amazon S3 User Guide_.
-   *   * `ObjectLockMode` - the object lock mode. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
-   *   * `ObjectLockRetainUntilDate` - the date/time when the object's Object Lock expires. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
-   *   * `ObjectLockLegalHoldStatus` - indicates the status of the legal hold applied to the object. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
-   *
-   */
-  getObjectStream(key, options) {
-    return this._s3.getObjectStream(this.name, key, options)
-  }
+  // TODO
 
   /**
    * @name deleteObject
