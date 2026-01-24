@@ -1105,7 +1105,7 @@ class S3Bucket {
    *
    * Response:
    *   * `Body` - the object data.
-   *   * `DeleteMarker` - if `true`, the current version or specified object version that was permanently deleted was a [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) before deletion.
+   *   * `DeleteMarker` - if `true`, the current version or specified object version is a [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html).
    *   * `AcceptRanges` - the range of bytes specified by the [Range](https://www.rfc-editor.org/rfc/rfc9110.html#section-14.2) header of the request.
    *   * `Expiration` - if the expiration is configured for the object (see [PutBucketLifecycleConfiguration](https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketLifecycleConfiguration.html) from the _Amazon S3 User Guide_), this header will be present in the response. Includes the `expiry-date` and `rule-id` key-value pairs that provide information about object expiration. The value of the `rule-id` is URL-encoded.
    *   * `Restore` - provides information about the object restoration action and expiration time of the restored object copy. For more information, see [Restoring an archived object](https://docs.aws.amazon.com/AmazonS3/latest/userguide/restoring-objects.html) from the _Amazon S3 User Guide_.
@@ -1237,9 +1237,6 @@ class S3Bucket {
     if (response.ok) {
       const data = {}
 
-      if (response.headers['x-amz-delete-marker']) {
-        data.DeleteMarker = response.headers['x-amz-delete-marker']
-      }
       if (response.headers['accept-ranges']) {
         data.AcceptRanges = response.headers['accept-ranges']
       }
@@ -1383,7 +1380,12 @@ class S3Bucket {
 
       return data
     }
-    throw new AwsError(await Readable.Text(response))
+
+    const errorData = {}
+    if (response.headers['x-amz-delete-marker']) {
+      errorData.DeleteMarker = response.headers['x-amz-delete-marker'] == 'true'
+    }
+    throw new AwsError(await Readable.Text(response), response.status, errorData)
 
     // return this._s3.getObject(this.name, key, options)
   }
@@ -1395,7 +1397,7 @@ class S3Bucket {
    * Retrieve the access control list (ACL) of an object from the Amazon S3 Bucket.
    *
    * ```coffeescript [specscript]
-   * bucket.getObjectACL(key string, options {
+   * getObjectACL(key string, options {
    * }) -> data Promise<{
    *   Grants: Array<{
    *     Grantee: {
@@ -1443,7 +1445,7 @@ class S3Bucket {
       data.Grants = Grants
       return data
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -1453,7 +1455,7 @@ class S3Bucket {
    * Retrieve the headers of an object from the Amazon S3 Bucket.
    *
    * ```coffeescript [specscript]
-   * bucket.headObject(
+   * headObject(
    *   key string,
    *   options {
    *     IfMatch: string,
@@ -1534,7 +1536,7 @@ class S3Bucket {
    *   * `ChecksumMode` - required to retrieve the [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object.
    *
    * Response:
-   *   * `DeleteMarker` - if `true`, the current version or specified object version that was permanently deleted was a [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) before deletion.
+   *   * `DeleteMarker` - if `true`, the current version or specified object version is a [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html).
    *   * `AcceptRanges` - the range of bytes specified by the [Range](https://www.rfc-editor.org/rfc/rfc9110.html#section-14.2) header of the request.
    *   * `Expiration` - if the expiration is configured for the object (see [PutBucketLifecycleConfiguration](https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketLifecycleConfiguration.html) from the _Amazon S3 User Guide_), this header will be present in the response. Includes the `expiry-date` and `rule-id` key-value pairs that provide information about object expiration. The value of the `rule-id` is URL-encoded.
    *   * `Restore` - provides information about the object restoration action and expiration time of the restored object copy. For more information, see [Restoring an archived object](https://docs.aws.amazon.com/AmazonS3/latest/userguide/restoring-objects.html) from the _Amazon S3 User Guide_.
@@ -1666,9 +1668,6 @@ class S3Bucket {
     if (response.ok) {
       const data = {}
 
-      if (response.headers['x-amz-delete-marker']) {
-        data.DeleteMarker = response.headers['x-amz-delete-marker']
-      }
       if (response.headers['accept-ranges']) {
         data.AcceptRanges = response.headers['accept-ranges']
       }
@@ -1810,7 +1809,12 @@ class S3Bucket {
 
       return data
     }
-    throw new AwsError(await Readable.Text(response), response.status)
+
+    const errorData = {}
+    if (response.headers['x-amz-delete-marker']) {
+      errorData.DeleteMarker = response.headers['x-amz-delete-marker'] == 'true'
+    }
+    throw new AwsError(await Readable.Text(response), response.status, errorData)
 
     // return this._s3.headObject(this.name, key, options)
   }
@@ -1822,7 +1826,7 @@ class S3Bucket {
    * Remove an object from the Amazon S3 Bucket.
    *
    * ```coffeescript [specscript]
-   * bucket.deleteObject(key string, options {
+   * deleteObject(key string, options {
    *   MFA: string,
    *   VersionId: string,
    *   BypassGovernanceRetention: boolean,
@@ -1842,11 +1846,53 @@ class S3Bucket {
    *   * `BypassGovernanceRetention` - if `true`, S3 Object Lock bypasses [Governance mode](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html#object-lock-retention-modes) restrictions to process this operation. Requires the `s3:BypassGovernanceRetention` permission.
    *
    * Response:
-   *   * `DeleteMarker` - if `true`, the current version or specified object version that was permanently deleted was a [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) before deletion.
+   *   * `DeleteMarker` - if `VersionId` was specified and `DeleteMarker` is `true`, the specified object version that was permanently deleted was a delete marker. If `VersionId` was not specified (simple DELETE) and `DeleteMarker` is `true`, the current version of the object is a delete marker. See [Working with delete markers](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) for more information. This field is not present if the AWS S3 bucket does not support versioning.
    *   * `VersionId` - version ID of the [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) created as a result of the DELETE operation.
    */
-  deleteObject(key, options) {
-    return this._s3.deleteObject(this.name, key, options)
+  async deleteObject(key, options = {}) {
+    const headers = {}
+
+    /* TODO
+    if (options.MFA) {
+      headers['X-Amz-MFA'] = options.MFA
+    }
+    */
+
+    /* TODO
+    if (options.BypassGovernanceRetention) {
+      headers['X-Amz-Bypass-Governance-Retention'] = options.BypassGovernanceRetention
+    }
+    */
+
+    const searchParams = new URLSearchParams()
+
+    if (options.VersionId) {
+      searchParams.set('versionId', options.VersionId)
+    }
+
+    const response = await this._awsRequest1(
+      'DELETE',
+      searchParams.size > 0
+        ? `/${key}?${searchParams.toString()}`
+        : `/${key}`,
+      headers,
+      ''
+    )
+
+    if (response.ok) {
+      const data = {}
+
+      if (response.headers['x-amz-delete-marker']) {
+        data.DeleteMarker = response.headers['x-amz-delete-marker'] == 'true'
+      }
+
+      if (response.headers['x-amz-version-id']) {
+        data.VersionId = response.headers['x-amz-version-id']
+      }
+
+      return data
+    }
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**

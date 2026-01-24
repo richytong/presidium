@@ -52,7 +52,8 @@ const test1 = new Test('S3Bucket', async function integration1() {
 
   await testBucket.deleteAllObjects()
 
-  await testBucket.deleteObject('binary')
+  const deleteObjectResponse0 = await testBucket.deleteObject('binary')
+  assert.equal(Object.keys(deleteObjectResponse0).length, 0)
 
   await testBucket.putObject('a', JSON.stringify({ id: 'a' }), {
     ContentType: 'application/json',
@@ -88,7 +89,7 @@ const test1 = new Test('S3Bucket', async function integration1() {
     await testBucket.putObject(key, Buffer.from('buffer'))
     const headRes = await testBucket.headObject(key)
     assert.equal(headRes.ContentLength, 6)
-    const res = await testBucket.getObjectStream(key)
+    const res = await testBucket.getObject(key, { Stream: true })
     assert.equal(res.ContentLength, 6)
   }
 
@@ -96,10 +97,11 @@ const test1 = new Test('S3Bucket', async function integration1() {
     const a = await testBucket.getObject('a')
     const body = a.Body.toString('utf8')
     assert.equal(body, '{"id":"a"}')
-    await testBucket.deleteObjects(['a'])
+    const deleteObjectResponse = await testBucket.deleteObject('a')
+    assert.equal(Object.keys(deleteObjectResponse).length, 0)
     await assert.rejects(
       testBucket.getObject('a'),
-      { name: 'NoSuchKey', message: 'The specified key does not exist.' },
+      { name: 'NoSuchKey', message: 'The specified key does not exist.', code: 404 },
     )
   }
 
@@ -109,10 +111,10 @@ const test1 = new Test('S3Bucket', async function integration1() {
     await testBucket.deleteObjects([{ Key: 'b', VersionId: '0' }])
     b = await testBucket.getObject('b')
     assert.equal(b.Body.toString('utf8'), '{"id":"b"}')
-    await testBucket.deleteObjects([{ Key: 'b' }]),
+    await testBucket.deleteObjects(['b']),
     await assert.rejects(
       testBucket.getObject('b'),
-      { name: 'NoSuchKey', message: 'The specified key does not exist.' },
+      { name: 'NoSuchKey', message: 'The specified key does not exist.', code: 404 },
     )
   }
 
@@ -318,7 +320,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
     assert(data2.Body instanceof stream.Readable)
   }
 
-  { // getObject VersionId
+  { // getObject, deleteObject VersionId
     const key = 'test/getObject-VersionId'
     const data1 = await testBucket3.putObject(key, 'test')
     assert.equal(typeof data1.VersionId, 'string')
@@ -330,6 +332,60 @@ const test3 = new Test('S3Bucket', async function integration3() {
     })
     assert.equal(data3.VersionId, data1.VersionId)
     assert.equal(data3.Body.toString('utf8'), 'test')
+
+    const data4 = await testBucket3.deleteObject(key, {
+      VersionId,
+    })
+    assert.equal(data4.VersionId, data1.VersionId)
+
+    await assert.rejects(
+      testBucket3.getObject(key, {
+        VersionId,
+      }),
+      { name: 'NoSuchVersion', message: 'The specified version does not exist.', code: 404 },
+    )
+  }
+
+  { // deleteObject with delete marker
+    const key = 'test/getObject-delete-marker'
+    const data1 = await testBucket3.putObject(key, 'test')
+    assert.equal(typeof data1.VersionId, 'string')
+    const VersionId = data1.VersionId
+    const data2 = await testBucket3.putObject(key, 'test2') // should overwrite
+    assert.notEqual(typeof data2.VersionId, data1.VersionId)
+    const data3 = await testBucket3.getObject(key, {
+      VersionId,
+    })
+    assert.equal(data3.VersionId, data1.VersionId)
+    assert.equal(data3.Body.toString('utf8'), 'test')
+
+    const data4 = await testBucket3.deleteObject(key)
+    assert.equal(typeof data4.VersionId, 'string')
+    const deleteMarker = data4.VersionId
+    assert.equal(data4.DeleteMarker, true) // delete marker is created
+
+    // current version is a delete marker
+
+    await assert.rejects(
+      testBucket3.getObject(key),
+      { name: 'NoSuchKey', message: 'The specified key does not exist.', code: 404, DeleteMarker: true },
+    )
+
+    await assert.rejects(
+      testBucket3.getObject(key, { VersionId: deleteMarker }),
+      { name: 'MethodNotAllowed', message: 'The specified method is not allowed against this resource.', code: 405, DeleteMarker: true },
+    )
+
+    // delete the delete marker (un-deletes the object)
+    const data5 = await testBucket3.deleteObject(key, {
+      VersionId: deleteMarker,
+    })
+    assert.equal(data5.VersionId, deleteMarker)
+    assert.equal(data5.DeleteMarker, true)
+
+    // current version should be last version before delete marker, or data2.VersionId
+    const data6 = await testBucket3.getObject(key)
+    assert.equal(data6.VersionId, data2.VersionId)
   }
 
   { // ACL option + VersionId in response
@@ -348,13 +404,23 @@ const test3 = new Test('S3Bucket', async function integration3() {
     assert.equal(data4.ContentType, 'application/octet-stream')
     assert.equal(typeof data4.VersionId, 'string')
 
-    const data3 = await testBucket3.getObjectACL(key)
+    const data3 = await testBucket3.getObjectACL(key, {
+      VersionId: data4.VersionId,
+    })
     assert.equal(data3.Grants.length, 2)
     for (const Grant of data3.Grants) {
       assert.equal(Grant.Grantee.Type, 'CanonicalUser')
     }
     assert.equal(data3.Grants[0].Permission, 'FULL_CONTROL')
     assert.equal(data3.Grants[1].Permission, 'READ')
+
+    const data5 = await testBucket3.getObjectACL(key)
+    assert.equal(data5.Grants.length, 2)
+    for (const Grant of data5.Grants) {
+      assert.equal(Grant.Grantee.Type, 'CanonicalUser')
+    }
+    assert.equal(data5.Grants[0].Permission, 'FULL_CONTROL')
+    assert.equal(data5.Grants[1].Permission, 'READ')
   }
 
   { // ACL option 2

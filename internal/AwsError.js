@@ -10,7 +10,7 @@ const XML = require('../XML')
  * ```
  */
 class AwsError extends Error {
-  constructor(message, code = 500) {
+  constructor(message, code = 500, data = {}) {
     super()
 
     if (message.startsWith('<?xml')) {
@@ -33,6 +33,10 @@ class AwsError extends Error {
         this.message = message
         this.code = code
       }
+    }
+
+    for (const key in data) {
+      this[key] = data[key]
     }
   }
 }
