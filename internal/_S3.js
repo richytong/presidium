@@ -261,7 +261,6 @@ class S3 {
    * ```
    */
   deleteObjects(bucketname, keys, options) {
-    console.log('_s3 deleteObjects', keys)
     const { Quiet = false, ...optionsRest } = options ?? {}
     return this.client.deleteObjects({
       Bucket: bucketname,

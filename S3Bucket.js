@@ -64,8 +64,8 @@ const XML = require('./XML')
  *   * `BlockPublicPolicy` - if `false`, AWS S3 does not block public bucket policies for this bucket. Default `true`.
  *   * `RestrictPublicBuckets` - if `false`, AWS S3 does not restrict public bucket policies for this bucket. Default `true`.
  *   * `RequestPayer` - the payer for requests to the AWS S3 bucket. Defaults to `BucketOwner`.
- *   * `ObjectLockEnabled` - if `false`, AWS S3 disables Object Lock for this bucket.
- *   * `ObjectLockDefaultRetentionMode` - the default Object Lock mode (`'GOVERNANCE'` or `'COMPLIANCE'`) for this bucket.
+ *   * `ObjectLockEnabled` - if `true`, AWS S3 enables Object Lock for this bucket. Defaults to `false`.
+ *   * `ObjectLockDefaultRetentionMode` - the default Object Lock mode (`'GOVERNANCE'` or `'COMPLIANCE'`) for this bucket. Defaults to `'COMPLIANCE'`
  *     * `'COMPLIANCE'` - no one, including the root user, can delete a locked object.
  *     * `'GOVERNANCE'` - users with special permissions can delete a locked object.
  *   * `ObjectLockDefaultRetentionDays` - number of days that a locked object is protected by Object Lock for this bucket.
@@ -134,7 +134,7 @@ class S3Bucket {
     this.RestrictPublicBuckets = options.RestrictPublicBuckets ?? true
     this.RequestPayer = options.RequestPayer ?? 'BucketOwner'
 
-    this.ObjectLockEnabled = options.ObjectLockEnabled ?? true
+    this.ObjectLockEnabled = options.ObjectLockEnabled ?? false
     this.ObjectLockDefaultRetentionMode =
       options.ObjectLockDefaultRetentionMode ?? 'COMPLIANCE'
     this.ObjectLockDefaultRetentionDays =
@@ -182,7 +182,9 @@ class S3Bucket {
         await this.create()
         await this.putPublicAccessBlock()
         await this.putRequestPayment()
-        await this.putVersioning()
+        if (this.VersioningStatus == 'Enabled') {
+          await this.putVersioning()
+        }
         if (this.ObjectLockEnabled) {
           await this.putObjectLockConfiguration()
         }
@@ -1421,12 +1423,6 @@ class S3Bucket {
    *     IfNoneMatch: string,
    *     IfUnmodifiedSince: Date|DateString|TimestampSeconds,
    *     Range: string, # 'bytes=0-9'
-   *     ResponseCacheControl: string,
-   *     ResponseContentDisposition: string,
-   *     ResponseContentEncoding: string,
-   *     ResponseContentLanguage: string,
-   *     ResponseContentType: string,
-   *     ResponseExpires: Date|Date.toString()|number,
    *     VersionId: string,
    *     SSECustomerAlgorithm: string,
    *     SSECustomerKey: Buffer|TypedArray|Blob|string,
@@ -1570,7 +1566,7 @@ class S3Bucket {
    *   ChecksumMode: 'ENABLED',
    * }) -> response stream.Readable {
    *   DeleteMarker: boolean,
-   *   AcceptRanges: string,
+   *   AcceptRanges: 'bytes',
    *   Expiration: string,
    *   Restore: string,
    *   ArchiveStatus: 'ARCHIVE_ACCESS|DEEP_ARCHIVE_ACCESS',
@@ -1632,7 +1628,7 @@ class S3Bucket {
    *   * `IfModifiedSince` - if the object has not been modified since the time specified in this option, Amazon S3 responds with HTTP status code `304 Not Modified`. If the `IfNoneMatch` option is specified, this option is ignored. For more information, see [If-Modified-Since](https://datatracker.ietf.org/doc/html/rfc7232#section-3.3).
    *   * `IfNoneMatch` - if the object has the same entity tag (ETag) as the one specified in this option, Amazon S3 responds with HTTP status code `304 Not Modified`. For more information, see [If-None-Match](https://datatracker.ietf.org/doc/html/rfc7232#section-3.2).
    *   * `IfUnmodifiedSince` - if the object has been modified since the time specified in this option, Amazon S3 responds with HTTP status code `412 Precondition Failed`. If the `IfMatch` option is specified, this option is ignored. For more information, see [If-Unmodified-Since](https://datatracker.ietf.org/doc/html/rfc7232#section-3.4).
-   *   * `Range` - download only the byte range of the object specified by this option. For more information, see [Range](https://www.rfc-editor.org/rfc/rfc9110.html#section-14.2).
+   *   * `Range` - a ranges-specifier string of format `bytes={lower_byte}-{upper_byte}`. AWS S3 downloads only the byte range of the object specified by the ranges-specifier.
    *   * `ResponseCacheControl` - sets the [Cache-Control](https://www.rfc-editor.org/rfc/rfc9111#section-5.2) header of the response.
    *   * `ResponseContentDisposition` - sets the [Content-Disposition](https://www.rfc-editor.org/rfc/rfc6266) header of the response.
    *   * `ResponseContentEncoding` - sets the [Content-Encoding](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.4) header of the response.
@@ -1648,7 +1644,7 @@ class S3Bucket {
    *
    * Response:
    *   * `DeleteMarker` - if `true`, the current version or specified object version that was permanently deleted was a [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) before deletion.
-   *   * `AcceptRanges` - the range of bytes specified by the [Range](https://www.rfc-editor.org/rfc/rfc9110.html#section-14.2) header of the request.
+   *   * `AcceptRanges` - If present, the object is capable of supporting range requests via the `Range` option. Always `'bytes'`.
    *   * `Expiration` - if the expiration is configured for the object (see [PutBucketLifecycleConfiguration](https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketLifecycleConfiguration.html) from the _Amazon S3 User Guide_), this header will be present in the response. Includes the `expiry-date` and `rule-id` key-value pairs that provide information about object expiration. The value of the `rule-id` is URL-encoded.
    *   * `Restore` - provides information about the object restoration action and expiration time of the restored object copy. For more information, see [Restoring an archived object](https://docs.aws.amazon.com/AmazonS3/latest/userguide/restoring-objects.html) from the _Amazon S3 User Guide_.
    *   * `ArchiveStatus` - archive status of the object.
@@ -1839,13 +1835,10 @@ class S3Bucket {
     let versions = await this.listObjectVersions({ MaxKeys: BatchSize }).then(get('Versions'))
 
     while (versions.length > 0) {
-console.log(versions.map(pick(['Key', 'VersionId'])))
-
       const response1 = await this.deleteObjects(
         versions.map(pick(['Key', 'VersionId'])),
         deleteObjectsOptions
       )
-      console.log('deleteObjects response1', response1)
       versions = await this.listObjectVersions({ MaxKeys: BatchSize }).then(get('Versions'))
 
       if (response1.Deleted) {
@@ -1865,7 +1858,31 @@ console.log(versions.map(pick(['Key', 'VersionId'])))
 
     }
 
-console.log('done', response)
+    let deleteMarkers = await this.listObjectVersions({ MaxKeys: BatchSize }).then(get('DeleteMarkers'))
+
+    while (deleteMarkers.length > 0) {
+      const response1 = await this.deleteObjects(
+        deleteMarkers.map(pick(['Key', 'VersionId'])),
+        deleteObjectsOptions
+      )
+      deleteMarkers = await this.listObjectVersions({ MaxKeys: BatchSize }).then(get('DeleteMarkers'))
+
+      if (response1.Deleted) {
+        response.Deleted ??= []
+        response.Deleted = response.Deleted.concat(response1.Deleted)
+      }
+
+      if (response1.Errors?.length > 0) {
+        const errors = response1.Errors.map(({ Key, VersionId, Code, Message }) => {
+          if (VersionId) {
+            return new Error(`${Key} (VersionId ${VersionId}): ${Code}: ${Message}`)
+          }
+          return new Error(`${Key}: ${Code}: ${Message}`)
+        })
+        throw new AggregateError(errors)
+      }
+
+    }
 
     return response
   }

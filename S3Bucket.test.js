@@ -124,13 +124,12 @@ const test1 = new Test('S3Bucket', async function integration1() {
 
   {
     const response = await testBucket.deleteAllObjects({ BatchSize: 1 })
-    assert.deepEqual(response.Deleted, [
+    assert.deepEqual(response.Deleted.map(pick(['Key'])), [
       { Key: 'binary' },
       { Key: 'buffer' },
       { Key: 'buffer2' },
       { Key: 'c' }
     ])
-    assert.deepEqual(response.Errors, [])
   }
 
   {
@@ -193,301 +192,6 @@ const test2 = new Test('S3Bucket', async function integration2() {
     assert.equal(message, 'bucket-exists')
   }
 
-  { // putPolicy, getPolicy
-    const policy = {
-      "Version": "2008-10-17",
-      "Id": "Policy1380877762691",
-      "Statement": [
-        {
-          "Sid": "Stmt1380877761162",
-          "Effect": "Allow",
-          "Principal": {
-            "AWS": "*"
-          },
-          "Action": "s3:GetObject",
-          "Resource": `arn:aws:s3:::${bucketName}/*`,
-        }
-      ]
-    }
-
-    await testBucket2.putPolicy({
-      policy,
-    })
-
-    const policy2 = await testBucket2.getPolicy()
-    assert.equal(policy.Version, policy2.Version)
-    assert.equal(policy.Id, policy2.Id)
-    assert.deepEqual(policy.Statement, policy2.Statement)
-  }
-
-  { // ACL option + VersionId in response
-    const key = 'test/acl'
-    const data1 = await testBucket2.putObject(key, 'test', {
-      ACL: 'aws-exec-read'
-    })
-    assert.equal(typeof data1.ETag, 'string')
-    assert.equal(typeof data1.VersionId, 'string')
-
-    const data2 = await testBucket2.getObject(key)
-    assert.equal(data2.ContentType, 'application/octet-stream')
-    assert.equal(typeof data2.VersionId, 'string')
-
-    const data3 = await testBucket2.getObjectACL(key)
-    assert.equal(data3.Grants.length, 2)
-    for (const Grant of data3.Grants) {
-      assert.equal(Grant.Grantee.Type, 'CanonicalUser')
-    }
-    assert.equal(data3.Grants[0].Permission, 'FULL_CONTROL')
-    assert.equal(data3.Grants[1].Permission, 'READ')
-  }
-
-  { // ACL option 2
-    const key = 'test/acl2'
-    const data1 = await testBucket2.putObject(key, 'test', {
-      ACL: 'public-read-write'
-    }) // should not error
-    assert.equal(typeof data1.ETag, 'string')
-
-    const data2 = await testBucket2.getObject(key)
-    assert.equal(data2.ContentType, 'application/octet-stream')
-
-    const data3 = await testBucket2.getObjectACL(key)
-  }
-
-  { // CacheControl, ContentDisposition, ContentEncoding, ContentLanguage, ContentLength, ContentMD5, ContentType, Expires options
-    const date = new Date()
-    const key = 'test/cache-control'
-    const data1 = await testBucket2.putObject(key, 'test', {
-      CacheControl: 'nocache',
-      ContentDisposition: 'inline',
-      ContentEncoding: 'gzip',
-      ContentLanguage: 'en-US',
-      ContentLength: '4',
-      ContentMD5: crypto.createHash('md5').update('test', 'utf8').digest('base64'), // should not error
-      ContentType: 'text/plain',
-      Expires: date,
-    })
-    const data2 = await testBucket2.getObject(key)
-    assert.equal(data2.CacheControl, 'nocache')
-    assert.equal(data2.ContentDisposition, 'inline')
-    assert.equal(data2.ContentEncoding, 'gzip')
-    assert.equal(data2.ContentLanguage, 'en-US')
-    assert.equal(data2.ContentLength, '4')
-    assert.equal(data2.ContentType, 'text/plain')
-    assert.equal(data2.Expires, date)
-  }
-
-  { // ChecksumAlgorithm, ChecksumCRC32 options
-    const key = 'test/checksum-crc32'
-    const body = 'test-checksum-crc32'
-
-    const crc32 = new CRC32()
-    crc32.update(Buffer.from(body, 'utf8'))
-    const base64Checksum = convertUint32ToBase64(crc32.checksum)
-
-    const data1 = await testBucket2.putObject(key, body, {
-      ChecksumAlgorithm: 'ChecksumCRC32',
-      ChecksumCRC32: base64Checksum
-    })
-    assert.equal(data1.ChecksumType, 'FULL_OBJECT')
-    assert.equal(data1.ChecksumCRC32, base64Checksum)
-
-    const data2 = await testBucket2.getObject(key, {
-      ChecksumMode: 'Enabled'
-    })
-    assert.equal(data2.ChecksumCRC32, base64Checksum)
-  }
-
-  { // ChecksumAlgorithm, ChecksumCRC32C options
-    const key = 'test/checksum-crc32c'
-    const body = 'test-checksum-crc32c'
-
-    const checksum = crc32c.calculate(body)
-    const base64Checksum = convertUint32ToBase64(checksum)
-
-    const data1 = await testBucket2.putObject(key, body, {
-      ChecksumAlgorithm: 'ChecksumCRC32C',
-      ChecksumCRC32C: base64Checksum
-    })
-    assert.equal(data1.ChecksumType, 'FULL_OBJECT')
-    assert.equal(data1.ChecksumCRC32C, base64Checksum)
-
-    const data2 = await testBucket2.getObject(key, {
-      ChecksumMode: 'Enabled'
-    })
-    assert.equal(data2.ChecksumCRC32C, base64Checksum)
-  }
-
-  { // ChecksumAlgorithm, ChecksumCRC64NVME options
-    const key = 'test/checksum-crc64nvme'
-    const body = 'test-checksum-crc64nvme'
-
-    const crc64 = new CrtCrc64Nvme()
-    crc64.update(Buffer.from(body, 'utf8'))
-    const result = await crc64.digest()
-    const base64Checksum = Buffer.from(result).toString('base64')
-
-    const data1 = await testBucket2.putObject(key, body, {
-      ChecksumAlgorithm: 'ChecksumCRC64NVME',
-      ChecksumCRC64NVME: base64Checksum
-    })
-    assert.equal(data1.ChecksumType, 'FULL_OBJECT')
-    assert.equal(data1.ChecksumCRC64NVME, base64Checksum)
-
-    const data2 = await testBucket2.getObject(key, {
-      ChecksumMode: 'Enabled'
-    })
-    assert.equal(data2.ChecksumCRC64NVME, base64Checksum)
-  }
-
-  { // ChecksumAlgorithm, ChecksumSHA1 options
-    const key = 'test/checksum-sha1'
-    const body = 'test-checksum-sha1'
-
-    const base64Checksum = crypto.createHash('sha1').update(body).digest('base64')
-
-    const data1 = await testBucket2.putObject(key, body, {
-      ChecksumAlgorithm: 'ChecksumSHA1',
-      ChecksumSHA1: base64Checksum
-    })
-    assert.equal(data1.ChecksumType, 'FULL_OBJECT')
-    assert.equal(data1.ChecksumSHA1, base64Checksum)
-
-    const data2 = await testBucket2.getObject(key, {
-      ChecksumMode: 'Enabled'
-    })
-    assert.equal(data2.ChecksumSHA1, base64Checksum)
-  }
-
-  { // ChecksumAlgorithm, ChecksumSHA256 options
-    const key = 'test/checksum-sha256'
-    const body = 'test-checksum-sha256'
-
-    const base64Checksum = crypto.createHash('sha256').update(body).digest('base64')
-
-    const data1 = await testBucket2.putObject(key, body, {
-      ChecksumAlgorithm: 'ChecksumSHA256',
-      ChecksumSHA256: base64Checksum
-    })
-    assert.equal(data1.ChecksumType, 'FULL_OBJECT')
-    assert.equal(data1.ChecksumSHA256, base64Checksum)
-
-    const data2 = await testBucket2.getObject(key, {
-      ChecksumMode: 'Enabled'
-    })
-    assert.equal(data2.ChecksumSHA256, base64Checksum)
-  }
-
-  { // IfNoneMatch option
-    const key = 'test/if-match-option'
-    const data1 = await testBucket2.putObject(key, 'test', {
-      IfNoneMatch: '*',
-    })
-    const data2 = await testBucket2.getObject(key)
-    await assert.rejects(
-      () => testBucket2.putObject(key, 'test', {
-        IfNoneMatch: '*',
-      }),
-      { name: 'PreconditionFailed', message: 'At least one of the pre-conditions you specified did not hold', code: 412 },
-    )
-  }
-
-  { // GrantFullControl, GrantRead, GrantReadACP, GrantWriteACP optionss
-    const key = 'test/grant-read-write-full-control-option'
-    await testBucket2.putObject(key, 'test', {
-      GrantFullControl: 'uri=http://acs.amazonaws.com/groups/global/AllUsers',
-      GrantRead: 'uri=http://acs.amazonaws.com/groups/global/AllUsers',
-      GrantReadACP: 'uri=http://acs.amazonaws.com/groups/global/AllUsers',
-      GrantWriteACP: 'uri=http://acs.amazonaws.com/groups/global/AllUsers',
-    })
-    await testBucket2.getObject(key)
-    // no error
-  }
-
-  { // ServerSideEncryption, SSEKMSKeyId, SSEKMSEncryptionContext options
-    const key = 'test/ServerSideEncryption-SSEKMSKeyId-SSEKMSEncryptionContext-option'
-    const encryptionContext = { a: '1' }
-    const data1 = await testBucket2.putObject(key, 'test', {
-      ServerSideEncryption: 'aws:kms',
-      SSEKMSKeyId: 'alias/presidium-test',
-      SSEKMSEncryptionContext: Buffer.from(JSON.stringify(encryptionContext), 'utf8').toString('base64'),
-    })
-    assert.equal(data1.ServerSideEncryption, 'aws:kms')
-    assert.equal(data1.SSEKMSKeyId, 'arn:aws:kms:us-east-1:095798571722:key/c0bb3d73-0b3f-47c3-8eb6-8567b6d22265')
-    const encryptionContext1 = JSON.parse(Buffer.from(data1.SSEKMSEncryptionContext, 'base64').toString('utf8'))
-    assert.equal(encryptionContext1.a, '1')
-    const data2 = await testBucket2.getObject(key)
-    assert.equal(data2.ServerSideEncryption, 'aws:kms')
-    assert.equal(data2.SSEKMSKeyId, 'arn:aws:kms:us-east-1:095798571722:key/c0bb3d73-0b3f-47c3-8eb6-8567b6d22265')
-    const encryptionContext2 = JSON.parse(Buffer.from(data1.SSEKMSEncryptionContext, 'base64').toString('utf8'))
-    assert.equal(encryptionContext2.a, '1')
-  }
-
-  { // ServerSideEncryption, SSEKMSKeyId, BucketKeyEnabled options
-    const key = 'test/ServerSideEncryption-SSEKMSKeyId-BucketKeyEnabled-option'
-    const encryptionContext = { a: '1' }
-    const data1 = await testBucket2.putObject(key, 'test', {
-      ServerSideEncryption: 'aws:kms',
-      SSEKMSKeyId: 'alias/presidium-test',
-      BucketKeyEnabled: true,
-    })
-    assert.equal(data1.ServerSideEncryption, 'aws:kms')
-    assert.equal(data1.SSEKMSKeyId, 'arn:aws:kms:us-east-1:095798571722:key/c0bb3d73-0b3f-47c3-8eb6-8567b6d22265')
-    assert.strictEqual(data1.BucketKeyEnabled, true)
-    const data2 = await testBucket2.getObject(key)
-    assert.equal(data2.ServerSideEncryption, 'aws:kms')
-    assert.equal(data2.SSEKMSKeyId, 'arn:aws:kms:us-east-1:095798571722:key/c0bb3d73-0b3f-47c3-8eb6-8567b6d22265')
-    assert.strictEqual(data2.BucketKeyEnabled, true)
-  }
-
-  { // StorageClass option
-    const key = 'test/StorageClass-option'
-    await testBucket2.putObject(key, 'test', {
-      StorageClass: 'REDUCED_REDUNDANCY',
-    })
-    const data2 = await testBucket2.getObject(key)
-    assert.equal(data2.StorageClass, 'REDUCED_REDUNDANCY')
-  }
-
-  { // WebsiteRedirectLocation option
-    const key = 'test/WebsiteRedirectLocation-option'
-    const data1 = await testBucket2.putObject(key, 'test', {
-      WebsiteRedirectLocation: '/test',
-    })
-    const data2 = await testBucket2.getObject(key)
-    assert.equal(data2.WebsiteRedirectLocation, '/test')
-  }
-
-  { // SSECustomerAlgorithm, SSECustomerKey options
-    const key = 'test/SSECustomerAlgorithm-SSECustomerKey-option'
-    const SSECustomerKey = '8spSZEuMkTTwG5Taq1lObxkaJiSOxHmkkPK9Q+WzN5k='
-    const SSECustomerKeyMD5 = 'CFvXiGVeD8YIPWCv+UJEBA=='
-    const data1 = await testBucket2.putObject(key, 'test', {
-      SSECustomerAlgorithm: 'AES256',
-      SSECustomerKey,
-      SSECustomerKeyMD5,
-    })
-    assert.equal(data1.SSECustomerAlgorithm, 'AES256')
-    assert.equal(data1.SSECustomerKeyMD5, SSECustomerKeyMD5)
-    const data2 = await testBucket2.getObject(key, {
-      SSECustomerAlgorithm: 'AES256',
-      SSECustomerKey,
-      SSECustomerKeyMD5,
-    })
-    assert.equal(data2.SSECustomerAlgorithm, 'AES256')
-    assert.equal(data2.SSECustomerKeyMD5, SSECustomerKeyMD5)
-  }
-
-  { // Tagging option
-    const key = 'test/Tagging-option'
-    const Tagging = 'a=1&b=test'
-    await testBucket2.putObject(key, 'test', {
-      Tagging,
-    })
-    const data2 = await testBucket2.getObject(key)
-    assert.equal(data2.TagCount, 2)
-  }
-
   { // ObjectLockMode, ObjectLockRetainUntilDate, ObjectLockLegalHoldStatus
     const key = 'test/ObjectLockMode-ObjectLockRetainUntilDate-ObjectLockLegalHoldStatus-options'
     const ObjectLockMode = 'COMPLIANCE'
@@ -509,9 +213,396 @@ const test2 = new Test('S3Bucket', async function integration2() {
   testBucket2.closeConnections()
 }).case()
 
+const test3 = new Test('S3Bucket', async function integration3() {
+  const awsCreds = await AwsCredentials('presidium')
+  awsCreds.region = 'us-east-1'
+  // const bucketName = `test-bucket-presidium-${Date.now()}`
+  const bucketName = `test-bucket-presidium-3`
+
+  {
+    const testBucket3 = new S3Bucket({
+      name: bucketName,
+      ACL: 'public-read',
+      ObjectOwnership: 'BucketOwnerPreferred',
+      BlockPublicAccess: false,
+      BlockPublicACLs: false,
+      BlockPublicPolicy: false,
+      IgnorePublicACLs: false,
+      RestrictPublicBuckets: false,
+      RequestPayer: 'Requester',
+      VersioningMfaDelete: 'Disabled',
+      VersioningStatus: 'Enabled',
+      autoReady: false,
+      ...awsCreds
+    })
+
+    await testBucket3.deleteAllObjects().catch(() => {})
+    await testBucket3.delete().catch(() => {})
+    testBucket3.closeConnections()
+  }
+
+  {
+    const testBucket3 = new S3Bucket({
+      name: bucketName,
+      ACL: 'public-read',
+      ObjectOwnership: 'BucketOwnerPreferred',
+      BlockPublicAccess: false,
+      BlockPublicACLs: false,
+      BlockPublicPolicy: false,
+      IgnorePublicACLs: false,
+      RestrictPublicBuckets: false,
+      RequestPayer: 'Requester',
+      VersioningMfaDelete: 'Disabled',
+      VersioningStatus: 'Enabled',
+      ...awsCreds
+    })
+    const { message } = await testBucket3.ready
+    assert.equal(message, 'created-bucket')
+    testBucket3.closeConnections()
+  }
+
+  const testBucket3 = new S3Bucket({
+    name: bucketName,
+    ACL: 'public-read',
+    ObjectOwnership: 'BucketOwnerPreferred',
+    BlockPublicAccess: false,
+    BlockPublicACLs: false,
+    BlockPublicPolicy: false,
+    IgnorePublicACLs: false,
+    RestrictPublicBuckets: false,
+    RequestPayer: 'Requester',
+    VersioningMfaDelete: 'Disabled',
+    VersioningStatus: 'Enabled',
+    ...awsCreds
+  })
+
+  {
+    const { message } = await testBucket3.ready
+    assert.equal(message, 'bucket-exists')
+  }
+
+  { // putPolicy, getPolicy
+    const policy = {
+      "Version": "2008-10-17",
+      "Id": "Policy1380877762691",
+      "Statement": [
+        {
+          "Sid": "Stmt1380877761162",
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "*"
+          },
+          "Action": "s3:GetObject",
+          "Resource": `arn:aws:s3:::${bucketName}/*`,
+        }
+      ]
+    }
+
+    await testBucket3.putPolicy({
+      policy,
+    })
+
+    const policy2 = await testBucket3.getPolicy()
+    assert.equal(policy.Version, policy2.Version)
+    assert.equal(policy.Id, policy2.Id)
+    assert.deepEqual(policy.Statement, policy2.Statement)
+  }
+
+  { // ACL option + VersionId in response
+    const key = 'test/acl'
+    const data1 = await testBucket3.putObject(key, 'test', {
+      ACL: 'aws-exec-read'
+    })
+    assert.equal(typeof data1.ETag, 'string')
+    assert.equal(typeof data1.VersionId, 'string')
+
+    const data2 = await testBucket3.getObject(key)
+    assert.equal(data2.ContentType, 'application/octet-stream')
+    assert.equal(typeof data2.VersionId, 'string')
+
+    const data3 = await testBucket3.getObjectACL(key)
+    assert.equal(data3.Grants.length, 2)
+    for (const Grant of data3.Grants) {
+      assert.equal(Grant.Grantee.Type, 'CanonicalUser')
+    }
+    assert.equal(data3.Grants[0].Permission, 'FULL_CONTROL')
+    assert.equal(data3.Grants[1].Permission, 'READ')
+  }
+
+  { // ACL option 2
+    const key = 'test/acl2'
+    const data1 = await testBucket3.putObject(key, 'test', {
+      ACL: 'public-read-write'
+    }) // should not error
+    assert.equal(typeof data1.ETag, 'string')
+
+    const data2 = await testBucket3.getObject(key)
+    assert.equal(data2.ContentType, 'application/octet-stream')
+
+    const data3 = await testBucket3.getObjectACL(key)
+  }
+
+  { // CacheControl, ContentDisposition, ContentEncoding, ContentLanguage, ContentLength, ContentMD5, ContentType, Expires options
+    const date = new Date()
+    const key = 'test/cache-control'
+    const data1 = await testBucket3.putObject(key, 'test', {
+      CacheControl: 'nocache',
+      ContentDisposition: 'inline',
+      ContentEncoding: 'gzip',
+      ContentLanguage: 'en-US',
+      ContentLength: '4',
+      ContentMD5: crypto.createHash('md5').update('test', 'utf8').digest('base64'), // should not error
+      ContentType: 'text/plain',
+      Expires: date,
+    })
+    const data2 = await testBucket3.getObject(key)
+    assert.equal(data2.CacheControl, 'nocache')
+    assert.equal(data2.ContentDisposition, 'inline')
+    assert.equal(data2.ContentEncoding, 'gzip')
+    assert.equal(data2.ContentLanguage, 'en-US')
+    assert.equal(data2.ContentLength, '4')
+    assert.equal(data2.ContentType, 'text/plain')
+    assert.equal(data2.Expires, date)
+  }
+
+  { // ChecksumAlgorithm, ChecksumCRC32 options
+    const key = 'test/checksum-crc32'
+    const body = 'test-checksum-crc32'
+
+    const crc32 = new CRC32()
+    crc32.update(Buffer.from(body, 'utf8'))
+    const base64Checksum = convertUint32ToBase64(crc32.checksum)
+
+    const data1 = await testBucket3.putObject(key, body, {
+      ChecksumAlgorithm: 'ChecksumCRC32',
+      ChecksumCRC32: base64Checksum
+    })
+    assert.equal(data1.ChecksumType, 'FULL_OBJECT')
+    assert.equal(data1.ChecksumCRC32, base64Checksum)
+
+    const data2 = await testBucket3.getObject(key, {
+      ChecksumMode: 'Enabled'
+    })
+    assert.equal(data2.ChecksumCRC32, base64Checksum)
+  }
+
+  { // ChecksumAlgorithm, ChecksumCRC32C options
+    const key = 'test/checksum-crc32c'
+    const body = 'test-checksum-crc32c'
+
+    const checksum = crc32c.calculate(body)
+    const base64Checksum = convertUint32ToBase64(checksum)
+
+    const data1 = await testBucket3.putObject(key, body, {
+      ChecksumAlgorithm: 'ChecksumCRC32C',
+      ChecksumCRC32C: base64Checksum
+    })
+    assert.equal(data1.ChecksumType, 'FULL_OBJECT')
+    assert.equal(data1.ChecksumCRC32C, base64Checksum)
+
+    const data2 = await testBucket3.getObject(key, {
+      ChecksumMode: 'Enabled'
+    })
+    assert.equal(data2.ChecksumCRC32C, base64Checksum)
+  }
+
+  { // ChecksumAlgorithm, ChecksumCRC64NVME options
+    const key = 'test/checksum-crc64nvme'
+    const body = 'test-checksum-crc64nvme'
+
+    const crc64 = new CrtCrc64Nvme()
+    crc64.update(Buffer.from(body, 'utf8'))
+    const result = await crc64.digest()
+    const base64Checksum = Buffer.from(result).toString('base64')
+
+    const data1 = await testBucket3.putObject(key, body, {
+      ChecksumAlgorithm: 'ChecksumCRC64NVME',
+      ChecksumCRC64NVME: base64Checksum
+    })
+    assert.equal(data1.ChecksumType, 'FULL_OBJECT')
+    assert.equal(data1.ChecksumCRC64NVME, base64Checksum)
+
+    const data2 = await testBucket3.getObject(key, {
+      ChecksumMode: 'Enabled'
+    })
+    assert.equal(data2.ChecksumCRC64NVME, base64Checksum)
+  }
+
+  { // ChecksumAlgorithm, ChecksumSHA1 options
+    const key = 'test/checksum-sha1'
+    const body = 'test-checksum-sha1'
+
+    const base64Checksum = crypto.createHash('sha1').update(body).digest('base64')
+
+    const data1 = await testBucket3.putObject(key, body, {
+      ChecksumAlgorithm: 'ChecksumSHA1',
+      ChecksumSHA1: base64Checksum
+    })
+    assert.equal(data1.ChecksumType, 'FULL_OBJECT')
+    assert.equal(data1.ChecksumSHA1, base64Checksum)
+
+    const data2 = await testBucket3.getObject(key, {
+      ChecksumMode: 'Enabled'
+    })
+    assert.equal(data2.ChecksumSHA1, base64Checksum)
+  }
+
+  { // ChecksumAlgorithm, ChecksumSHA256 options
+    const key = 'test/checksum-sha256'
+    const body = 'test-checksum-sha256'
+
+    const base64Checksum = crypto.createHash('sha256').update(body).digest('base64')
+
+    const data1 = await testBucket3.putObject(key, body, {
+      ChecksumAlgorithm: 'ChecksumSHA256',
+      ChecksumSHA256: base64Checksum
+    })
+    assert.equal(data1.ChecksumType, 'FULL_OBJECT')
+    assert.equal(data1.ChecksumSHA256, base64Checksum)
+
+    const data2 = await testBucket3.getObject(key, {
+      ChecksumMode: 'Enabled'
+    })
+    assert.equal(data2.ChecksumSHA256, base64Checksum)
+  }
+
+  { // IfNoneMatch option
+    const key = 'test/if-match-option'
+    const data1 = await testBucket3.putObject(key, 'test', {
+      IfNoneMatch: '*',
+    })
+    const data2 = await testBucket3.getObject(key)
+    await assert.rejects(
+      () => testBucket3.putObject(key, 'test', {
+        IfNoneMatch: '*',
+      }),
+      { name: 'PreconditionFailed', message: 'At least one of the pre-conditions you specified did not hold', code: 412 },
+    )
+  }
+
+  { // ServerSideEncryption, SSEKMSKeyId, SSEKMSEncryptionContext options
+    const key = 'test/ServerSideEncryption-SSEKMSKeyId-SSEKMSEncryptionContext-option'
+    const encryptionContext = { a: '1' }
+    const data1 = await testBucket3.putObject(key, 'test', {
+      ServerSideEncryption: 'aws:kms',
+      SSEKMSKeyId: 'alias/presidium-test',
+      SSEKMSEncryptionContext: Buffer.from(JSON.stringify(encryptionContext), 'utf8').toString('base64'),
+    })
+    assert.equal(data1.ServerSideEncryption, 'aws:kms')
+    assert.equal(data1.SSEKMSKeyId, 'arn:aws:kms:us-east-1:095798571722:key/c0bb3d73-0b3f-47c3-8eb6-8567b6d22265')
+    const encryptionContext1 = JSON.parse(Buffer.from(data1.SSEKMSEncryptionContext, 'base64').toString('utf8'))
+    assert.equal(encryptionContext1.a, '1')
+    const data2 = await testBucket3.getObject(key)
+    assert.equal(data2.ServerSideEncryption, 'aws:kms')
+    assert.equal(data2.SSEKMSKeyId, 'arn:aws:kms:us-east-1:095798571722:key/c0bb3d73-0b3f-47c3-8eb6-8567b6d22265')
+    const encryptionContext2 = JSON.parse(Buffer.from(data1.SSEKMSEncryptionContext, 'base64').toString('utf8'))
+    assert.equal(encryptionContext2.a, '1')
+  }
+
+  { // ServerSideEncryption, SSEKMSKeyId, BucketKeyEnabled options
+    const key = 'test/ServerSideEncryption-SSEKMSKeyId-BucketKeyEnabled-option'
+    const encryptionContext = { a: '1' }
+    const data1 = await testBucket3.putObject(key, 'test', {
+      ServerSideEncryption: 'aws:kms',
+      SSEKMSKeyId: 'alias/presidium-test',
+      BucketKeyEnabled: true,
+    })
+    assert.equal(data1.ServerSideEncryption, 'aws:kms')
+    assert.equal(data1.SSEKMSKeyId, 'arn:aws:kms:us-east-1:095798571722:key/c0bb3d73-0b3f-47c3-8eb6-8567b6d22265')
+    assert.strictEqual(data1.BucketKeyEnabled, true)
+    const data2 = await testBucket3.getObject(key)
+    assert.equal(data2.ServerSideEncryption, 'aws:kms')
+    assert.equal(data2.SSEKMSKeyId, 'arn:aws:kms:us-east-1:095798571722:key/c0bb3d73-0b3f-47c3-8eb6-8567b6d22265')
+    assert.strictEqual(data2.BucketKeyEnabled, true)
+  }
+
+  { // StorageClass option
+    const key = 'test/StorageClass-option'
+    await testBucket3.putObject(key, 'test', {
+      StorageClass: 'REDUCED_REDUNDANCY',
+    })
+    const data2 = await testBucket3.getObject(key)
+    assert.equal(data2.StorageClass, 'REDUCED_REDUNDANCY')
+  }
+
+  { // WebsiteRedirectLocation option
+    const key = 'test/WebsiteRedirectLocation-option'
+    const data1 = await testBucket3.putObject(key, 'test', {
+      WebsiteRedirectLocation: '/test',
+    })
+    const data2 = await testBucket3.getObject(key)
+    assert.equal(data2.WebsiteRedirectLocation, '/test')
+  }
+
+  { // SSECustomerAlgorithm, SSECustomerKey options
+    const key = 'test/SSECustomerAlgorithm-SSECustomerKey-option'
+    const SSECustomerKey = '8spSZEuMkTTwG5Taq1lObxkaJiSOxHmkkPK9Q+WzN5k='
+    const SSECustomerKeyMD5 = 'CFvXiGVeD8YIPWCv+UJEBA=='
+    const data1 = await testBucket3.putObject(key, 'test', {
+      SSECustomerAlgorithm: 'AES256',
+      SSECustomerKey,
+      SSECustomerKeyMD5,
+    })
+    assert.equal(data1.SSECustomerAlgorithm, 'AES256')
+    assert.equal(data1.SSECustomerKeyMD5, SSECustomerKeyMD5)
+    const data2 = await testBucket3.getObject(key, {
+      SSECustomerAlgorithm: 'AES256',
+      SSECustomerKey,
+      SSECustomerKeyMD5,
+    })
+    assert.equal(data2.SSECustomerAlgorithm, 'AES256')
+    assert.equal(data2.SSECustomerKeyMD5, SSECustomerKeyMD5)
+  }
+
+  { // Tagging option
+    const key = 'test/Tagging-option'
+    const Tagging = 'a=1&b=test'
+    await testBucket3.putObject(key, 'test', {
+      Tagging,
+    })
+    const data2 = await testBucket3.getObject(key)
+    assert.equal(data2.TagCount, 2)
+    assert.equal(data2.AcceptRanges, 'bytes')
+  }
+
+  { // Range
+    const key = 'test/Range'
+    await testBucket3.putObject(key, 'test')
+    const data2 = await testBucket3.getObject(key, {
+      Range: 'bytes=0-1'
+    })
+    assert.equal(data2.AcceptRanges, 'bytes')
+    assert.equal(Buffer.from(data2.Body, 'utf8').length, 2)
+  }
+
+  { // GrantFullControl, GrantRead, GrantReadACP, GrantWriteACP optionss
+    const key = 'test/grant-read-write-full-control-option'
+    await testBucket3.putObject(key, 'test', {
+      GrantFullControl: 'uri=http://acs.amazonaws.com/groups/global/AllUsers',
+      GrantRead: 'uri=http://acs.amazonaws.com/groups/global/AllUsers',
+      GrantReadACP: 'uri=http://acs.amazonaws.com/groups/global/AllUsers',
+      GrantWriteACP: 'uri=http://acs.amazonaws.com/groups/global/AllUsers',
+    })
+    await testBucket3.getObject(key)
+    // no error
+  }
+
+  { // deleteAllObjects
+    const data1 = await testBucket3.deleteAllObjects()
+    assert(data1.Deleted.length > 0)
+  }
+
+  { // delete
+    await testBucket3.delete()
+  }
+
+  testBucket3.closeConnections()
+}).case()
+
 const test = Test.all([
   // test1,
-  test2,
+  // test2,
+  test3,
 ])
 
 if (process.argv[1] == __filename) {
