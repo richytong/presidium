@@ -346,7 +346,7 @@ class S3Bucket {
       }
     }
     const text = await Readable.Text(response)
-    throw new AwsError(text)
+    throw new AwsError(text, response.status)
   }
 
   /**
@@ -390,7 +390,7 @@ class S3Bucket {
     if (response.ok) {
       return {}
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -423,7 +423,7 @@ class S3Bucket {
     if (response.ok) {
       return {}
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -453,7 +453,7 @@ class S3Bucket {
     if (response.ok) {
       return {}
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -493,7 +493,7 @@ class S3Bucket {
     if (response.ok) {
       return {}
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -524,7 +524,7 @@ class S3Bucket {
     if (response.ok) {
       return {}
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -565,7 +565,7 @@ class S3Bucket {
     if (response.ok) {
       return {}
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -605,7 +605,7 @@ class S3Bucket {
       const data = await Readable.JSON(response)
       return data
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -648,7 +648,7 @@ class S3Bucket {
     if (response.ok) {
       return {}
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -919,9 +919,14 @@ class S3Bucket {
       if (response.headers['etag']) {
         data.ETag = response.headers['etag']
       }
-      if (response.headers['x-amz-expiration']) { // TODO https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html; Sample Response for general purpose buckets: Expiration rule created using lifecycle configuration
+
+      /* TODO
+      // https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html;
+      // Sample Response for general purpose buckets: Expiration rule created using lifecycle configuration
+      if (response.headers['x-amz-expiration']) {
         data.Expiration = response.headers['x-amz-expiration']
       }
+      */
 
       if (response.headers['x-amz-checksum-crc32']) {
         data.ChecksumCRC32 = response.headers['x-amz-checksum-crc32']
@@ -1179,9 +1184,11 @@ class S3Bucket {
 
     const searchParams = new URLSearchParams()
 
+    /* TODO
     if (options.PartNumber) {
       searchParams.set('partNumber', options.PartNumber)
     }
+    */
 
     if (options.ResponseCacheControl) {
       searchParams.set('response-cache-control', options.ResponseCacheControl)
@@ -1212,7 +1219,7 @@ class S3Bucket {
       searchParams.set('response-content-type', options.ResponseContentType)
     }
     if (options.ResponseExpires) {
-      searchParams.set('response-expires', options.ResponseExpires)
+      searchParams.set('response-expires', new Date(options.ResponseExpires).toISOString())
     }
     if (options.VersionId) {
       searchParams.set('versionId', options.VersionId)
@@ -1601,9 +1608,11 @@ class S3Bucket {
 
     const searchParams = new URLSearchParams()
 
+    /* TODO
     if (options.PartNumber) {
       searchParams.set('partNumber', options.PartNumber)
     }
+    */
 
     if (options.ResponseCacheControl) {
       searchParams.set('response-cache-control', options.ResponseCacheControl)
@@ -1634,7 +1643,7 @@ class S3Bucket {
       searchParams.set('response-content-type', options.ResponseContentType)
     }
     if (options.ResponseExpires) {
-      searchParams.set('response-expires', options.ResponseExpires)
+      searchParams.set('response-expires', new Date(options.ResponseExpires).toISOString())
     }
     if (options.VersionId) {
       searchParams.set('versionId', options.VersionId)
@@ -1791,12 +1800,10 @@ class S3Bucket {
 
       return data
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
 
     // return this._s3.headObject(this.name, key, options)
   }
-
-  // TODO
 
   /**
    * @name deleteObject

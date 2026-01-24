@@ -318,6 +318,20 @@ const test3 = new Test('S3Bucket', async function integration3() {
     assert(data2.Body instanceof stream.Readable)
   }
 
+  { // getObject VersionId
+    const key = 'test/getObject-VersionId'
+    const data1 = await testBucket3.putObject(key, 'test')
+    assert.equal(typeof data1.VersionId, 'string')
+    const VersionId = data1.VersionId
+    const data2 = await testBucket3.putObject(key, 'test2') // should overwrite
+    assert.notEqual(typeof data2.VersionId, data1.VersionId)
+    const data3 = await testBucket3.getObject(key, {
+      VersionId,
+    })
+    assert.equal(data3.VersionId, data1.VersionId)
+    assert.equal(data3.Body.toString('utf8'), 'test')
+  }
+
   { // ACL option + VersionId in response
     const key = 'test/acl'
     const data1 = await testBucket3.putObject(key, 'test', {
@@ -389,6 +403,40 @@ const test3 = new Test('S3Bucket', async function integration3() {
     assert.equal(data3.ContentLength, '4')
     assert.equal(data3.ContentType, 'text/plain')
     assert.equal(data3.Expires, date)
+
+    // ResponseCacheControl, ResponseContentDisposition, ResponseContentEncoding, ResponseContentLanguage, ResponseContentType, ResponseExpires
+
+    const data4 = await testBucket3.getObject(key, {
+      ResponseCacheControl: 'cache',
+      ResponseContentDisposition: 'attachment',
+      ResponseContentEncoding: 'compress',
+      ResponseContentLanguage: 'de-DE',
+      ResponseContentType: 'application/json',
+      ResponseExpires: new Date('Wed, 21 Oct 2015 07:28:00 GMT'),
+    })
+    assert.equal(data4.CacheControl, 'cache')
+    assert.equal(data4.ContentDisposition, 'attachment')
+    assert.equal(data4.ContentEncoding, 'compress')
+    assert.equal(data4.ContentLanguage, 'de-DE')
+    assert.equal(data4.ContentLength, '4')
+    assert.equal(data4.ContentType, 'application/json')
+    assert.equal(data4.Expires, new Date('Wed, 21 Oct 2015 07:28:00 GMT').toISOString())
+
+    const data5 = await testBucket3.headObject(key, {
+      ResponseCacheControl: 'cache',
+      ResponseContentDisposition: 'attachment',
+      ResponseContentEncoding: 'compress',
+      ResponseContentLanguage: 'de-DE',
+      ResponseContentType: 'application/json',
+      ResponseExpires: new Date('Wed, 21 Oct 2015 07:28:00 GMT'),
+    })
+    assert.equal(data5.CacheControl, 'cache')
+    assert.equal(data5.ContentDisposition, 'attachment')
+    assert.equal(data5.ContentEncoding, 'compress')
+    assert.equal(data5.ContentLanguage, 'de-DE')
+    assert.equal(data5.ContentType, 'application/json')
+    assert.equal(data5.Expires, new Date('Wed, 21 Oct 2015 07:28:00 GMT').toISOString())
+
   }
 
   { // ChecksumAlgorithm, ChecksumCRC32 options

@@ -1,3 +1,4 @@
+const StatusCodeMessage = require('./StatusCodeMessage')
 const XML = require('../XML')
 
 /**
@@ -16,6 +17,10 @@ class AwsError extends Error {
       const data = XML.parse(message)
       this.name = data.Error.Code
       this.message = data.Error.Message
+      this.code = code
+    } else if (message == '') {
+      this.name = 'AwsError'
+      this.message = StatusCodeMessage(code)
       this.code = code
     } else {
       try {

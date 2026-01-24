@@ -10,6 +10,7 @@ describe('AwsError', () => {
     const error = new AwsError(xml)
     assert.equal(error.name, 'BucketAlreadyOwnedByYou')
     assert.equal(error.message, 'Your previous request to create the named bucket succeeded and you already own it.')
+    assert.equal(error.code, 500)
   })
 
   it('Creates error for JSON message', async () => {
@@ -20,6 +21,7 @@ describe('AwsError', () => {
     const error = new AwsError(message)
     assert.equal(error.name, 'TestError')
     assert.equal(error.message, 'test')
+    assert.equal(error.code, 500)
   })
 
   it('Creates error for basic message', async () => {
@@ -27,5 +29,15 @@ describe('AwsError', () => {
     const error = new AwsError(message)
     assert.equal(error.name, 'AwsError')
     assert.equal(error.message, 'test')
+    assert.equal(error.code, 500)
+  })
+
+  it('Uses status code message for empty message', async () => {
+    const message = ''
+    const statusCode = 401
+    const error = new AwsError(message, statusCode)
+    assert.equal(error.name, 'AwsError')
+    assert.equal(error.message, 'Unauthorized')
+    assert.equal(error.code, 401)
   })
 })

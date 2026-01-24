@@ -37,7 +37,7 @@
     "tar-stream": "^2.1.4"
   },
   "scripts": {
-    "test": "node test.js",
+    "test": "node test.js && mocha **/*.test.js *.test.js",
     "lint": "eslint ."
   },
   "devDependencies": {
