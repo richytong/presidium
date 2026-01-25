@@ -141,7 +141,7 @@ const test1 = new Test('S3Bucket', async function integration1() {
 
   { // listObjects EncodingType option
     const specialKey = ':::'
-    await testBucket.putObject(specialKey, 'test')
+    await testBucket.putObject(encodeURIComponent(specialKey), 'test')
     const data1 = await testBucket.listObjects()
     assert.equal(data1.Contents.length, 1)
     assert.equal(data1.Contents[0].Key, specialKey)
@@ -864,7 +864,87 @@ const test3 = new Test('S3Bucket', async function integration3() {
     assert(data1.Deleted.length > 0)
   }
 
+  { // listObjectVersions Prefix and Delimiter options
+    await testBucket3.putObject('c/b', 'test1')
+    await testBucket3.putObject('c/b', 'test2')
+    await testBucket3.putObject('c/b', 'test3')
+    await testBucket3.putObject('c/c', 'test1')
+
+    const data1 = await testBucket3.listObjectVersions({
+      // Prefix: 'c',
+      Delimiter: '/',
+    })
+    assert.equal(data1.CommonPrefixes.length, 1)
+    assert.equal(data1.CommonPrefixes[0].Prefix, 'c/')
+    assert.equal(data1.Versions.length, 0)
+    assert.equal(data1.DeleteMarkers.length, 0)
+
+    const data3 = await testBucket3.listObjectVersions({
+      Prefix: 'c',
+      Delimiter: '/',
+    })
+    assert.equal(data3.CommonPrefixes.length, 1)
+    assert.equal(data3.CommonPrefixes[0].Prefix, 'c/')
+    assert.equal(data3.Versions.length, 0)
+    assert.equal(data3.DeleteMarkers.length, 0)
+
+    const data2 = await testBucket3.listObjectVersions({
+      Prefix: 'c/',
+      Delimiter: '/',
+    })
+    assert.strictEqual(data2.CommonPrefixes, undefined)
+    assert.equal(data2.Versions.length, 4)
+    assert.equal(data2.DeleteMarkers.length, 0)
+  }
+
+  await testBucket3.deleteAllObjects()
+
+  { // listObjectVersions KeyMarker, VersionIdMarker, MaxKeys options
+    await testBucket3.putObject('c', 'test1')
+    await testBucket3.putObject('c', 'test2')
+    await testBucket3.putObject('c', 'test3')
+
+    const data1 = await testBucket3.listObjectVersions({
+      MaxKeys: 1,
+    })
+    assert.equal(data1.Versions.length, 1)
+    assert.equal(data1.DeleteMarkers.length, 0)
+    assert.equal(typeof data1.NextKeyMarker, 'string')
+    assert.equal(typeof data1.NextVersionIdMarker, 'string')
+    assert(data1.IsTruncated)
+
+    const data2 = await testBucket3.listObjectVersions({
+      MaxKeys: 1,
+      KeyMarker: data1.NextKeyMarker,
+      VersionIdMarker: data1.NextVersionIdMarker,
+    })
+    assert.equal(data2.Versions.length, 1)
+    assert.equal(data2.DeleteMarkers.length, 0)
+    assert.equal(typeof data2.NextKeyMarker, 'string')
+    assert.equal(typeof data2.NextVersionIdMarker, 'string')
+    assert.equal(data2.Versions[0].Key, data1.Versions[0].Key)
+    assert.notEqual(data2.Versions[0].VersionId, data1.Versions[0].VersionId)
+    assert(data2.IsTruncated)
+  }
+
+  await testBucket3.deleteAllObjects()
+
+  { // listObjectVersions EncodingType option
+    const specialKey = ':::'
+    await testBucket3.putObject(encodeURIComponent(specialKey), 'test')
+    const data1 = await testBucket3.listObjectVersions()
+    assert.equal(data1.Versions.length, 1)
+    assert.equal(data1.Versions[0].Key, specialKey)
+
+    const data2 = await testBucket3.listObjectVersions({
+      EncodingType: 'url',
+    })
+    assert.equal(data2.Versions.length, 1)
+    assert.equal(data2.Versions[0].Key, encodeURIComponent(specialKey))
+  }
+
   { // delete
+    await testBucket3.deleteAllObjects()
     await testBucket3.delete()
   }
 
@@ -874,7 +954,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
 const test = Test.all([
   test1,
   // test2,
-  // test3,
+  test3,
 ])
 
 if (process.argv[1] == __filename) {

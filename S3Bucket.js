@@ -771,7 +771,7 @@ class S3Bucket {
    *
    * Response:
    *   * `Expiration` - if the expiration is configured for the object (see [PutBucketLifecycleConfiguration](https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketLifecycleConfiguration.html) from the _Amazon S3 User Guide_), this header will be present in the response. Includes the `expiry-date` and `rule-id` key-value pairs that provide information about object expiration. The value of the `rule-id` is URL-encoded.
-   *   * `ETag` - the entity tag or hash of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
+   *   * `ETag` - the entity tag or MD5 hash of the object.
    *   * `ChecksumCRC32` - the base64-encoded, 32-bit CRC-32 [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
    *   * `ChecksumCRC32C` - the base64-encoded, 32-bit CRC-32C [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
    *   * `ChecksumCRC64NVME` - the base64-encoded, 64-bit CRC-64NVME [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
@@ -916,7 +916,7 @@ class S3Bucket {
         options.ObjectLockLegalHoldStatus
     }
 
-    const response = await this._awsRequest1('PUT', `/${encodeURIComponent(key)}`, headers, body)
+    const response = await this._awsRequest1('PUT', `/${key}`, headers, body)
 
     if (response.ok) {
       const data = {}
@@ -1117,7 +1117,7 @@ class S3Bucket {
    *   * `Restore` - provides information about the object restoration action and expiration time of the restored object copy. For more information, see [Restoring an archived object](https://docs.aws.amazon.com/AmazonS3/latest/userguide/restoring-objects.html) from the _Amazon S3 User Guide_.
    *   * `LastModified` - date/time when the object was last modified.
    *   * `ContentLength` - indicates the object's data length as a non-negative integer number of bytes. For more information, see [Content-Length](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.6).
-   *   * `ETag` - the entity tag or hash of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
+   *   * `ETag` - the entity tag or MD5 hash of the object.
    *   * `ChecksumCRC32` - the base64-encoded, 32-bit CRC-32 [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
    *   * `ChecksumCRC32C` - the base64-encoded, 32-bit CRC-32C [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
    *   * `ChecksumCRC64NVME` - the base64-encoded, 64-bit CRC-64NVME [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
@@ -1234,8 +1234,8 @@ class S3Bucket {
     const response = await this._awsRequest1(
       'GET',
       searchParams.size > 0
-        ? `/${encodeURIComponent(key)}?${searchParams.toString()}`
-        : `/${encodeURIComponent(key)}`,
+        ? `/${key}?${searchParams.toString()}`
+        : `/${key}`,
       headers,
       ''
     )
@@ -1549,7 +1549,7 @@ class S3Bucket {
    *   * `ArchiveStatus` - archive status of the object.
    *   * `LastModified` - date/time when the object was last modified.
    *   * `ContentLength` - indicates the object's data length as a non-negative integer number of bytes. For more information, see [Content-Length](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.6).
-   *   * `ETag` - the entity tag or hash of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
+   *   * `ETag` - the entity tag or MD5 hash of the object.
    *   * `ChecksumCRC32` - the base64-encoded, 32-bit CRC-32 [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
    *   * `ChecksumCRC32C` - the base64-encoded, 32-bit CRC-32C [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
    *   * `ChecksumCRC64NVME` - the base64-encoded, 64-bit CRC-64NVME [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
@@ -2177,7 +2177,7 @@ class S3Bucket {
    *   * `Contents` - data and metadata about each object returned.
    *     * `Key` - a name or path that uniquely identifies the object. For more information, see [Naming Amazon S3 objects](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html) from the _Amazon S3 User Guide_.
    *     * `LastModified` - creation date of the object.
-   *     * `ETag` - the entity tag or hash of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
+   *     * `ETag` - the entity tag or MD5 hash of the object.
    *     * `ChecksumAlgorithm`- indicates the algorithm used to create the [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
    *     * `Size` - size or data length in bytes of the object.
    *     * `StorageClass` - the [storage class](https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html) associated with the object. Defaults to `STANDARD`.
@@ -2245,6 +2245,9 @@ class S3Bucket {
 
       if (xmlData.ListBucketResult.CommonPrefixes) {
         data.CommonPrefixes = xmlData.ListBucketResult.CommonPrefixes
+        if (!Array.isArray(data.CommonPrefixes)) {
+          data.CommonPrefixes = [data.CommonPrefixes]
+        }
       }
       data.KeyCount = xmlData.ListBucketResult.KeyCount
       data.NextContinuationToken = xmlData.ListBucketResult.NextContinuationToken
@@ -2259,15 +2262,163 @@ class S3Bucket {
    * @name listObjectVersions
    *
    * @docs
-   * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html
+   * Retrieve some or all (up to 1,000) objects from the Amazon S3 Bucket. Objects are returned in [lexicographical order](https://help.splunk.com/en/splunk-cloud-platform/search/spl2-search-manual/sort-and-order/lexicographical-order).
+   *
+   * ```coffeescript [specscript]
+   * bucket.listObjectVersions(options {
+   *   Delimiter: string,
+   *   EncodingType: 'url',
+   *   KeyMarker: string,
+   *   MaxKeys: number,
+   *   Prefix: string,
+   *   VersionIdMarker: string,
+   * }) -> response Promise<{
+   *   IsTruncated: boolean,
+   *   Versions: Array<{
+   *     IsLatest: boolean,
+   *     Key: string,
+   *     LastModified: Date,
+   *     ETag: string,
+   *     ChecksumAlgorithm: 'CRC32'|'CRC32C'|'SHA1'|'SHA256',
+   *     ChecksumType: 'COMPOSITE'|'FULL_OBJECT',
+   *     Size: number, # bytes
+   *     StorageClass: 'STANDARD'|'REDUCED_REDUNDANCY'|'STANDARD_IA'|'ONEZONE_IA'
+   *                   |'INTELLIGENT_TIERING'|'GLACIER'|'DEEP_ARCHIVE'|'OUTPOSTS'
+   *                   |'GLACIER_IR'|'SNOW'|'EXPRESS_ONEZONE',
+   *     Owner: {
+   *       DisplayName: string,
+   *       ID: string
+   *     },
+   *     VersionId: string,
+   *   }>,
+   *   DeleteMarkers: Array<{
+   *     IsLatest: boolean,
+   *     Key: string,
+   *     LastModified: Date,
+   *     Owner: {
+   *       DisplayName: string,
+   *       ID: string
+   *     },
+   *     VersionId: string,
+   *   }>,
+   *   CommonPrefixes: Array<{ Prefix: string }>,
+   *   NextKeyMarker: string,
+   *   NextVersionIdMarker: string,
+   * }>
+   * ```
+   *
+   * ```javascript
+   * const response = await myBucket.listObjectVersions()
+   *
+   * const response = await myBucket.listObjectVersions({
+   *   Prefix: 'my-prefix'
+   * })
+   * ```
+   *
+   * Options:
+   *   * `Delimiter` - character used to group keys. For more information, see [Organizing objects using prefixes](https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-prefixes.html) from the _Amazon S3 User Guide_.
+   *   * `EncodingType` - encoding type of the [object keys](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html) in the response. If specified as `url`, object keys in the response use [percent-encoding](https://datatracker.ietf.org/doc/html/rfc3986#section-2.1).
+   *   * `KeyMarker` - key to start with when listing object versions
+   *   * `MaxKeys` - maximum number of object versions returned in the response. Defaults to `1000`.
+   *   * `Prefix` - limits the response to keys that begin with the specified prefix.
+   *   * `VersionIdMarker` - object version id to start with when listing object versions
+   *
+   * Response:
+   *   * `IsTruncated` - set to `true` if there are more object versions available in the bucket to retrieve.
+   *   * `Versions` - data and metadata about each object version returned.
+   *     * `IsLatest` - if `true`, this object version is the latest version of the object. If `false`, this object version is not the latest version of the object.
+   *     * `Key` - a name or path that, along with the VersionId uniquely identifies the object version.
+   *     * `LastModified` - date and time when the object was last modified.
+   *     * `ETag` - the entity tag or MD5 hash of the object.
+   *     * `ChecksumType` - checksum type (`'COMPOSITE'` or `'FULL_OBJECT'`) that is used to calcuulate the object version's checksum value.
+   *     * `ChecksumAlgorithm`- indicates the algorithm used to create the [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
+   *     * `Size` - size or data length in bytes of the object.
+   *     * `StorageClass` - the [storage class](https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html) associated with the object. Defaults to `STANDARD`.
+   *     * `Owner` - the owner of the object.
+   *       * `DisplayName` - the display name of the owner.
+   *       * `ID` - the ID of the owner.
+   *     * `VersionId` - Version ID of the object version.
+   *   * `DeleteMarkers` - data and metadata about each delete marker returned.
+   *     * `IsLatest` - if `true`, this delete marker is the latest version of the object. If `false`, this delete marker is not the latest version of the object.
+   *     * `Key` - a name or path that, along with the VersionId, uniquely identifies the delete marker.
+   *     * `LastModified` - date and time when the object was last modified.
+   *     * `Owner` - the owner of the object.
+   *       * `DisplayName` - the display name of the owner.
+   *       * `ID` - the ID of the owner.
+   *     * `VersionId` - Version ID of the object version.
+   *   * `CommonPrefixes` - common prefixes of keys returned in place of the actual keys. Used to browse keys hierachically. For more information, see [Organizing objects using prefixes](https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-prefixes.html) from the _Amazon S3 User Guide_.
+   *     * `Prefix` - the value for a common prefix.
+   *   * `NextKeyMarker` - the key of the object version at which to start the next page of object versions.
+   *   * `NextVersionIdMarker` - the Version ID of the object version at which to start the next page of object versions.
+   *
    */
-  listObjectVersions(options) {
-    return this._s3.listObjectVersions(this.name, options).catch(error => {
-      if (error.retryable) {
-        return this.listObjectVersions(options)
+  async listObjectVersions(options = {}) {
+    const headers = {}
+
+    const searchParams = new URLSearchParams()
+
+    if (options.Delimiter) {
+      searchParams.set('delimiter', options.Delimiter)
+    }
+    if (options.EncodingType) {
+      searchParams.set('encoding-type', options.EncodingType)
+    }
+
+    if (options.KeyMarker) {
+      searchParams.set('key-marker', options.KeyMarker)
+    }
+    if (options.MaxKeys) {
+      searchParams.set('max-keys', options.MaxKeys)
+    }
+
+    if (options.Prefix) {
+      searchParams.set('prefix', options.Prefix)
+    }
+    if (options.VersionIdMarker) {
+      searchParams.set('version-id-marker', options.VersionIdMarker)
+    }
+
+    const response = await this._awsRequest1(
+      'GET',
+      searchParams.size > 0
+        ? `/?versions&${searchParams.toString()}`
+        : '/?versions',
+      headers,
+      ''
+    )
+
+    if (response.ok) {
+      const text = await Readable.Text(response)
+      const xmlData = XML.parse(text)
+
+      const data = {}
+
+      data.Versions = xmlData.ListVersionsResult.Version ?? []
+      if (!Array.isArray(data.Versions)) {
+        data.Versions = [data.Versions]
       }
-      throw error
-    })
+
+      data.DeleteMarkers = xmlData.ListVersionsResult.DeleteMarker ?? []
+      if (!Array.isArray(data.DeleteMarkers)) {
+        data.DeleteMarkers = [data.DeleteMarkers]
+      }
+
+      data.IsTruncated =
+        xmlData.ListVersionsResult.IsTruncated == 'true' ? true : false
+
+      if (xmlData.ListVersionsResult.CommonPrefixes) {
+        data.CommonPrefixes = xmlData.ListVersionsResult.CommonPrefixes
+        if (!Array.isArray(data.CommonPrefixes)) {
+          data.CommonPrefixes = [data.CommonPrefixes]
+        }
+      }
+      data.NextKeyMarker = xmlData.ListVersionsResult.NextKeyMarker
+      data.NextVersionIdMarker = xmlData.ListVersionsResult.NextVersionIdMarker
+
+      return data
+    }
+
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 }
 
