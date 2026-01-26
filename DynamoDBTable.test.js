@@ -5,7 +5,7 @@ const isDynamoDBJSON = require('./internal/isDynamoDBJSON')
 const DynamoDBTable = require('./DynamoDBTable')
 const AwsCredentials = require('./AwsCredentials')
 
-const test = new Test('DynamoDBTable', async function integration() {
+const test1 = new Test('DynamoDBTable', async function integration1() {
   const awsCreds = await AwsCredentials('presidium')
   awsCreds.region = 'us-east-1'
 
@@ -29,14 +29,21 @@ const test = new Test('DynamoDBTable', async function integration() {
     assert.equal(message, 'created-table')
   })
 
-  const testTable2 = new DynamoDBTable({
-    name: 'test-tablename',
-    key: [{ id: 'string' }],
-    ...awsCreds,
-  })
-  await testTable2.ready.then(({ message }) => {
-    assert.equal(message, 'table-exists')
-  })
+  { // default PAY_PER_REQUEST
+    const testTable2 = new DynamoDBTable({
+      name: 'test-tablename',
+      key: [{ id: 'string' }],
+      ...awsCreds,
+    })
+    await testTable2.ready.then(({ message }) => {
+      assert.equal(message, 'table-exists')
+    })
+
+    const data1 = await testTable2.describe()
+    assert.equal(data1.Table.BillingModeSummary.BillingMode, 'PAY_PER_REQUEST')
+    assert.equal(data1.Table.ProvisionedThroughput.ReadCapacityUnits, 0)
+    assert.equal(data1.Table.ProvisionedThroughput.WriteCapacityUnits, 0)
+  }
 
   await testTable.putItem({ id: { S: '1' }, name: { S: 'john' } })
   await testTable.putItemJSON({ id: '2', name: 'henry' })
@@ -425,6 +432,83 @@ const test = new Test('DynamoDBTable', async function integration() {
   await userVersionTable.delete()
   await userVersionTable.waitForNotExists()
 }).case()
+
+const test2 = new Test('DynamoDBTable', async function integration2() {
+  const awsCreds = await AwsCredentials('presidium')
+  awsCreds.region = 'us-east-1'
+
+  { // PROVISIONED default throughput
+    const _testTable3 = new DynamoDBTable({
+      name: 'test-tablename-provisioned-throughput-default',
+      key: [{ id: 'string' }],
+      BillingMode: 'PROVISIONED',
+      ...awsCreds,
+      autoReady: false
+    })
+    await _testTable3.delete().catch(() => {})
+    await _testTable3.waitForNotExists()
+
+    const testTable3 = new DynamoDBTable({
+      name: 'test-tablename-provisioned-throughput-default',
+      key: [{ id: 'string' }],
+      BillingMode: 'PROVISIONED',
+      ...awsCreds,
+    })
+    await testTable3.ready.then(({ message }) => {
+      assert.equal(message, 'created-table')
+    })
+
+    const data1 = await testTable3.describe()
+    assert.equal(data1.Table.ProvisionedThroughput.ReadCapacityUnits, 5)
+    assert.equal(data1.Table.ProvisionedThroughput.WriteCapacityUnits, 5)
+
+    await testTable3.delete()
+    await testTable3.waitForNotExists()
+  }
+
+  { // PROVISIONED custom throughput
+    const _testTable4 = new DynamoDBTable({
+      name: 'test-tablename-provisioned-throughput-custom',
+      key: [{ id: 'string' }],
+      BillingMode: 'PROVISIONED',
+      ProvisionedThroughput: {
+        ReadCapacityUnits: 10,
+        WriteCapacityUnits: 10,
+      },
+      ...awsCreds,
+      autoReady: false
+    })
+    await _testTable4.delete().catch(() => {})
+    await _testTable4.waitForNotExists()
+
+    const testTable4 = new DynamoDBTable({
+      name: 'test-tablename-provisioned-throughput-custom',
+      key: [{ id: 'string' }],
+      BillingMode: 'PROVISIONED',
+      ProvisionedThroughput: {
+        ReadCapacityUnits: 10,
+        WriteCapacityUnits: 10,
+      },
+      ...awsCreds,
+    })
+    await testTable4.ready.then(({ message }) => {
+      assert.equal(message, 'created-table')
+    })
+
+    const data1 = await testTable4.describe()
+    assert.equal(data1.Table.ProvisionedThroughput.ReadCapacityUnits, 10)
+    assert.equal(data1.Table.ProvisionedThroughput.WriteCapacityUnits, 10)
+
+    await testTable4.delete()
+    await testTable4.waitForNotExists()
+  }
+
+}).case()
+
+const test = Test.all([
+  test1,
+  test2,
+])
 
 if (process.argv[1] == __filename) {
   test()

@@ -8,6 +8,15 @@ const userAgent = require('./userAgent')
 const AwsAuthorization = require('./internal/AwsAuthorization')
 const AmzDate = require('./internal/AmzDate')
 const Readable = require('./Readable')
+const DynamoDBKeySchema = require('./internal/DynamoDBKeySchema')
+const DynamoDBAttributeDefinitions =
+  require('./internal/DynamoDBAttributeDefinitions')
+const DynamoDBAttributeType =
+  require('./internal/DynamoDBAttributeType')
+const DynamoDBAttributeValue =
+  require('./internal/DynamoDBAttributeValue')
+const DynamoDBAttributeValueJSON =
+  require('./internal/DynamoDBAttributeValueJSON')
 const AwsError = require('./internal/AwsError')
 const hashJSON = require('./internal/hashJSON')
 const sleep = require('./internal/sleep')
@@ -109,7 +118,7 @@ class DynamoDBTable {
    */
   async _readyPromise() {
     try {
-      await this.exists()
+      await this.describe()
       await this.waitForActive()
       return { message: 'table-exists' }
     } catch (error) {
@@ -178,14 +187,14 @@ class DynamoDBTable {
   }
 
   /**
-   * @name exists
+   * @name describe
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * table.exists() -> data Promise<>
+   * table.describe() -> data Promise<>
    * ```
    */
-  async exists() {
+  async describe() {
     const payload = JSON.stringify({
       TableName: this.name
     })
@@ -193,7 +202,7 @@ class DynamoDBTable {
       await this._awsRequest('POST', '/', 'DescribeTable', payload)
 
     if (response.ok) {
-      return undefined
+      return Readable.JSON(response)
     }
     throw new AwsError(await Readable.Text(response), response.status)
   }
@@ -209,8 +218,8 @@ class DynamoDBTable {
   async create() {
     let payload = {
       TableName: this.name,
-      KeySchema: Dynamo.KeySchema(this.key),
-      AttributeDefinitions: Dynamo.AttributeDefinitions(this.key),
+      KeySchema: DynamoDBKeySchema(this.key),
+      AttributeDefinitions: DynamoDBAttributeDefinitions(this.key),
       BillingMode: this.BillingMode,
     }
     if (payload.BillingMode == 'PROVISIONED') {
@@ -243,7 +252,7 @@ class DynamoDBTable {
     if (response.ok) {
       let data = await Readable.JSON(response)
       while (data.Table.TableStatus != 'ACTIVE') {
-        await sleep(1000)
+        await sleep(100)
         response = await this._awsRequest('POST', '/', 'DescribeTable', payload)
         if (response.ok) {
           data = await Readable.JSON(response)
@@ -273,7 +282,7 @@ class DynamoDBTable {
     let responseText = await Readable.Text(response)
 
     while (!responseText.includes('ResourceNotFoundException')) {
-      await sleep(1000)
+      await sleep(100)
       response = await this._awsRequest('POST', '/', 'DescribeTable', payload)
       responseText = await Readable.Text(response)
     }
@@ -412,7 +421,7 @@ class DynamoDBTable {
   async putItemJSON(item, options = {}) {
     const payload = JSON.stringify({
       TableName: this.name,
-      Item: map(item, Dynamo.AttributeValue),
+      Item: map(item, DynamoDBAttributeValue),
       ...options,
     })
     const response = await this._awsRequest('POST', '/', 'PutItem', payload)
@@ -421,7 +430,7 @@ class DynamoDBTable {
       const data = await Readable.JSON(response)
 
       if (data.Attributes) {
-        data.AttributesJSON = map(data.Attributes, Dynamo.attributeValueToJSON)
+        data.AttributesJSON = map(data.Attributes, DynamoDBAttributeValueJSON)
         delete data.Attributes
       }
 
@@ -509,7 +518,7 @@ class DynamoDBTable {
   async getItemJSON(key) {
     const payload = JSON.stringify({
       TableName: this.name,
-      Key: map(key, Dynamo.AttributeValue)
+      Key: map(key, DynamoDBAttributeValue)
     })
     const response = await this._awsRequest('POST', '/', 'GetItem', payload)
 
@@ -519,7 +528,7 @@ class DynamoDBTable {
         throw new Error(`Item not found for ${JSON.stringify(key)}`)
       }
 
-      data.ItemJSON = map(data.Item, Dynamo.attributeValueToJSON)
+      data.ItemJSON = map(data.Item, DynamoDBAttributeValueJSON)
       delete data.Item
       return data
     }
@@ -571,7 +580,7 @@ class DynamoDBTable {
    * [aws-sdk DynamoDB updateItem](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#updateItem-property)
    */
   async updateItem(Key, Updates, options = {}) {
-    const updates = map(Updates, Dynamo.attributeValueToJSON)
+    const updates = map(Updates, DynamoDBAttributeValueJSON)
 
     const payload = JSON.stringify({
       TableName: this.name,
@@ -593,7 +602,7 @@ class DynamoDBTable {
       ExpressionAttributeValues:
         map.entries(updates, ([key, value]) => [
           `:${hashJSON(value)}`,
-          Dynamo.AttributeValue(value),
+          DynamoDBAttributeValue(value),
         ]),
 
       ...options,
@@ -648,7 +657,7 @@ class DynamoDBTable {
   async updateItemJSON(key, updates, options = {}) {
     const payload = JSON.stringify({
       TableName: this.name,
-      Key: map(key, Dynamo.AttributeValue),
+      Key: map(key, DynamoDBAttributeValue),
 
       UpdateExpression: pipe(updates, [
         Object.entries,
@@ -666,7 +675,7 @@ class DynamoDBTable {
       ExpressionAttributeValues:
         map.entries(updates, ([key, value]) => [
           `:${hashJSON(value)}`,
-          Dynamo.AttributeValue(value),
+          DynamoDBAttributeValue(value),
         ]),
 
       ...options,
@@ -677,7 +686,7 @@ class DynamoDBTable {
       const data = await Readable.JSON(response)
 
       if (data.Attributes) {
-        data.AttributesJSON = map(data.Attributes, Dynamo.attributeValueToJSON)
+        data.AttributesJSON = map(data.Attributes, DynamoDBAttributeValueJSON)
         delete data.Attributes
       }
 
@@ -726,7 +735,7 @@ class DynamoDBTable {
    * ```
    */
   async incrementItem(Key, IncrementUpdates, options = {}) {
-    const incrementUpdates = map(IncrementUpdates, Dynamo.attributeValueToJSON)
+    const incrementUpdates = map(IncrementUpdates, DynamoDBAttributeValueJSON)
 
     const payload = JSON.stringify({
       TableName: this.name,
@@ -748,7 +757,7 @@ class DynamoDBTable {
       ExpressionAttributeValues:
         map.entries(incrementUpdates, ([key, value]) => [
           `:${hashJSON(value)}`,
-          Dynamo.AttributeValue(value),
+          DynamoDBAttributeValue(value),
         ]),
 
       ...options,
@@ -798,7 +807,7 @@ class DynamoDBTable {
   async incrementItemJSON(key, incrementUpdates, options = {}) {
     const payload = JSON.stringify({
       TableName: this.name,
-      Key: map(key, Dynamo.AttributeValue),
+      Key: map(key, DynamoDBAttributeValue),
 
       UpdateExpression: pipe(incrementUpdates, [
         Object.entries,
@@ -816,7 +825,7 @@ class DynamoDBTable {
       ExpressionAttributeValues:
         map.entries(incrementUpdates, ([key, value]) => [
           `:${hashJSON(value)}`,
-          Dynamo.AttributeValue(value),
+          DynamoDBAttributeValue(value),
         ]),
 
       ...options,
@@ -827,7 +836,7 @@ class DynamoDBTable {
       const data = await Readable.JSON(response)
 
       if (data.Attributes) {
-        data.AttributesJSON = map(data.Attributes, Dynamo.attributeValueToJSON)
+        data.AttributesJSON = map(data.Attributes, DynamoDBAttributeValueJSON)
         delete data.Attributes
       }
 
@@ -918,7 +927,7 @@ class DynamoDBTable {
   async deleteItemJSON(key, options) {
     const payload = JSON.stringify({
       TableName: this.name,
-      Key: map(key, Dynamo.AttributeValue),
+      Key: map(key, DynamoDBAttributeValue),
       ...options,
     })
     const response = await this._awsRequest('POST', '/', 'DeleteItem', payload)
@@ -927,7 +936,7 @@ class DynamoDBTable {
       const data = await Readable.JSON(response)
 
       if (data.Attributes) {
-        data.AttributesJSON = map(data.Attributes, Dynamo.attributeValueToJSON)
+        data.AttributesJSON = map(data.Attributes, DynamoDBAttributeValueJSON)
         delete data.Attributes
       }
 
@@ -1041,13 +1050,13 @@ class DynamoDBTable {
   async * scanIteratorJSON(options = {}) {
     const BatchLimit = options.BatchLimit ?? 1000
     let response = await this.scan({ Limit: BatchLimit })
-    yield* map(response.Items, map(Dynamo.attributeValueToJSON))
+    yield* map(response.Items, map(DynamoDBAttributeValueJSON))
     while (response.LastEvaluatedKey != null) {
       response = await this.scan({
         Limit: BatchLimit,
         ExclusiveStartKey: response.LastEvaluatedKey,
       })
-      yield* map(response.Items, map(Dynamo.attributeValueToJSON))
+      yield* map(response.Items, map(DynamoDBAttributeValueJSON))
     }
   }
 
@@ -1116,7 +1125,7 @@ class DynamoDBTable {
    *   * `ConsistentRead` - true to perform a strongly consistent read (eventually consistent by default). Consumes more RCUs.
    */
   async query(keyConditionExpression, Values, options = {}) {
-    const values = map(Values, Dynamo.attributeValueToJSON)
+    const values = map(Values, DynamoDBAttributeValueJSON)
 
     const keyConditionStatements = keyConditionExpression.trim().split(/\s+AND\s+/)
     let statementsIndex = -1
@@ -1308,7 +1317,7 @@ class DynamoDBTable {
 
     if (response.ok) {
       const data = await Readable.JSON(response)
-      data.ItemsJSON = map(data.Items, map(Dynamo.attributeValueToJSON))
+      data.ItemsJSON = map(data.Items, map(DynamoDBAttributeValueJSON))
       delete data.Items
       return data
     }
