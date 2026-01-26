@@ -195,7 +195,7 @@ class DynamoDBTable {
     if (response.ok) {
       return undefined
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -223,7 +223,7 @@ class DynamoDBTable {
     if (response.ok) {
       return Readable.JSON(response)
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -248,12 +248,12 @@ class DynamoDBTable {
         if (response.ok) {
           data = await Readable.JSON(response)
         } else {
-          throw new AwsError(await Readable.Text(response))
+          throw new AwsError(await Readable.Text(response), response.status)
         }
       }
       return undefined
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -317,7 +317,7 @@ class DynamoDBTable {
     if (response.ok) {
       return Readable.JSON(response)
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -371,7 +371,7 @@ class DynamoDBTable {
     if (response.ok) {
       return Readable.JSON(response)
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -387,7 +387,7 @@ class DynamoDBTable {
    *   ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *   ReturnValues: 'NONE'|'ALL_OLD',
    * }) -> data Promise<{
-   *   attributes: JSONObject,
+   *   AttributesJSON: JSONObject,
    *   ConsumedCapacity: {
    *     CapacityUnits: number,
    *     TableName: string,
@@ -421,13 +421,13 @@ class DynamoDBTable {
       const data = await Readable.JSON(response)
 
       if (data.Attributes) {
-        data.attributes = map(data.Attributes, Dynamo.attributeValueToJSON)
+        data.AttributesJSON = map(data.Attributes, Dynamo.attributeValueToJSON)
         delete data.Attributes
       }
 
       return data
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -477,7 +477,7 @@ class DynamoDBTable {
 
       return data
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -492,7 +492,7 @@ class DynamoDBTable {
    * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
    * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
    *
-   * table.getItemJSON(key JSONKey) -> data Promise<{ item: JSONObject }>
+   * table.getItemJSON(key JSONKey) -> data Promise<{ ItemJSON: JSONObject }>
    * ```
    *
    * @description
@@ -519,11 +519,11 @@ class DynamoDBTable {
         throw new Error(`Item not found for ${JSON.stringify(key)}`)
       }
 
-      data.item = map(data.Item, Dynamo.attributeValueToJSON)
+      data.ItemJSON = map(data.Item, Dynamo.attributeValueToJSON)
       delete data.Item
       return data
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -603,7 +603,7 @@ class DynamoDBTable {
     if (response.ok) {
       return Readable.JSON(response)
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -628,7 +628,7 @@ class DynamoDBTable {
    *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *     ReturnValues: 'NONE'|'ALL_OLD'|'UPDATED_OLD'|'ALL_NEW'|'UPDATED_NEW',
    *   }
-   * ) -> data Promise<{ attributes: JSONObject }>
+   * ) -> data Promise<{ AttributesJSON: JSONObject }>
    * ```
    *
    * @description
@@ -677,13 +677,13 @@ class DynamoDBTable {
       const data = await Readable.JSON(response)
 
       if (data.Attributes) {
-        data.attributes = map(data.Attributes, Dynamo.attributeValueToJSON)
+        data.AttributesJSON = map(data.Attributes, Dynamo.attributeValueToJSON)
         delete data.Attributes
       }
 
       return data
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -758,7 +758,7 @@ class DynamoDBTable {
     if (response.ok) {
       return Readable.JSON(response)
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -785,7 +785,7 @@ class DynamoDBTable {
    *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *     ReturnValues: 'NONE'|'ALL_OLD'|'UPDATED_OLD'|'ALL_NEW'|'UPDATED_NEW',
    *   }
-   * ) -> data Promise<{ attributes: JSONObject }>
+   * ) -> data Promise<{ AttributesJSON: JSONObject }>
    * ```
    *
    * @description
@@ -827,13 +827,13 @@ class DynamoDBTable {
       const data = await Readable.JSON(response)
 
       if (data.Attributes) {
-        data.attributes = map(data.Attributes, Dynamo.attributeValueToJSON)
+        data.AttributesJSON = map(data.Attributes, Dynamo.attributeValueToJSON)
         delete data.Attributes
       }
 
       return data
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -882,7 +882,7 @@ class DynamoDBTable {
     if (response.ok) {
       return Readable.JSON(response)
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -905,7 +905,7 @@ class DynamoDBTable {
    *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *     ReturnValues: 'NONE'|'ALL_OLD',
    *   }
-   * ) -> data Promise<{ attributes: JSONObject }>
+   * ) -> data Promise<{ AttributesJSON: JSONObject }>
    * ```
    *
    * @description
@@ -927,13 +927,13 @@ class DynamoDBTable {
       const data = await Readable.JSON(response)
 
       if (data.Attributes) {
-        data.attributes = map(data.Attributes, Dynamo.attributeValueToJSON)
+        data.AttributesJSON = map(data.Attributes, Dynamo.attributeValueToJSON)
         delete data.Attributes
       }
 
       return data
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -985,7 +985,7 @@ class DynamoDBTable {
     if (response.ok) {
       return Readable.JSON(response)
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -1182,7 +1182,7 @@ class DynamoDBTable {
     if (response.ok) {
       return Readable.JSON(response)
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -1209,7 +1209,7 @@ class DynamoDBTable {
    *     FilterExpression: string, // 'fieldA >= :someValue'
    *     ConsistentRead: boolean // true to perform a strongly consistent read (eventually consistent by default)
    *   },
-   * ) -> Promise<{ items: Array<JSONObject> }>
+   * ) -> Promise<{ ItemsJSON: Array<JSONObject> }>
    * ```
    *
    * @description
@@ -1308,11 +1308,11 @@ class DynamoDBTable {
 
     if (response.ok) {
       const data = await Readable.JSON(response)
-      data.items = map(data.Items, map(Dynamo.attributeValueToJSON))
+      data.ItemsJSON = map(data.Items, map(Dynamo.attributeValueToJSON))
       delete data.Items
       return data
     }
-    throw new AwsError(await Readable.Text(response))
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -1463,8 +1463,8 @@ class DynamoDBTable {
         Limit: Math.min(BatchLimit, Limit - numYielded)
       },
     )
-    yield* response.items
-    numYielded += response.items.length
+    yield* response.ItemsJSON
+    numYielded += response.ItemsJSON.length
 
     while (response.LastEvaluatedKey != null && numYielded < Limit) {
       response = await this.queryJSON(
@@ -1476,8 +1476,8 @@ class DynamoDBTable {
           ExclusiveStartKey: response.LastEvaluatedKey,
         },
       )
-      yield* response.items
-      numYielded += response.items.length
+      yield* response.ItemsJSON
+      numYielded += response.ItemsJSON.length
     }
   }
 }

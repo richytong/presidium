@@ -1,15 +1,19 @@
 require('rubico/global')
 const Test = require('thunk-test')
 const assert = require('assert')
-const Dynamo = require('./internal/Dynamo')
+const isDynamoDBJSON = require('./internal/isDynamoDBJSON')
 const DynamoDBTable = require('./DynamoDBTable')
+const AwsCredentials = require('./AwsCredentials')
 
 const test = new Test('DynamoDBTable', async function integration() {
+  const awsCreds = await AwsCredentials('presidium')
+  awsCreds.region = 'us-east-1'
+
   {
     const testTable = new DynamoDBTable({
       name: 'test-tablename',
-      endpoint: 'http://localhost:8000/',
       key: [{ id: 'string' }],
+      ...awsCreds,
       autoReady: false
     })
     await testTable.delete().catch(() => {})
@@ -18,8 +22,8 @@ const test = new Test('DynamoDBTable', async function integration() {
 
   const testTable = new DynamoDBTable({
     name: 'test-tablename',
-    endpoint: 'http://localhost:8000/',
     key: [{ id: 'string' }],
+    ...awsCreds,
   })
   await testTable.ready.then(({ message }) => {
     assert.equal(message, 'created-table')
@@ -27,8 +31,8 @@ const test = new Test('DynamoDBTable', async function integration() {
 
   const testTable2 = new DynamoDBTable({
     name: 'test-tablename',
-    endpoint: 'http://localhost:8000/',
     key: [{ id: 'string' }],
+    ...awsCreds,
   })
   await testTable2.ready.then(({ message }) => {
     assert.equal(message, 'table-exists')
@@ -44,18 +48,18 @@ const test = new Test('DynamoDBTable', async function integration() {
   )
 
   await assert.rejects(
-    testTable.putItem({ somekey: { S: 'hey' } }),
+    testTable.putItem({ optionalKey: { S: 'a' } }),
     {
       name: 'ValidationException',
-      message: 'One of the required keys was not given a value',
+      message: 'One or more parameter values were invalid: Missing the key id in the item',
     }
   )
 
   await assert.rejects(
-    testTable.putItemJSON({ somekey: 'hey' }),
+    testTable.putItemJSON({ optionalKey: 'a' }),
     {
       name: 'ValidationException',
-      message: 'One of the required keys was not given a value',
+      message: 'One or more parameter values were invalid: Missing the key id in the item',
     }
   )
 
@@ -81,12 +85,12 @@ const test = new Test('DynamoDBTable', async function integration() {
 
   assert.deepEqual(
     await testTable.getItemJSON({ id: '1' }),
-    { item: { id: '1', name: 'john' } },
+    { ItemJSON: { id: '1', name: 'john' } },
   )
 
   assert.deepEqual(
     await testTable.getItemJSON({ id: '2' }),
-    { item: { id: '2', name: 'henry' } },
+    { ItemJSON: { id: '2', name: 'henry' } },
   )
 
   await testTable.updateItem({ id: { S: '2' } }, { age: { N: 36 } }, {
@@ -104,7 +108,7 @@ const test = new Test('DynamoDBTable', async function integration() {
 
   assert.deepEqual(
     await testTable.getItemJSON({ id: '2' }),
-    { item: { id: '2', name: 'henry', age: 36 } },
+    { ItemJSON: { id: '2', name: 'henry', age: 36 } },
   )
 
   await testTable.updateItemJSON({ id: '2' }, { age: 36 }, {
@@ -112,7 +116,7 @@ const test = new Test('DynamoDBTable', async function integration() {
     ReturnItemCollectionMetrics: 'SIZE',
     ReturnValues: 'ALL_NEW',
   }).then(res => {
-    assert.deepEqual(res.attributes, {
+    assert.deepEqual(res.AttributesJSON, {
       id: '2',
       name: 'henry',
       age: '36',
@@ -149,7 +153,7 @@ const test = new Test('DynamoDBTable', async function integration() {
     const iter = await testTable.scanIterator()
     const items = []
     for await (const item of iter) {
-      assert(Dynamo.isDynamoDBJSON(item))
+      assert(isDynamoDBJSON(item))
       items.push(item)
     }
     assert.equal(items.length, 3)
@@ -159,7 +163,7 @@ const test = new Test('DynamoDBTable', async function integration() {
     const iter = await testTable.scanIterator({ BatchLimit: 1 })
     const items = []
     for await (const item of iter) {
-      assert(Dynamo.isDynamoDBJSON(item))
+      assert(isDynamoDBJSON(item))
       items.push(item)
     }
     assert.equal(items.length, 3)
@@ -169,7 +173,7 @@ const test = new Test('DynamoDBTable', async function integration() {
     const iter = await testTable.scanIteratorJSON()
     const items = []
     for await (const item of iter) {
-      assert(!Dynamo.isDynamoDBJSON(item))
+      assert(!isDynamoDBJSON(item))
       items.push(item)
     }
     assert.equal(items.length, 3)
@@ -179,7 +183,7 @@ const test = new Test('DynamoDBTable', async function integration() {
     const iter = await testTable.scanIteratorJSON({ BatchLimit: 1 })
     const items = []
     for await (const item of iter) {
-      assert(!Dynamo.isDynamoDBJSON(item))
+      assert(!isDynamoDBJSON(item))
       items.push(item)
     }
     assert.equal(items.length, 3)
@@ -203,7 +207,7 @@ const test = new Test('DynamoDBTable', async function integration() {
       ReturnValues: 'ALL_NEW',
     }),
     {
-      attributes: {
+      AttributesJSON: {
         id: '2',
         name: 'henry',
         age: 39
@@ -213,7 +217,7 @@ const test = new Test('DynamoDBTable', async function integration() {
 
   assert.deepEqual(
     await testTable.getItemJSON({ id: '2' }),
-    { item: { id: '2', name: 'henry', age: 39 } },
+    { ItemJSON: { id: '2', name: 'henry', age: 39 } },
   )
 
   assert.deepEqual(
@@ -221,7 +225,7 @@ const test = new Test('DynamoDBTable', async function integration() {
       ReturnValues: 'ALL_OLD',
     }),
     {
-      attributes: {
+      AttributesJSON: {
         id: '2',
         name: 'henry',
         age: 39
@@ -242,8 +246,8 @@ const test = new Test('DynamoDBTable', async function integration() {
 
   const userVersionTable = new DynamoDBTable({
     name: 'test-user-version-tablename',
-    endpoint: 'http://localhost:8000/',
     key: [{ id: 'string' }, { version: 'number' }],
+    ...awsCreds,
   })
   await userVersionTable.ready
 
@@ -276,7 +280,7 @@ const test = new Test('DynamoDBTable', async function integration() {
     assert.equal(res.Items.length, 3)
     assert.equal(res.Count, 3)
     for (const item of res.Items) {
-      assert(Dynamo.isDynamoDBJSON(item))
+      assert(isDynamoDBJSON(item))
     }
     assert.equal(res.Items[0].version.N, '1')
     assert.equal(res.Items[1].version.N, '2')
@@ -288,14 +292,14 @@ const test = new Test('DynamoDBTable', async function integration() {
     { id: '1', version: 0 },
     { ScanIndexForward: true, ConsistentRead: true },
   ).then(res => {
-    assert.equal(res.items.length, 3)
+    assert.equal(res.ItemsJSON.length, 3)
     assert.equal(res.Count, 3)
-    for (const item of res.items) {
-      assert(!Dynamo.isDynamoDBJSON(item))
+    for (const item of res.ItemsJSON) {
+      assert(!isDynamoDBJSON(item))
     }
-    assert.equal(res.items[0].version, 1)
-    assert.equal(res.items[1].version, 2)
-    assert.equal(res.items[2].version, 3)
+    assert.equal(res.ItemsJSON[0].version, 1)
+    assert.equal(res.ItemsJSON[1].version, 2)
+    assert.equal(res.ItemsJSON[2].version, 3)
   })
 
   await userVersionTable.query(
@@ -306,7 +310,7 @@ const test = new Test('DynamoDBTable', async function integration() {
     assert.equal(res.Items.length, 3)
     assert.equal(res.Count, 3)
     for (const item of res.Items) {
-      assert(Dynamo.isDynamoDBJSON(item))
+      assert(isDynamoDBJSON(item))
     }
     assert.deepEqual(res.Items[0], { id: { S: '1' }, createTime: { N: '2' } })
     assert.deepEqual(res.Items[1], { id: { S: '1' }, createTime: { N: '3' } })
@@ -325,7 +329,7 @@ const test = new Test('DynamoDBTable', async function integration() {
     assert.equal(res.Count, 2)
     assert.equal(res.ScannedCount, 3)
     for (const item of res.Items) {
-      assert(Dynamo.isDynamoDBJSON(item))
+      assert(isDynamoDBJSON(item))
     }
     assert.equal(res.Items[0].createTime.N, '3')
     assert.equal(res.Items[1].createTime.N, '4')
@@ -339,7 +343,7 @@ const test = new Test('DynamoDBTable', async function integration() {
     )
     const items = []
     for await (const item of iter) {
-      assert(Dynamo.isDynamoDBJSON(item))
+      assert(isDynamoDBJSON(item))
       items.push(item)
     }
     assert.equal(items.length, 3)
@@ -356,7 +360,7 @@ const test = new Test('DynamoDBTable', async function integration() {
     )
     const items = []
     for await (const item of iter) {
-      assert(!Dynamo.isDynamoDBJSON(item))
+      assert(!isDynamoDBJSON(item))
       items.push(item)
     }
     assert.equal(items.length, 3)
@@ -373,7 +377,7 @@ const test = new Test('DynamoDBTable', async function integration() {
     )
     const items = []
     for await (const item of iter) {
-      assert(Dynamo.isDynamoDBJSON(item))
+      assert(isDynamoDBJSON(item))
       items.push(item)
     }
     assert.equal(items.length, 2)
@@ -389,7 +393,7 @@ const test = new Test('DynamoDBTable', async function integration() {
     )
     const items = []
     for await (const item of iter) {
-      assert(!Dynamo.isDynamoDBJSON(item))
+      assert(!isDynamoDBJSON(item))
       items.push(item)
     }
     assert.equal(items.length, 3)
@@ -406,7 +410,7 @@ const test = new Test('DynamoDBTable', async function integration() {
     )
     const items = []
     for await (const item of iter) {
-      assert(!Dynamo.isDynamoDBJSON(item))
+      assert(!isDynamoDBJSON(item))
       items.push(item)
     }
     assert.equal(items.length, 2)
