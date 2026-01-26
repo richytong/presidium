@@ -16,6 +16,7 @@ const resolvePath = require('./internal/resolvePath')
  * }) -> awsCreds {
  *   accessKeyId: string,
  *   secretAccessKey: string,
+ *   region: string,
  * }
  * ```
  */
@@ -85,8 +86,9 @@ const AwsCredentials = async function (profile, options = {}) {
   if (secretAccessKey == null) {
     throw new Error(`unable to find aws_secret_access_key for profile ${profile}`)
   }
+
   if (region == null) {
-    throw new Error(`unable to find region for profile ${profile}`)
+    return { accessKeyId, secretAccessKey }
   }
 
   return { accessKeyId, secretAccessKey, region }

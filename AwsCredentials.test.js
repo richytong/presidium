@@ -117,18 +117,15 @@ region = us-east-presidium
   }
 
   {
-    await assert.rejects(
-      async () => {
-        const awsCreds = await AwsCredentials('missing-region', {
-          credentialsFileDirname,
-          credentialsFilename,
-          configFileDirname,
-          configFilename,
-        })
-        console.error('awsCreds', awsCreds)
-      },
-      new Error('unable to find region for profile missing-region')
-    )
+    const awsCreds = await AwsCredentials('missing-region', {
+      credentialsFileDirname,
+      credentialsFilename,
+      configFileDirname,
+      configFilename,
+    })
+    assert.equal(awsCreds.accessKeyId, 'AAA')
+    assert.equal(awsCreds.secretAccessKey, 'BBB')
+    assert.equal(Object.keys(awsCreds).length, 2)
   }
 
   await fs.promises.rm(`${__dirname}/../${credentialsFileDirname}`, { recursive: true })
