@@ -2,7 +2,7 @@ require('rubico/global')
 const assert = require('assert')
 const Test = require('thunk-test')
 const Docker = require('./Docker')
-const pathResolve = require('./internal/pathResolve')
+const resolvePath = require('./internal/resolvePath')
 
 const test = Test.all([
   Test('Docker - prune', Docker)
@@ -52,7 +52,7 @@ const test = Test.all([
     }
 
     {
-      const response = await docker.buildImage('presidium-test:ayo', pathResolve(__dirname), {
+      const response = await docker.buildImage('presidium-test:ayo', resolvePath(__dirname), {
         archive: {
           Dockerfile: `
 FROM node:15-alpine

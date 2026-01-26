@@ -1,7 +1,6 @@
 require('rubico/global')
 const fs = require('fs')
-const nodePath = require('path')
-const pathResolve = require('./internal/pathResolve')
+const resolvePath = require('./internal/resolvePath')
 
 /**
  * @name AwsCredentials
@@ -22,41 +21,17 @@ const pathResolve = require('./internal/pathResolve')
  */
 
 const AwsCredentials = async function (profile, options = {}) {
-  if (options.noenv) {
-    // continue
-  } else if (
-    process.env.AWS_ACCESS_KEY_ID
-    || process.env.AWS_SECRET_ACCESS_KEY
-    || process.env.AWS_REGION
-  ) {
-    if (process.env.AWS_ACCESS_KEY_ID == null) {
-      throw new Error('unable to find AWS_ACCESS_KEY_ID in env')
-    }
-    if (process.env.AWS_SECRET_ACCESS_KEY == null) {
-      throw new Error('unable to find AWS_SECRET_ACCESS_KEY in env')
-    }
-    if (process.env.AWS_REGION == null) {
-      throw new Error('unable to find AWS_REGION in env')
-    }
-    return {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-      region: process.env.AWS_REGION,
-    }
-  }
-
-
   if (profile == null) {
     profile = 'default'
   }
 
   const credentialsFileDirname = options.credentialsFileDirname ?? '.aws'
   const credentialsFilename = options.credentialsFilename ?? 'credentials'
-  let credentialsFileDir = pathResolve(process.cwd())
+  let credentialsFileDir = resolvePath(process.cwd())
   let lines = ''
   while (credentialsFileDir != '/') {
     const credentialsFilePath =
-      pathResolve(credentialsFileDir, `${credentialsFileDirname}/${credentialsFilename}`)
+      resolvePath(credentialsFileDir, `${credentialsFileDirname}/${credentialsFilename}`)
     if (fs.existsSync(credentialsFilePath)) {
       lines = await (
         fs.promises.readFile(credentialsFilePath)
@@ -64,7 +39,7 @@ const AwsCredentials = async function (profile, options = {}) {
       )
       break
     }
-    credentialsFileDir = pathResolve(credentialsFileDir, '..')
+    credentialsFileDir = resolvePath(credentialsFileDir, '..')
   }
 
   const startingLineNumber = lines.findIndex(line => line == `[${profile}]`)
@@ -82,10 +57,10 @@ const AwsCredentials = async function (profile, options = {}) {
 
   const configFileDirname = options.configFileDirname ?? '.aws'
   const configFilename = options.configFilename ?? 'config'
-  let configFileDir = pathResolve(process.cwd())
+  let configFileDir = resolvePath(process.cwd())
   let lines2 = ''
   while (configFileDir != '/') {
-    const configFilePath = pathResolve(configFileDir, `${configFileDirname}/${configFilename}`)
+    const configFilePath = resolvePath(configFileDir, `${configFileDirname}/${configFilename}`)
     if (fs.existsSync(configFilePath)) {
       lines2 = await (
         fs.promises.readFile(configFilePath)
@@ -93,7 +68,7 @@ const AwsCredentials = async function (profile, options = {}) {
       )
       break
     }
-    configFileDir = pathResolve(configFileDir, '..')
+    configFileDir = resolvePath(configFileDir, '..')
   }
 
   const startingLineNumber2 = lines2.findIndex(line => line == `[${profile}]`)

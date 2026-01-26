@@ -3,7 +3,7 @@ const assert = require('assert')
 const fs = require('fs')
 const AwsCredentials = require('./AwsCredentials')
 
-const test = new Test('AwsCredentials', async function () {
+const test = new Test('AwsCredentials', async function integration() {
   const credentialsFilename = 'credentials-test'
   const credentialsFileDirname = '.aws-test'
   const configFilename = 'config-test'
@@ -51,9 +51,6 @@ region = us-east-presidium
   `.trim())
 
   {
-    delete process.env.AWS_ACCESS_KEY_ID
-    delete process.env.AWS_SECRET_ACCESS_KEY
-    delete process.env.AWS_REGION
     const awsCreds = await AwsCredentials('presidium', {
       credentialsFileDirname,
       credentialsFilename,
@@ -131,74 +128,6 @@ region = us-east-presidium
         console.error('awsCreds', awsCreds)
       },
       new Error('unable to find region for profile missing-region')
-    )
-  }
-
-  {
-    process.env.AWS_ACCESS_KEY_ID = 'AAAA'
-    process.env.AWS_SECRET_ACCESS_KEY = 'BBBB'
-    process.env.AWS_REGION = 'CCCC'
-    const awsCreds = await AwsCredentials('presidium', {
-      credentialsFileDirname,
-      credentialsFilename,
-      configFileDirname,
-      configFilename,
-    })
-    assert.equal(awsCreds.accessKeyId, 'AAAA')
-    assert.equal(awsCreds.secretAccessKey, 'BBBB')
-    assert.equal(awsCreds.region, 'CCCC')
-  }
-
-  {
-    process.env.AWS_ACCESS_KEY_ID = 'AAAA'
-    process.env.AWS_SECRET_ACCESS_KEY = 'BBBB'
-    process.env.AWS_REGION = 'CCCC'
-    const awsCreds = await AwsCredentials('default', {
-      noenv: true,
-      credentialsFileDirname,
-      credentialsFilename,
-      configFileDirname,
-      configFilename,
-    })
-    assert.equal(awsCreds.accessKeyId, 'X1')
-    assert.equal(awsCreds.secretAccessKey, 'X2')
-    assert.equal(awsCreds.region, 'us-east-default')
-  }
-
-  {
-    // process.env.AWS_ACCESS_KEY_ID
-    // process.env.AWS_SECRET_ACCESS_KEY = 'BBBB'
-    delete process.env.AWS_REGION
-    assert.rejects(
-      async () => {
-        const awsCreds = await AwsCredentials()
-        console.error('awsCreds', awsCreds)
-      },
-      new Error('unable to find AWS_REGION in env')
-    )
-  }
-
-  {
-    // process.env.AWS_ACCESS_KEY_ID
-    delete process.env.AWS_SECRET_ACCESS_KEY
-    assert.rejects(
-      async () => {
-        const awsCreds = await AwsCredentials()
-        console.error('awsCreds', awsCreds)
-      },
-      new Error('unable to find AWS_SECRET_ACCESS_KEY in env')
-    )
-  }
-
-  {
-    process.env.AWS_REGION = 'us-east-test'
-    delete process.env.AWS_ACCESS_KEY_ID
-    assert.rejects(
-      async () => {
-        const awsCreds = await AwsCredentials()
-        console.error('awsCreds', awsCreds)
-      },
-      new Error('unable to find AWS_ACCESS_KEY_ID in env')
     )
   }
 

@@ -1,7 +1,7 @@
 const assert = require('assert')
 const Test = require('thunk-test')
 const pathWalk = require('./pathWalk')
-const pathResolve = require('./pathResolve')
+const resolvePath = require('./resolvePath')
 
 const test = Test('pathWalk', pathWalk)
 
@@ -14,7 +14,7 @@ const test = Test('pathWalk', pathWalk)
   assert.equal(paths.length, this.allInternalPaths.length - 1)
 })
 
-.case(__dirname, { ignore: [pathResolve(__dirname, 'pathWalk.js')] }, function (paths) {
+.case(__dirname, { ignore: [resolvePath(__dirname, 'pathWalk.js')] }, function (paths) {
   assert.equal(paths.length, this.allInternalPaths.length - 1)
 })
 
