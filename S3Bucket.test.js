@@ -212,9 +212,136 @@ const test1 = new Test('S3Bucket', async function integration1() {
 const test2 = new Test('S3Bucket', async function integration2() {
   const awsCreds = await AwsCredentials('presidium')
   awsCreds.region = 'us-east-1'
-  const bucketName = `test-bucket-presidium-${Date.now()}`
-  // const bucketName = `test-bucket-presidium-2`
 
+  { // default retention period 1 year (ObjectLockDefaultRetentionYears=1)
+    const bucketName02 = `test-bucket-presidium-${Date.now()}-02`
+    const testBucket02 = new S3Bucket({
+      name: bucketName02,
+      ACL: 'public-read',
+      ObjectOwnership: 'BucketOwnerPreferred',
+      BlockPublicAccess: false,
+      BlockPublicACLs: false,
+      BlockPublicPolicy: false,
+      IgnorePublicACLs: false,
+      RestrictPublicBuckets: false,
+      RequestPayer: 'Requester',
+      ObjectLockEnabled: true,
+      ObjectLockDefaultRetentionMode: 'COMPLIANCE',
+      ObjectLockDefaultRetentionYears: 1,
+      VersioningMfaDelete: 'Disabled',
+      VersioningStatus: 'Enabled',
+      ...awsCreds
+    })
+    const { message } = await testBucket02.ready
+    assert.equal(message, 'created-bucket')
+
+    const data1 = await testBucket02.putObject('test/retention-period-1-year', 'test')
+    await assert.rejects(
+      testBucket02.deleteObject('test/retention-period-1-year', {
+        VersionId: data1.VersionId
+      }),
+      { name: 'AccessDenied', message: 'Access Denied because object protected by object lock.', code: 403 },
+    )
+
+    // simple delete creates DeleteMarker
+    const data2 = await testBucket02.deleteObject('test/retention-period-1-year')
+    assert(data2.DeleteMarker)
+
+    testBucket02.closeConnections()
+  }
+
+  assert.throws(
+    () => {
+      new S3Bucket({
+        name: `test-bucket-presidium-${Date.now()}-object-lock-config-error`,
+        ACL: 'public-read',
+        ObjectOwnership: 'BucketOwnerPreferred',
+        BlockPublicAccess: false,
+        BlockPublicACLs: false,
+        BlockPublicPolicy: false,
+        IgnorePublicACLs: false,
+        RestrictPublicBuckets: false,
+        RequestPayer: 'Requester',
+        ObjectLockEnabled: true,
+        ObjectLockDefaultRetentionMode: 'COMPLIANCE',
+        VersioningMfaDelete: 'Disabled',
+        VersioningStatus: 'Enabled',
+        ...awsCreds
+      })
+    },
+    new Error('ObjectLockDefaultRetentionDays or ObjectLockDefaultRetentionYears must be specified with ObjectLockDefaultRetentionMode'),
+  )
+
+  { // default retention period must be a positive integer value (error when ObjectLockDefaultRetentionYears 0 or ObjectLockDefaultRetentionDays 0)
+    const bucketName03 = `test-bucket-presidium-${Date.now()}-03`
+    const testBucket03 = new S3Bucket({
+      name: bucketName03,
+      ACL: 'public-read',
+      ObjectOwnership: 'BucketOwnerPreferred',
+      BlockPublicAccess: false,
+      BlockPublicACLs: false,
+      BlockPublicPolicy: false,
+      IgnorePublicACLs: false,
+      RestrictPublicBuckets: false,
+      RequestPayer: 'Requester',
+      ObjectLockEnabled: true,
+      ObjectLockDefaultRetentionMode: 'COMPLIANCE',
+      ObjectLockDefaultRetentionYears: 0,
+      VersioningMfaDelete: 'Disabled',
+      VersioningStatus: 'Enabled',
+      ...awsCreds
+    })
+
+    await assert.rejects(
+      testBucket03.ready,
+      { name: 'InvalidArgument', message: 'Default retention period must be a positive integer value.', code: 400 }
+    )
+
+    testBucket03.closeConnections()
+    await testBucket03.delete()
+  }
+
+  { // default retention period 1 day
+    const bucketName04 = `test-bucket-presidium-${Date.now()}-04`
+    const testBucket04 = new S3Bucket({
+      name: bucketName04,
+      ACL: 'public-read',
+      ObjectOwnership: 'BucketOwnerPreferred',
+      BlockPublicAccess: false,
+      BlockPublicACLs: false,
+      BlockPublicPolicy: false,
+      IgnorePublicACLs: false,
+      RestrictPublicBuckets: false,
+      RequestPayer: 'Requester',
+      ObjectLockEnabled: true,
+      ObjectLockDefaultRetentionMode: 'COMPLIANCE',
+      ObjectLockDefaultRetentionDays: 1,
+      VersioningMfaDelete: 'Disabled',
+      VersioningStatus: 'Enabled',
+      ...awsCreds
+    })
+    const { message } = await testBucket04.ready
+    assert.equal(message, 'created-bucket')
+
+    const data1 = await testBucket04.putObject('test/retention-period-1-day', 'test')
+    await assert.rejects(
+      testBucket04.deleteObject('test/retention-period-1-day', {
+        VersionId: data1.VersionId,
+      }),
+      { name: 'AccessDenied', message: 'Access Denied because object protected by object lock.', code: 403 },
+    )
+
+    // simple delete creates DeleteMarker
+    const data2 = await testBucket04.deleteObject('test/retention-period-1-year')
+    assert(data2.DeleteMarker)
+
+    testBucket04.closeConnections()
+  }
+
+  const bucketName = `test-bucket-presidium-${Date.now()}`
+
+  // ObjectLock enabled with no default retention period
+  // new objects will not be locked by default, allowing immediate deletion or overwriting
   {
     const testBucket2 = new S3Bucket({
       name: bucketName,
@@ -227,15 +354,12 @@ const test2 = new Test('S3Bucket', async function integration2() {
       RestrictPublicBuckets: false,
       RequestPayer: 'Requester',
       ObjectLockEnabled: true,
-      ObjectLockDefaultRetentionMode: 'COMPLIANCE',
-      ObjectLockDefaultRetentionYears: 10,
       VersioningMfaDelete: 'Disabled',
       VersioningStatus: 'Enabled',
       ...awsCreds
     })
     const { message } = await testBucket2.ready
     assert.equal(message, 'created-bucket')
-    testBucket2.closeConnections()
   }
 
   const testBucket2 = new S3Bucket({
@@ -249,8 +373,6 @@ const test2 = new Test('S3Bucket', async function integration2() {
     RestrictPublicBuckets: false,
     RequestPayer: 'Requester',
     ObjectLockEnabled: true,
-    ObjectLockDefaultRetentionMode: 'COMPLIANCE',
-    ObjectLockDefaultRetentionYears: 10,
     VersioningMfaDelete: 'Disabled',
     VersioningStatus: 'Enabled',
     ...awsCreds
@@ -261,12 +383,36 @@ const test2 = new Test('S3Bucket', async function integration2() {
     assert.equal(message, 'bucket-exists')
   }
 
+  {
+    const key = 'test/bucket-2-simple-delete-no-default-retention'
+
+    // delete object version succeeds
+    const data1 = await testBucket2.putObject(key, 'test')
+    await testBucket2.deleteObject(key, {
+      VersionId: data1.VersionId,
+    })
+    assert(!data1.DeleteMarker) // object version was deleted
+
+    await assert.rejects(
+      testBucket2.getObject(key),
+      error => {
+        assert.equal(error.name, 'NoSuchKey')
+        assert.equal(error.message, 'The specified key does not exist.')
+        assert.equal(error.code, 404)
+        assert(!error.DeleteMarker)
+        return true
+      },
+    )
+
+    // simple delete creates a delete marker (no delete marker)
+    const data2 = await testBucket2.deleteObject(key)
+    assert(data2.DeleteMarker) // delete marker was created and is now the current version
+  }
+
   { // ObjectLockMode, ObjectLockRetainUntilDate, ObjectLockLegalHoldStatus
     const key = 'test/ObjectLockMode-ObjectLockRetainUntilDate-ObjectLockLegalHoldStatus-options'
     const ObjectLockMode = 'COMPLIANCE'
-    let ObjectLockRetainUntilDate = new Date()
-    ObjectLockRetainUntilDate.setFullYear(ObjectLockRetainUntilDate.getFullYear() + 10)
-    ObjectLockRetainUntilDate = ObjectLockRetainUntilDate.toISOString()
+    const ObjectLockRetainUntilDate = new Date(Date.now() + 10000).toISOString()
     const ObjectLockLegalHoldStatus = 'ON'
     await testBucket2.putObject(key, 'test', {
       ObjectLockMode,
@@ -277,6 +423,19 @@ const test2 = new Test('S3Bucket', async function integration2() {
     assert.equal(data2.ObjectLockMode, ObjectLockMode)
     assert.equal(data2.ObjectLockRetainUntilDate, ObjectLockRetainUntilDate)
     assert.equal(data2.ObjectLockLegalHoldStatus, ObjectLockLegalHoldStatus)
+  }
+
+  { // deleteAllObjects error
+    await assert.rejects(
+      testBucket2.deleteAllObjects(),
+      error => {
+        assert.equal(error.name, 'AggregateError')
+        assert.equal(error.errors.length, 1)
+        assert.equal(error.errors[0].name, 'AccessDenied')
+        assert.equal(error.errors[0].message, 'Access Denied because object protected by object lock.')
+        return true
+      }
+    )
   }
 
   testBucket2.closeConnections()
@@ -952,9 +1111,9 @@ const test3 = new Test('S3Bucket', async function integration3() {
 }).case()
 
 const test = Test.all([
-  test1,
-  // test2,
-  test3,
+  // test1,
+  test2,
+  // test3,
 ])
 
 if (process.argv[1] == __filename) {

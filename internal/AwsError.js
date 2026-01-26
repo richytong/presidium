@@ -26,7 +26,7 @@ class AwsError extends Error {
       try {
         const data = JSON.parse(message)
         this.name = data.__type.split('#')[1]
-        this.message = data.Message
+        this.message = data.message
         this.code = code
       } catch (_error) {
         this.name = 'AwsError'

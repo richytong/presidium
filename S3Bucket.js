@@ -8,6 +8,7 @@ const AwsAuthorization = require('./internal/AwsAuthorization')
 const AmzDate = require('./internal/AmzDate')
 const AwsError = require('./internal/AwsError')
 const parseURL = require('./internal/parseURL')
+const createS3DeleteObjectError = require('./internal/createS3DeleteObjectError')
 const XML = require('./XML')
 
 /**
@@ -136,11 +137,19 @@ class S3Bucket {
 
     this.ObjectLockEnabled = options.ObjectLockEnabled ?? false
     this.ObjectLockDefaultRetentionMode =
-      options.ObjectLockDefaultRetentionMode ?? 'COMPLIANCE'
+      options.ObjectLockDefaultRetentionMode // 'COMPLIANCE'|'GOVERNANCE'
     this.ObjectLockDefaultRetentionDays =
-      options.ObjectLockDefaultRetentionDays ?? 0
+      options.ObjectLockDefaultRetentionDays
     this.ObjectLockDefaultRetentionYears =
-      options.ObjectLockDefaultRetentionYears ?? 10
+      options.ObjectLockDefaultRetentionYears
+
+    if (
+      this.ObjectLockDefaultRetentionMode
+        && this.ObjectLockDefaultRetentionDays == null
+        && this.ObjectLockDefaultRetentionYears == null
+    ) {
+      throw new Error('ObjectLockDefaultRetentionDays or ObjectLockDefaultRetentionYears must be specified with ObjectLockDefaultRetentionMode')
+    }
 
     this.VersioningMfaDelete = options.VersioningMfaDelete ?? 'Disabled'
     this.VersioningStatus = options.VersioningStatus ?? 'Suspended'
@@ -149,19 +158,6 @@ class S3Bucket {
     if (this.autoReady) {
       this.ready = this._readyPromise()
     }
-
-    /*
-    this.ready = this._s3.getBucketLocation(this.name).then(() => {
-      return { message: 'bucket-exists' }
-    }).catch(async error => {
-      if (error.name == 'NoSuchBucket') {
-        await this._s3.createBucket(this.name).catch(() => {})
-        return { message: 'created-bucket' }
-      } else {
-        throw error
-      }
-    })
-    */
 
   }
 
@@ -387,6 +383,7 @@ class S3Bucket {
     const response = await this._awsRequest1('PUT', '/', headers, body)
 
     if (response.ok) {
+      await Readable.Text(response)
       return {}
     }
     throw new AwsError(await Readable.Text(response), response.status)
@@ -474,16 +471,18 @@ class S3Bucket {
 <?xml version="1.0" encoding="UTF-8"?>
 <ObjectLockConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
    <ObjectLockEnabled>Enabled</ObjectLockEnabled>
+   ${this.ObjectLockDefaultRetentionMode ? `
    <Rule>
       <DefaultRetention>
          <Mode>${this.ObjectLockDefaultRetentionMode}</Mode>
          ${
-           this.ObjectLockDefaultRetentionYears > 0
-           ? `<Years>${this.ObjectLockDefaultRetentionYears}</Years>`
-           : `<Days>${this.ObjectLockDefaultRetentionDays}</Days>`
+           this.ObjectLockDefaultRetentionDays == null
+             ? `<Years>${this.ObjectLockDefaultRetentionYears}</Years>`
+             : `<Days>${this.ObjectLockDefaultRetentionDays}</Days>`
          }
       </DefaultRetention>
    </Rule>
+   ` : ''}
 </ObjectLockConfiguration>
     `.trim()
 
@@ -1993,7 +1992,13 @@ class S3Bucket {
 
       const data = {}
       data.Deleted = xmlData.DeleteResult.Deleted ?? []
-      data.Errors = xmlData.DeleteResult.Errors ?? []
+      if (!Array.isArray(data.Deleted)) {
+        data.Deleted = [data.Deleted]
+      }
+      data.Errors = xmlData.DeleteResult.Error ?? []
+      if (!Array.isArray(data.Errors)) {
+        data.Errors = [data.Errors]
+      }
 
       return data
     }
@@ -2078,12 +2083,7 @@ class S3Bucket {
       }
 
       if (response1.Errors.length > 0) {
-        const errors = response1.Errors.map(({ Key, VersionId, Code, Message }) => {
-          if (VersionId) {
-            return new Error(`${Key} (VersionId ${VersionId}): ${Code}: ${Message}`)
-          }
-          return new Error(`${Key}: ${Code}: ${Message}`)
-        })
+        const errors = response1.Errors.map(createS3DeleteObjectError)
         throw new AggregateError(errors)
       }
 
@@ -2104,12 +2104,7 @@ class S3Bucket {
       }
 
       if (response1.Errors.length > 0) {
-        const errors = response1.Errors.map(({ Key, VersionId, Code, Message }) => {
-          if (VersionId) {
-            return new Error(`${Key} (VersionId ${VersionId}): ${Code}: ${Message}`)
-          }
-          return new Error(`${Key}: ${Code}: ${Message}`)
-        })
+        const errors = response1.Errors.map(createS3DeleteObjectError)
         throw new AggregateError(errors)
       }
 
