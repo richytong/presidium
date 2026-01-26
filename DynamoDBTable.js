@@ -113,7 +113,7 @@ class DynamoDBTable {
    *
    * @docs
    * ```coffeescript [specscript]
-   * table._readyPromise() -> ready Promise<>
+   * _readyPromise() -> ready Promise<>
    * ```
    */
   async _readyPromise() {
@@ -135,7 +135,7 @@ class DynamoDBTable {
    * ```coffeescript [specscript]
    * module http 'https://nodejs.org/api/http.html'
    *
-   * table._awsRequest(
+   * _awsRequest(
    *   method string,
    *   url string,
    *   action string,
@@ -191,7 +191,7 @@ class DynamoDBTable {
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * table.describe() -> data Promise<>
+   * describe() -> data Promise<>
    * ```
    */
   async describe() {
@@ -212,7 +212,7 @@ class DynamoDBTable {
    *
    * @docs
    * ```coffeescript [specscript]
-   * table.create() -> data Promise<>
+   * create() -> data Promise<>
    * ```
    */
   async create() {
@@ -240,7 +240,7 @@ class DynamoDBTable {
    *
    * @docs
    * ```coffeescript [specscript]
-   * table.waitForActive() -> data Promise<>
+   * waitForActive() -> data Promise<>
    * ```
    */
   async waitForActive() {
@@ -270,7 +270,7 @@ class DynamoDBTable {
    *
    * @docs
    * ```coffeescript [specscript]
-   * table.waitForNotExists() -> data Promise<>
+   * waitForNotExists() -> data Promise<>
    * ```
    */
   async waitForNotExists() {
@@ -295,7 +295,7 @@ class DynamoDBTable {
    *
    * @docs
    * ```coffeescript [specscript]
-   * table.closeConnections() -> ()
+   * closeConnections() -> ()
    * ```
    */
   closeConnections() {
@@ -307,7 +307,7 @@ class DynamoDBTable {
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * table.delete() -> data Promise<>
+   * delete() -> data Promise<>
    * ```
    *
    * @description
@@ -342,7 +342,7 @@ class DynamoDBTable {
    *   |{ 'M': Object<DynamoDBJSONObject> }
    * >
    *
-   * table.putItem(item DynamoDBJSONObject, options {
+   * putItem(item DynamoDBJSONObject, options {
    *   ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
    *   ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *   ReturnValues: 'NONE'|'ALL_OLD',
@@ -391,7 +391,7 @@ class DynamoDBTable {
    * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
    * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
    *
-   * table.putItemJSON(item JSONObject, options {
+   * putItemJSON(item JSONObject, options {
    *   ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
    *   ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *   ReturnValues: 'NONE'|'ALL_OLD',
@@ -456,7 +456,7 @@ class DynamoDBTable {
    *   |{ 'M': Object<DynamoDBJSONObject> }
    * >
    *
-   * table.getItem(key DynamoDBJSONKey) ->
+   * getItem(key DynamoDBJSONKey) ->
    *   data Promise<{ Item: DynamoDBJSONObject }>
    * ```
    *
@@ -501,7 +501,7 @@ class DynamoDBTable {
    * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
    * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
    *
-   * table.getItemJSON(key JSONKey) -> data Promise<{ ItemJSON: JSONObject }>
+   * getItemJSON(key JSONKey) -> data Promise<{ ItemJSON: JSONObject }>
    * ```
    *
    * @description
@@ -553,7 +553,7 @@ class DynamoDBTable {
    *   |{ 'M': Object<DynamoDBJSONObject> }
    * >
    *
-   * table.updateItem(
+   * updateItem(
    *   Key DynamoDBJSONKey,
    *   Updates DynamoDBJSONObject,
    *   options {
@@ -628,7 +628,7 @@ class DynamoDBTable {
    * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
    * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
    *
-   * table.updateItemJSON(
+   * updateItemJSON(
    *   key JSONKey,
    *   updates JSONObject,
    *   options {
@@ -645,7 +645,7 @@ class DynamoDBTable {
    *
    * ```javascript
    * await userTable.updateItemJSON({ id: '1' }, {
-   *   name: 'George',
+   *   name: 'Name',
    *   height: 180,
    *   heightUnits: 'cm',
    * })
@@ -715,7 +715,7 @@ class DynamoDBTable {
    *   |{ 'M': Object<DynamoDBJSONObject> }
    * >
    *
-   * table.incrementItem(
+   * incrementItem(
    *   key DynamoDBJSONKey,
    *   incrementUpdates DynamoDBJSONIncrementObject,
    *   options {
@@ -785,7 +785,7 @@ class DynamoDBTable {
    * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
    * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
    *
-   * table.incrementItemJSON(
+   * incrementItemJSON(
    *   key JSONKey,
    *   incrementUpdates JSONIncrementObject,
    *   options {
@@ -863,7 +863,7 @@ class DynamoDBTable {
    *   |{ 'M': Object<DynamoDBJSONObject> }
    * >
    *
-   * table.deleteItem(
+   * deleteItem(
    *   key DynamoDBJSONKey,
    *   options {
    *     ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
@@ -907,7 +907,7 @@ class DynamoDBTable {
    * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
    * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
    *
-   * table.deleteItemJSON(
+   * deleteItemJSON(
    *   key JSONKey,
    *   options {
    *     ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
@@ -962,7 +962,7 @@ class DynamoDBTable {
    *   [sortKey string]: { ['S'|'N'|'B']: string|number|Buffer }
    * }
    *
-   * table.scan(options {
+   * scan(options {
    *   Limit: number,
    *   ExclusiveStartKey: DynamoDBJSONKey
    * }) -> data Promise<{
@@ -998,7 +998,7 @@ class DynamoDBTable {
   }
 
   /**
-   * @name scanIterator
+   * @name scanItemsIterator
    *
    * @synopsis
    * ```coffeescript [specscript]
@@ -1010,7 +1010,7 @@ class DynamoDBTable {
    *   |{ 'M': Object<DynamoDBJSONObject> }
    * >
    *
-   * scanIterator(options {
+   * scanItemsIterator(options {
    *   BatchLimit: number,
    * }) -> iter AsyncIterator<DynamoDBJSONObject>
    * ```
@@ -1018,7 +1018,7 @@ class DynamoDBTable {
    * @description
    * Get an async iterator of all items from a DynamoDB table.
    */
-  async * scanIterator(options = {}) {
+  async * scanItemsIterator(options = {}) {
     const BatchLimit = options.BatchLimit ?? 1000
     let response = await this.scan({ Limit: BatchLimit })
     yield* response.Items
@@ -1032,14 +1032,14 @@ class DynamoDBTable {
   }
 
   /**
-   * @name scanIteratorJSON
+   * @name scanItemsIteratorJSON
    *
    * @synopsis
    * ```coffeescript [specscript]
    * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
    * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
    *
-   * table.scanIteratorJSON(options {
+   * scanItemsIteratorJSON(options {
    *   BatchLimit: number,
    * }) -> iter AsyncIterator<JSONObject>
    * ```
@@ -1047,7 +1047,7 @@ class DynamoDBTable {
    * @description
    * Get an async iterator of all items from a DynamoDB table in JSON format.
    */
-  async * scanIteratorJSON(options = {}) {
+  async * scanItemsIteratorJSON(options = {}) {
     const BatchLimit = options.BatchLimit ?? 1000
     let response = await this.scan({ Limit: BatchLimit })
     yield* map(response.Items, map(DynamoDBAttributeValueJSON))
@@ -1078,7 +1078,7 @@ class DynamoDBTable {
    *   |{ 'M': Object<DynamoDBJSONObject> }
    * >
    *
-   * table.query(
+   * query(
    *   keyConditionExpression string, // hashKey = :a AND sortKey < :b
    *   Values DynamoDBJSONObject,
    *   options {
@@ -1207,7 +1207,7 @@ class DynamoDBTable {
    * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
    * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
    *
-   * table.queryJSON(
+   * queryJSON(
    *   keyConditionExpression string, // hashKey = :a AND sortKey < :b
    *   values JSONObject,
    *   options {
@@ -1340,7 +1340,7 @@ class DynamoDBTable {
    *   |{ 'M': Object<DynamoDBJSONObject> }
    * >
    *
-   * table.queryItemsIterator(
+   * queryItemsIterator(
    *   keyConditionExpression string,
    *   Values DynamoDBJSONObject,
    *   options {
@@ -1419,7 +1419,7 @@ class DynamoDBTable {
    * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
    * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
    *
-   * table.queryItemsIteratorJSON(
+   * queryItemsIteratorJSON(
    *   keyConditionExpression string,
    *   values JSONObject,
    *   options {

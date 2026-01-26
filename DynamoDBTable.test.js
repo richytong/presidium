@@ -157,7 +157,7 @@ const test1 = new Test('DynamoDBTable', async function integration1() {
   })
 
   {
-    const iter = await testTable.scanIterator()
+    const iter = await testTable.scanItemsIterator()
     const items = []
     for await (const item of iter) {
       assert(isDynamoDBJSON(item))
@@ -167,7 +167,7 @@ const test1 = new Test('DynamoDBTable', async function integration1() {
   }
 
   {
-    const iter = await testTable.scanIterator({ BatchLimit: 1 })
+    const iter = await testTable.scanItemsIterator({ BatchLimit: 1 })
     const items = []
     for await (const item of iter) {
       assert(isDynamoDBJSON(item))
@@ -177,7 +177,7 @@ const test1 = new Test('DynamoDBTable', async function integration1() {
   }
 
   {
-    const iter = await testTable.scanIteratorJSON()
+    const iter = await testTable.scanItemsIteratorJSON()
     const items = []
     for await (const item of iter) {
       assert(!isDynamoDBJSON(item))
@@ -187,7 +187,7 @@ const test1 = new Test('DynamoDBTable', async function integration1() {
   }
 
   {
-    const iter = await testTable.scanIteratorJSON({ BatchLimit: 1 })
+    const iter = await testTable.scanItemsIteratorJSON({ BatchLimit: 1 })
     const items = []
     for await (const item of iter) {
       assert(!isDynamoDBJSON(item))
