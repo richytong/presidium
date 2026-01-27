@@ -1,5 +1,4 @@
 require('rubico/global')
-const _S3 = require('./internal/_S3')
 const crypto = require('crypto')
 const HTTP = require('./HTTP')
 const Readable = require('./Readable')
@@ -111,13 +110,6 @@ class S3Bucket {
       this.endpoint1 = `${this.name}.s3.${this.region}.amazonaws.com`
       this.protocol = 'https'
     }
-
-    this._s3 = new _S3({
-      accessKeyId: this.accessKeyId,
-      secretAccessKey: this.secretAccessKey,
-      region: this.region,
-      apiVersion: this.apiVersion,
-    })
 
     this.http0 = new HTTP(`${this.protocol}://${this.endpoint0}`)
     this.http1 = new HTTP(`${this.protocol}://${this.endpoint1}`)
@@ -1391,8 +1383,6 @@ class S3Bucket {
       errorData.DeleteMarker = response.headers['x-amz-delete-marker'] == 'true'
     }
     throw new AwsError(await Readable.Text(response), response.status, errorData)
-
-    // return this._s3.getObject(this.name, key, options)
   }
 
   /**
@@ -1821,8 +1811,6 @@ class S3Bucket {
       errorData.DeleteMarker = response.headers['x-amz-delete-marker'] == 'true'
     }
     throw new AwsError(await Readable.Text(response), response.status, errorData)
-
-    // return this._s3.headObject(this.name, key, options)
   }
 
   /**
@@ -2004,8 +1992,6 @@ class S3Bucket {
     }
 
     throw new AwsError(await Readable.Text(response), response.status)
-
-    // return this._s3.deleteObjects(this.name, keys, options)
   }
 
   /**

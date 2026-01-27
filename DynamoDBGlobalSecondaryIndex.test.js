@@ -1,117 +1,170 @@
 require('rubico/global')
 const Test = require('thunk-test')
 const assert = require('assert')
-const Dynamo = require('./internal/Dynamo')
+const sleep = require('./internal/sleep')
+const AwsCredentials = require('./AwsCredentials')
+const isDynamoDBJSON = require('./internal/isDynamoDBJSON')
 const DynamoDBTable = require('./DynamoDBTable')
 const DynamoDBGlobalSecondaryIndex = require('./DynamoDBGlobalSecondaryIndex')
 
 const test = new Test('DynamoDBGlobalSecondaryIndex', async function integration() {
-  this.dynamo = new Dynamo({
-    endpoint: 'http://localhost:8000/',
-    region: 'default-region',
-  })
-  await this.dynamo.deleteTable('test-tablename').catch(() => {})
-  await this.dynamo.waitFor('test-tablename', 'tableNotExists')
+  const awsCreds = await AwsCredentials('presidium')
+  awsCreds.region = 'us-east-1'
+
+  const testTablename = `test-tablename-1-${Date.now()}`
+
+  {
+    const testTable = new DynamoDBTable({
+      name: testTablename,
+      key: [{ id: 'string' }],
+      ...awsCreds,
+      autoReady: false
+    })
+
+    let resourceInUse = await testTable.delete().catch(error => {
+      if (error.name == 'ResourceInUseException') {
+        return true
+      }
+      if (error.name == 'ResourceNotFoundException') {
+        return false
+      }
+      throw error
+    })
+    while (resourceInUse) {
+      await sleep(100)
+      resourceInUse = await testTable.delete().catch(error => {
+        if (error.name == 'ResourceInUseException') {
+          return true
+        }
+        if (error.name == 'ResourceNotFoundException') {
+          return false
+        }
+        throw error
+      })
+    }
+    await testTable.waitForNotExists()
+  }
 
   const testTable = new DynamoDBTable({
-    name: 'test-tablename',
+    name: testTablename,
     key: [{ id: 'string' }],
-    endpoint: 'http://localhost:8000/',
+    ...awsCreds,
   })
   await testTable.ready.then(({ message }) => {
     assert.equal(message, 'created-table')
   })
 
   const testIndex = new DynamoDBGlobalSecondaryIndex({
-    table: 'test-tablename',
+    table: testTablename,
     key: [{ type: 'string' }, { time: 'number' }],
-    endpoint: 'http://localhost:8000/',
+    ...awsCreds,
   })
   await testIndex.ready.then(({ message }) => {
-    assert.equal(message, 'created-index')
+    assert.equal(message, 'created-global-secondary-index')
   })
 
   const testIndex2 = new DynamoDBGlobalSecondaryIndex({
-    table: 'test-tablename',
+    table: testTablename,
     key: [{ type: 'string' }, { time: 'number' }],
-    endpoint: 'http://localhost:8000/',
+    ...awsCreds,
   })
   await testIndex2.ready.then(({ message }) => {
-    assert.equal(message, 'index-exists')
+    assert.equal(message, 'global-secondary-index-exists')
   })
 
-  await testTable.putItem({ id: '0', type: 'page_view', time: 0, a: 0 })
-  await testTable.putItem({ id: '1', type: 'page_view', time: 1, a: 1 })
-  await testTable.putItem({ id: '2', type: 'page_view', time: 2, a: 2 })
-  await testTable.putItem({ id: '3', type: 'page_view', time: 3, a: 3 })
-  await testTable.putItem({ id: '4', type: 'page_view', time: 4, a: 4 })
-  await testTable.putItem({ id: '5', type: 'page_view', time: 5, a: 5 })
+  await testTable.putItemJSON({ id: '0', type: 'page_view', time: 0, a: 0 })
+  await testTable.putItemJSON({ id: '1', type: 'page_view', time: 1, a: 1 })
+  await testTable.putItemJSON({ id: '2', type: 'page_view', time: 2, a: 2 })
+  await testTable.putItemJSON({ id: '3', type: 'page_view', time: 3, a: 3 })
+  await testTable.putItemJSON({ id: '4', type: 'page_view', time: 4, a: 4 })
+  await testTable.putItemJSON({ id: '5', type: 'page_view', time: 5, a: 5 })
+
+  let maximumTimeToWaitForEventualConsistency = 60000
+  while (true) {
+    const data = await testTable.scan()
+    if (data.Items.length == 6) {
+      break
+    }
+    await sleep(100)
+    maximumTimeToWaitForEventualConsistency -= 100
+    if (maximumTimeToWaitForEventualConsistency <= 0) {
+      throw new Error('Unexpected count of table items.')
+    }
+  }
 
   await testIndex.query(
     'type = :type AND time > :time',
-    { type: 'page_view', time: 0 },
+    { type: { S: 'page_view' }, time: { N: 0 } },
     { ScanIndexForward: true },
-  ).then(res => {
-    assert.equal(res.Items.length, 5)
-    assert.equal(res.Count, 5)
-    assert.equal(res.ScannedCount, 5)
-    for (const item of res.Items) {
-      assert(Dynamo.isDynamoDBJSON(item))
+  ).then(data => {
+    assert.equal(data.Items.length, 5)
+    assert.equal(data.Count, 5)
+    assert.equal(data.ScannedCount, 5)
+    for (const item of data.Items) {
+      assert(isDynamoDBJSON(item))
     }
-    assert.equal(res.Items[0].time.N, '1')
-    assert.equal(res.Items[1].time.N, '2')
-    assert.equal(res.Items[2].time.N, '3')
-    assert.equal(res.Items[3].time.N, '4')
-    assert.equal(res.Items[4].time.N, '5')
+
+    assert.equal(data.Items[0].time.N, '1')
+    assert.equal(data.Items[1].time.N, '2')
+    assert.equal(data.Items[2].time.N, '3')
+    assert.equal(data.Items[3].time.N, '4')
+    assert.equal(data.Items[4].time.N, '5')
+
+    assert.equal(data.Items[0].id.S, '1')
+    assert.equal(data.Items[1].id.S, '2')
+    assert.equal(data.Items[2].id.S, '3')
+    assert.equal(data.Items[3].id.S, '4')
+    assert.equal(data.Items[4].id.S, '5')
   })
 
-  await testIndex.query(
+  await testIndex.queryJSON(
     'type = :type AND time > :time',
     { type: 'page_view', time: 0 },
     {
       ScanIndexForward: false,
       ProjectionExpression: 'id,time'
     },
-  ).then(res => {
-    assert.equal(res.Items.length, 5)
-    assert.equal(res.Count, 5)
-    assert.equal(res.ScannedCount, 5)
-    for (const item of res.Items) {
-      assert(Dynamo.isDynamoDBJSON(item))
+  ).then(data => {
+    assert.equal(data.ItemsJSON.length, 5)
+    assert.equal(data.Count, 5)
+    assert.equal(data.ScannedCount, 5)
+    for (const item of data.ItemsJSON) {
+      assert(!isDynamoDBJSON(item))
     }
-    assert.deepEqual(res.Items[4], { id: { S: '1' }, time: { N: '1' } })
-    assert.deepEqual(res.Items[3], { id: { S: '2' }, time: { N: '2' } })
-    assert.deepEqual(res.Items[2], { id: { S: '3' }, time: { N: '3' } })
-    assert.deepEqual(res.Items[1], { id: { S: '4' }, time: { N: '4' } })
-    assert.deepEqual(res.Items[0], { id: { S: '5' }, time: { N: '5' } })
+
+    assert.deepEqual(data.ItemsJSON[4], { id: '1', time: 1 })
+    assert.deepEqual(data.ItemsJSON[3], { id: '2', time: 2 })
+    assert.deepEqual(data.ItemsJSON[2], { id: '3', time: 3 })
+    assert.deepEqual(data.ItemsJSON[1], { id: '4', time: 4 })
+    assert.deepEqual(data.ItemsJSON[0], { id: '5', time: 5 })
   })
 
-  await testIndex.query(
+  await testIndex.queryJSON(
     'type = :type AND time > :time',
     { type: 'page_view', time: 0, a: 4 },
     {
       ScanIndexForward: true,
       FilterExpression: 'a > :a',
     },
-  ).then(res => {
-    assert.equal(res.Items.length, 1)
-    assert.equal(res.Count, 1)
-    assert.equal(res.ScannedCount, 5)
-    for (const item of res.Items) {
-      assert(Dynamo.isDynamoDBJSON(item))
+  ).then(data => {
+    assert.equal(data.ItemsJSON.length, 1)
+    assert.equal(data.Count, 1)
+    assert.equal(data.ScannedCount, 5)
+    for (const item of data.ItemsJSON) {
+      assert(!isDynamoDBJSON(item))
     }
-    assert.equal(res.Items[0].id.S, '5')
+    assert.equal(data.ItemsJSON[0].id, '5')
   })
 
   {
-    const iter = testIndex.queryIterator(
+    const iter = testIndex.queryItemsIterator(
       'type = :type AND time > :time',
-      { type: 'page_view', time: 0 },
+      { type: { S: 'page_view' }, time: { N: 0 } },
       { ScanIndexForward: true, BatchLimit: 1 },
     )
     const items = []
     for await (const item of iter) {
-      assert(Dynamo.isDynamoDBJSON(item))
+      assert(isDynamoDBJSON(item))
       items.push(item)
     }
     assert.equal(items.length, 5)
@@ -123,14 +176,14 @@ const test = new Test('DynamoDBGlobalSecondaryIndex', async function integration
   }
 
   {
-    const iter = testIndex.queryIterator(
+    const iter = testIndex.queryItemsIterator(
       'type = :type AND time > :time',
-      { type: 'page_view', time: 0 },
+      { type: { S: 'page_view' }, time: { N: 0 } },
       { ScanIndexForward: false, BatchLimit: 1, Limit: 2 },
     )
     const items = []
     for await (const item of iter) {
-      assert(Dynamo.isDynamoDBJSON(item))
+      assert(isDynamoDBJSON(item))
       items.push(item)
     }
     assert.equal(items.length, 2)
@@ -139,14 +192,14 @@ const test = new Test('DynamoDBGlobalSecondaryIndex', async function integration
   }
 
   {
-    const iter = testIndex.queryIteratorJSON(
+    const iter = testIndex.queryItemsIteratorJSON(
       'type = :type AND time > :time',
       { type: 'page_view', time: 0 },
       { ScanIndexForward: true, BatchLimit: 1 },
     )
     const items = []
     for await (const item of iter) {
-      assert(!Dynamo.isDynamoDBJSON(item))
+      assert(!isDynamoDBJSON(item))
       items.push(item)
     }
     assert.equal(items.length, 5)
@@ -158,14 +211,14 @@ const test = new Test('DynamoDBGlobalSecondaryIndex', async function integration
   }
 
   {
-    const iter = testIndex.queryIteratorJSON(
+    const iter = testIndex.queryItemsIteratorJSON(
       'type = :type AND time > :time',
       { type: 'page_view', time: 0 },
       { ScanIndexForward: false, BatchLimit: 1, Limit: 2 },
     )
     const items = []
     for await (const item of iter) {
-      assert(!Dynamo.isDynamoDBJSON(item))
+      assert(!isDynamoDBJSON(item))
       items.push(item)
     }
     assert.equal(items.length, 2)

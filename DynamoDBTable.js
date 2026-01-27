@@ -1,8 +1,5 @@
 require('rubico/global')
-const { identity } = require('rubico/x')
-require('aws-sdk/lib/maintenance_mode_message').suppress = true
 const crypto = require('crypto')
-const Dynamo = require('./internal/Dynamo')
 const HTTP = require('./HTTP')
 const userAgent = require('./userAgent')
 const AwsAuthorization = require('./internal/AwsAuthorization')

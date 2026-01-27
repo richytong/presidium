@@ -1,3 +1,5 @@
+const getFirstKey = require('./getFirstKey')
+
 /**
  * @name DynamoDBIndexname
  * @static
