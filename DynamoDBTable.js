@@ -1119,11 +1119,11 @@ class DynamoDBTable {
    * ```
    *
    * Options:
-   *   * `Limit` - Maximum number of items (hard limited by the total size of the response)
+   *   * `Limit` - Maximum number of items (hard limited by the total size of the response).
    *   * `ExclusiveStartKey` - Key after which to start reading
-   *   * `ScanIndexForward` - true to sort items in ascending order
-   *   * `ProjectionExpression` - list of attributes to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`
-   *   * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`
+   *   * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
+   *   * `ProjectionExpression` - list of attributes to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
+   *   * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
    *   * `ConsistentRead` - true to perform a strongly consistent read (eventually consistent by default). Consumes more RCUs.
    */
   async query(keyConditionExpression, Values, options = {}) {
@@ -1248,11 +1248,11 @@ class DynamoDBTable {
    * ```
    *
    * Options:
-   *   * `Limit` - Maximum number of items (hard limited by the total size of the response)
+   *   * `Limit` - Maximum number of items (hard limited by the total size of the response).
    *   * `ExclusiveStartKey` - Key after which to start reading
-   *   * `ScanIndexForward` - true to sort items in ascending order
-   *   * `ProjectionExpression` - list of attributes to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`
-   *   * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`
+   *   * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
+   *   * `ProjectionExpression` - list of attributes to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
+   *   * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
    *   * `ConsistentRead` - true to perform a strongly consistent read (eventually consistent by default). Consumes more RCUs.
    */
   async queryJSON(keyConditionExpression, values, options = {}) {
@@ -1349,6 +1349,8 @@ class DynamoDBTable {
    *     BatchLimit: number,
    *     Limit: number,
    *     ScanIndexForward: boolean, // default true for ASC
+   *     ProjectionExpression: string, // 'fieldA,fieldB,fieldC'
+   *     FilterExpression: string, // 'fieldA >= :someValue'
    *   }
    * ) -> AsyncIterator<DynamoDBJSONObject>
    * ```
@@ -1377,9 +1379,12 @@ class DynamoDBTable {
    * ```
    *
    * Options:
-   *   * `BatchLimit` - Max number of items to retrieve per `query` call
-   *   * `Limit` - Max number of items to yield from returned iterator
-   *   * `ScanIndexForward` - true to sort items in ascending order
+   *   * `BatchLimit` - Max number of items to retrieve per `query` call.
+   *   * `Limit` - Maximum number of items (hard limited by the total size of the response).
+   *   * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
+   *   * `ProjectionExpression` - list of attributes to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
+   *   * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
+   *   * `ConsistentRead` - true to perform a strongly consistent read (eventually consistent by default). Consumes more RCUs.
    */
   async * queryItemsIterator(keyConditionExpression, Values, options = {}) {
     const BatchLimit = options.BatchLimit ?? 1000
@@ -1392,7 +1397,8 @@ class DynamoDBTable {
       Values,
       {
         ScanIndexForward,
-        Limit: Math.min(BatchLimit, Limit - numYielded)
+        Limit: Math.min(BatchLimit, Limit - numYielded),
+        ...pick(options, ['ProjectionExpression', 'FilterExpression', 'ConsistentRead']),
       },
     )
     yield* response.Items
@@ -1406,6 +1412,7 @@ class DynamoDBTable {
           ScanIndexForward,
           Limit: Math.min(BatchLimit, Limit - numYielded),
           ExclusiveStartKey: response.LastEvaluatedKey,
+          ...pick(options, ['ProjectionExpression', 'FilterExpression', 'ConsistentRead']),
         },
       )
       yield* response.Items
@@ -1428,6 +1435,8 @@ class DynamoDBTable {
    *     BatchLimit: number,
    *     Limit: number,
    *     ScanIndexForward: boolean // default true for ASC
+   *     ProjectionExpression: string, // 'fieldA,fieldB,fieldC'
+   *     FilterExpression: string, // 'fieldA >= :someValue'
    *   }
    * ) -> AsyncIterator<JSONObject>
    * ```
@@ -1435,13 +1444,13 @@ class DynamoDBTable {
    * @description
    * Get an `AsyncIterator` of all items represented by a query on a DynamoDB Table in JSON format.
    *
-   * The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
+   * The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey <!-- < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
    *
    * ```javascript
    * // userVersionTable has hashKey `id` and sortKey `version`
    *
    * const iter = userVersionTable.queryItemsIteratorJSON(
-   *   'id = :id AND version > :version',
+   *   'id = :id AND version > --> :version',
    *   { id: '1', version: 0 },
    *   { ScanIndexForward: true },
    * )
@@ -1456,9 +1465,12 @@ class DynamoDBTable {
    * ```
    *
    * Options:
-   *   * `BatchLimit` - Max number of items to retrieve per `query` call
-   *   * `Limit` - Max number of items to yield from returned iterator
-   *   * `ScanIndexForward` - true to sort items in ascending order
+   *   * `BatchLimit` - Max number of items to retrieve per `query` call.
+   *   * `Limit` - Maximum number of items (hard limited by the total size of the response).
+   *   * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
+   *   * `ProjectionExpression` - list of attributes to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
+   *   * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
+   *   * `ConsistentRead` - true to perform a strongly consistent read (eventually consistent by default). Consumes more RCUs.
    */
   async * queryItemsIteratorJSON(keyConditionExpression, values, options = {}) {
     const BatchLimit = options.BatchLimit ?? 1000
@@ -1471,7 +1483,8 @@ class DynamoDBTable {
       values,
       {
         ScanIndexForward,
-        Limit: Math.min(BatchLimit, Limit - numYielded)
+        Limit: Math.min(BatchLimit, Limit - numYielded),
+        ...pick(options, ['ProjectionExpression', 'FilterExpression', 'ConsistentRead']),
       },
     )
     yield* response.ItemsJSON
@@ -1485,6 +1498,7 @@ class DynamoDBTable {
           ScanIndexForward,
           Limit: Math.min(BatchLimit, Limit - numYielded),
           ExclusiveStartKey: response.LastEvaluatedKey,
+          ...pick(options, ['ProjectionExpression', 'FilterExpression', 'ConsistentRead']),
         },
       )
       yield* response.ItemsJSON
