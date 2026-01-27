@@ -313,7 +313,7 @@ class DynamoDBTable {
    * ```
    *
    * @description
-   * Delete the DynamoDB table.
+   * Delete the DynamoDB Table.
    *
    * ```javascript
    * await myTable.delete()
@@ -358,7 +358,7 @@ class DynamoDBTable {
    * ```
    *
    * @description
-   * Write an item to a DynamoDB table using DyanmoDB JSON.
+   * Write an item to a DynamoDB Table using DyanmoDB JSON.
    *
    * ```javascript
    * await userTable.putItem({
@@ -407,7 +407,7 @@ class DynamoDBTable {
    * ```
    *
    * @description
-   * Write an item to a DynamoDB table using JSON format.
+   * Write an item to a DynamoDB Table using JSON format.
    *
    * ```javascript
    * await userTable.putItemJSON({
@@ -463,7 +463,7 @@ class DynamoDBTable {
    * ```
    *
    * @description
-   * Retrieve an item from a DynamoDB table using DynamoDB JSON format.
+   * Retrieve an item from a DynamoDB Table using DynamoDB JSON format.
    *
    * ```javascript
    * const res = await userTable.getItem({ id: { S: '1' } })
@@ -507,7 +507,7 @@ class DynamoDBTable {
    * ```
    *
    * @description
-   * Retrieve an item from a DynamoDB table using JSON format.
+   * Retrieve an item from a DynamoDB Table using JSON format.
    *
    * ```javascript
    * const user = await userTable.getItemJSON({ id: '1' })
@@ -568,7 +568,7 @@ class DynamoDBTable {
    * ```
    *
    * @description
-   * Update an item in a DynamoDB table using DynamoDB JSON format.
+   * Update an item in a DynamoDB Table using DynamoDB JSON format.
    *
    * ```javascript
    * await userTable.updateItem({ id: { S: '1' } }, {
@@ -643,7 +643,7 @@ class DynamoDBTable {
    * ```
    *
    * @description
-   * Update an item in a DynamoDB table. Accepts DynamoDB JSON and JSON formats.
+   * Update an item in a DynamoDB Table. Accepts DynamoDB JSON and JSON formats.
    *
    * ```javascript
    * await userTable.updateItemJSON({ id: '1' }, {
@@ -730,7 +730,7 @@ class DynamoDBTable {
    * ```
    *
    * @description
-   * Increment the attributes of an item in a DynamoDB table. Negative numbers will decrement the attribute of the item. Accepts DynamoDB JSON and JSON formats.
+   * Increment the attributes of an item in a DynamoDB Table. Negative numbers will decrement the attribute of the item. Accepts DynamoDB JSON and JSON formats.
    *
    * ```javascript
    * await userTable.incrementItem({ id: { S: '1' } }, { age: { N: 1 } })
@@ -800,7 +800,7 @@ class DynamoDBTable {
    * ```
    *
    * @description
-   * Increment the attributes of an item in a DynamoDB table. Negative numbers will decrement the attribute of the item. Accepts DynamoDB JSON and JSON formats.
+   * Increment the attributes of an item in a DynamoDB Table. Negative numbers will decrement the attribute of the item. Accepts DynamoDB JSON and JSON formats.
    *
    * ```javascript
    * await userTable.incrementItemJSON({ id: '1' }, { age: 1 })
@@ -876,7 +876,7 @@ class DynamoDBTable {
    * ```
    *
    * @description
-   * Delete an item from a DynamoDB table using DynamoDB JSON.
+   * Delete an item from a DynamoDB Table using DynamoDB JSON.
    *
    * ```javascript
    * await userTable.deleteItem({ id: { S: '1' } })
@@ -920,7 +920,7 @@ class DynamoDBTable {
    * ```
    *
    * @description
-   * Delete an item from a DynamoDB table using JSON format.
+   * Delete an item from a DynamoDB Table using JSON format.
    *
    * ```javascript
    * await userTable.deleteItemJSON({ id: '1' })
@@ -976,7 +976,7 @@ class DynamoDBTable {
    * ```
    *
    * @description
-   * Get an unordered, paginated list of items from a DynamoDB table.
+   * Get an unordered, paginated list of items from a DynamoDB Table.
    *
    * ```javascript
    * const scanResponse = await userTable.scan()
@@ -1018,7 +1018,7 @@ class DynamoDBTable {
    * ```
    *
    * @description
-   * Get an async iterator of all items from a DynamoDB table.
+   * Get an async iterator of all items from a DynamoDB Table.
    */
   async * scanItemsIterator(options = {}) {
     const BatchLimit = options.BatchLimit ?? 1000
@@ -1047,7 +1047,7 @@ class DynamoDBTable {
    * ```
    *
    * @description
-   * Get an async iterator of all items from a DynamoDB table in JSON format.
+   * Get an async iterator of all items from a DynamoDB Table in JSON format.
    */
   async * scanItemsIteratorJSON(options = {}) {
     const BatchLimit = options.BatchLimit ?? 1000
@@ -1095,7 +1095,7 @@ class DynamoDBTable {
    * ```
    *
    * @description
-   * Query a DynamoDB table using DynamoDB JSON format.
+   * Query a DynamoDB Table using DynamoDB JSON format.
    *
    * Use the hash and sort keys as query parameters and to construct the key condition expression. The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
    *
@@ -1224,7 +1224,7 @@ class DynamoDBTable {
    * ```
    *
    * @description
-   * Query a DynamoDB table using JSON format.
+   * Query a DynamoDB Table using JSON format.
    *
    * Use the hash and sort keys as query parameters and to construct the key condition expression. The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
    *
@@ -1354,7 +1354,7 @@ class DynamoDBTable {
    * ```
    *
    * @description
-   * Get an `AsyncIterator` of all items represented by a query on a DynamoDB table in DynamoDB JSON format.
+   * Get an `AsyncIterator` of all items represented by a query on a DynamoDB Table in DynamoDB JSON format.
    *
    * The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
    *
@@ -1433,7 +1433,7 @@ class DynamoDBTable {
    * ```
    *
    * @description
-   * Get an `AsyncIterator` of all items represented by a query on a DynamoDB table in JSON format.
+   * Get an `AsyncIterator` of all items represented by a query on a DynamoDB Table in JSON format.
    *
    * The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
    *
