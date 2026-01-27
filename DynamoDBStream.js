@@ -11,7 +11,7 @@ const Mux = require('rubico/monad/Mux')
 /**
  * @name DynamoDBStream
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * new DynamoDBStream(options {
  *   table: string,
@@ -84,7 +84,7 @@ class DynamoDBStream {
   /**
    * @name close
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * stream.close() -> ()
    * ```
@@ -96,7 +96,7 @@ class DynamoDBStream {
   /**
    * @name getStreams
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * stream._getStreams() -> asyncIterator AsyncIterator<Stream { StreamArn: string }>
    * ```
@@ -124,7 +124,7 @@ class DynamoDBStream {
   /**
    * @name _getShards
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * stream._getShards(Stream {
    *   StreamArn: string
@@ -168,7 +168,7 @@ class DynamoDBStream {
   /**
    * @name _getRecords
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * type DynamoDBJSONObject = Object<[key string]: {
    *   ['S'|'N'|'B'|'L'|'M']:
@@ -260,7 +260,7 @@ class DynamoDBStream {
   /**
    * @name [Symbol.asyncIterator]
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * stream[Symbol.asyncIterator]() -> asyncIterator AsyncIterator<Record {
    *   eventID,
@@ -278,7 +278,6 @@ class DynamoDBStream {
    * }>
    * ```
    *
-   * @description
    * Implements the [async iterable protocol](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_async_iterator_and_async_iterable_protocols). Allows for consumption of the DynamoDB stream as an async iterable.
    *
    * ```

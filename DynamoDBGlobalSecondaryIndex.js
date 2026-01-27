@@ -28,7 +28,7 @@ const createFilterExpression = require('./internal/createFilterExpression')
 /**
  * @name DynamoDBGlobalSecondaryIndex
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * new DynamoDBGlobalSecondaryIndex(options {
  *   name: string,
@@ -44,7 +44,6 @@ const createFilterExpression = require('./internal/createFilterExpression')
  * }) -> globalSecondaryIndex DynamoDBGlobalSecondaryIndex
  * ```
  *
- * @description
  * The presidium DynamoDBGlobalSecondaryIndex client. Creates the DynamoDB Global Secondary Index (GSI) if it doesn't exist.
  *
  * DynamoDBGlobalSecondaryIndex instances have a `ready` promise that resolves when the GSI is active.
@@ -192,7 +191,7 @@ class DynamoDBGlobalSecondaryIndex {
   /**
    * @name describeTable
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * describeTable() -> data Promise<>
    * ```
@@ -213,7 +212,7 @@ class DynamoDBGlobalSecondaryIndex {
   /**
    * @name describe
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * describe() -> indexData Promise<{
    *   IndexArn: string,
@@ -259,7 +258,7 @@ class DynamoDBGlobalSecondaryIndex {
   /**
    * @name create
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * create() -> indexData Promise<{
    *   IndexArn: string,
@@ -357,7 +356,7 @@ class DynamoDBGlobalSecondaryIndex {
   /**
    * @name query
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * type DynamoDBJSONKey = {
    *   [hashKey string]: { S: string }|{ N: number }|{ B: Buffer },
@@ -385,7 +384,6 @@ class DynamoDBGlobalSecondaryIndex {
    * ) -> data Promise<{ Items: Array<DynamoDBJSONObject> }>
    * ```
    *
-   * @description
    * Query a DynamoDB Global Secondary Index using DynamoDB JSON format.
    *
    * Use the hash and sort keys as query parameters and to construct the key condition expression. The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
@@ -489,7 +487,7 @@ class DynamoDBGlobalSecondaryIndex {
   /**
    * @name queryJSON
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * type DynamoDBJSONKey = {
    *   [hashKey string]: { S: string }|{ N: number }|{ B: Buffer },
@@ -512,7 +510,6 @@ class DynamoDBGlobalSecondaryIndex {
    * ) -> Promise<{ ItemsJSON: Array<JSONObject> }>
    * ```
    *
-   * @description
    * Query a DynamoDB Global Secondary Index using JSON format.
    *
    * Use the hash and sort keys as query parameters and to construct the key condition expression. The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
@@ -617,7 +614,7 @@ class DynamoDBGlobalSecondaryIndex {
   /**
    * @name queryItemsIterator
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * type JSONObject = Object<[key string]: string|number|binary|Array|Object>
    * type DynamoDBJSONObject = Object<
@@ -641,7 +638,6 @@ class DynamoDBGlobalSecondaryIndex {
    * ) -> AsyncIterator<DynamoDBJSONObject>
    * ```
    *
-   * @description
    * Get an `AsyncIterator` of all items represented by a query on a DynamoDB Global Secondary Index (GSI) in DynamoDB JSON format.
    *
    * The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
@@ -707,7 +703,7 @@ class DynamoDBGlobalSecondaryIndex {
   /**
    * @name queryItemsIteratorJSON
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
    * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
@@ -725,7 +721,6 @@ class DynamoDBGlobalSecondaryIndex {
    * ) -> AsyncIterator<JSONObject>
    * ```
    *
-   * @description
    * Get an `AsyncIterator` of all items represented by a query on a DynamoDB Table in JSON format.
    *
    * The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey <!-- < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).

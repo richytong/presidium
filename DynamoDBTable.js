@@ -29,7 +29,7 @@ const createFilterExpression = require('./internal/createFilterExpression')
 /**
  * @name DynamoDBTable
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * new DynamoDBTable(options {
  *   name: string,
@@ -44,7 +44,6 @@ const createFilterExpression = require('./internal/createFilterExpression')
  * }) -> table DynamoDBTable
  * ```
  *
- * @description
  * The presidium DynamoDBTable client. Creates the DynamoDB Table if it doesn't exist.
  *
  * DynamoDBTable instances have a `ready` promise that resolves when the table is active.
@@ -188,7 +187,7 @@ class DynamoDBTable {
   /**
    * @name describe
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * describe() -> data Promise<>
    * ```
@@ -304,12 +303,11 @@ class DynamoDBTable {
   /**
    * @name delete
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * delete() -> data Promise<>
    * ```
    *
-   * @description
    * Delete the DynamoDB Table.
    *
    * ```javascript
@@ -331,7 +329,7 @@ class DynamoDBTable {
   /**
    * @name putItem
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * type DynamoDBJSONObject = Object<
    *   { S: string }
@@ -354,7 +352,6 @@ class DynamoDBTable {
    * }>
    * ```
    *
-   * @description
    * Write an item to a DynamoDB Table using DyanmoDB JSON.
    *
    * ```javascript
@@ -385,7 +382,7 @@ class DynamoDBTable {
   /**
    * @name putItemJSON
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
    * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
@@ -403,7 +400,6 @@ class DynamoDBTable {
    * }>
    * ```
    *
-   * @description
    * Write an item to a DynamoDB Table using JSON format.
    *
    * ```javascript
@@ -441,7 +437,7 @@ class DynamoDBTable {
   /**
    * @name getItem
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * type DynamoDBJSONKey = {
    *   [hashKey string]: { S: string }|{ N: number }|{ B: Buffer },
@@ -459,7 +455,6 @@ class DynamoDBTable {
    *   data Promise<{ Item: DynamoDBJSONObject }>
    * ```
    *
-   * @description
    * Retrieve an item from a DynamoDB Table using DynamoDB JSON format.
    *
    * ```javascript
@@ -491,7 +486,7 @@ class DynamoDBTable {
   /**
    * @name getItemJSON
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * type JSONKey = {
    *   [hashKey string]: string|number|Buffer,
@@ -503,7 +498,6 @@ class DynamoDBTable {
    * getItemJSON(key JSONKey) -> data Promise<{ ItemJSON: JSONObject }>
    * ```
    *
-   * @description
    * Retrieve an item from a DynamoDB Table using JSON format.
    *
    * ```javascript
@@ -537,7 +531,7 @@ class DynamoDBTable {
   /**
    * @name updateItem
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * type DynamoDBJSONKey = {
    *   [hashKey string]: { S: string }|{ N: number }|{ B: Buffer },
@@ -564,7 +558,6 @@ class DynamoDBTable {
    * ) -> data Promise<{ Attributes: DynamoDBJSONObject }>
    * ```
    *
-   * @description
    * Update an item in a DynamoDB Table using DynamoDB JSON format.
    *
    * ```javascript
@@ -617,7 +610,7 @@ class DynamoDBTable {
   /**
    * @name updateItemJSON
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * type JSONKey = {
    *   [hashKey string]: string|number|Buffer,
@@ -639,7 +632,6 @@ class DynamoDBTable {
    * ) -> data Promise<{ AttributesJSON: JSONObject }>
    * ```
    *
-   * @description
    * Update an item in a DynamoDB Table. Accepts DynamoDB JSON and JSON formats.
    *
    * ```javascript
@@ -697,7 +689,7 @@ class DynamoDBTable {
   /**
    * @name incrementItem
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * type DynamoDBJSONKey = {
    *   [hashKey string]: { S: string }|{ N: number }|{ B: Buffer },
@@ -726,7 +718,6 @@ class DynamoDBTable {
    * ) -> data Promise<{ Attributes: DynamoDBJSONObject }>
    * ```
    *
-   * @description
    * Increment the attributes of an item in a DynamoDB Table. Negative numbers will decrement the attribute of the item. Accepts DynamoDB JSON and JSON formats.
    *
    * ```javascript
@@ -772,7 +763,7 @@ class DynamoDBTable {
   /**
    * @name incrementItemJSON
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * type JSONKey = {
    *   [hashKey string]: string|number|Buffer,
@@ -796,7 +787,6 @@ class DynamoDBTable {
    * ) -> data Promise<{ AttributesJSON: JSONObject }>
    * ```
    *
-   * @description
    * Increment the attributes of an item in a DynamoDB Table. Negative numbers will decrement the attribute of the item. Accepts DynamoDB JSON and JSON formats.
    *
    * ```javascript
@@ -847,7 +837,7 @@ class DynamoDBTable {
   /**
    * @name deleteItem
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * type DynamoDBJSONKey = {
    *   [hashKey string]: { S: string }|{ N: number }|{ B: Buffer },
@@ -872,7 +862,6 @@ class DynamoDBTable {
    * ) -> data Promise<{ Attributes: DynamoDBJSONObject }>
    * ```
    *
-   * @description
    * Delete an item from a DynamoDB Table using DynamoDB JSON.
    *
    * ```javascript
@@ -896,7 +885,7 @@ class DynamoDBTable {
   /**
    * @name deleteItemJSON
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * type JSONKey = {
    *   [hashKey string]: string|number|Buffer,
@@ -916,7 +905,6 @@ class DynamoDBTable {
    * ) -> data Promise<{ AttributesJSON: JSONObject }>
    * ```
    *
-   * @description
    * Delete an item from a DynamoDB Table using JSON format.
    *
    * ```javascript
@@ -947,7 +935,7 @@ class DynamoDBTable {
   /**
    * @name scan
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * type DynamoDBJSONObject = Object<
    *   { S: string }
@@ -972,7 +960,6 @@ class DynamoDBTable {
    * }>
    * ```
    *
-   * @description
    * Get an unordered, paginated list of items from a DynamoDB Table.
    *
    * ```javascript
@@ -999,7 +986,7 @@ class DynamoDBTable {
   /**
    * @name scanItemsIterator
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * type DynamoDBJSONObject = Object<
    *   { S: string }
@@ -1014,7 +1001,6 @@ class DynamoDBTable {
    * }) -> iter AsyncIterator<DynamoDBJSONObject>
    * ```
    *
-   * @description
    * Get an async iterator of all items from a DynamoDB Table.
    */
   async * scanItemsIterator(options = {}) {
@@ -1033,7 +1019,7 @@ class DynamoDBTable {
   /**
    * @name scanItemsIteratorJSON
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
    * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
@@ -1043,7 +1029,6 @@ class DynamoDBTable {
    * }) -> iter AsyncIterator<JSONObject>
    * ```
    *
-   * @description
    * Get an async iterator of all items from a DynamoDB Table in JSON format.
    */
   async * scanItemsIteratorJSON(options = {}) {
@@ -1062,7 +1047,7 @@ class DynamoDBTable {
   /**
    * @name query
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * type DynamoDBJSONKey = {
    *   [hashKey string]: { S: string }|{ N: number }|{ B: Buffer },
@@ -1091,7 +1076,6 @@ class DynamoDBTable {
    * ) -> data Promise<{ Items: Array<DynamoDBJSONObject> }>
    * ```
    *
-   * @description
    * Query a DynamoDB Table using DynamoDB JSON format.
    *
    * Use the hash and sort keys as query parameters and to construct the key condition expression. The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
@@ -1196,7 +1180,7 @@ class DynamoDBTable {
   /**
    * @name queryJSON
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * type DynamoDBJSONKey = {
    *   [hashKey string]: { S: string }|{ N: number }|{ B: Buffer },
@@ -1220,7 +1204,6 @@ class DynamoDBTable {
    * ) -> Promise<{ ItemsJSON: Array<JSONObject> }>
    * ```
    *
-   * @description
    * Query a DynamoDB Table using JSON format.
    *
    * Use the hash and sort keys as query parameters and to construct the key condition expression. The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
@@ -1326,7 +1309,7 @@ class DynamoDBTable {
   /**
    * @name queryItemsIterator
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
    * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
@@ -1352,7 +1335,6 @@ class DynamoDBTable {
    * ) -> AsyncIterator<DynamoDBJSONObject>
    * ```
    *
-   * @description
    * Get an `AsyncIterator` of all items represented by a query on a DynamoDB Table in DynamoDB JSON format.
    *
    * The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
@@ -1420,7 +1402,7 @@ class DynamoDBTable {
   /**
    * @name queryItemsIteratorJSON
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
    * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
@@ -1438,7 +1420,6 @@ class DynamoDBTable {
    * ) -> AsyncIterator<JSONObject>
    * ```
    *
-   * @description
    * Get an `AsyncIterator` of all items represented by a query on a DynamoDB Table in JSON format.
    *
    * The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey <!-- < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
