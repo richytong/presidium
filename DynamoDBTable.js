@@ -48,7 +48,9 @@ const createFilterExpression = require('./internal/createFilterExpression')
  * ```
  *
  * @description
- * Creates a DynamoDB table.
+ * The presidium DynamoDBTable client. Creates the DynamoDB Table if it doesn't exist.
+ *
+ * DynamoDBTable instances have a `ready` promise that resolves when the table is active.
  *
  * ```javascript
  * // local testing
@@ -445,8 +447,8 @@ class DynamoDBTable {
    * @synopsis
    * ```coffeescript [specscript]
    * type DynamoDBJSONKey = {
-   *   [hashKey string]: { ['S'|'N'|'B']: string|number|Buffer },
-   *   [sortKey string]: { ['S'|'N'|'B']: string|number|Buffer }
+   *   [hashKey string]: { S: string }|{ N: number }|{ B: Buffer },
+   *   [sortKey string]: { S: string }|{ N: number }|{ B: Buffer },
    * }
    * type DynamoDBJSONObject = Object<
    *   { 'S': string }
@@ -541,8 +543,8 @@ class DynamoDBTable {
    * @synopsis
    * ```coffeescript [specscript]
    * type DynamoDBJSONKey = {
-   *   [hashKey string]: { ['S'|'N'|'B']: string|number|Buffer },
-   *   [sortKey string]: { ['S'|'N'|'B']: string|number|Buffer }
+   *   [hashKey string]: { S: string }|{ N: number }|{ B: Buffer },
+   *   [sortKey string]: { S: string }|{ N: number }|{ B: Buffer },
    * }
    *
    * type DynamoDBJSONObject = Object<
@@ -701,8 +703,8 @@ class DynamoDBTable {
    * @synopsis
    * ```coffeescript [specscript]
    * type DynamoDBJSONKey = {
-   *   [hashKey string]: { ['S'|'N'|'B']: string|number|Buffer },
-   *   [sortKey string]: { ['S'|'N'|'B']: string|number|Buffer }
+   *   [hashKey string]: { S: string }|{ N: number }|{ B: Buffer },
+   *   [sortKey string]: { S: string }|{ N: number }|{ B: Buffer },
    * }
    *
    * type DynamoDBJSONIncrementObject = Object<{ N: number }>
@@ -851,8 +853,8 @@ class DynamoDBTable {
    * @synopsis
    * ```coffeescript [specscript]
    * type DynamoDBJSONKey = {
-   *   [hashKey string]: { ['S'|'N'|'B']: string|number|Buffer },
-   *   [sortKey string]: { ['S'|'N'|'B']: string|number|Buffer }
+   *   [hashKey string]: { S: string }|{ N: number }|{ B: Buffer },
+   *   [sortKey string]: { S: string }|{ N: number }|{ B: Buffer },
    * }
    *
    * type DynamoDBJSONObject = Object<
@@ -958,8 +960,8 @@ class DynamoDBTable {
    *   |{ 'M': Object<DynamoDBJSONObject> }
    * >
    * type DynamoDBJSONKey = {
-   *   [hashKey string]: { ['S'|'N'|'B']: string|number|Buffer },
-   *   [sortKey string]: { ['S'|'N'|'B']: string|number|Buffer }
+   *   [hashKey string]: { S: string }|{ N: number }|{ B: Buffer },
+   *   [sortKey string]: { S: string }|{ N: number }|{ B: Buffer },
    * }
    *
    * scan(options {
@@ -1066,8 +1068,8 @@ class DynamoDBTable {
    * @synopsis
    * ```coffeescript [specscript]
    * type DynamoDBJSONKey = {
-   *   [hashKey string]: { ['S'|'N'|'B']: string|number|Buffer },
-   *   [sortKey string]: { ['S'|'N'|'B']: string|number|Buffer }
+   *   [hashKey string]: { S: string }|{ N: number }|{ B: Buffer },
+   *   [sortKey string]: { S: string }|{ N: number }|{ B: Buffer },
    * }
    *
    * type DynamoDBJSONObject = Object<
@@ -1200,8 +1202,8 @@ class DynamoDBTable {
    * @synopsis
    * ```coffeescript [specscript]
    * type DynamoDBJSONKey = {
-   *   [hashKey string]: { ['S'|'N'|'B']: string|number|Buffer },
-   *   [sortKey string]: { ['S'|'N'|'B']: string|number|Buffer }
+   *   [hashKey string]: { S: string }|{ N: number }|{ B: Buffer },
+   *   [sortKey string]: { S: string }|{ N: number }|{ B: Buffer },
    * }
    *
    * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
