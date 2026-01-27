@@ -1102,13 +1102,13 @@ class DynamoDBTable {
    * ```javascript
    * // userVersionTable has hashKey `id` and sortKey `version`
    *
-   * const response = await userVersionTable.query(
+   * const data = await userVersionTable.query(
    *   'id = :id AND version > :version',
    *   { id: { S: '1' }, version: { N: '0' } },
    *   { ScanIndexForward: false },
    * )
    *
-   * console.log(response)
+   * console.log(data)
    * // {
    * //   Items: [
    * //     { id: { S: '1' }, version: { N: '3' } },
@@ -1119,7 +1119,7 @@ class DynamoDBTable {
    * ```
    *
    * Options:
-   *   * `Limit` - Maximum number of items (hard limited by total size of response)
+   *   * `Limit` - Maximum number of items (hard limited by the total size of the response)
    *   * `ExclusiveStartKey` - Key after which to start reading
    *   * `ScanIndexForward` - true to sort items in ascending order
    *   * `ProjectionExpression` - list of attributes to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`
@@ -1231,13 +1231,13 @@ class DynamoDBTable {
    * ```javascript
    * // userVersionTable has hashKey `id` and sortKey `version`
    *
-   * const response = await userVersionTable.queryJSON(
+   * const data = await userVersionTable.queryJSON(
    *   'id = :id AND version > :version',
    *   { id: '1', version: 0 },
    *   { ScanIndexForward: false },
    * )
    *
-   * console.log(response)
+   * console.log(data)
    * // {
    * //   items: [
    * //     { id: '1', version: 3 },
@@ -1248,7 +1248,7 @@ class DynamoDBTable {
    * ```
    *
    * Options:
-   *   * `Limit` - Maximum number of items (hard limited by total size of response)
+   *   * `Limit` - Maximum number of items (hard limited by the total size of the response)
    *   * `ExclusiveStartKey` - Key after which to start reading
    *   * `ScanIndexForward` - true to sort items in ascending order
    *   * `ProjectionExpression` - list of attributes to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`
