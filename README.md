@@ -9,7 +9,7 @@ A library for creating web services.
 
 ## Handle HTTP
 ```javascript
-const { HTTP } = require('presidium')
+const HTTP = require('presidium/HTTP')
 
 const server = HTTP.Server((request, response) => {
   response.writeHead(200, { 'Content-Type': 'application/json' })
@@ -28,7 +28,7 @@ http.get('/')
 
 ## Handle WebSocket
 ```javascript
-const { WebSocket } = require('presidium')
+const WebSocket = require('presidium/WebSocket')
 
 const server = new WebSocket.Server(websocket => {
   websocket.on('message', message => {
@@ -52,7 +52,9 @@ websocket.on('message', message => {
 
 ## CRUD and Query DynamoDB
 ```javascript
-const { DynamoDB } = require('presidium')
+const DynamoDBTable = require('presidium/DynamoDBTable')
+const DynamoDBGlobalSecondaryIndex =
+require('presidium/DynamoDBGlobalSecondaryIndex')
 
 const awsCreds = {
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -60,14 +62,14 @@ const awsCreds = {
   region: process.env.AWS_REGION,
 }
 
-const myTable = new DynamoDB.Table({
+const myTable = new DynamoDBTable({
   name: 'my-table',
   key: [{ id: 'string' }],
   ...awsCreds,
 })
 await myTable.ready
 
-const myTypeAgeIndex = new DynamoDB.GlobalSecondaryIndex({
+const myTypeAgeIndex = new DynamoDBGlobalSecondaryIndex({
   table: 'my-table',
   key: [{ type: 'string' }, { age: 'number' }],
   ...awsCreds,
@@ -81,7 +83,7 @@ await myTable.putItemJSON({ id: '2', name: 'Joe', age: 19, type: 'person' })
 await myTable.putItemJSON({ id: '3', name: 'Jane', age: 33, type: 'person' })
 
 {
-  const response = await myTable.getItem({ id: '1' }),
+  const response = await myTable.getItem({ id: { S: '1' } }),
   console.log(response)
   // { Item: { id: { S: '1' }, name: { S: 'John' }, age: { N: '32' } } }
 }
@@ -95,7 +97,7 @@ await myTable.putItemJSON({ id: '3', name: 'Jane', age: 33, type: 'person' })
 {
   const response = await myTypeAgeIndex.query(
     'type = :type AND age < :age',
-    { type: 'person', age: 100 },
+    { type: { S: 'person' }, age: { N: '100' } },
     { Limit: 2, ScanIndexForward: true },
   )
   console.log(response)
@@ -110,9 +112,26 @@ await myTable.putItemJSON({ id: '3', name: 'Jane', age: 33, type: 'person' })
 }
 
 {
-  const ItemIterator = myTypeAgeIndex.queryItemsIterator(
+  const response = await myTypeAgeIndex.queryJSON(
     'type = :type AND age < :age',
     { type: 'person', age: 100 },
+    { Limit: 2, ScanIndexForward: true },
+  )
+  console.log(response)
+  // {
+  //   ItemsJSON: [
+  //     { id: '1', name: 'John', age: 32, type: 'person' },
+  //     { id: '2', name: 'Joe', age: 19, type: 'person' },
+  //   ],
+  //   Count: 2,
+  //   ScannedCount: 2,
+  // }
+}
+
+{
+  const ItemIterator = myTypeAgeIndex.queryItemsIterator(
+    'type = :type AND age < :age',
+    { type: { S: 'person' }, age: { N: '100' } },
     { ScanIndexForward: true },
   )
   for await (const Item of ItemIterator) {
@@ -140,7 +159,8 @@ await myTable.putItemJSON({ id: '3', name: 'Jane', age: 33, type: 'person' })
 
 ## Consume DynamoDB Streams
 ```javascript
-const { DynamoDB } = require('presidium')
+const DynamoDBTable = require('presidium/DynamoDBTable')
+const DynamoDBStream = require('presidium/DynamoDBStream')
 
 const awsCreds = {
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -148,14 +168,14 @@ const awsCreds = {
   region: process.env.AWS_REGION,
 }
 
-const myTable = new DynamoDB.Table({
+const myTable = new DynamoDBTable({
   name: 'my-table',
   key: [{ id: 'string' }],
   ...awsCreds,
 })
 await myTable.ready
 
-const myStream = new DynamoDB.Stream({
+const myStream = new DynamoDBStream({
   table: 'my-table',
   ...awsCreds,
 })
@@ -163,15 +183,29 @@ await myStream.ready
 
 for await (const record of myStream) {
   console.log(record)
-  // { dynamodb: { NewImage: {...}, OldImage: {...} }, oldImageJSON: {...}, newImageJSON: {...} }
-  // { dynamodb: { NewImage: {...}, OldImage: {...} }, oldImageJSON: {...}, newImageJSON: {...} }
-  // { dynamodb: { NewImage: {...}, OldImage: {...} }, oldImageJSON: {...}, newImageJSON: {...} }
+  // { dynamodb: { Keys: {...}, NewImage: {...}, OldImage: {...} }  }
+  // { dynamodb: { Keys: {...}, NewImage: {...}, OldImage: {...} }  }
+  // { dynamodb: { Keys: {...}, NewImage: {...}, OldImage: {...} }  }
+}
+
+const myStreamJSON = new DynamoDBStream({
+  table: 'my-table',
+  ...awsCreds,
+  JSON: true,
+})
+await myStream.ready
+
+for await (const record of myStreamJSON) {
+  console.log(record)
+  // { dynamodb: { KeysJSON: {...}, NewImageJSON: {...}, OldImageJSON: {...} }  }
+  // { dynamodb: { KeysJSON: {...}, NewImageJSON: {...}, OldImageJSON: {...} }  }
+  // { dynamodb: { KeysJSON: {...}, NewImageJSON: {...}, OldImageJSON: {...} }  }
 }
 ```
 
 ## Upload to S3
 ```javascript
-const { S3Bucket } = require('presidium')
+const S3Bucket = require('presidium/S3Bucket')
 
 const awsCreds = {
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -201,7 +235,7 @@ await myBucket.delete()
 ## Build and Push Docker Images
 > No more --build-arg for npm tokens!
 ```javascript
-const { Docker } = require('presidium')
+const Docker = require('presidium/Docker')
 
 const myImage = 'my-app:1.0.0'
 
@@ -230,37 +264,39 @@ buildStream.on('end', () => {
 })
 ```
 
-## Execute Docker Containers
+## Run Docker Containers
 ```javascript
-const { DockerContainer } = require('presidium')
+const Docker = require('presidium/Docker')
 
-const container = new DockerContainer({
+const docker = new Docker()
+
+const container = await docker.createContainer({
   image: 'node:15-alpine',
-  env: { FOO: 'foo' },
+  env: { FOO: 'example' },
   cmd: ['node', '-e', 'console.log(process.env.FOO)'],
   rm: true,
 })
 
-container.run().pipe(process.stdout) // foo
+container.run().pipe(process.stdout) // example
 ```
 
 ## Deploy Docker Swarm Services
 ```javascript
-const { Docker, DockerService } = require('presidium')
+const Docker = require('presidium/Docker')
 
 const docker = new Docker()
 
-// initiate docker swarm
+// initialize docker swarm
 await docker.initSwarm('eth0:2377')
 
-const myService = new DockerService({
+const myService = await docker.createService({
   name: 'my-service',
   image: 'nginx:1.19',
   publish: { 80: 80 },
   healthCheck: ['curl', '[::1]'],
   replicas: 5,
 })
-await myService.ready // new nginx service is up running
+// new nginx service is deploying to the docker swarm
 ```
 
 # Support
