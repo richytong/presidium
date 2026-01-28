@@ -9,7 +9,7 @@
 
 const RetryAwsErrors = function (func, context, name) {
   return function retriesAwsErrors(...args) {
-    return func.apply(context, args).promise().catch(error => {
+    return func.apply(context, args).catch(error => {
       if (error.retryable) {
         return retriesAwsErrors(...args)
       }

@@ -1,12 +1,22 @@
 require('rubico/global')
-const Transducer = require('rubico/Transducer')
-const DynamoDBStreams = require('aws-sdk/clients/dynamodbstreams')
-require('aws-sdk/lib/maintenance_mode_message').suppress = true
 const { differenceWith } = require('rubico/x')
-const has = require('./internal/has')
-const RetryAwsErrors = require('./internal/RetryAwsErrors')
-const Dynamo = require('./internal/Dynamo')
+const Transducer = require('rubico/Transducer')
 const Mux = require('rubico/monad/Mux')
+const crypto = require('crypto')
+const HTTP = require('./HTTP')
+const userAgent = require('./userAgent')
+const AwsAuthorization = require('./internal/AwsAuthorization')
+const AmzDate = require('./internal/AmzDate')
+const Readable = require('./Readable')
+const sleep = require('./internal/sleep')
+const dynamoDBStreamGetStreamsIterator =
+  require('./internal/dynamoDBStreamGetStreamsIterator')
+const dynamoDBStreamGetShardsIterator =
+  require('./internal/dynamoDBStreamGetShardsIterator')
+const dynamoDBStreamGetRecordsIterator =
+  require('./internal/dynamoDBStreamGetRecordsIterator')
+
+const SymbolUpdateShards = Symbol('UpdateShards')
 
 /**
  * @name DynamoDBStream
@@ -19,66 +29,318 @@ const Mux = require('rubico/monad/Mux')
  *   secretAccessKey: string,
  *   region: string,
  *   endpoint: string,
- *   streamViewType: 'NEW_AND_OLD_IMAGES'|'NEW_IMAGE'|'OLD_IMAGE'|'KEYS_ONLY',
- *   shardIteratorType: 'TRIM_HORIZON'|'LATEST'|'AT_SEQUENCE_NUMBER'|'AFTER_SEQUENCE_NUMBER',
+ *   StreamViewType: 'NEW_AND_OLD_IMAGES'|'NEW_IMAGE'|'OLD_IMAGE'|'KEYS_ONLY',
+ *   ShardIteratorType: 'TRIM_HORIZON'|'LATEST',
+ *   GetRecordsLimit: number,
+ *   GetRecordsInterval: number,
+ *   ShardUpdatePeriod: number,
+ *   ListStreamsLimit: number,
  * }) -> stream DynamoDBStream
  * ```
  */
 class DynamoDBStream {
   constructor(options) {
-    const awsCreds = {
-      ...pick(options, [
-        'accessKeyId',
-        'secretAccessKey',
-        'endpoint',
-      ]),
-      region: options.region ?? 'default-region',
+    this.table = options.table
+
+    this.StreamViewType = options.StreamViewType ?? 'NEW_AND_OLD_IMAGES'
+    this.ShardIteratorType = options.ShardIteratorType ?? 'LATEST'
+    this.GetRecordsLimit = options.GetRecordsLimit ?? 1000
+    this.GetShardsInterval = options.GetShardsInterval ?? 1000
+    this.GetRecordsInterval = options.GetRecordsInterval ?? 1000
+    this.ShardUpdatePeriod = options.ShardUpdatePeriod ?? 15000
+    this.ListStreamsLimit = options.ListStreamsLimit ?? 100
+
+    this.accessKeyId = options.accessKeyId ?? ''
+    this.secretAccessKey = options.secretAccessKey ?? ''
+    this.region = options.region ?? ''
+    this.apiVersion = '2012-08-10'
+
+    this.endpoint = `dynamodb.${this.region}.amazonaws.com`
+    this.streamsEndpoint = `streams.dynamodb.${this.region}.amazonaws.com`
+    this.protocol = 'https'
+
+    this.http = new HTTP(`${this.protocol}://${this.endpoint}`)
+    this.streamsHttp = new HTTP(`${this.protocol}://${this.streamsEndpoint}`)
+
+    this.autoReady = options.autoReady ?? true
+    if (this.autoReady) {
+      this.ready = this._readyPromise()
+    }
+  }
+
+  /**
+   * @name _readyPromise
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * _readyPromise() -> Promise<>
+   * ```
+   */
+  async _readyPromise() {
+    try {
+      await this.describe()
+      await this.waitForActive()
+      return { message: 'stream-exists' }
+    } catch (error) {
+      await this.create()
+      await this.waitForActive()
+      return { message: 'created-stream' }
+    }
+  }
+
+  /**
+   * @name _awsDynamoDBRequest
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * module http 'https://nodejs.org/api/http.html'
+   *
+   * _awsDynamoDBRequest(
+   *   method string,
+   *   url string,
+   *   action string,
+   *   payload string
+   * ) -> response Promise<http.ServerResponse>
+   * ```
+   */
+  _awsDynamoDBRequest(method, url, action, payload) {
+    const amzDate = AmzDate()
+    const amzTarget = `DynamoDB_${this.apiVersion.replace(/-/g, '')}.${action}`
+
+    const headers = {
+      'Host': this.endpoint,
+      'Accept-Encoding': 'identity',
+      'Content-Length': Buffer.byteLength(payload, 'utf8'),
+      'User-Agent': userAgent,
+      'Content-Type': 'application/x-amz-json-1.0',
+      'X-Amz-Date': amzDate,
+      'X-Amz-Target': amzTarget
     }
 
-    this.table = options.table
-    this.getRecordsLimit = options.getRecordsLimit ?? 1000
-    this.getRecordsInterval = options.getRecordsInterval ?? 1000
-    this.shardIteratorType = options.shardIteratorType ?? 'LATEST'
-    this.shardUpdatePeriod = options.shardUpdatePeriod ?? 15000
-    this.listStreamsLimit = options.listStreamsLimit ?? 100
+    const amzHeaders = {}
+    for (const key in headers) {
+      if (key.toLowerCase().startsWith('x-amz')) {
+        amzHeaders[key] = headers[key]
+      }
+    }
 
-    this.client = new DynamoDBStreams({
-      ...awsCreds,
-      apiVersion: '2012-08-10',
+    headers['Authorization'] = AwsAuthorization({
+      accessKeyId: this.accessKeyId,
+      secretAccessKey: this.secretAccessKey,
+      region: this.region,
+      method,
+      endpoint: this.endpoint,
+      protocol: this.protocol,
+      canonicalUri: url,
+      serviceName: 'dynamodb',
+      payloadHash:
+        crypto.createHash('sha256').update(payload, 'utf8').digest('hex'),
+      expires: 300,
+      queryParams: new URLSearchParams(),
+      headers: {
+        'Host': this.endpoint,
+        ...amzHeaders
+      }
     })
 
-    this._retryListStreams = RetryAwsErrors(
-      this.client.listStreams,
-      this.client,
-    )
-    this._retryDescribeStream = RetryAwsErrors(
-      this.client.describeStream,
-      this.client,
-    )
-    this._retryGetShardIterator = RetryAwsErrors(
-      this.client.getShardIterator,
-      this.client,
-    )
-    this._retryGetRecords = RetryAwsErrors(
-      this.client.getRecords,
-      this.client,
-    )
+    return this.http[method](url, { headers, body: payload })
+  }
 
-    const dynamo = new Dynamo(awsCreds)
+  /**
+   * @name _awsDynamoDBStreamsRequest
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * module http 'https://nodejs.org/api/http.html'
+   *
+   * _awsDynamoDBStreamsRequest(
+   *   method string,
+   *   url string,
+   *   action string,
+   *   payload string
+   * ) -> response Promise<http.ServerResponse>
+   * ```
+   */
+  _awsDynamoDBStreamsRequest(method, url, action, payload) {
+    const amzDate = AmzDate()
+    const amzTarget = `DynamoDBStreams_${this.apiVersion.replace(/-/g, '')}.${action}`
 
-    this.ready = dynamo.describeTable(this.table).then(pipe([
-      get('Table.StreamSpecification'),
+    const headers = {
+      'Host': this.streamsEndpoint,
+      'Accept-Encoding': 'identity',
+      'Content-Length': Buffer.byteLength(payload, 'utf8'),
+      'User-Agent': userAgent,
+      'Content-Type': 'application/x-amz-json-1.0',
+      'X-Amz-Date': amzDate,
+      'X-Amz-Target': amzTarget
+    }
 
-      async streamSpec => {
-        if (streamSpec == null) {
-          const enableStreamsResponse = await dynamo.enableStreams(this.table, {
-            streamViewType: options.streamViewType ?? 'NEW_AND_OLD_IMAGES',
-          })
-          return { message: 'enabling-streams', enableStreamsResponse }
-        }
-        return { message: 'streams-enabled' }
+    const amzHeaders = {}
+    for (const key in headers) {
+      if (key.toLowerCase().startsWith('x-amz')) {
+        amzHeaders[key] = headers[key]
+      }
+    }
+
+    headers['Authorization'] = AwsAuthorization({
+      accessKeyId: this.accessKeyId,
+      secretAccessKey: this.secretAccessKey,
+      region: this.region,
+      method,
+      endpoint: this.streamsEndpoint,
+      protocol: this.protocol,
+      canonicalUri: url,
+      serviceName: 'dynamodb',
+      payloadHash:
+        crypto.createHash('sha256').update(payload, 'utf8').digest('hex'),
+      expires: 300,
+      queryParams: new URLSearchParams(),
+      headers: {
+        'Host': this.streamsEndpoint,
+        ...amzHeaders
+      }
+    })
+
+    return this.streamsHttp[method](url, { headers, body: payload })
+  }
+
+  /**
+   * @name describe
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * describe() -> streamData Promise<{
+   *   StreamEnabled: boolean,
+   *   StreamViewType: 'NEW_AND_OLD_IMAGES'|'NEW_IMAGE'|'OLD_IMAGE'|'KEYS_ONLY',
+   *   TableStatus: 'CREATING'|'UPDATING'|'DELETING'|'ACTIVE'|'INACCESSIBLE_ENCRYPTION_CREDENTIALS'|'ARCHIVING'|'ARCHIVED'
+   * }>
+   * ```
+   */
+  async describe() {
+    const payload = JSON.stringify({
+      TableName: this.table,
+    })
+    const response =
+      await this._awsDynamoDBRequest('POST', '/', 'DescribeTable', payload)
+
+    if (response.ok) {
+      const data = await Readable.JSON(response)
+
+      const streamData = data.Table.StreamSpecification
+      if (streamData == null) {
+        throw new Error(`DynamoDB Stream for ${this.table} not found.`)
+      }
+      streamData.TableStatus = data.Table.TableStatus
+      return streamData
+    }
+
+    throw new AwsError(await Readable.Text(response), response.status)
+  }
+
+  /**
+   * @name create
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * create() -> data Promise<{}>
+   * ```
+   */
+  async create() {
+    const payload = JSON.stringify({
+      TableName: this.table,
+      StreamSpecification: {
+        StreamEnabled: true,
+        StreamViewType: this.StreamViewType,
       },
-    ]))
+    })
+
+    const response =
+      await this._awsDynamoDBRequest('POST', '/', 'UpdateTable', payload)
+
+    if (response.ok) {
+      await Readable.Text(response)
+      return {}
+    }
+
+    throw new AwsError(await Readable.Text(response), response.status)
+  }
+
+  /**
+   * @name waitForActive
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * waitForActive() -> Promise<>
+   * ```
+   */
+  async waitForActive() {
+    let exists = false
+    while (!exists) {
+      await sleep(100)
+      const streamData = await this.describe().catch(error => {
+        if (error.message == `DynamoDB Stream for ${this.table} not found.`) {
+          // return
+        } else {
+          throw error
+        }
+      })
+      if (streamData.TableStatus == 'ACTIVE') {
+        exists = true
+      }
+    }
+  }
+
+  /**
+   * @name describeStream
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * describeStream(options {
+   *   StreamArn: string,
+   *   Limit: number,
+   * }) -> streamData Promise<{
+   *   StreamDescription: {
+   *     KeySchema: [
+   *       { AttributeName: string, KeyType: string },
+   *       { AttributeName: string, KeyType: string },
+   *     ],
+   *     LastEvaluatedShardId: string,
+   *     Shards: Array<{
+   *       ParentShardId: string,
+   *       SequenceNumberRange: {
+   *         EndingSequenceNumber: string,
+   *         StartingSequenceNumber: string,
+   *       },
+   *       ShardId: string,
+   *     }>,
+   *     StreamArn: string,
+   *     StreamLabel: string, # ISO 8601 Date string
+   *     StreamStatus: string,
+   *     StreamViewType: string,
+   *     TableName: string,
+   *   },
+   * }>
+   * ```
+   */
+  async describeStream(options) {
+    const payload = JSON.stringify({
+      StreamArn: options.StreamArn,
+      Limit: options.Limit
+    })
+
+    const response = await this._awsDynamoDBStreamsRequest(
+      'POST',
+      '/',
+      'DescribeStream',
+      payload,
+    )
+
+    if (response.ok) {
+      const data = await Readable.JSON(response)
+      return data
+    }
+
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -86,7 +348,7 @@ class DynamoDBStream {
    *
    * @docs
    * ```coffeescript [specscript]
-   * stream.close() -> ()
+   * close() -> ()
    * ```
    */
   close() {
@@ -94,174 +356,18 @@ class DynamoDBStream {
   }
 
   /**
-   * @name getStreams
-   *
-   * @docs
-   * ```coffeescript [specscript]
-   * stream._getStreams() -> asyncIterator AsyncIterator<Stream { StreamArn: string }>
-   * ```
-   */
-  async * _getStreams() {
-    let streams = await this._retryListStreams({
-      Limit: this.listStreamsLimit,
-      TableName: this.table
-    })
-    if (streams.Streams.length > 0) {
-      yield* streams.Streams
-    }
-    while (!this.closed && streams.LastEvaluatedStreamArn != null) {
-      streams = await this._retryListStreams({
-        Limit: this.listStreamsLimit,
-        TableName: this.table,
-        ExclusiveStartStreamArn: streams.LastEvaluatedStreamArn,
-      })
-      if (streams.Streams.length > 0) {
-        yield* streams.Streams
-      }
-    }
-  }
-
-  /**
-   * @name _getShards
-   *
-   * @docs
-   * ```coffeescript [specscript]
-   * stream._getShards(Stream {
-   *   StreamArn: string
-   * }) -> asyncIterator AsyncIterator<Shard {
-   *   ShardId: string,
-   *   ShardIteratorType: string,
-   *   Stream: { StreamArn: string },
-   * }>
-   * ```
-   */
-  async * _getShards(Stream) {
-    let shards = await this._retryDescribeStream({
-      StreamArn: Stream.StreamArn,
-      Limit: 100,
-    }).then(get('StreamDescription'))
-    if (shards.Shards.length > 0) {
-      yield* shards.Shards.map(assign({ Stream }))
-    }
-    while (!this.closed && shards.LastEvaluatedShardId != null) {
-      shards = await this._retryDescribeStream({
-        StreamArn: Stream.StreamArn,
-        Limit: 100,
-        ExclusiveStartShardId: shards.LastEvaluatedShardId,
-      }).then(get('StreamDescription'))
-      if (shards.Shards.length > 0) {
-        yield* shards.Shards.map(assign({ Stream }))
-      }
-    }
-  }
-
-  // handleGetRecordsError(error Error) -> ()
-  static handleGetRecordsError(error) {
-    if (error.message.includes('Shard iterator has expired')) {
-      console.error(error)
-      return []
-    }
-    throw error
-  }
-
-
-  /**
-   * @name _getRecords
-   *
-   * @docs
-   * ```coffeescript [specscript]
-   * type DynamoDBJSONObject = Object<[key string]: {
-   *   ['S'|'N'|'B'|'L'|'M']:
-   *     string|number|binary|Array<DynamoDBJSONObject>|DynamoDBJSONObject,
-   * }>
-   *
-   * stream._getRecords(Shard {
-   *   ShardId: string,
-   *   ShardIteratorType: string,
-   *   Stream: { StreamArn: string },
-   * }) -> asyncIterator AsyncIterator<Record {
-   *   eventID,
-   *   eventName: 'INSERT'|'MODIFY'|'REMOVE',
-   *   eventVersion: string,
-   *   eventSource: string,
-   *   awsRegion: string,
-   *   dynamodb: {
-   *     ApproximateCreationDateTime: Date,
-   *     NewImage: DynamoDBJSONObject,
-   *     SequenceNumber: string,
-   *     SizeBytes: number,
-   *     StreamViewType: 'NEW_AND_OLD_IMAGES'|'NEW_IMAGE'|'OLD_IMAGE'|'KEYS_ONLY',
-   *   },
-   * }>
-   * ```
-   */
-  async * _getRecords(Shard) {
-    const startingShardIterator = await this._retryGetShardIterator({
-      ShardId: Shard.ShardId,
-      StreamArn: Shard.Stream.StreamArn,
-      ShardIteratorType: Shard.ShardIteratorType,
-    }).then(get('ShardIterator'))
-
-    let getRecordsResponse = await this._retryGetRecords({
-      ShardIterator: startingShardIterator,
-      Limit: this.getRecordsLimit
-    }).catch(DynamoDBStream.handleGetRecordsError)
-
-    if (getRecordsResponse.Records == null) {
-      const error = new Error('getRecordsResponse.Records undefined')
-      error.getRecordsResponse = getRecordsResponse
-      throw error
-    }
-    else if (getRecordsResponse.Records.length > 0) {
-      yield* getRecordsResponse.Records.map(assign({
-        table: this.table,
-        shardId: Shard.ShardId,
-        oldImageJSON: pipe([
-          get('dynamodb.OldImage', undefined),
-          map(Dynamo.attributeValueToJSON)
-        ]),
-        newImageJSON: pipe([
-          get('dynamodb.NewImage', undefined),
-          map(Dynamo.attributeValueToJSON)
-        ])
-      }))
-    }
-    await new Promise(resolve => setTimeout(resolve, this.getRecordsInterval))
-
-    while (!this.closed && getRecordsResponse.NextShardIterator != null) {
-      getRecordsResponse = await this._retryGetRecords({
-        ShardIterator: getRecordsResponse.NextShardIterator,
-        Limit: this.getRecordsLimit
-      }).catch(DynamoDBStream.handleGetRecordsError)
-      if (getRecordsResponse.Records == null) {
-        const error = new Error('getRecordsResponse.Records undefined')
-        error.getRecordsResponse = getRecordsResponse
-        throw error
-      } else if (getRecordsResponse.Records.length > 0) {
-        yield* getRecordsResponse.Records.map(assign({
-          table: this.table,
-          shardId: Shard.ShardId,
-          oldImageJSON: pipe([
-            get('dynamodb.OldImage', undefined),
-            map(Dynamo.attributeValueToJSON)
-          ]),
-          newImageJSON: pipe([
-            get('dynamodb.NewImage', undefined),
-            map(Dynamo.attributeValueToJSON)
-          ])
-        }))
-      }
-      await new Promise(resolve => setTimeout(resolve, this.getRecordsInterval))
-    }
-  }
-
-  SymbolUpdateShards = Symbol('UpdateShards')
-
-  /**
    * @name [Symbol.asyncIterator]
    *
    * @docs
    * ```coffeescript [specscript]
+   * type DynamoDBJSONObject = Object<
+   *   { S: string }
+   *   |{ N: number }
+   *   |{ B: Buffer }
+   *   |{ L: Array<DynamoDBJSONObject> }
+   *   |{ M: Object<DynamoDBJSONObject> }
+   * >
+   *
    * stream[Symbol.asyncIterator]() -> asyncIterator AsyncIterator<Record {
    *   eventID,
    *   eventName: 'INSERT'|'MODIFY'|'REMOVE',
@@ -333,29 +439,33 @@ class DynamoDBStream {
    * ```
    */
   async * [Symbol.asyncIterator]() {
-    let shards = await pipe(this._getStreams(), [
-      flatMap(Stream => this._getShards(Stream)),
-      map(assign({ ShardIteratorType: this.shardIteratorType })),
+    let shards = await pipe(dynamoDBStreamGetStreamsIterator.call(this), [
+      flatMap(Stream => dynamoDBStreamGetShardsIterator.call(this, {
+        StreamArn: Stream.StreamArn,
+      })),
       transform(Transducer.passthrough, []),
     ])
 
     let muxAsyncIterator = Mux.race([
-      ...shards.map(Shard => this._getRecords(Shard)),
+      ...shards.map(Shard => dynamoDBStreamGetRecordsIterator.call(this, {
+        ShardId: Shard.ShardId,
+        StreamArn: Shard.StreamArn,
+      })),
       (async function* UpdateShardsGenerator() {
         while (true) {
-          await new Promise(resolve => {
-            setTimeout(resolve, this.shardUpdatePeriod)
-          })
-          yield this.SymbolUpdateShards
+          await sleep(this.ShardUpdatePeriod)
+          yield SymbolUpdateShards
         }
       }).call(this),
     ])
 
     while (!this.closed) {
       const { value, done } = await muxAsyncIterator.next()
-      if (value == this.SymbolUpdateShards) {
-        const latestShards = await pipe(this._getStreams(), [
-          flatMap(Stream => this._getShards(Stream)),
+      if (value == SymbolUpdateShards) {
+        const latestShards = await pipe(dynamoDBStreamGetStreamsIterator.call(this), [
+          flatMap(Stream => dynamoDBStreamGetShardsIterator.call(this, {
+            StreamArn: Stream.StreamArn,
+          })),
           transform(Transducer.passthrough, []),
         ])
         const newShards = pipe(shards, [
@@ -369,7 +479,10 @@ class DynamoDBStream {
         shards = latestShards
         if (newShards.length > 0) {
           muxAsyncIterator = Mux.race([
-            ...newShards.map(Shard => this._getRecords(Shard)),
+            ...newShards.map(Shard => dynamoDBStreamGetRecordsIterator.call(this, {
+              ShardId: Shard.ShardId,
+              StreamArn: Shard.StreamArn,
+            })),
             muxAsyncIterator,
           ])
         }
