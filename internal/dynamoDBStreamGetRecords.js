@@ -1,5 +1,6 @@
 const Readable = require('../Readable')
 const AwsError = require('./AwsError')
+const DynamoDBAttributeValueJSON = require('./DynamoDBAttributeValueJSON')
 
 /**
  * @name dynamoDBStreamGetRecords
@@ -52,6 +53,27 @@ async function dynamoDBStreamGetRecords(options) {
 
   if (response.ok) {
     const data = await Readable.JSON(response)
+
+    if (this.JSON) {
+      data.Records.forEach(Record => {
+        Record.dynamodb.KeysJSON = pipe(Record, [
+          get('dynamodb.Keys', undefined),
+          map(DynamoDBAttributeValueJSON),
+        ])
+        Record.dynamodb.OldImageJSON = pipe(Record, [
+          get('dynamodb.OldImage', undefined),
+          map(DynamoDBAttributeValueJSON),
+        ])
+        Record.dynamodb.NewImageJSON = pipe(Record, [
+          get('dynamodb.NewImage', undefined),
+          map(DynamoDBAttributeValueJSON),
+        ])
+        delete Record.dynamodb.Keys
+        delete Record.dynamodb.OldImage
+        delete Record.dynamodb.NewImage
+      })
+    }
+
     return data
   }
 

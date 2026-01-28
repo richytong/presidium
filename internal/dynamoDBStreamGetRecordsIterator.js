@@ -56,14 +56,6 @@ async function* dynamoDBStreamGetRecordsIterator(options) {
   yield* getRecordsResponse.Records.map(assign({
     Table: this.table,
     ShardId: options.ShardId,
-    OldImageJSON: pipe([
-      get('dynamodb.OldImage', undefined),
-      map(DynamoDBAttributeValueJSON),
-    ]),
-    NewImageJSON: pipe([
-      get('dynamodb.NewImage', undefined),
-      map(DynamoDBAttributeValueJSON),
-    ]),
   }))
 
   while (!this.closed && getRecordsResponse.NextShardIterator != null) {
@@ -77,14 +69,6 @@ async function* dynamoDBStreamGetRecordsIterator(options) {
     yield* getRecordsResponse.Records.map(assign({
       Table: this.table,
       ShardId: options.ShardId,
-      OldImageJSON: pipe([
-        get('dynamodb.OldImage', undefined),
-        map(DynamoDBAttributeValueJSON),
-      ]),
-      NewImageJSON: pipe([
-        get('dynamodb.NewImage', undefined),
-        map(DynamoDBAttributeValueJSON),
-      ]),
     }))
   }
 }

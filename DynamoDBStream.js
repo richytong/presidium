@@ -49,6 +49,7 @@ class DynamoDBStream {
     this.GetRecordsInterval = options.GetRecordsInterval ?? 1000
     this.ShardUpdatePeriod = options.ShardUpdatePeriod ?? 15000
     this.ListStreamsLimit = options.ListStreamsLimit ?? 100
+    this.JSON = options.JSON ?? false
 
     this.accessKeyId = options.accessKeyId ?? ''
     this.secretAccessKey = options.secretAccessKey ?? ''
