@@ -3,477 +3,511 @@ const assert = require('assert')
 const Test = require('thunk-test')
 const Docker = require('./Docker')
 const resolvePath = require('./internal/resolvePath')
+const Readable = require('./Readable')
 
-const test = Test.all([
-  Test('Docker - prune', Docker)
-  .case(async docker => {
-    {
-      const response = await docker.pruneContainers()
-      assert.equal(response.status, 200)
-    }
-    {
-      const response = await docker.pruneVolumes()
-      assert.equal(response.status, 200)
-    }
-    {
-      const response = await docker.pruneImages()
-      assert.equal(response.status, 200)
-    }
-    {
-      const response = await docker.pruneNetworks()
-      assert.equal(response.status, 200)
-    }
-  }),
+const test1 = Test('Docker - prune', async function integration() {
+  const docker = new Docker()
 
-  Test('Docker - auth', Docker)
-  .case(async docker => {
-    const response = await docker.auth({
-      username: 'admin',
-      password: 'password',
-      email: 'hey@example.com',
-      serveraddress: 'localhost:5000',
-    })
-    assert.equal(response.status, 200)
-    const body = await pipe(response, [
-      reduce((a, b) => a + b, ''),
-      JSON.parse,
-    ])
-    this.identitytoken = get('IdentityToken')(body)
-    assert.equal(this.identitytoken, '')
-  }),
+  await docker.pruneContainers()
+  await docker.pruneVolumes()
+  await docker.pruneImages()
+  await docker.pruneNetworks()
 
-  Test('Docker - image', Docker)
-  .case(async function (docker) {
-    { // pull node-15:alpine
-      const response = await docker.pullImage('node:15-alpine')
-      assert.equal(response.status, 200)
-      response.pipe(process.stdout)
-      await new Promise(resolve => response.on('end', resolve))
-    }
+  {
+    const data = await docker.pruneContainers()
+    assert.equal(data.ContainersDeleted.length, 0)
+    assert.equal(data.SpaceReclaimed, 0)
+  }
 
-    {
-      const response = await docker.buildImage('presidium-test:ayo', resolvePath(__dirname), {
-        archive: {
-          Dockerfile: `
+  {
+    const data = await docker.pruneVolumes()
+    assert.equal(data.VolumesDeleted.length, 0)
+    assert.equal(data.SpaceReclaimed, 0)
+  }
+
+  {
+    const data = await docker.pruneImages()
+    assert.equal(data.ImagesDeleted.length, 0)
+    assert.equal(data.SpaceReclaimed, 0)
+  }
+
+  {
+    const data = await docker.pruneNetworks()
+    assert.equal(data.NetworksDeleted.length, 0)
+  }
+
+}).case()
+
+const test2 = new Test('Docker - auth', async function integration() {
+  const docker = new Docker()
+
+  const data = await docker.auth({
+    username: 'admin',
+    password: 'password',
+    email: 'test@example.com',
+    serveraddress: 'localhost:5000',
+  })
+  assert.equal(typeof data.Status, 'string')
+  assert.equal(typeof data.IdentityToken, 'string')
+}).case()
+
+const test3 = new Test('Docker - image', async function integration() {
+  const docker = new Docker()
+
+  await docker.removeImage('presidium-test:test').catch(() => {})
+  await docker.removeImage('localhost:5000/presidium-test:test').catch(() => {})
+
+  { // pull node-15:alpine
+    const dataStream = await docker.pullImage('node:15-alpine')
+    dataStream.pipe(process.stdout)
+    await new Promise(resolve => dataStream.on('end', resolve))
+  }
+
+  {
+    const dataStream = await docker.buildImage('presidium-test:test', resolvePath(__dirname), {
+      archive: {
+        Dockerfile: `
 FROM node:15-alpine
 WORKDIR /opt
 COPY . .
 EXPOSE 8888`,
-        },
-        platform: 'linux/x86_64',
-      })
-      assert.equal(response.status, 200)
-      response.pipe(process.stdout)
-      await new Promise(resolve => {
-        response.on('end', resolve)
-      })
-    }
-    {
-      const response = await docker.listImages()
-      assert.equal(response.status, 200)
-      const body = await response.json()
-      assert(body.length > 1)
-      this.initialBodyLength = body.length
-    }
-    {
-      const response = await docker.tagImage('presidium-test:ayo', {
-        tag: 'ayo',
-        repo: 'localhost:5000/presidium-test',
-      })
-      response.pipe(process.stdout)
-      await new Promise(resolve => {
-        response.on('end', resolve)
-      })
-    }
-    {
-      const response = await docker.pushImage('presidium-test:ayo', 'localhost:5000', {
-        identitytoken: this.identitytoken,
-      })
-      response.pipe(process.stdout)
-      await new Promise(resolve => {
-        response.on('end', resolve)
-      })
-    }
-    {
-      const response = await docker.inspectImage('localhost:5000/presidium-test:ayo')
-      assert.equal(response.status, 200)
-    }
-    {
-      const responses = await Promise.all([
-        docker.removeImage('presidium-test:ayo'),
-        docker.removeImage('localhost:5000/presidium-test:ayo'),
-      ])
-      for (const response of responses) {
-        const response = await docker.removeImage('presidium-test:ayo')
-        assert(response.status == 200 || response.status == 404)
-      }
-    }
-  }),
+      },
+      platform: 'linux/x86_64',
+    })
+    dataStream.pipe(process.stdout)
+    await new Promise(resolve => {
+      dataStream.on('end', resolve)
+    })
+  }
 
-  Test('Docker - container', Docker)
-  .case(async function (docker) {
-    {
-      const createResponse = await docker.createContainer({
-        name: 'test-alpine-3',
-        image: 'node:15-alpine',
-        cmd: ['node', '-e', 'console.log(\'heyy\')'],
-        rm: true,
-      })
-      assert(createResponse.ok)
-      const containerId = (await createResponse.json()).Id
-      const attachResponse = await docker.attachContainer(containerId),
-        startResponse = await docker.startContainer(containerId)
-      assert(startResponse.ok)
-      assert(attachResponse.ok)
+  {
+    const data = await docker.listImages()
+    assert(data.length >= 2)
+    for (const imageData of data) {
+      assert.equal(typeof imageData.Id, 'string')
+      assert.equal(typeof imageData.ParentId, 'string')
+      assert(['string', 'number'].includes(typeof imageData.Created))
+      assert.equal(typeof imageData.Size, 'number')
+      assert.equal(typeof imageData.SharedSize, 'number')
+    }
+  }
 
-      const body = await attachResponse.buffer()
-      assert.equal(body.constructor, Buffer)
-      assert.strictEqual(body[0], 1) // stdout
-      assert.strictEqual(body[1], 0) // empty
-      assert.strictEqual(body[2], 0) // empty
-      assert.strictEqual(body[3], 0) // empty
-      assert.strictEqual(body[4], 0) // SIZE1
-      assert.strictEqual(body[5], 0) // SIZE2
-      assert.strictEqual(body[6], 0) // SIZE3
-      assert.strictEqual(body[7], 5) // SIZE4
-      assert.strictEqual(body.slice(8).toString(), 'heyy\n')
+  {
+    const data = await docker.tagImage('presidium-test:test', {
+      tag: 'test',
+      repo: 'localhost:5000/presidium-test',
+    })
+    assert.equal(Object.keys(data).length, 0)
+  }
 
-      this.removedContainerId = containerId
+  {
+    const dataStream = await docker.pushImage('presidium-test:test', 'localhost:5000', {
+      identitytoken: this.identitytoken,
+    })
+    dataStream.pipe(process.stdout)
+    await new Promise(resolve => {
+      dataStream.on('end', resolve)
+    })
+  }
+
+  {
+    const data = await docker.inspectImage('localhost:5000/presidium-test:test')
+    assert.equal(typeof data.Id, 'string')
+    assert(['string', 'number'].includes(typeof data.Created))
+    assert.equal(typeof data.Size, 'number')
+    assert.equal(typeof data.Architecture, 'string')
+    assert.equal(typeof data.Os, 'string')
+  }
+
+  {
+    const data1 = await docker.removeImage('presidium-test:test')
+    assert(data1.length  > 0)
+    for (const item of data1) {
+      assert(item.Untagged || item.Deleted)
     }
 
-    {
-      const createResponse = await docker.createContainer({
-        name: 'test-alpine-1',
-        image: 'node:15-alpine',
-        cmd: ['node', '-e', 'console.log(\'hey\')'],
-        workdir: '/opt/heyo',
-        expose: [22, 8888, '8889/udp'],
-        env: { HEY: 'hey' },
-        volume: ['/opt/my-volume'],
-        mounts: [{
-          source: 'other-volume',
-          target: '/opt/other-volume',
-          readonly: true,
-        }],
-        memory: 512e6, // bytes
-        restart: 'on-failure:5',
-
-        healthCmd: ['echo', 'ok'],
-        healthInterval: 1e9,
-        healthTimeout: 30e9,
-        healthRetries: 10,
-        healthStartPeriod: 5e9,
-
-        publish: {
-          23: 22, // hostPort -> containerPort[/protocol]
-          8888: '8000/tcp',
-        },
-        logDriver: 'json-file',
-        logDriverOptions: {
-          'max-file': '10',
-          'max-size': '100m',
-        },
-      })
-      assert(createResponse.ok)
-      const containerId = (await createResponse.json()).Id
-      this.containerId = containerId
-      const attachResponse = await docker.attachContainer(containerId),
-        startResponse = await docker.startContainer(containerId)
-      assert(startResponse.ok)
-      assert(attachResponse.ok)
-
-      const body = await attachResponse.buffer()
-      assert.equal(body.constructor, Buffer)
-      assert.strictEqual(body[0], 1) // stdout
-      assert.strictEqual(body[1], 0) // empty
-      assert.strictEqual(body[2], 0) // empty
-      assert.strictEqual(body[3], 0) // empty
-      assert.strictEqual(body[4], 0) // SIZE1
-      assert.strictEqual(body[5], 0) // SIZE2
-      assert.strictEqual(body[6], 0) // SIZE3
-      assert.strictEqual(body[7], 4) // SIZE4
-      assert.strictEqual(body.slice(8).toString(), 'hey\n')
+    const data2 = await docker.removeImage('localhost:5000/presidium-test:test')
+    assert(data2.length > 0)
+    for (const item of data2) {
+      assert(item.Untagged || item.Deleted)
     }
+  }
 
-    {
-      const createResponse = await docker.createContainer({
-        name: 'test-alpine-2',
-        image: 'node:15-alpine',
-        cmd: ['node', '-e', 'http.createServer((request, response) => response.end(\'hey0\')).listen(2999)'],
-        rm: true,
-      })
-      assert(createResponse.ok)
-      const containerId = (await createResponse.json()).Id
-      assert((await docker.startContainer(containerId)).ok)
-      const execResponse = await docker.execContainer(containerId, ['node', '-e', 'console.log(\'heyyy\')'])
-      const body = await execResponse.buffer()
-      assert.equal(body.constructor, Buffer)
-      assert.strictEqual(body[0], 1) // stdout
-      assert.strictEqual(body[1], 0) // empty
-      assert.strictEqual(body[2], 0) // empty
-      assert.strictEqual(body[3], 0) // empty
-      assert.strictEqual(body[4], 0) // SIZE1
-      assert.strictEqual(body[5], 0) // SIZE2
-      assert.strictEqual(body[6], 0) // SIZE3
-      assert.strictEqual(body[7], 6) // SIZE4
-      assert.strictEqual(body.slice(8).toString(), 'heyyy\n')
-      await docker.stopContainer(containerId, { time: 1 })
+}).case()
+
+const test4 = new Test('Docker - container', async function integration() {
+  const docker = new Docker()
+
+  {
+    const data = await docker.createContainer({
+      name: `test-alpine-3-${Date.now()}`,
+      image: 'node:15-alpine',
+      cmd: ['node', '-e', 'console.log(\'test0\')'],
+      rm: true,
+    })
+    assert.equal(typeof data.Id, 'string')
+    assert(Array.isArray(data.Warnings))
+    const containerId = data.Id
+    const attachDataStream = await docker.attachContainer(containerId)
+    const startMessage = await docker.startContainer(containerId)
+    assert.equal(typeof startMessage, 'string')
+
+    const body = await Readable.Buffer(attachDataStream)
+    assert.equal(body.constructor, Buffer)
+    assert.strictEqual(body[0], 1) // stdout
+    assert.strictEqual(body[1], 0) // empty
+    assert.strictEqual(body[2], 0) // empty
+    assert.strictEqual(body[3], 0) // empty
+    assert.strictEqual(body[4], 0) // SIZE1
+    assert.strictEqual(body[5], 0) // SIZE2
+    assert.strictEqual(body[6], 0) // SIZE3
+    assert.strictEqual(body[7], 6) // SIZE4
+    assert.strictEqual(body.slice(8).toString(), 'test0\n')
+
+    this.removedContainerId = containerId
+  }
+
+  {
+    const data = await docker.createContainer({
+      name: `test-alpine-1-${Date.now()}`,
+      image: 'node:15-alpine',
+      cmd: ['node', '-e', 'console.log(\'test\')'],
+      workdir: '/opt/test0',
+      expose: [22, 8888, '8889/udp'],
+      env: { TEST: 'test' },
+      volume: ['/opt/my-volume'],
+      mounts: [{
+        source: 'other-volume',
+        target: '/opt/other-volume',
+        readonly: true,
+      }],
+      memory: 512e6, // bytes
+      restart: 'on-failure:5',
+
+      healthCmd: ['echo', 'ok'],
+      healthInterval: 1e9,
+      healthTimeout: 30e9,
+      healthRetries: 10,
+      healthStartPeriod: 5e9,
+
+      publish: {
+        23: 22, // hostPort -> containerPort[/protocol]
+        8888: '8000/tcp',
+      },
+      logDriver: 'json-file',
+      logDriverOptions: {
+        'max-file': '10',
+        'max-size': '100m',
+      },
+    })
+    const containerId = data.Id
+    this.containerId = containerId
+    const attachDataStream = await docker.attachContainer(containerId)
+    const startMessage = await docker.startContainer(containerId)
+    assert.equal(typeof startMessage, 'string')
+
+    const body = await Readable.Buffer(attachDataStream)
+    assert.equal(body.constructor, Buffer)
+    assert.strictEqual(body[0], 1) // stdout
+    assert.strictEqual(body[1], 0) // empty
+    assert.strictEqual(body[2], 0) // empty
+    assert.strictEqual(body[3], 0) // empty
+    assert.strictEqual(body[4], 0) // SIZE1
+    assert.strictEqual(body[5], 0) // SIZE2
+    assert.strictEqual(body[6], 0) // SIZE3
+    assert.strictEqual(body[7], 5) // SIZE4
+    assert.strictEqual(body.slice(8).toString(), 'test\n')
+  }
+
+  {
+    const data = await docker.createContainer({
+      name: `test-alpine-2-${Date.now()}`,
+      image: 'node:15-alpine',
+      cmd: ['node', '-e', 'http.createServer((request, response) => response.end(\'hey0\')).listen(2999)'],
+      rm: true,
+    })
+    const containerId = data.Id
+    const startMessage = await docker.startContainer(containerId)
+    assert.equal(typeof startMessage, 'string')
+    const execDataStream = await docker.execContainer(containerId, ['node', '-e', 'console.log(\'test123\')'])
+    const body = await Readable.Buffer(execDataStream)
+    assert.equal(body.constructor, Buffer)
+    assert.strictEqual(body[0], 1) // stdout
+    assert.strictEqual(body[1], 0) // empty
+    assert.strictEqual(body[2], 0) // empty
+    assert.strictEqual(body[3], 0) // empty
+    assert.strictEqual(body[4], 0) // SIZE1
+    assert.strictEqual(body[5], 0) // SIZE2
+    assert.strictEqual(body[6], 0) // SIZE3
+    assert.strictEqual(body[7], 8) // SIZE4
+    assert.strictEqual(body.slice(8).toString(), 'test123\n')
+    await docker.stopContainer(containerId, { time: 1 })
+  }
+
+  {
+    const data = await docker.inspectContainer(this.containerId)
+    assert.equal(data.Config.Image, 'node:15-alpine')
+    assert.deepEqual(data.Config.Volumes, { '/opt/my-volume': {} })
+    assert.equal(data.Config.WorkingDir, '/opt/test0')
+    assert.deepEqual(data.Config.ExposedPorts, { '22/tcp': {}, '8888/tcp': {}, '8889/udp': {} })
+    assert.equal(data.HostConfig.Memory, 512e6)
+    assert.deepEqual(data.HostConfig.PortBindings, {
+      '22/tcp': [{ HostIp: '', HostPort: '23' }],
+      '8000/tcp': [{ HostIp: '', HostPort: '8888' }]
+    })
+    assert.deepEqual(data.HostConfig.LogConfig, {
+      Type: 'json-file',
+      Config: {
+        'max-file': '10',
+        'max-size': '100m',
+      },
+    })
+    assert.deepEqual(data.Config.Healthcheck, {
+      Test: ['CMD', 'echo', 'ok'],
+      Interval: 1000000000,
+      Timeout: 30000000000,
+      StartPeriod: 5000000000,
+      Retries: 10,
+    })
+    assert.deepEqual(data.HostConfig.Mounts, [{
+      Type: 'volume',
+      Source: 'other-volume',
+      Target: '/opt/other-volume',
+      ReadOnly: true
+    }])
+  }
+
+  {
+    const data = await docker.listContainers()
+    assert(data.length > 0)
+    assert(!data.map(get('Id')).includes(this.removedContainerId))
+    for (item of data) {
+      assert.equal(typeof item.Id, 'string')
+      assert.equal(typeof item.Image, 'string')
+      assert.equal(typeof item.State, 'string')
     }
+  }
 
-    {
-      const response = await docker.inspectContainer(this.containerId)
-      assert.equal(response.status, 200)
-      const body = await response.json()
-      assert.equal(body.Config.Image, 'node:15-alpine')
-      assert.deepEqual(body.Config.Volumes, { '/opt/my-volume': {} })
-      assert.equal(body.Config.WorkingDir, '/opt/heyo')
-      assert.deepEqual(body.Config.ExposedPorts, { '22/tcp': {}, '8888/tcp': {}, '8889/udp': {} })
-      assert.equal(body.HostConfig.Memory, 512e6)
-      assert.deepEqual(body.HostConfig.PortBindings, {
-        '22/tcp': [{ HostIp: '', HostPort: '23' }],
-        '8000/tcp': [{ HostIp: '', HostPort: '8888' }]
-      })
-      assert.deepEqual(body.HostConfig.LogConfig, {
-        Type: 'json-file',
-        Config: {
-          'max-file': '10',
-          'max-size': '100m',
-        },
-      })
-      assert.deepEqual(body.Config.Healthcheck, {
-        Test: ['CMD', 'echo', 'ok'],
-        Interval: 1000000000,
-        Timeout: 30000000000,
-        StartPeriod: 5000000000,
-        Retries: 10,
-      })
-      assert.deepEqual(body.HostConfig.Mounts, [{
-        Type: 'volume',
-        Source: 'other-volume',
-        Target: '/opt/other-volume',
-        ReadOnly: true
-      }])
+}).case()
+
+const test5 = new Test('Docker - swarm', async function integration() {
+  const docker = new Docker()
+
+  await docker.leaveSwarm({ force: true }).catch(() => {})
+
+  { // initSwarm
+    const nodeId = await docker.initSwarm('[::1]:2377')
+    assert.equal(typeof nodeId, 'string')
+  }
+
+  { // listNodes
+    const nodes = await docker.listNodes()
+    assert.equal(nodes.length, 1) // just this computer
+    this.nodeId = nodes[0].ID
+  }
+
+  // attempt deleteNode
+  await assert.rejects(
+    docker.deleteNode(this.nodeId),
+    error => {
+      assert(error instanceof Error)
+      assert.equal(error.code, 400)
+      return true
+    },
+  )
+
+  { // inspectSwarm
+    const data = await docker.inspectSwarm()
+    assert.equal(typeof data.JoinTokens.Worker, 'string')
+    assert.equal(typeof data.JoinTokens.Manager, 'string')
+    this.managerJoinToken = data.JoinTokens.Manager
+    this.workerJoinToken = data.JoinTokens.Worker
+  }
+
+  { // createNetwork
+    const data1 = await docker.createNetwork({
+      name: 'my-network',
+      driver: 'overlay',
+      subnet: '10.11.0.0/20',
+      gateway: '10.11.0.1',
+    })
+    assert.equal(typeof data1.Id, 'string')
+
+    const data2 = await docker.createNetwork({
+      name: 'my-other-network',
+      driver: 'overlay',
+    })
+    assert.equal(typeof data2.Id, 'string')
+  }
+
+  { // inspect my-network
+    const data = await docker.inspectNetwork('my-network')
+    assert.equal(typeof data.Id, 'string')
+    assert.equal(data.Scope, 'swarm')
+  }
+
+  { // create a service
+    const data1 = await docker.createService('service1', {
+      image: 'node:15-alpine',
+      labels: { foo: 'bar' },
+      replicas: 2,
+      cmd: ['node', '-e', 'http.createServer((request, response) => response.end(\'service1\')).listen(3000)'],
+      workdir: '/opt/test0',
+      env: { TEST: 'test' },
+      mounts: [{
+        source: 'other-volume',
+        target: '/opt/other-volume',
+        readonly: true,
+      }],
+      memory: 512e6, // bytes
+      cpus: 2,
+      gpus: 'all',
+      restart: 'on-failure:5',
+
+      healthCmd: ['wget', '--no-verbose', '--tries=1', '--spider', 'localhost:3000'],
+      healthInterval: 1e9,
+      healthTimeout: 30e9,
+      healthRetries: 10,
+      healthStartPeriod: 5e9,
+
+      publish: {
+        // 23: 22, // hostPort -> containerPort[/protocol]
+        8080: 3000,
+      },
+
+      logDriver: 'json-file',
+      logDriverOptions: {
+        'max-file': '10',
+        'max-size': '100m',
+      },
+      network: 'my-network',
+    })
+    const serviceId = data1.ID
+
+    const data2 = await docker.inspectService(serviceId)
+    assert.equal(data2.Spec.Labels.foo, 'bar')
+    assert.equal(data2.Spec.TaskTemplate.Resources.Reservations.NanoCPUs, 2000000000)
+    assert.equal(data2.Spec.TaskTemplate.Resources.Reservations.MemoryBytes, 512000000)
+
+    this.serviceId1 = serviceId
+
+  }
+
+  { // create another service
+    const data1 = await docker.createService('service2', {
+      image: 'node:15-alpine',
+      replicas: 'global',
+      cmd: ['node', '-e', 'http.createServer((request, response) => response.end(\'service2\')).listen(3001)'],
+      workdir: '/opt/test0',
+      env: { TEST: 'test' },
+      mounts: [{
+        source: 'other-volume',
+        target: '/opt/other-volume',
+        readonly: true,
+      }],
+      restart: 'on-failure',
+      publish: { 8081: 3001 },
+
+      healthCmd: ['wget', '--no-verbose', '--tries=1', '--spider', 'localhost:3001'],
+    })
+    const serviceId = data1.ID
+
+    const data2 = await docker.inspectService(serviceId)
+    assert.equal(Object.keys(data2.Spec.TaskTemplate.Resources.Reservations), 0)
+
+    this.serviceId2 = serviceId
+  }
+
+  { // updateService
+    // update resources
+    // TODO
+  }
+
+  { // listServices
+    const data = await docker.listServices()
+    assert.equal(data.length, 2)
+    const serviceIds = data.map(get('ID'))
+    assert(serviceIds.includes(this.serviceId1))
+    assert(serviceIds.includes(this.serviceId2))
+  }
+
+  { // listTasks
+    const data = await docker.listTasks()
+    assert.equal(data.length, 3) // 2 for service1, 1 for service2 (global)
+    for (const item of data) {
+      assert.equal(typeof item.ID, 'string')
+      assert.equal(typeof item.Version, 'object')
+      assert.equal(typeof item.Spec, 'object')
+      assert.equal(typeof item.ServiceID, 'string')
+      assert.equal(typeof item.Status, 'object')
+      assert.equal(typeof item.DesiredState, 'string')
     }
+  }
 
-    {
-      const containersResponse = await docker.listContainers()
-      assert.equal(containersResponse.status, 200)
-      const body = await containersResponse.json()
-      assert(!body.map(get('Id')).includes(this.removedContainerId))
+  { // listTasks filter
+    const data = await docker.listTasks({ desiredState: 'accepted' })
+    assert.equal(data.length, 0)
+  }
+
+  { // listTasks filter
+    const data = await docker.listTasks({ service: 'service2' })
+    assert.equal(data.length, 1)
+    assert.equal(data[0].ServiceID, this.serviceId2)
+  }
+
+  { // deleteService
+    const message = await docker.deleteService(this.serviceId1)
+    assert.equal(typeof message, 'string')
+  }
+
+  { // listServices after deleteService
+    const data = await docker.listServices()
+    assert.equal(data.length, 1)
+  }
+
+  // join own swarm
+  await assert.rejects(
+    docker.joinSwarm('[::1]:2377', {
+      RemoteAddrs: ['[::1]:2377'],
+      JoinToken: this.managerJoinToken,
+    }),
+    error => {
+      assert(error instanceof Error)
+      assert.equal(error.code, 503)
+      return true
+    },
+  )
+
+  // leaveSwarm without forcing
+  await assert.rejects(
+    docker.leaveSwarm(),
+    error => {
+      assert(error instanceof Error)
+      assert.equal(error.code, 503)
+      return true
     }
-  }),
+  )
 
-  Test('Docker - swarm and service', Docker)
-  .case(async function (docker) {
-    { // initial leaveSwarm
-      const response = await docker.leaveSwarm({ force: true })
-      assert([200, 503].includes(response.status))
-    }
+  { // delete networks
+    const message1 = await docker.deleteNetwork('my-network')
+    assert.equal(typeof message1, 'string')
+    const message2 = await docker.deleteNetwork('my-other-network')
+    assert.equal(typeof message2, 'string')
+  }
 
-    { // initSwarm
-      const response = await docker.initSwarm('[::1]:2377')
-      assert.equal(response.status, 200)
-    }
+  { // force leaveSwarm
+    const message = await docker.leaveSwarm({ force: true })
+    assert.equal(typeof message, 'string')
+  }
 
-    { // listNodes
-      const response = await docker.listNodes()
-      assert.equal(response.status, 200)
-      const nodes = await response.json()
-      assert.equal(nodes.length, 1) // just this computer
-      this.nodeId = nodes[0].ID
-    }
+}).case()
 
-    { // attempt deleteNode
-      const response = await docker.deleteNode(this.nodeId)
-      assert.equal(response.status, 400)
-      console.log(await response.text())
-    }
-
-    { // inspectSwarm
-      const response = await docker.inspectSwarm()
-      assert.equal(response.status, 200)
-      const body = await response.json()
-      assert.equal(typeof body.JoinTokens.Worker, 'string')
-      assert.equal(typeof body.JoinTokens.Manager, 'string')
-      this.workerJoinToken = body.JoinTokens.Worker
-    }
-
-    { // create some networks
-      const response = await docker.createNetwork({
-        name: 'my-network',
-        driver: 'overlay',
-        subnet: '10.11.0.0/20',
-        gateway: '10.11.0.1',
-      })
-      assert.equal(response.status, 201)
-
-      const response2 = await docker.createNetwork({
-        name: 'my-other-network',
-        driver: 'overlay',
-      })
-      assert.equal(response2.status, 201)
-    }
-
-    { // inspect my-network
-      const response = await docker.inspectNetwork('my-network')
-      const network = await response.json()
-      assert.equal(network.IPAM.Config[0].Subnet, '10.11.0.0/20')
-    }
-
-    { // create a service
-      const response = await docker.createService('hey1', {
-        image: 'node:15-alpine',
-        labels: { foo: 'bar' },
-        replicas: 2,
-        cmd: ['node', '-e', 'http.createServer((request, response) => response.end(\'hey1\')).listen(3000)'],
-        workdir: '/opt/heyo',
-        env: { HEY: 'hey' },
-        mounts: [{
-          source: 'other-volume',
-          target: '/opt/other-volume',
-          readonly: true,
-        }],
-        memory: 512e6, // bytes
-        cpus: 2,
-        gpus: 'all',
-        restart: 'on-failure:5',
-
-        healthCmd: ['wget', '--no-verbose', '--tries=1', '--spider', 'localhost:3000'],
-        healthInterval: 1e9,
-        healthTimeout: 30e9,
-        healthRetries: 10,
-        healthStartPeriod: 5e9,
-
-        publish: {
-          // 23: 22, // hostPort -> containerPort[/protocol]
-          8080: 3000,
-        },
-
-        logDriver: 'json-file',
-        logDriverOptions: {
-          'max-file': '10',
-          'max-size': '100m',
-        },
-        network: 'my-network',
-      })
-      assert.equal(response.status, 201)
-      const body = await response.json()
-      const serviceId = body.ID
-
-      await docker.inspectService(serviceId).then(async response => {
-        const data = await response.json()
-        assert.equal(data.Spec.Labels.foo, 'bar')
-        assert.equal(data.Spec.TaskTemplate.Resources.Reservations.NanoCPUs, 2000000000)
-        assert.equal(data.Spec.TaskTemplate.Resources.Reservations.MemoryBytes, 512000000)
-        assert.equal(
-          data.Spec.TaskTemplate.Resources.Reservations.GenericResources[0].DiscreteResourceSpec.Kind,
-          'gpu',
-        )
-      })
-
-      this.serviceId1 = serviceId
-
-    }
-
-    { // create another service
-      const response = await docker.createService('hey2', {
-        image: 'node:15-alpine',
-        replicas: 'global',
-        cmd: ['node', '-e', 'http.createServer((request, response) => response.end(\'hey2\')).listen(3001)'],
-        workdir: '/opt/heyo',
-        env: { HEY: 'hey' },
-        mounts: [{
-          source: 'other-volume',
-          target: '/opt/other-volume',
-          readonly: true,
-        }],
-        restart: 'on-failure',
-        publish: { 8081: 3001 },
-
-        healthCmd: ['wget', '--no-verbose', '--tries=1', '--spider', 'localhost:3001'],
-      })
-      assert.equal(response.status, 201)
-      const body = await response.json()
-      const serviceId = body.ID
-
-      await docker.inspectService(serviceId).then(async response => {
-        const data = await response.json()
-        assert.equal(Object.keys(data.Spec.TaskTemplate.Resources.Reservations), 0)
-      })
-    }
-
-    { // listServices
-      const response = await docker.listServices()
-      assert.equal(response.status, 200)
-      const body = await response.json()
-      assert.equal(body.length, 2)
-    }
-
-    { // listTasks
-      const response = await docker.listTasks()
-      const body = await response.json()
-      assert.equal(body.length, 3) // 2 for hey1, 1 for hey2 (global)
-    }
-
-    { // listTasks filter
-      const response = await docker.listTasks({ desiredState: 'accepted' })
-      const body = await response.json()
-      assert.equal(body.length, 0)
-    }
-
-    { // listTasks filter
-      const response = await docker.listTasks({ service: 'hey2' })
-      const body = await response.json()
-      assert.equal(body.length, 1)
-    }
-
-    { // deleteService
-      const response = await docker.deleteService(this.serviceId1)
-      assert.equal(response.status, 200)
-    }
-
-    { // listServices again
-      const response = await docker.listServices()
-      assert.equal(response.status, 200)
-      const body = await response.json()
-      assert.equal(body.length, 1)
-    }
-
-    { // leaveSwarm without forcing
-      const response = await docker.leaveSwarm()
-      assert.equal(response.status, 503)
-      assert((await response.json()).message.startsWith('You are attempting to leave'))
-    }
-
-    { // force leaveSwarm
-      const response = await docker.leaveSwarm({ force: true })
-      assert.equal(response.status, 200)
-    }
-
-    { // delete the network
-      const response = await docker.deleteNetwork('my-network')
-      console.log(await response.json())
-    }
-
-    await Promise.all([ // TODO figure out a real test for join. Checking for the 503 is ok but is both slow and not a 200
-      docker.joinSwarm('[::1]:2377', this.workerJoinToken, {
-        listenAddr: 'hey',
-      }).then(async response => {
-        console.log('hey1', await response.text())
-        // assert.equal(response.status, 503)
-        assert.equal(response.status, 400)
-      }),
-      docker.joinSwarm('[::1]:2377', this.workerJoinToken, {
-        advertiseAddr: '[::1]:2377',
-        listenAddr: 'hey',
-        dataPathAddr: '127.0.0.1',
-      }).then(async response => {
-        console.log('hey2', await response.text())
-        // assert.equal(response.status, 503)
-        assert.equal(response.status, 400)
-      }),
-    ])
-  }),
+const test = Test.all([
+  test1,
+  test2,
+  test3,
+  test4,
+  test5,
 ])
 
 if (process.argv[1] == __filename) {

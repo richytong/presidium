@@ -59,15 +59,19 @@ const PassThroughStream = stream.PassThrough
  * ```
  *
  * @description
- * Declarative syntax for Docker containers.
+ * presidium DockerContainer client.
  * ```javascript
- * new DockerContainer('node:15-alpine', {
+ * const myContainer = new DockerContainer('node:15-alpine', {
  *   name: 'my-container',
  *   env: { FOO: 'hey', BAR: 1 },
  *   cmd: ['node', '-e', 'console.log(process.env.FOO)'],
- * }).attach(async dockerRawStream => {
+ * })
+ *
+ * myContainer.attach(async dockerRawStream => {
  *   // main process stream
- * }).start()
+ * })
+ *
+ * myContainer.start()
  * ```
  */
 const DockerContainer = function (options) {

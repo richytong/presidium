@@ -90,13 +90,13 @@ const createUpdateServiceSpec = function (options) {
     ]))
   }
 
-  if (or([
+  if (or(options, [
     has('healthCmd'),
     has('healthInterval'),
     has('healthTimeout'),
     has('healthRetries'),
     has('healthStartPeriod'),
-  ])(options)) {
+  ])) {
     result.TaskTemplate.ContainerSpec.HealthCheck = {}
   }
   if (options.healthCmd != null) {
@@ -118,7 +118,7 @@ const createUpdateServiceSpec = function (options) {
       options.healthStartPeriod
   }
 
-  if (or([has('restart'), has('restartDelay')])(options)) {
+  if (or(options, [has('restart'), has('restartDelay')])) {
     result.TaskTemplate.RestartPolicy = {}
   }
   if (options.restart != null) {
@@ -156,7 +156,7 @@ const createUpdateServiceSpec = function (options) {
       },
     })
   }
-  if (or([has('logDriver'), has('logDriverOptions')])(options)) {
+  if (or(options, [has('logDriver'), has('logDriverOptions')])) {
     result.TaskTemplate.LogDriver = {}
   }
   if (options.logDriver != null) {
@@ -178,13 +178,13 @@ const createUpdateServiceSpec = function (options) {
     }
   }
 
-  if (or([
+  if (or(options, [
     has('updateParallelism'),
     has('updateDelay'),
     has('updateFailureAction'),
     has('updateMonitor'),
     has('updateMaxFailureRatio'),
-  ])(options)) {
+  ])) {
     result.UpdateConfig = {}
   }
   if (options.updateParallelism != null) {
@@ -203,13 +203,13 @@ const createUpdateServiceSpec = function (options) {
     result.UpdateConfig.MaxFailureRatio = options.updateMaxFailureRatio
   }
 
-  if (or([
+  if (or(options, [
     has('rollbackParallelism'),
     has('rollbackDelay'),
     has('rollbackFailureAction'),
     has('rollbackMonitor'),
     has('rollbackMaxFailureRatio'),
-  ])(options)) {
+  ])) {
     result.RollbackConfig = {}
   }
   if (options.rollbackParallelism != null) {
@@ -248,7 +248,7 @@ const createUpdateServiceSpec = function (options) {
           },
           TargetPort: pipe([get(1), split('/'), get(0), Number]),
           PublishedPort: pipe([get(0), split('/'), get(0), Number]),
-          PublishMode: always('ingress'),
+          PublishMode: 'ingress',
         }),
       ])),
     }
