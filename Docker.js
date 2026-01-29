@@ -57,7 +57,7 @@ class Docker {
         'Content-Type': 'application/json',
       },
       body: pipe(options, [
-        pick(['username', 'password', 'email', 'serveraddress']),
+        pick(['username', 'password', 'email', 'serveraddress', 'identitytoken']),
         JSON.stringify,
       ]),
     })
@@ -191,16 +191,13 @@ class Docker {
    * ```coffeescript [specscript]
    * module stream 'https://nodejs.org/api/stream.html'
    *
-   * buildImage(
-   *   image string,
-   *   path string,
-   *   options? {
-   *     ignore: Array<string>, // paths or names to ignore in build context tarball
-   *     archive: Object<[path string]: content string>, // object representation of the base archive for build context
-   *     archiveDockerfile: string, // path to Dockerfile in archive
-   *     platform: string, // e.g. linux/x86_64
-   *   },
-   * ) -> dataStream Promise<stream.Readable>
+   * buildImage(path string, options {
+   *   image: string,
+   *   ignore: Array<string>, // paths or names to ignore in build context tarball
+   *   archive: Object<[path string]: content string>, // object representation of the base archive for build context
+   *   archiveDockerfile: string, // path to Dockerfile in archive
+   *   platform: string, // e.g. linux/x86_64
+   * }) -> dataStream Promise<stream.Readable>
    * ```
    *
    * @description
@@ -249,7 +246,7 @@ class Docker {
    * References:
    * [Dockerfile docs](https://docs.docker.com/engine/reference/builder/)
    */
-  async buildImage(image, path, options = {}) {
+  async buildImage(path, options = {}) {
     const archive = new Archive(options.archive)
 
     const pack = archive.tar(path, {
@@ -260,7 +257,7 @@ class Docker {
 
     const response = await this.http.post(`/build?${querystring.stringify({
       dockerfile: options.archiveDockerfile ?? 'Dockerfile',
-      t: image,
+      t: options.image,
       forcerm: true,
       platform: options.platform ?? '',
     })}`, {
@@ -281,7 +278,9 @@ class Docker {
    * ```coffeescript [specscript]
    * module stream 'https://nodejs.org/api/stream.html'
    *
-   * pushImage(image string, repository string, options {
+   * pushImage(options {
+   *   image: string,
+   *   repository: string,
    *   authorization: {
    *     username: string,
    *     password: string,
@@ -296,7 +295,7 @@ class Docker {
    * @description
    * https://docs.docker.com/registry/deploying/
    */
-  async pushImage(image, repository, options = {}) {
+  async pushImage(options = {}) {
     const authOptions = pick(options, [
       'username',
       'password',
@@ -317,8 +316,8 @@ class Docker {
         Buffer.from(JSON.stringify(authOptions)).toString('base64')
     }
 
-    const [name, tag] = image.split(':')
-    const remoteImageName = `${repository}/${name}`
+    const [name, tag] = options.image.split(':')
+    const remoteImageName = `${options.repository}/${name}`
     const queryParams = `tag=${encodeURIComponent(tag)}`
 
     const response = await this.http.post(

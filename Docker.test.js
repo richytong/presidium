@@ -64,7 +64,8 @@ const test3 = new Test('Docker - image', async function integration() {
   }
 
   {
-    const dataStream = await docker.buildImage('presidium-test:test', resolvePath(__dirname), {
+    const dataStream = await docker.buildImage(__dirname, {
+      image: 'presidium-test:test',
       archive: {
         Dockerfile: `
 FROM node:15-alpine
@@ -101,7 +102,9 @@ EXPOSE 8888`,
   }
 
   {
-    const dataStream = await docker.pushImage('presidium-test:test', 'localhost:5000', {
+    const dataStream = await docker.pushImage({
+      image: 'presidium-test:test',
+      repository: 'localhost:5000',
       identitytoken: this.identitytoken,
     })
     dataStream.pipe(process.stdout)

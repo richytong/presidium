@@ -239,7 +239,8 @@ const Docker = require('presidium/Docker')
 
 const myImage = 'my-app:1.0.0'
 
-const buildStream = await docker.buildImage(myImage, __dirname, {
+const buildStream = await docker.buildImage(__dirname, {
+  image: myImage,
   ignore: ['.github', 'node_modules'],
   archive: {
     Dockerfile: `
@@ -259,7 +260,10 @@ CMD ["npm", "start"]
 buildStream.pipe(process.stdout)
 
 buildStream.on('end', () => {
-  const pushStream = await docker.pushImage(myImage, 'my-registry.io')
+  const pushStream = await docker.pushImage({
+    image: myImage,
+    repository: 'my-registry.io',
+  })
   pushStream.pipe(process.stdout)
 })
 ```
