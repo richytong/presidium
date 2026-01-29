@@ -52,7 +52,7 @@ const split = require('./split')
  * ```
  */
 const createUpdateServiceSpec = function (options) {
-  const result = omit(options.spec, []) // deep copy
+  const result = omit(options.Spec, []) // deep copy
   result.Name = options.serviceName
 
   if (options.labels != null) {

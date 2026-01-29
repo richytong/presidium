@@ -6,14 +6,14 @@ const test = new Test('createUpdateServiceSpec', createUpdateServiceSpec)
 
 .case({
   serviceName: 'my-service',
-  spec: {},
+  Spec: {},
 }, {
   Name: 'my-service',
 })
 
 .case({
   serviceName: 'my-service',
-  spec: {},
+  Spec: {},
   labels: { a: 1 },
 }, {
   Name: 'my-service',
@@ -22,7 +22,7 @@ const test = new Test('createUpdateServiceSpec', createUpdateServiceSpec)
 
 .case({
   serviceName: 'my-service',
-  spec: {
+  Spec: {
     TaskTemplate: {
       ContainerSpec: {},
     },
@@ -39,7 +39,7 @@ const test = new Test('createUpdateServiceSpec', createUpdateServiceSpec)
 
 .case({
   serviceName: 'my-service',
-  spec: {
+  Spec: {
     TaskTemplate: {
       ContainerSpec: {},
     },
@@ -56,7 +56,7 @@ const test = new Test('createUpdateServiceSpec', createUpdateServiceSpec)
 
 .case({
   serviceName: 'my-service',
-  spec: {
+  Spec: {
     TaskTemplate: {
       ContainerSpec: {},
     },
@@ -76,7 +76,7 @@ const test = new Test('createUpdateServiceSpec', createUpdateServiceSpec)
 
 .case({
   serviceName: 'my-service',
-  spec: {
+  Spec: {
     TaskTemplate: {
       ContainerSpec: {},
     },
@@ -93,7 +93,7 @@ const test = new Test('createUpdateServiceSpec', createUpdateServiceSpec)
 
 .case({
   serviceName: 'my-service',
-  spec: {
+  Spec: {
     TaskTemplate: {
       ContainerSpec: {},
     },
@@ -126,7 +126,7 @@ const test = new Test('createUpdateServiceSpec', createUpdateServiceSpec)
 
 .case({
   serviceName: 'my-service',
-  spec: {
+  Spec: {
     TaskTemplate: {
       ContainerSpec: {},
     },
@@ -159,7 +159,7 @@ const test = new Test('createUpdateServiceSpec', createUpdateServiceSpec)
 
 .case({
   serviceName: 'my-service',
-  spec: {
+  Spec: {
     TaskTemplate: {
       ContainerSpec: {},
     },
@@ -186,7 +186,7 @@ const test = new Test('createUpdateServiceSpec', createUpdateServiceSpec)
 
 .case({
   serviceName: 'my-service',
-  spec: {
+  Spec: {
     TaskTemplate: {},
   },
   restart: 'on-failure:5',
@@ -202,7 +202,7 @@ const test = new Test('createUpdateServiceSpec', createUpdateServiceSpec)
 
 .case({
   serviceName: 'my-service',
-  spec: {
+  Spec: {
     TaskTemplate: {},
   },
   restart: 'on-failure',
@@ -220,7 +220,7 @@ const test = new Test('createUpdateServiceSpec', createUpdateServiceSpec)
 
 .case({
   serviceName: 'my-service',
-  spec: {
+  Spec: {
     TaskTemplate: {},
   },
   memory: 512e6,
@@ -243,7 +243,7 @@ const test = new Test('createUpdateServiceSpec', createUpdateServiceSpec)
 
 .case({
   serviceName: 'my-service',
-  spec: {
+  Spec: {
     TaskTemplate: {},
   },
   gpus: 'all',
@@ -266,7 +266,7 @@ const test = new Test('createUpdateServiceSpec', createUpdateServiceSpec)
 
 .case({
   serviceName: 'my-service',
-  spec: {
+  Spec: {
     TaskTemplate: {},
   },
   logDriver: 'json-file',
@@ -289,18 +289,18 @@ const test = new Test('createUpdateServiceSpec', createUpdateServiceSpec)
 
 .case({
   serviceName: 'my-service',
-  spec: {
+  Spec: {
     TaskTemplate: {},
   },
   force: true,
-}, spec => {
-  assert.equal(spec.Name, 'my-service')
-  assert.equal(typeof spec.TaskTemplate.ForceUpdate, 'number')
+}, Spec => {
+  assert.equal(Spec.Name, 'my-service')
+  assert.equal(typeof Spec.TaskTemplate.ForceUpdate, 'number')
 })
 
 .case({
   serviceName: 'my-service',
-  spec: {},
+  Spec: {},
   replicas: 'global',
 }, {
   Name: 'my-service',
@@ -311,7 +311,7 @@ const test = new Test('createUpdateServiceSpec', createUpdateServiceSpec)
 
 .case({
   serviceName: 'my-service',
-  spec: {},
+  Spec: {},
   replicas: 3,
 }, {
   Name: 'my-service',
@@ -324,7 +324,7 @@ const test = new Test('createUpdateServiceSpec', createUpdateServiceSpec)
 
 .case({
   serviceName: 'my-service',
-  spec: {},
+  Spec: {},
   updateParallelism: 3,
   updateDelay: 2e9,
   updateFailureAction: 'continue',
@@ -343,7 +343,7 @@ const test = new Test('createUpdateServiceSpec', createUpdateServiceSpec)
 
 .case({
   serviceName: 'my-service',
-  spec: {},
+  Spec: {},
   rollbackParallelism: 3,
   rollbackDelay: 2e9,
   rollbackFailureAction: 'continue',
@@ -362,7 +362,7 @@ const test = new Test('createUpdateServiceSpec', createUpdateServiceSpec)
 
 .case({
   serviceName: 'my-service',
-  spec: {},
+  Spec: {},
   network: 'my-network',
 }, {
   Name: 'my-service',
@@ -375,7 +375,7 @@ const test = new Test('createUpdateServiceSpec', createUpdateServiceSpec)
 
 .case({
   serviceName: 'my-service',
-  spec: {},
+  Spec: {},
   publish: { 3000: 8080 },
 }, {
   Name: 'my-service',

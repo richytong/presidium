@@ -1063,7 +1063,6 @@ class Docker {
    * ```coffeescript [specscript]
    * updateService(service string, options {
    *   version: number, // current version of service
-   *   registryAuthFrom: 'spec'|'previous-spec', // where to look for auth if no authorization
    *   rollback: 'previous', // roll service back to previous version
    *   authorization: {
    *     username: string,
@@ -1112,21 +1111,25 @@ class Docker {
    *   labels: object,
    *
    *   force?: boolean,
-   * }) -> data Promise<{}>
+   * }) -> data Promise<{
+   *   Warnings: Array<string>,
+   * }>
    * ```
    */
   async updateService(service, options = {}) {
+    const serviceData = await this.inspectService(service)
+
     const updateServiceSpec = createUpdateServiceSpec({
-      ...options,
       serviceName: service,
+      Spec: serviceData.Spec,
+      ...options,
     })
 
     const response = await this.http.post(`/services/${service}/update?${
-      querystring.stringify(pick(options, [
-        'version',
-        'registryAuthFrom',
-        'rollback',
-      ]))
+      querystring.stringify({
+        version: serviceData.Version.Index,
+        ...pick(options, ['rollback']),
+      })
     }`, {
 
       body: JSON.stringify(updateServiceSpec),

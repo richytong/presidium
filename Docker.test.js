@@ -419,8 +419,15 @@ const test5 = new Test('Docker - swarm', async function integration() {
   }
 
   { // updateService
-    // update resources
-    // TODO
+    const data1 = await docker.updateService('service2', {
+      memory: 512e6, // bytes
+      cpus: 2,
+    })
+    assert.equal(data1.Warnings, null)
+
+    const data2 = await docker.inspectService(this.serviceId2)
+    assert.equal(data2.Spec.TaskTemplate.Resources.Reservations.NanoCPUs, 2000000000)
+    assert.equal(data2.Spec.TaskTemplate.Resources.Reservations.MemoryBytes, 512000000)
   }
 
   { // listServices
@@ -433,7 +440,7 @@ const test5 = new Test('Docker - swarm', async function integration() {
 
   { // listTasks
     const data = await docker.listTasks()
-    assert.equal(data.length, 3) // 2 for service1, 1 for service2 (global)
+    assert.equal(data.length, 4) // 2 for service1, 1 for service2 (global), 1 for service2 (update)
     for (const item of data) {
       assert.equal(typeof item.ID, 'string')
       assert.equal(typeof item.Version, 'object')
@@ -451,8 +458,9 @@ const test5 = new Test('Docker - swarm', async function integration() {
 
   { // listTasks filter
     const data = await docker.listTasks({ service: 'service2' })
-    assert.equal(data.length, 1)
+    assert.equal(data.length, 2)
     assert.equal(data[0].ServiceID, this.serviceId2)
+    assert.equal(data[1].ServiceID, this.serviceId2)
   }
 
   { // deleteService
