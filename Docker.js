@@ -206,7 +206,8 @@ class Docker {
    * ```javascript
    * const docker = new Docker()
    *
-   * await docker.buildImage('my-image', path string, {
+   * await docker.buildImage(path string, {
+   *   image: 'my-image',
    *   archive: {
    *     Dockerfile: `
    * FROM node:15-alpine
@@ -374,18 +375,19 @@ class Docker {
    * @synopsis
    * ```coffeescript [specscript]
    * tagImage(
-   *   image string,
-   *   options {
-   *     repo: string, // some_user/some_image
-   *     tag: string,
-   *   },
+   *   sourceImageTag string, # '<image>:<tag>'
+   *   targetImageTag string, # '<image>:<tag>'
    * ) -> data Promise<{}>
    * ```
    */
-  async tagImage(image, options = {}) {
-    const response = await this.http.post(`/images/${image}/tag?${
-      querystring.stringify(pick(options, ['repo', 'tag']))
-    }`)
+  // async tagImage(image, options = {}) {
+  async tagImage(sourceImageTag, targetImageTag) {
+    const targetImageTagParts = targetImageTag.split(':')
+    const tag = targetImageTagParts[targetImageTagParts.length - 1]
+    const repo = targetImageTagParts.slice(0, -1).join(':')
+    const response = await this.http.post(`
+/images/${sourceImageTag}/tag?${querystring.stringify({ repo, tag })}
+    `.trim())
     await handleDockerHTTPResponse(response, { text: true })
     return {}
   }

@@ -94,10 +94,10 @@ EXPOSE 8888`,
   }
 
   {
-    const data = await docker.tagImage('presidium-test:test', {
-      tag: 'test',
-      repo: 'localhost:5000/presidium-test',
-    })
+    const data = await docker.tagImage(
+      'presidium-test:test',
+      'localhost:5000/presidium-test:test'
+    )
     assert.equal(Object.keys(data).length, 0)
   }
 
