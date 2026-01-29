@@ -41,6 +41,7 @@ const createFilterExpression = require('./internal/createFilterExpression')
  *   secretAccessKey: string,
  *   region: string,
  *   endpoint: string,
+ *   BillingMode: 'PAY_PER_REQUEST'|'PROVISIONED',
  * }) -> table DynamoDBTable
  * ```
  *
