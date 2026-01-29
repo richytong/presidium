@@ -266,18 +266,18 @@ buildStream.on('end', () => {
 
 ## Run Docker Containers
 ```javascript
-const Docker = require('presidium/Docker')
+const DockerContainer = require('presidium/DockerContainer')
 
 const docker = new Docker()
 
-const container = await docker.createContainer({
+const container = new DockerContainer({
   image: 'node:15-alpine',
-  env: { FOO: 'example' },
+  env: { FOO: 'Example' },
   cmd: ['node', '-e', 'console.log(process.env.FOO)'],
   rm: true,
 })
 
-container.run().pipe(process.stdout) // example
+container.run().pipe(process.stdout) // Example
 ```
 
 ## Deploy Docker Swarm Services
