@@ -223,7 +223,7 @@ const test4 = new Test('Docker - container', async function integration() {
     const data = await docker.createContainer({
       name: `test-alpine-2-${Date.now()}`,
       image: 'node:15-alpine',
-      cmd: ['node', '-e', 'http.createServer((request, response) => response.end(\'hey0\')).listen(2999)'],
+      cmd: ['node', '-e', 'http.createServer((request, response) => response.end(\'x0\')).listen(2999)'],
       rm: true,
     })
     const containerId = data.Id
@@ -242,6 +242,26 @@ const test4 = new Test('Docker - container', async function integration() {
     assert.strictEqual(body[7], 8) // SIZE4
     assert.strictEqual(body.slice(8).toString(), 'test123\n')
     await docker.stopContainer(containerId, { time: 1 })
+  }
+
+  {
+    const runStream = await docker.runContainer({
+      name: `test-alpine-4-${Date.now()}`,
+      image: 'node:15-alpine',
+      cmd: ['node', '-e', 'console.log(\'x0\')'],
+      rm: true,
+    })
+    const body = await Readable.Buffer(runStream)
+    assert.equal(body.constructor, Buffer)
+    assert.strictEqual(body[0], 1) // stdout
+    assert.strictEqual(body[1], 0) // empty
+    assert.strictEqual(body[2], 0) // empty
+    assert.strictEqual(body[3], 0) // empty
+    assert.strictEqual(body[4], 0) // SIZE1
+    assert.strictEqual(body[5], 0) // SIZE2
+    assert.strictEqual(body[6], 0) // SIZE3
+    assert.strictEqual(body[7], 3) // SIZE4
+    assert.strictEqual(body.slice(8).toString(), 'x0\n')
   }
 
   {

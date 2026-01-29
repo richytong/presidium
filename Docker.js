@@ -419,7 +419,8 @@ class Docker {
    *
    * @synopsis
    * ```coffeescript [specscript]
-   * createContainer(name string, options? {
+   * createContainer(options {
+   *   name: string,
    *   image: string, // image to run in the container
    *   rm: boolean, // automatically remove the container when it exits
    *   restart: 'no'|'on-failure[:<max-retries>]'|'always'|'unless-stopped',
@@ -610,6 +611,58 @@ class Docker {
     }`)
     const dataStream = await handleDockerHTTPResponse(response, { stream: true })
     return dataStream
+  }
+
+  /**
+   * @name runContainer
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * module stream 'https://nodejs.org/api/stream.html'
+   *
+   * runContainer(options {
+   *   name: string,
+   *   image: string, // image to run in the container
+   *   rm: boolean, // automatically remove the container when it exits
+   *   restart: 'no'|'on-failure[:<max-retries>]'|'always'|'unless-stopped',
+   *   logDriver: 'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'none',
+   *   logDriverOptions: Object<string>,
+   *   publish: Array<string>, // '<hostPort>:<containerPort>[:"tcp"|"udp"|"sctp"]'
+   *   healthCmd: Array<string>, // healthcheck command. See description
+   *   healthInterval: 10e9|>1e6, // nanoseconds to wait between healthchecks; 0 means inherit
+   *   healthTimeout: 20e9|>1e6, // nanoseconds to wait before healthcheck fails
+   *   healthRetries: 5|number, // number of retries before unhealhty
+   *   healthStartPeriod: >=1e6, // nanoseconds to wait on container init before starting first healthcheck
+   *   memory: number, // memory limit in bytes
+   *   cpus: number, // number of cpus
+   *   gpus?: 'all', // expose gpus
+   *   mounts: Array<{
+   *     source: string, // name of volume
+   *     target: string, // mounted path inside container
+   *     readonly: boolean,
+   *     type?: string, // default volume
+   *   }>|Array<string>, // '<source>:<target>[:readonly]'
+   *
+   *   // Dockerfile defaults
+   *   cmd: Array<string|number>, // CMD
+   *   expose: Array<(port string)>, // EXPOSE
+   *   volume: Array<path string>, // VOLUME
+   *   workdir: path string, // WORKDIR
+   *   env: {
+   *     HOME: string,
+   *     HOSTNAME: string,
+   *     PATH: string, // $PATH
+   *     ...(moreEnvOptions Object<string>),
+   *   }, // ENV; environment variables exposed to container during run time
+   * }) -> dataStream Promise<stream.Readable>
+   * ```
+   */
+  async runContainer(options) {
+    const createData = await this.createContainer(options)
+    const containerId = createData.Id
+    const attachDataStream = await this.attachContainer(containerId)
+    await this.startContainer(containerId)
+    return attachDataStream
   }
 
   /**
