@@ -100,16 +100,9 @@ class S3Bucket {
     this.region = options.region ?? ''
     this.apiVersion = '2012-08-10'
 
-    if (options.endpoint) {
-      const endpointUrl = new URL(options.endpoint)
-      this.endpoint0 = endpointUrl.host
-      this.endpoint1 = endpointUrl.host
-      this.protocol = endpointUrl.protocol.replace(/:$/, '')
-    } else {
-      this.endpoint0 = `${this.name}.s3.amazonaws.com`
-      this.endpoint1 = `${this.name}.s3.${this.region}.amazonaws.com`
-      this.protocol = 'https'
-    }
+    this.endpoint0 = `${this.name}.s3.amazonaws.com`
+    this.endpoint1 = `${this.name}.s3.${this.region}.amazonaws.com`
+    this.protocol = 'https'
 
     this.http0 = new HTTP(`${this.protocol}://${this.endpoint0}`)
     this.http1 = new HTTP(`${this.protocol}://${this.endpoint1}`)
