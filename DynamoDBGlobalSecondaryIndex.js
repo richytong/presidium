@@ -85,14 +85,8 @@ class DynamoDBGlobalSecondaryIndex {
     this.region = options.region ?? ''
     this.apiVersion = '2012-08-10'
 
-    if (options.endpoint) {
-      const endpointUrl = new URL(options.endpoint)
-      this.endpoint = endpointUrl.host
-      this.protocol = endpointUrl.protocol.replace(/:$/, '')
-    } else {
-      this.endpoint = `dynamodb.${this.region}.amazonaws.com`
-      this.protocol = 'http'
-    }
+    this.endpoint = `dynamodb.${this.region}.amazonaws.com`
+    this.protocol = 'https'
 
     this.BillingMode = options.BillingMode ?? 'PAY_PER_REQUEST'
     if (this.BillingMode == 'PROVISIONED') {
