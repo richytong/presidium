@@ -14,57 +14,6 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    services:
-      dynamo:
-        image: amazon/dynamodb-local:1.15.0
-        ports:
-          - 8000:8000
-
-      registry:
-        image: registry:2.7
-        ports:
-          - 5000:5000
-        options: >-
-          --restart always
-          --name registry
-
-      mongo:
-        image: mongo:4.0.6
-        ports:
-          - 27017:27017
-
-      redis:
-        image: redis:6.0.9
-        ports:
-          - 6379:6379
-
-      elasticsearch:
-        image: docker.elastic.co/elasticsearch/elasticsearch:7.9.3
-        ports:
-          - 9200:9200
-        options: >-
-          -m "512m"
-          -e "discovery.type=single-node"
-          -e "ES_JAVA_OPTS=-Xms256m -Xmx256m"
-
-      gremlin:
-        image: tinkerpop/gremlin-server:3.4.4
-        ports:
-          - 8182:8182
-
-      minio:
-        image: minio/minio:edge-cicd
-        ports:
-          - 9000:9000
-        options: >-
-          -e "MINIO_ACCESS_KEY=minioadmin"
-          -e "MINIO_SECRET_KEY=minioadmin"
-
-      kinesis:
-        image: saidsef/aws-kinesis-local:latest
-        ports:
-          - 4567:4567
-
     strategy:
       matrix:
         node-version: [24.x]
