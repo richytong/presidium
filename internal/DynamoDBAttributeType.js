@@ -1,7 +1,7 @@
 /**
  * @name DynamoDBAttributeType
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * DynamoDBAttributeType(value string) -> 'S'
  * DynamoDBAttributeType(value number) -> 'N'

@@ -3,7 +3,7 @@ const nodePath = require('path')
 /**
  * @name pathJoin
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * pathJoin(parts ...string) -> string
  * ```

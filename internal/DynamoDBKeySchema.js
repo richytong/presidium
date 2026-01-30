@@ -3,7 +3,7 @@ const getFirstKey = require('./getFirstKey')
 /**
  * @name DynamoDBKeySchema
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * type DynamoAttributeType = 'S'|'N'|'B'|'string'|'number'|'binary'
  *

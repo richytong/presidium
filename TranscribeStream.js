@@ -56,7 +56,6 @@ const MINIMUM_MESSAGE_LENGTH = PRELUDE_LENGTH + CHECKSUM_LENGTH * 2
  * transcribeStream.sendAudioChunk(chunk Buffer) -> ()
  * ```
  *
- * @description
  * Interface for [Amazon TranscribeStreaming](https://docs.aws.amazon.com/transcribe/latest/dg/streaming.html)
  *
  * `languageCode` - `en-AU`, `en-GB`, `en-US`, `es-US`, `fr-CA`, `fr-FR`, `de-DE`, `ja-JP`, `ko-KR`, `pt-BR`, `zh-CN` or `it-IT`.
@@ -135,7 +134,6 @@ class TranscribeStream extends EventEmitter {
    * ) -> undefined
    * ```
    *
-   * @description
    * https://docs.aws.amazon.com/transcribe/latest/dg/event-stream.html
    * https://github.com/aws-samples/amazon-transcribe-comprehend-medical-twilio/blob/main/lib/transcribe-service.js
    */

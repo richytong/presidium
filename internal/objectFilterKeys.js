@@ -1,7 +1,7 @@
 /**
  * @name objectFilterKeys
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * objectFilterKeys(object Object, predicate function) -> filteredObject Object
  * ```

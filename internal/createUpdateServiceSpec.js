@@ -5,7 +5,7 @@ const split = require('./split')
 /**
  * @name createUpdateServiceSpec
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * createUpdateServiceSpec(options {
  *   image: string,

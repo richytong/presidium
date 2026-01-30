@@ -5,14 +5,13 @@ const resolvePath = require('./internal/resolvePath')
 /**
  * @name NpmToken
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * NpmToken(options {
  *   recurse: boolean,
  * }) -> Promise<npmToken string>
  * ```
  *
- * @description
  * Finds the npm token from `~/.npmrc`
  */
 

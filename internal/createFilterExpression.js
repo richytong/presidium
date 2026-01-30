@@ -5,7 +5,7 @@ const trim = value => value.trim()
 /**
  * @name createFilterExpression
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * createFilterExpression(options {
  *   filterExpressionStatements: Array<string>,

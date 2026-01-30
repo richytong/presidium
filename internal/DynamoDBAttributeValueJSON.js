@@ -4,7 +4,7 @@ const getFirstKey = require('./getFirstKey')
 /**
  * @name DynamoDBAttributeValueJSON
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * DynamoAttributeValue = {
  *   S: string,

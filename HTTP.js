@@ -6,7 +6,7 @@ const stream = require('stream')
 /**
  * @name HTTP
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * requestOptions {
  *   agent: http.Agent,
@@ -79,7 +79,7 @@ class HTTP {
   /**
    * @name request
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * request(options {
    *   hostname: string,

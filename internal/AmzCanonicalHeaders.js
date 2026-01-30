@@ -1,7 +1,7 @@
 /**
  * @name AmzCanonicalHeaders
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * AmzCanonicalHeaders(headers Object) -> canonicalHeaders string
  * ```

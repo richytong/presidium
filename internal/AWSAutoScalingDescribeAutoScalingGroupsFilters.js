@@ -6,7 +6,7 @@ const toArray = require('./toArray')
 /**
  * @name AWSAutoScalingDescribeAutoScalingGroupsFilters
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * import AutoScalingListGroupsDescribeFilterOptions
  *   from './AutoScalingListGroupsDescribeFilterOptions.ss'

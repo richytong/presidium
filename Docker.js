@@ -22,7 +22,7 @@ const handleDockerHTTPResponse = require('./internal/handleDockerHTTPResponse')
 /**
  * @name Docker
  *
- * @synopsis
+ * @docs
  * new Docker() -> Docker
  */
 class Docker {
@@ -38,7 +38,7 @@ class Docker {
   /**
    * @name auth
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * auth(options {
    *   username: string,
@@ -69,7 +69,7 @@ class Docker {
   /**
    * @name listImages
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * module DockerDocs 'https://docs.docker.com/reference/api/engine/version/v1.52/'
    *
@@ -97,7 +97,7 @@ class Docker {
   /**
    * @name listContainers
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * module DockerDocs 'https://docs.docker.com/reference/api/engine/version/v1.52/'
    *
@@ -139,7 +139,7 @@ class Docker {
   /**
    * @name pullImage
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * module stream 'https://nodejs.org/api/stream.html'
    *
@@ -187,7 +187,7 @@ class Docker {
   /**
    * @name buildImage
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * module stream 'https://nodejs.org/api/stream.html'
    *
@@ -200,7 +200,6 @@ class Docker {
    * }) -> dataStream Promise<stream.Readable>
    * ```
    *
-   * @description
    * Build a Docker Image.
    *
    * ```javascript
@@ -275,7 +274,7 @@ class Docker {
   /**
    * @name pushImage
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * module stream 'https://nodejs.org/api/stream.html'
    *
@@ -293,7 +292,6 @@ class Docker {
    * }) -> dataStream Promise<stream.Readable>
    * ```
    *
-   * @description
    * https://docs.docker.com/registry/deploying/
    */
   async pushImage(options = {}) {
@@ -333,7 +331,7 @@ class Docker {
   /**
    * @name inspectImage
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * module DockerDocs 'https://docs.docker.com/reference/api/engine/version/v1.52/'
    *
@@ -372,7 +370,7 @@ class Docker {
   /**
    * @name tagImage
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * tagImage(
    *   sourceImageTag string, # '<image>:<tag>'
@@ -395,7 +393,7 @@ class Docker {
   /**
    * @name removeImage
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * removeImage(image string, options? {
    *   force: boolean,
@@ -403,7 +401,6 @@ class Docker {
    * }) -> data Promise<Array<{ Untagged: string }|{ Deleted: string }>>
    * ```
    *
-   * @description
    * `image` is a docker image name or ID
    */
   async removeImage(image, options = {}) {
@@ -418,7 +415,7 @@ class Docker {
   /**
    * @name createContainer
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * createContainer(options {
    *   name: string,
@@ -459,7 +456,6 @@ class Docker {
    *   Warnings: Array<string>,
    * }>
    *
-   * @description
    * https://docs.docker.com/engine/reference/commandline/create/
    *
    * Restart policies:
@@ -592,7 +588,7 @@ class Docker {
   /**
    * @name attachContainer
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * module stream 'https://nodejs.org/api/stream.html'
    *
@@ -617,7 +613,7 @@ class Docker {
   /**
    * @name runContainer
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * module stream 'https://nodejs.org/api/stream.html'
    *
@@ -669,7 +665,7 @@ class Docker {
   /**
    * @name execContainer
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * module stream 'https://nodejs.org/api/stream.html'
    *
@@ -707,7 +703,7 @@ class Docker {
   /**
    * @name startContainer
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * module stream 'https://nodejs.org/api/stream.html'
    *
@@ -723,7 +719,7 @@ class Docker {
   /**
    * @name stopContainer
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * stopContainer(containerId string, options? {
    *   time: number, # seconds
@@ -746,7 +742,7 @@ class Docker {
   /**
    * @name inspectContainer
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * module DockerDocs 'https://docs.docker.com/reference/api/engine/version/v1.52/'
    *
@@ -790,7 +786,7 @@ class Docker {
   /**
    * @name inspectSwarm
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * module DockerDocs 'https://docs.docker.com/reference/api/engine/version/v1.52/'
    *
@@ -821,7 +817,7 @@ class Docker {
   /**
    * @name initSwarm
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * initSwarm(address string) -> nodeId string
    * ```
@@ -844,7 +840,7 @@ class Docker {
   /**
    * @name joinSwarm
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * joinSwarm(address string, options {
    *   RemoteAddrs: Array<string>,
@@ -877,7 +873,7 @@ class Docker {
   /**
    * @name leaveSwarm
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * leaveSwarm(options? { force: boolean }) -> message Promise<string>
    * ```
@@ -893,7 +889,7 @@ class Docker {
   /**
    * @name createService
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * createService(service string, options {
    *   image: string,
@@ -1113,7 +1109,7 @@ class Docker {
   /**
    * @name updateService
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * updateService(service string, options {
    *   version: number, // current version of service
@@ -1211,7 +1207,7 @@ class Docker {
   /**
    * @name deleteService
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * deleteService(id string) -> message Promise<string>
    * ```
@@ -1225,7 +1221,7 @@ class Docker {
   /**
    * @name prototype.listServices
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * module DockerDocs 'https://docs.docker.com/reference/api/engine/version/v1.52/'
    *
@@ -1260,7 +1256,6 @@ class Docker {
    * }>
    * ```
    *
-   * @description
    * See https://docs.docker.com/engine/api/v1.40/#operation/ServiceList
    */
   async listServices(options = {}) {
@@ -1274,7 +1269,7 @@ class Docker {
   /**
    * @name inspectService
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * module DockerDocs 'https://docs.docker.com/reference/api/engine/version/v1.52/'
    *
@@ -1319,7 +1314,7 @@ class Docker {
   /**
    * @name getServiceLogs
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * getServiceLogs(serviceId string, options {
    *   stdout: boolean, // return logs from stdout, default false
@@ -1346,7 +1341,7 @@ class Docker {
   /**
    * @name listTasks
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * module DockerDocs 'https://docs.docker.com/reference/api/engine/version/v1.52/'
    *
@@ -1392,7 +1387,7 @@ class Docker {
   /**
    * @name listNodes
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * module DockerDocs 'https://docs.docker.com/reference/api/engine/version/v1.52/'
    *
@@ -1408,7 +1403,6 @@ class Docker {
    * ]>
    * ```
    *
-   * @description
    * See https://docs.docker.com/engine/api/v1.40/#operation/NodeList
    */
   async listNodes() {
@@ -1420,7 +1414,7 @@ class Docker {
   /**
    * @name deleteNode
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * deleteNode(id string) -> message Promise<string>
    * ```
@@ -1434,7 +1428,7 @@ class Docker {
   /**
    * @name pruneImages
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * pruneImages() -> data Promise<{
    *   ImagesDeleted: Array<string>, # deleted image IDs
@@ -1452,7 +1446,7 @@ class Docker {
   /**
    * @name pruneContainers
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * pruneContainers() -> data Promise<{
    *   ContainersDeleted: Array<string>, # deleted container IDs
@@ -1470,7 +1464,7 @@ class Docker {
   /**
    * @name pruneVolumes
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * pruneVolumes() -> data Promise<{
    *   VolumesDeleted: Array<string>, # volume IDs
@@ -1488,7 +1482,7 @@ class Docker {
   /**
    * @name pruneNetworks
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * pruneNetworks() -> data Promise<{
    *   NetworksDeleted: Array<string>, # network IDs
@@ -1505,7 +1499,7 @@ class Docker {
   /**
    * @name createNetwork
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * createNetwork(options {
    *   name: string, // name of the network
@@ -1549,7 +1543,7 @@ class Docker {
   /**
    * @name inspectNetwork
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * module DockerDocs 'https://docs.docker.com/reference/api/engine/version/v1.52/'
    *
@@ -1585,7 +1579,7 @@ class Docker {
   /**
    * @name deleteNetwork
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * deleteNetwork(id string) -> message Promise<string>
    * ```

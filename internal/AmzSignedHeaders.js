@@ -1,7 +1,7 @@
 /**
  * @name AmzSignedHeaders
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * AmzSignedHeaders(headers Object) -> amzSignedHeaders string
  * ```

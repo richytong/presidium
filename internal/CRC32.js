@@ -3,7 +3,7 @@ const _Buffer = require('./_Buffer')
 /**
  * @name CRC32
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * new CRC32() -> crc32 CRC32
  * ```

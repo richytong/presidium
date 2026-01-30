@@ -3,7 +3,7 @@ const crypto = require('crypto')
 /*
  * @name AmzSignature
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * AmzSignature(options {
  *   secretAccessKey: string,

@@ -1,7 +1,7 @@
 /**
  * @name isArray
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * isArray(value any) -> boolean
  * ```

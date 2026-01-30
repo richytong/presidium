@@ -3,7 +3,7 @@ const DynamoDBAttributeValue = require('./DynamoDBAttributeValue')
 /**
  * @name createExpressionAttributeValues
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * createExpressionAttributeValues(options {
  *   values: Object,

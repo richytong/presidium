@@ -5,7 +5,7 @@ const trim = value => value.trim()
 /**
  * @name createKeyConditionExpression
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * createKeyConditionExpression(options {
  *   keyConditionStatements: Array<string>,

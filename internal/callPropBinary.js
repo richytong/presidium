@@ -1,7 +1,7 @@
 /**
  * @name callPropBinary
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * callPropBinary(
  *   value object,
@@ -11,7 +11,6 @@
  * ) -> value[property](arg0, arg1)
  * ```
  *
- * @description
  * Call a property function on a value with two arguments.
  */
 const callPropBinary = (value, property, arg0, arg1) => value[property](arg0, arg1)

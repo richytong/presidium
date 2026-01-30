@@ -1,7 +1,7 @@
 /**
  * @name sleep
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * sleep(time number) -> promiseThatResolvesAfterTime Promise
  * ```

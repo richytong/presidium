@@ -3,7 +3,7 @@ const isArray = require('./isArray')
 /**
  * @name toArray
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * toArray(value Array|any) -> originalValueOrArrayOfJustValue Array
  * ```

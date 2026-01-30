@@ -1,7 +1,7 @@
 /**
  * @name OptionalValidator
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * OptionalValidator(parsers Object<function>)
  *   -> optionalValidator (object Object)=>(validated Object)

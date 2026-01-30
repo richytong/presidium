@@ -4,7 +4,7 @@ const getFirstKey = require('./getFirstKey')
  * @name DynamoDBIndexname
  * @static
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * type JSONKey = {
  *   [hashKey string]: string|number|binary,
@@ -14,7 +14,6 @@ const getFirstKey = require('./getFirstKey')
  * DynamoDBIndexname(indexKey JSONKey) -> indexname string
  * ```
  *
- * @description
  * Converts a DynamoDB index key to its indexname.
  *
  * ```javascript

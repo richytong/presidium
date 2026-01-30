@@ -3,7 +3,7 @@ const { Readable } = require('stream')
 /**
  * @name StringStream
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * StringStream(str string)
  * ```

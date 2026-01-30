@@ -8,7 +8,7 @@ const AmzSignature = require('./AmzSignature')
 /**
  * @name AwsPresignedUrlV4
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * AwsPresignedUrlV4(options {
  *   accessKeyId: string,

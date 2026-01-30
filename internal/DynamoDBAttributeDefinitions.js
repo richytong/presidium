@@ -7,7 +7,7 @@ const DynamoDBAttributeType = require('./DynamoDBAttributeType')
  * @name DynamoDBAttributeDefinitions
  * @static
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * type DynamoAttributeType = 'S'|'N'|'B'|'string'|'number'|'binary'
  *

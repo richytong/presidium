@@ -1,7 +1,7 @@
 /**
  * @name AmzDate
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * new AmzDate() -> string // 20211129T053254Z
  * ```

@@ -12,7 +12,7 @@ const retryableErrorNames = require('./internal/retryableErrorNames')
 /**
  * @name SecretsManager
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * new SecretsManager(options {
  *   accessKeyId: string,
@@ -98,7 +98,7 @@ class SecretsManager {
   /**
    * @name putSecret
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * putSecret(name string, secretString string) -> result Promise<{
    *   ARN: string,
@@ -157,7 +157,7 @@ class SecretsManager {
   /**
    * @name getSecret
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * getSecret(name string) -> result Promise<{
    *   ARN: string,
@@ -182,7 +182,7 @@ class SecretsManager {
   /**
    * @name SecretsManager.prototype.getSecretString
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * new SecretsManager(...).getSecretString(name string) -> SecretString string
    * ```
@@ -195,7 +195,7 @@ class SecretsManager {
   /**
    * @name deleteSecret
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * deleteSecret(name string) -> result Promise<{
    *   ARN: string,

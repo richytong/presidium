@@ -8,7 +8,7 @@ const trim = value => value.trim()
 /**
  * @name createExpressionAttributeNames
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * createExpressionAttributeNames(options {
  *   keyConditionStatements: Array<string>,

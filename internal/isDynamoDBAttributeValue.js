@@ -1,7 +1,7 @@
 /**
  * @name isDynamoDBAttributeValue
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * isDynamoDBAttributeValue(o object) -> boolean
  * ```

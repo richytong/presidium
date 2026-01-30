@@ -7,14 +7,13 @@ const isArray = require('./isArray')
 /**
  * @name pathWalk
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * pathWalk(path, options? {
  *   ignore: Array<string>, // names or paths
  * }) -> Promise<Array<string>>
  * ```
  *
- * @description
  * ```javascript
  * pathWalk('./my/path/', {
  *   ignore: ['node_modules', '.github'],

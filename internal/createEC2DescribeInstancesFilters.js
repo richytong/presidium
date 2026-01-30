@@ -6,7 +6,7 @@ const toArray = require('./toArray')
 /**
  * @name createEC2DescribeInstancesFilters
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * import EC2ListInstancesDescribeFilterOptions from './EC2ListInstancesDescribeFilterOptions.ss'
  *

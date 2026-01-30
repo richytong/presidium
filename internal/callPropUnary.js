@@ -1,7 +1,7 @@
 /**
  * @name callPropUnary
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * callPropUnary(
  *   value object,
@@ -10,7 +10,6 @@
  * ) -> value[property](arg0)
  * ```
  *
- * @description
  * Call a property function on a value with a single argument.
  */
 const callPropUnary = (value, property, arg0) => value[property](arg0)

@@ -5,7 +5,7 @@ const resolvePath = require('./internal/resolvePath')
 /**
  * @name AwsCredentials
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * AwsCredentials(profile string, options? {
  *   credentialsFileDirname: string

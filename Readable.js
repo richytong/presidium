@@ -3,7 +3,7 @@ const Readable = {}
 /**
  * @name Readable.Buffer
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * module stream
  *
@@ -30,7 +30,7 @@ Readable.Buffer = function Readable(readable) {
 /**
  * @name Readable.Text
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * module stream
  *
@@ -57,7 +57,7 @@ Readable.Text = function Readable(readable) {
 /**
  * @name Readable.JSON
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * module stream
  *

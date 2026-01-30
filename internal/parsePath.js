@@ -3,7 +3,7 @@ const nodePath = require('path')
 /**
  * @name parsePath
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * parsePath(string) -> Path {
  *   root: string,

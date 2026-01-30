@@ -1,7 +1,7 @@
 /**
  * @name join
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * join(delimiter string)(array Array) -> joined string
  * ```

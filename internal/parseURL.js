@@ -1,7 +1,7 @@
 /**
  * @name parseURL
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * parseURL(s string) -> url URL
  * ```

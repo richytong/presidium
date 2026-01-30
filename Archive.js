@@ -15,7 +15,7 @@ const pick = require('rubico/pick')
 /**
  * @name Archive
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * new Archive(base Object<string>) -> archive Archive
  * ```
@@ -31,7 +31,7 @@ const Archive = function (base) {
 /**
  * @name Archive.prototype.tar
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * module tar 'https://github.com/mafintosh/tar-stream'
  *
@@ -40,7 +40,6 @@ const Archive = function (base) {
  * }) -> pack tar.Pack
  * ```
  *
- * @description
  * Note: `path` must be absolute
  * Note: Returned readable stream is hot, so please pipe this immediately
  * Note: pack.packing is a Promise that represents the entire packing operation of the tar
@@ -75,7 +74,7 @@ Archive.prototype.tar = function archiveTar(path, options) {
 /**
  * @name Archive.prototype.untar
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * module tar 'https://github.com/mafintosh/tar-stream'
  *

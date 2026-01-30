@@ -5,7 +5,7 @@ const Password = {}
 /**
  * @name Password.hash
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * Password.hash(plaintext string) -> hashed string
  * ```
@@ -20,7 +20,7 @@ Password.hash = async function (plaintext) {
 /**
  * @name Password.verify
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * Password.verify(plaintext string, hashed string) -> ()
  * ```

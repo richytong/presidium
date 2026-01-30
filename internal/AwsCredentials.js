@@ -5,7 +5,7 @@ const identity = require('rubico/x/identity')
 /**
  * @name AwsCredentials
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * AwsCredentials(profile string) -> Promise<{
  *   accessKeyId: string,

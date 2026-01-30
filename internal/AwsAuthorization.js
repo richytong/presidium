@@ -8,7 +8,7 @@ const AmzSignature = require('./AmzSignature')
 /**
  * @name AwsAuthorization
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * AwsAuthorization(options {
  *   accessKeyId: string,

@@ -1,7 +1,7 @@
 /**
  * @name RetryAwsErrors
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * RetryAwsErrors(func function, context object) -> retriesAwsErrors function
  * ```

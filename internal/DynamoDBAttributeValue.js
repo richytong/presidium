@@ -3,7 +3,7 @@ require('rubico/global')
 /**
  * @name DynamoDBAttributeValue
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * DynamoAttributeValue = {
  *   S: string,

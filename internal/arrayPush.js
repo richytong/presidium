@@ -1,7 +1,7 @@
 /**
  * @name arrayPush
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * arrayPush(array Array, item any) -> array
  * ```
