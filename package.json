@@ -29,7 +29,6 @@
     "types"
   ],
   "dependencies": {
-    "aws-sdk": "^2.1692.0",
     "bcrypt": "^5.1.0",
     "minimatch": "^9.0.3",
     "presidium-websocket": "^0.4.1",
