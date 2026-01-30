@@ -13,7 +13,7 @@ const trim = value => value.trim()
  * createExpressionAttributeNames(options {
  *   keyConditionStatements: Array<string>,
  *   filterExpressionStatements: Array<string>,
- *   projectionExpression: string,
+ *   ProjectionExpression: string,
  * })
  * ```
  */
@@ -21,7 +21,7 @@ const createExpressionAttributeNames = function (options) {
   const {
     keyConditionStatements,
     filterExpressionStatements,
-    projectionExpression,
+    ProjectionExpression,
   } = options
 
   return pipe([
@@ -35,8 +35,8 @@ const createExpressionAttributeNames = function (options) {
         : statement.split(/ (.+)/)[0],
       ),
       always(
-        options.projectionExpression
-        ? options.projectionExpression.split(',')
+        options.ProjectionExpression
+        ? options.ProjectionExpression.split(',')
         : [],
       ),
     ]),

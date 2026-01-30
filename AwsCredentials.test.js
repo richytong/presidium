@@ -3,9 +3,11 @@ const assert = require('assert')
 const fs = require('fs')
 const AwsCredentials = require('./AwsCredentials')
 
-const test = new Test('AwsCredentials', async function () {
+const test = new Test('AwsCredentials', async function integration() {
   const credentialsFilename = 'credentials-test'
   const credentialsFileDirname = '.aws-test'
+  const configFilename = 'config-test'
+  const configFileDirname = credentialsFileDirname
 
   try {
     await fs.promises.mkdir(`${__dirname}/../${credentialsFileDirname}`)
@@ -16,38 +18,127 @@ const test = new Test('AwsCredentials', async function () {
 
   await fs.promises.writeFile(`${__dirname}/../${credentialsFileDirname}/${credentialsFilename}`, `
 [default]
-aws_access_key_id = X
-aws_secret_access_key = X
+aws_access_key_id = X1
+aws_secret_access_key = X2
 
 [presidium]
 aws_access_key_id = AAA
 aws_secret_access_key = BBB
+
+[missing-access-key-id]
+aws_secret_access_key = BBB
+
+[missing-secret-access-key]
+aws_access_key_id = AAA
+
+[missing-region]
+aws_access_key_id = AAA
+aws_secret_access_key = BBB
+  `.trim())
+
+  await fs.promises.writeFile(`${__dirname}/../${configFileDirname}/${configFilename}`, `
+[default]
+region = us-east-default
+
+[missing-access-key-id]
+region = us-east-missing-access-key-id
+
+[missing-secret-access-key]
+region = us-east-missing-secret-access-key
+
+[presidium]
+region = us-east-presidium
   `.trim())
 
   {
-    const awsCreds = await AwsCredentials('presidium', { credentialsFileDirname, credentialsFilename })
+    const awsCreds = await AwsCredentials('presidium', {
+      credentialsFileDirname,
+      credentialsFilename,
+      configFileDirname,
+      configFilename,
+    })
+    assert.equal(awsCreds.accessKeyId, 'AAA')
     assert.equal(awsCreds.secretAccessKey, 'BBB')
+    assert.equal(awsCreds.region, 'us-east-presidium')
   }
 
   {
-    process.env.AWS_ACCESS_KEY_ID = 'AAAA'
-    process.env.AWS_SECRET_ACCESS_KEY = 'BBBB'
-    const awsCreds = await AwsCredentials('presidium', { credentialsFileDirname, credentialsFilename })
-    assert.equal(awsCreds.accessKeyId, 'AAAA')
-    assert.equal(awsCreds.secretAccessKey, 'BBBB')
+    const awsCreds = await AwsCredentials('default', {
+      credentialsFileDirname,
+      credentialsFilename,
+      configFileDirname,
+      configFilename,
+    })
+    assert.equal(awsCreds.accessKeyId, 'X1')
+    assert.equal(awsCreds.secretAccessKey, 'X2')
+    assert.equal(awsCreds.region, 'us-east-default')
   }
 
   {
-    process.env.AWS_ACCESS_KEY_ID = 'AAAA'
-    process.env.AWS_SECRET_ACCESS_KEY = 'BBBB'
-    process.env.AWS_REGION = 'us-east-2'
-    const awsCreds = await AwsCredentials('presidium', { credentialsFileDirname, credentialsFilename })
-    assert.equal(awsCreds.accessKeyId, 'AAAA')
-    assert.equal(awsCreds.secretAccessKey, 'BBBB')
-    assert.equal(awsCreds.region, 'us-east-2')
+    const awsCreds = await AwsCredentials(undefined, {
+      credentialsFileDirname,
+      credentialsFilename,
+      configFileDirname,
+      configFilename,
+    })
+    assert.equal(awsCreds.accessKeyId, 'X1')
+    assert.equal(awsCreds.secretAccessKey, 'X2')
+    assert.equal(awsCreds.region, 'us-east-default')
+  }
+
+  {
+    await assert.rejects(
+      async () => {
+        await AwsCredentials('missing-access-key-id', {
+          credentialsFileDirname,
+          credentialsFilename,
+          configFileDirname,
+          configFilename,
+        })
+      },
+      new Error('unable to find aws_access_key_id for profile missing-access-key-id')
+    )
+  }
+
+  {
+    await assert.rejects(
+      async () => {
+        await AwsCredentials('missing-secret-access-key', {
+          credentialsFileDirname,
+          credentialsFilename,
+          configFileDirname,
+          configFilename,
+        })
+      },
+      new Error('unable to find aws_secret_access_key for profile missing-secret-access-key')
+    )
+  }
+
+  {
+    const awsCreds = await AwsCredentials('missing-region', {
+      credentialsFileDirname,
+      credentialsFilename,
+      configFileDirname,
+      configFilename,
+    })
+    assert.equal(awsCreds.accessKeyId, 'AAA')
+    assert.equal(awsCreds.secretAccessKey, 'BBB')
+    assert.equal(Object.keys(awsCreds).length, 2)
   }
 
   await fs.promises.rm(`${__dirname}/../${credentialsFileDirname}`, { recursive: true })
+
+  await assert.rejects(
+    AwsCredentials('missing-region', {
+      credentialsFileDirname,
+      credentialsFilename,
+      configFileDirname,
+      configFilename,
+      recurse: false,
+    }),
+    new Error('Missing .aws/credentials file')
+  )
+
 }).case()
 
 if (process.argv[1] == __filename) {

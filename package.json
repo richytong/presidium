@@ -29,27 +29,24 @@
     "types"
   ],
   "dependencies": {
-    "@elastic/elasticsearch": "^7.10.0",
-    "aws-sdk": "^2.1123.0",
     "bcrypt": "^5.1.0",
-    "ioredis": "^4.19.0",
     "minimatch": "^9.0.3",
-    "mongodb": "^3.6.3",
-    "node-fetch": "^2.6.1",
-    "rubico": "latest",
-    "tar-stream": "^2.1.4",
-    "thunk-test": "latest",
-    "ws": "^8.18.1"
+    "presidium-websocket": "^0.4.1",
+    "rubico": "^2.7.7",
+    "tar-stream": "^2.1.4"
   },
   "scripts": {
-    "test": "node test.js",
+    "test": "node test.js && mocha **/*.test.js *.test.js",
     "lint": "eslint ."
   },
   "devDependencies": {
+    "@aws-sdk/crc64-nvme-crt": "^3.848.0",
     "eslint": "^7.13.0",
+    "fast-crc32c": "^2.0.0",
     "glob": "^7.1.6",
     "mocha": "^10.8.2",
     "nyc": "^17.1.0",
+    "thunk-test": "^1.3.1",
     "wavefile": "^11.0.0"
   }
 }

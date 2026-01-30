@@ -1,7 +1,6 @@
 require('rubico/global')
 const fs = require('fs')
-const nodePath = require('path')
-const pathResolve = require('./internal/pathResolve')
+const resolvePath = require('./internal/resolvePath')
 
 /**
  * @name AwsCredentials
@@ -9,55 +8,93 @@ const pathResolve = require('./internal/pathResolve')
  * @synopsis
  * ```coffeescript [specscript]
  * AwsCredentials(profile string, options? {
- *   credentialsFilename?: string,
- * }) -> awsCreds {
+ *   credentialsFileDirname: string
+ *   credentialsFilename: string,
+ *   configFileDirname: string
+ *   configFilename: string,
+ *   recurse: boolean,
+ * }) -> awsCreds Promise<{
  *   accessKeyId: string,
  *   secretAccessKey: string,
- * }
+ *   region: string,
+ * }>
  * ```
  */
 
 const AwsCredentials = async function (profile, options = {}) {
-  if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
-    const awsCreds = {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    }
-    if (process.env.AWS_REGION) {
-      awsCreds.region = process.env.AWS_REGION
-    }
-    return awsCreds
+  if (profile == null) {
+    profile = 'default'
   }
 
+  const recurse = options.recurse ?? true
   const credentialsFileDirname = options.credentialsFileDirname ?? '.aws'
   const credentialsFilename = options.credentialsFilename ?? 'credentials'
-  let credentialsFileDir = pathResolve(process.cwd())
+  let credentialsFileDir = resolvePath(process.cwd())
   let lines = ''
-  while (credentialsFileDir != '/') {
+  while (recurse && credentialsFileDir != '/') {
     const credentialsFilePath =
-      pathResolve(credentialsFileDir, `${credentialsFileDirname}/${credentialsFilename}`)
+      resolvePath(credentialsFileDir, `${credentialsFileDirname}/${credentialsFilename}`)
     if (fs.existsSync(credentialsFilePath)) {
-      lines = await (
-        fs.promises.readFile(credentialsFilePath)
-        .then(buffer => `${buffer}`.split('\n'))
-      )
+      lines = await fs.promises.readFile(credentialsFilePath)
+        .then(buffer => buffer.toString('utf8').split('\n'))
       break
     }
-    credentialsFileDir = pathResolve(credentialsFileDir, '..')
+    credentialsFileDir = resolvePath(credentialsFileDir, '..')
+  }
+
+  if (lines == '') {
+    throw new Error('Missing .aws/credentials file')
   }
 
   const startingLineNumber = lines.findIndex(line => line == `[${profile}]`)
 
-  const accessKeyId = lines.find(
+  const accessKeyId = startingLineNumber == -1 ? undefined : lines.find(
     (line, index) => index > startingLineNumber
-    && line.startsWith('aws_access_key_id')
-  ).split(' = ')[1]
-  const secretAccessKey = lines.find(
+      && line.startsWith('aws_access_key_id')
+      && index - startingLineNumber < 3
+  )?.split(' = ')[1]
+  const secretAccessKey = startingLineNumber == -1 ? undefined : lines.find(
     (line, index) => index > startingLineNumber
-    && line.startsWith('aws_secret_access_key')
-  ).split(' = ')[1]
+      && line.startsWith('aws_secret_access_key')
+      && index - startingLineNumber < 3
+  )?.split(' = ')[1]
 
-  return { accessKeyId, secretAccessKey }
+  const configFileDirname = options.configFileDirname ?? '.aws'
+  const configFilename = options.configFilename ?? 'config'
+  let configFileDir = resolvePath(process.cwd())
+  let lines2 = ''
+  while (configFileDir != '/') {
+    const configFilePath = resolvePath(configFileDir, `${configFileDirname}/${configFilename}`)
+    if (fs.existsSync(configFilePath)) {
+      lines2 = await (
+        fs.promises.readFile(configFilePath)
+        .then(buffer => `${buffer}`.split('\n'))
+      )
+      break
+    }
+    configFileDir = resolvePath(configFileDir, '..')
+  }
+
+  const startingLineNumber2 = lines2.findIndex(line => line == `[${profile}]`)
+
+  const region = startingLineNumber2 == -1 ? undefined : lines2.find(
+    (line, index) => index > startingLineNumber2
+      && line.startsWith('region')
+      && index - startingLineNumber2 < 2
+  )?.split(' = ')[1]
+
+  if (accessKeyId == null) {
+    throw new Error(`unable to find aws_access_key_id for profile ${profile}`)
+  }
+  if (secretAccessKey == null) {
+    throw new Error(`unable to find aws_secret_access_key for profile ${profile}`)
+  }
+
+  if (region == null) {
+    return { accessKeyId, secretAccessKey }
+  }
+
+  return { accessKeyId, secretAccessKey, region }
 }
 
 module.exports = AwsCredentials

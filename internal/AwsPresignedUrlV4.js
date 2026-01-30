@@ -1,9 +1,9 @@
 require('rubico/global')
+const crypto = require('crypto')
 const AmzDate = require('./AmzDate')
 const AmzSignedHeaders = require('./AmzSignedHeaders')
 const AmzCanonicalHeaders = require('./AmzCanonicalHeaders')
 const AmzSignature = require('./AmzSignature')
-const sha256 = require('./sha256')
 
 /**
  * @name AwsPresignedUrlV4
@@ -55,19 +55,19 @@ const AwsPresignedUrlV4 = function (options) {
     'aws4_request',
   ].join('/')
 
-  const credential = encodeURIComponent([
+  const credential = [
     accessKeyId,
     credentialScope,
-  ].join('/'))
+  ].join('/')
 
   let canonicalQueryString = ''
 
   // aws request parameters
-  canonicalQueryString += `X-Amz-Algorithm=${algorithm}`
-  canonicalQueryString += `&X-Amz-Credential=${credential}`
-  canonicalQueryString += `&X-Amz-Date=${amzDate}`
-  canonicalQueryString += `&X-Amz-Expires=${expires}`
-  canonicalQueryString += `&X-Amz-SignedHeaders=${AmzSignedHeaders(headers)}`
+  canonicalQueryString += `X-Amz-Algorithm=${encodeURIComponent(algorithm)}`
+  canonicalQueryString += `&X-Amz-Credential=${encodeURIComponent(credential)}`
+  canonicalQueryString += `&X-Amz-Date=${encodeURIComponent(amzDate)}`
+  canonicalQueryString += `&X-Amz-Expires=${encodeURIComponent(expires)}`
+  canonicalQueryString += `&X-Amz-SignedHeaders=${encodeURIComponent(AmzSignedHeaders(headers))}`
 
   for (const key in queryParams) {
     const value = queryParams[key]
@@ -87,7 +87,7 @@ const AwsPresignedUrlV4 = function (options) {
     algorithm,
     amzDate,
     credentialScope,
-    sha256(canonicalRequest),
+    crypto.createHash('sha256').update(canonicalRequest, 'utf8').digest('hex')
   ].join('\n')
 
   canonicalQueryString += `&X-Amz-Signature=${AmzSignature({

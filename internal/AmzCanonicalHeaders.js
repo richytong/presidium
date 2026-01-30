@@ -7,11 +7,16 @@
  * ```
  */
 const AmzCanonicalHeaders = function (headers) {
-  let canonicalHeaders = ''
-  for (const key in headers) {
-    const value = headers[key]
-    canonicalHeaders += `${key.toLowerCase()}:${value}\n`
-  }
+  const sortedHeaders =
+    Object.entries(headers)
+    .map(([k, v]) => [k.toLowerCase(), v])
+    .sort((a, b) => a[0] > b[0] ? 1 : -1)
+
+  const canonicalHeaders =
+    sortedHeaders
+    .map(([k, v]) => `${k}:${v}`)
+    .join('\n') + '\n'
+
   return canonicalHeaders
 }
 

@@ -1,21 +1,25 @@
 # Presidium
+![presidium](https://rubico.land/assets/presidium-logo-200.jpg)
+
 ![Node.js CI](https://github.com/richytong/presidium/workflows/Node.js%20CI/badge.svg)
 [![codecov](https://codecov.io/gh/richytong/presidium/branch/master/graph/badge.svg)](https://codecov.io/gh/richytong/presidium)
 [![npm version](https://img.shields.io/npm/v/presidium.svg?style=flat)](https://www.npmjs.com/package/presidium)
 
 A library for creating web services.
 
-## Handle Http
+## Handle HTTP
 ```javascript
-const { HttpServer, Http } = require('presidium')
+const HTTP = require('presidium/HTTP')
 
-new HttpServer((request, response) => {
+const server = HTTP.Server((request, response) => {
   response.writeHead(200, { 'Content-Type': 'application/json' })
   response.write(JSON.stringify({ greeting: 'Hello World' }))
   response.end()
-}).listen(3000)
+})
 
-const http = new Http('http://localhost:3000/')
+server.listen(3000)
+
+const http = new HTTP('http://localhost:3000/')
 
 http.get('/')
   .then(response => response.json())
@@ -24,30 +28,33 @@ http.get('/')
 
 ## Handle WebSocket
 ```javascript
-const { WebSocketServer, WebSocket } = require('presidium')
+const WebSocket = require('presidium/WebSocket')
 
-new WebSocketServer(socket => {
-  socket.on('message', message => {
-    console.log('Got message:', message)
+const server = new WebSocket.Server(websocket => {
+  websocket.on('message', message => {
+    console.log('Message from client:', message)
+    websocket.send('Hello Client!')
   })
-  socket.on('close', () => {
-    console.log('Socket closed')
+  websocket.on('close', () => {
+    console.log('websocket closed')
   })
-}).listen(1337)
-
-
-const socket = new WebSocket('ws://localhost:1337/')
-socket.addEventListener('open', function (event) {
-  socket.send('Hello Server!')
 })
-socket.addEventListener('message', function (event) {
-  console.log('Message from server:', event.data)
+server.listen(1337)
+
+const websocket = new WebSocket('ws://localhost:1337/')
+websocket.on('open', () => {
+  websocket.send('Hello Server!')
+})
+websocket.on('message', message => {
+  console.log('Message from server:', message)
 })
 ```
 
 ## CRUD and Query DynamoDB
 ```javascript
-const { DynamoTable, DynamoIndex } = require('presidium')
+const DynamoDBTable = require('presidium/DynamoDBTable')
+const DynamoDBGlobalSecondaryIndex =
+require('presidium/DynamoDBGlobalSecondaryIndex')
 
 const awsCreds = {
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -55,96 +62,150 @@ const awsCreds = {
   region: process.env.AWS_REGION,
 }
 
-;(async function() {
-  const myTable = new DynamoTable({
-    name: 'my-table',
-    key: [{ id: 'string' }],
-    ...awsCreds,
-  })
-  const myIndex = new DynamoIndex({
-    table: 'my-table',
-    key: [{ name: 'string' }, { age: 'number' }],
-    ...awsCreds,
-  })
-  const myStream = new DynamoStream({
-    table: 'my-table',
-    ...awsCreds,
-  })
-
-  await myTable.ready
-  await myIndex.ready
-  await myStream.ready
-
-  await myTable.putItem({ id: '1', name: 'George' })
-  await myTable.updateItem({ id: '1' }, { age: 32 })
-  console.log(
-    await myTable.getItem({ id: '1' }),
-  ) // { Item: { id: { S: '1' }, ... } }
-
-  console.log(
-    await myIndex.query('name = :name AND age < :age', {
-      name: 'George',
-      age: 33,
-    }),
-  ) // [{ Items: [{ id: { S: '1' }, ... }, ...] }]
-
-  for await (const record of myStream) {
-    console.log(record) // { dynamodb: { NewImage: {...}, OldImage: {...} }, ... }
-  }
-})()
-```
-
-## Consume Kinesis Streams
-```javascript
-const { KinesisStream } = require('presidium')
-
-const awsCreds = {
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_REGION,
-}
-
-const myStream = new KinesisStream({
-  name: 'my-stream',
+const myTable = new DynamoDBTable({
+  name: 'my-table',
+  key: [{ id: 'string' }],
   ...awsCreds,
 })
+await myTable.ready
 
-;(async function() {
-  await myStream.ready
-
-  await myStream.putRecord('hey')
-  await myStream.putRecord('hey')
-  await myStream.putRecord('hey')
-
-  for await (const item of myStream) {
-    console.log(item) /*
-    {
-      SequenceNumber: '49614...',
-      ApproximateArrivalTimestamp: 2021-01-12T16:01:24.432Z,
-      Data: <Buffer ...>, // hey
-      PartitionKey: 'hey',
-    }
-    {
-      SequenceNumber: '...',
-      SequenceNumber: '49614...',
-      ApproximateArrivalTimestamp: 2021-01-12T16:01:24.432Z,
-      Data: <Buffer ...>, // hey
-      PartitionKey: 'hey',
-    }
-    {
-      SequenceNumber: '49614...',
-      ApproximateArrivalTimestamp: 2021-01-12T16:01:24.432Z,
-      Data: <Buffer ...>, // hey
-      PartitionKey: 'hey',
-    }
-    */
-  }
+const myTypeAgeIndex = new DynamoDBGlobalSecondaryIndex({
+  table: 'my-table',
+  key: [{ type: 'string' }, { age: 'number' }],
+  ...awsCreds,
 })
+await myTypeAgeIndex.ready
+
+await myTable.putItem({ id: { S: '1' }, name: { S: 'John' }, type: { S: 'person' } })
+await myTable.updateItem({ id: { S: '1' } }, { age: { N: '32' } })
+
+await myTable.putItemJSON({ id: '2', name: 'Joe', age: 19, type: 'person' })
+await myTable.putItemJSON({ id: '3', name: 'Jane', age: 33, type: 'person' })
+
+{
+  const response = await myTable.getItem({ id: { S: '1' } }),
+  console.log(response)
+  // { Item: { id: { S: '1' }, name: { S: 'John' }, age: { N: '32' } } }
+}
+
+{
+  const response = await myTable.getItemJSON({ id: '1' })
+  console.log(response)
+  // { item: { id: '1', name: 'John', age: 32 } }
+}
+
+{
+  const response = await myTypeAgeIndex.query(
+    'type = :type AND age < :age',
+    { type: { S: 'person' }, age: { N: '100' } },
+    { Limit: 2, ScanIndexForward: true },
+  )
+  console.log(response)
+  // {
+  //   Items: [
+  //     { id: { S: '1' }, name: { S: 'John' }, age: { N: '32' }, type: { S: 'person' } },
+  //     { id: { S: '2' }, name: { S: 'Joe' }, age: { N: '19' }, type: { S: 'person' } },
+  //   ],
+  //   Count: 2,
+  //   ScannedCount: 2,
+  // }
+}
+
+{
+  const response = await myTypeAgeIndex.queryJSON(
+    'type = :type AND age < :age',
+    { type: 'person', age: 100 },
+    { Limit: 2, ScanIndexForward: true },
+  )
+  console.log(response)
+  // {
+  //   ItemsJSON: [
+  //     { id: '1', name: 'John', age: 32, type: 'person' },
+  //     { id: '2', name: 'Joe', age: 19, type: 'person' },
+  //   ],
+  //   Count: 2,
+  //   ScannedCount: 2,
+  // }
+}
+
+{
+  const ItemIterator = myTypeAgeIndex.queryItemsIterator(
+    'type = :type AND age < :age',
+    { type: { S: 'person' }, age: { N: '100' } },
+    { ScanIndexForward: true },
+  )
+  for await (const Item of ItemIterator) {
+    console.log(Item)
+    // { id: { S: '2' }, name: { S: 'Joe' }, age: { N: '19' }, type: { S: 'person' } },
+    // { id: { S: '1' }, name: { S: 'John' }, age: { N: '32' }, type: { S: 'person' } },
+    // { id: { S: '3' }, name: { S: 'Jane' }, age: { N: '33' }, type: { S: 'person' } },
+  }
+}
+
+{
+  const itemsIterator = myTypeAgeIndex.queryItemsIteratorJSON(
+    'type = :type AND age < :age',
+    { type: 'person', age: 100 },
+    { ScanIndexForward: true },
+  )
+  for await (const item of itemsIterator) {
+    console.log(item)
+    // { id: '2', name: 'Joe', age: 19, type: 'person' }
+    // { id: '1', name: 'John', age: 32, type: 'person' }
+    // { id: '3', name: 'Jane', age: 33, type: 'person' }
+  }
+}
+```
+
+## Consume DynamoDB Streams
+```javascript
+const DynamoDBTable = require('presidium/DynamoDBTable')
+const DynamoDBStream = require('presidium/DynamoDBStream')
+
+const awsCreds = {
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  region: process.env.AWS_REGION,
+}
+
+const myTable = new DynamoDBTable({
+  name: 'my-table',
+  key: [{ id: 'string' }],
+  ...awsCreds,
+})
+await myTable.ready
+
+const myStream = new DynamoDBStream({
+  table: 'my-table',
+  ...awsCreds,
+})
+await myStream.ready
+
+for await (const record of myStream) {
+  console.log(record)
+  // { dynamodb: { Keys: {...}, NewImage: {...}, OldImage: {...} }  }
+  // { dynamodb: { Keys: {...}, NewImage: {...}, OldImage: {...} }  }
+  // { dynamodb: { Keys: {...}, NewImage: {...}, OldImage: {...} }  }
+}
+
+const myStreamJSON = new DynamoDBStream({
+  table: 'my-table',
+  ...awsCreds,
+  JSON: true,
+})
+await myStream.ready
+
+for await (const record of myStreamJSON) {
+  console.log(record)
+  // { dynamodb: { KeysJSON: {...}, NewImageJSON: {...}, OldImageJSON: {...} }  }
+  // { dynamodb: { KeysJSON: {...}, NewImageJSON: {...}, OldImageJSON: {...} }  }
+  // { dynamodb: { KeysJSON: {...}, NewImageJSON: {...}, OldImageJSON: {...} }  }
+}
 ```
 
 ## Upload to S3
 ```javascript
-const { S3Bucket } = require('presidium')
+const S3Bucket = require('presidium/S3Bucket')
 
 const awsCreds = {
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -156,29 +217,30 @@ const myBucket = new S3Bucket({
   name: 'my-bucket',
   ...awsCreds,
 })
+await myBucket.ready
 
-;(async function () {
-  await myBucket.ready
+await myBucket.putObject('some-key', '{"hello":"world"}', {
+  ContentType: 'application/json',
+})
 
-  await myBucket.putObject('some-key', '{"hello":"world"}', {
-    ContentType: 'application/json',
-  })
-  console.log(
-    await myBucket.getObject('some-key'),
-  ) // { Etag: ..., Body: '{"hello":"world"}', ContentType: 'application/json' }
-  await myBucket.deleteAllObjects()
-  await myBucket.delete()
-})()
+{
+  const response = await myBucket.getObject('some-key')
+  console.log(response) // { Etag: '...', Body: '{"hello":"world"}', ContentType: 'application/json' }
+}
+
+await myBucket.deleteAllObjects()
+await myBucket.delete()
 ```
 
 ## Build and Push Docker Images
-> Stop using --build-arg for that npm token
+> No more --build-arg for npm tokens!
 ```javascript
-const { DockerImage } = require('presidium')
+const Docker = require('presidium/Docker')
 
-const myImage = new DockerImage('my-app:1.0.0')
+const myImage = 'my-app:1.0.0'
 
-const buildStream = myImage.build(__dirname, {
+const buildStream = await docker.buildImage(__dirname, {
+  image: myImage,
   ignore: ['.github', 'node_modules'],
   archive: {
     Dockerfile: `
@@ -195,44 +257,50 @@ CMD ["npm", "start"]
   },
 })
 
+buildStream.pipe(process.stdout)
+
 buildStream.on('end', () => {
-  const pushStream = myImage.push('my-registry.io')
+  const pushStream = await docker.pushImage({
+    image: myImage,
+    repository: 'my-registry.io',
+  })
   pushStream.pipe(process.stdout)
 })
-buildStream.pipe(process.stdout)
 ```
 
-## Execute Docker Containers
+## Run Docker Containers
 ```javascript
-const { DockerContainer } = require('presidium')
+const Docker = require('presidium/Docker')
 
-const container = new DockerContainer({
+const docker = new Docker()
+
+const runStream = await docker.runContainer({
   image: 'node:15-alpine',
-  env: { FOO: 'foo' },
+  env: { FOO: 'Example' },
   cmd: ['node', '-e', 'console.log(process.env.FOO)'],
   rm: true,
 })
 
-container.run().pipe(process.stdout) // foo
+runStream.pipe(process.stdout) // Example
 ```
 
 ## Deploy Docker Swarm Services
 ```javascript
-const { DockerSwarm, DockerService } = require('presidium')
+const Docker = require('presidium/Docker')
 
-;(async function() {
-  const mySwarm = new DockerSwarm('eth0:2377')
-  await mySwarm.ready // initiated new docker swarm
+const docker = new Docker()
 
-  const myService = new DockerService({
-    name: 'my-service',
-    image: 'nginx:1.19',
-    publish: { 80: 80 },
-    healthCheck: ['curl', '[::1]'],
-    replicas: 5,
-  })
-  await myService.ready // new nginx service is up running
-})()
+// initialize docker swarm
+await docker.initSwarm('eth0:2377')
+
+const myService = await docker.createService({
+  name: 'my-service',
+  image: 'nginx:1.19',
+  publish: { 80: 80 },
+  healthCheck: ['curl', '[::1]'],
+  replicas: 5,
+})
+// new nginx service is deploying to the docker swarm
 ```
 
 # Support

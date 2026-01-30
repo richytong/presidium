@@ -18,6 +18,7 @@ const AmzSignature = function (options) {
   const {
     secretAccessKey, datestamp, region, serviceName, stringToSign,
   } = options
+
   const h1 = hmac(`AWS4${secretAccessKey}`, datestamp)
   const h2 = hmac(h1, region)
   const h3 = hmac(h2, serviceName)

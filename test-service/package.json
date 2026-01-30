@@ -1,0 +1,17 @@
+{
+  "name": "presidium/test-service",
+  "version": "0.0.0",
+  "scripts": {
+    "lint": "eslint .",
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/richytong/presidium",
+    "directory": "test-service"
+  },
+  "dependencies": {
+    "presidium": "latest"
+  },
+  "swarm": "fleet"
+}

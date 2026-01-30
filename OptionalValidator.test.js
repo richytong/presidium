@@ -4,12 +4,12 @@ const OptionalValidator = require('./OptionalValidator')
 
 const test = new Test('OptionalValidator', OptionalValidator)
 
-.case({}, function (validator) {
+.case({}, function testEmptyValidator(validator) {
   const payload = validator({ a: 1 })
   assert.equal(Object.keys(payload).length, 0)
 })
 
-.case({ a: Number }, function (validator) {
+.case({ a: Number }, function testNumberValidator(validator) {
   const payload = validator({ a: 1 })
   assert.equal(Object.keys(payload).length, 1)
   assert.strictEqual(payload.a, 1)
@@ -17,7 +17,7 @@ const test = new Test('OptionalValidator', OptionalValidator)
   assert.deepEqual(validator({}), {})
 })
 
-.case({ a: String }, function (validator) {
+.case({ a: String }, function testStringValidator(validator) {
   const payload = validator({ a: 1 })
   assert.equal(Object.keys(payload).length, 1)
   assert.strictEqual(payload.a, '1')

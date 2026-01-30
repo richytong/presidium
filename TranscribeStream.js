@@ -1,9 +1,9 @@
 require('rubico/global')
 const EventEmitter = require('events')
+const crypto = require('crypto')
 const WebSocket = require('./WebSocket')
-const sha256 = require('./internal/sha256')
 const AwsPresignedUrlV4 = require('./internal/AwsPresignedUrlV4')
-const Crc32 = require('./internal/Crc32')
+const CRC32 = require('./internal/CRC32')
 
 // All prelude components are unsigned, 32-bit integers
 const PRELUDE_MEMBER_LENGTH = 4
@@ -20,9 +20,9 @@ const MINIMUM_MESSAGE_LENGTH = PRELUDE_LENGTH + CHECKSUM_LENGTH * 2
 /**
  * @name TranscribeStream
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
- * const myTranscribeStream = new TranscribeStream(options {
+ * new TranscribeStream(options {
  *   accessKeyId: string,
  *   secretAccessKey: string,
  *   region: string,
@@ -32,29 +32,32 @@ const MINIMUM_MESSAGE_LENGTH = PRELUDE_LENGTH + CHECKSUM_LENGTH * 2
  *   sampleRate: number,
  *   sessionId?: string,
  *   vocabularyName?: string,
- * })
+ * }) -> transcribeStream TranscribeStream
  *
- * myTranscribeStream.on('transcription', transcriptionHandler (transcription {
+ * transcribeStream.on('transcription', transcriptionHandler (transcription {
  *   Alternatives: Array<{
  *     Items: Array<{
  *       Confidence?: number,
  *       Content: string,
- *       EndTime: number, // seconds
- *       StartTime: number, // seconds
+ *       EndTime: number, # seconds
+ *       StartTime: number, # seconds
  *       Type: 'pronunciation'|'punctuation',
  *       VocabularyFilterMatch: boolean,
  *     }>,
  *     Transcript: string,
  *   }>,
- *   EndTime: number, // seconds
+ *   EndTime: number, # seconds
  *   IsPartial: boolean,
- *   ResultId: string, // uuid
- *   StartTime: number, // seconds
- * })=><>)
+ *   ResultId: string, # uuid
+ *   StartTime: number, # seconds
+ * })=>())
+ *
+ * # chunk must be properly encoded in the specified mediaEncoding
+ * transcribeStream.sendAudioChunk(chunk Buffer) -> ()
  * ```
  *
  * @description
- * https://docs.aws.amazon.com/TranscribeStreaming/latest/dg/websocket.html
+ * Interface for [Amazon TranscribeStreaming](https://docs.aws.amazon.com/transcribe/latest/dg/streaming.html)
  *
  * `languageCode` - `en-AU`, `en-GB`, `en-US`, `es-US`, `fr-CA`, `fr-FR`, `de-DE`, `ja-JP`, `ko-KR`, `pt-BR`, `zh-CN` or `it-IT`.
  *
@@ -90,7 +93,7 @@ class TranscribeStream extends EventEmitter {
       protocol: 'wss',
       canonicalUri: '/stream-transcription-websocket',
       serviceName: 'transcribe',
-      payloadHash: sha256(''),
+      payloadHash: crypto.createHash('sha256').update('', 'utf8').digest('hex'),
       expires: 300,
       queryParams: {
         'language-code': languageCode,
@@ -123,9 +126,9 @@ class TranscribeStream extends EventEmitter {
   }
 
   /**
-   * @name TranscribeStream.prototype.sendAudioChunk
+   * @name sendAudioChunk
    *
-   * @synopsis
+   * @docs
    * ```coffeescript [specscript]
    * myTranscribeStream.sendAudioChunk(
    *   chunk Buffer, // chunk is binary and assumed to be properly encoded in the specified mediaEncoding
@@ -149,22 +152,21 @@ class TranscribeStream extends EventEmitter {
       ':content-type': {
         type: 'string',
         value: 'application/octet-stream',
-      },
-      // hey: { type: 'string', value: 'yo' },
+      }
     })
     const length = headersBytes.byteLength + chunk.byteLength + 16
     const bytes = new Uint8Array(length)
     const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-    const checksum = new Crc32()
+    const crc32 = new CRC32()
 
     view.setUint32(0, length, false)
     view.setUint32(4, headersBytes.byteLength, false)
-    view.setUint32(8, checksum.update(bytes.subarray(0, 8)).digest(), false)
+    view.setUint32(8, crc32.update(Buffer.from(bytes.subarray(0, 8))).checksum, false)
     bytes.set(headersBytes, 12)
     bytes.set(chunk, headersBytes.byteLength + 12)
     view.setUint32(
       length - 4,
-      checksum.update(bytes.subarray(8, length - 4)).digest(),
+      crc32.update(Buffer.from(bytes.subarray(8, length - 4))).checksum,
       false
     )
     this.websocket.send(bytes)
@@ -180,7 +182,7 @@ class TranscribeStream extends EventEmitter {
 /**
  * @name marshalHeaders
  *
- * @synopsis
+ * @docs
  * ```coffeescript [specscript]
  * marshalHeaders(headers Object<
  *   [headerName string]: {
@@ -215,7 +217,9 @@ const marshalHeaders = function (headers) {
 }
 
 /**
- * @synopsis
+ * @name unmarshalMessage
+ *
+ * @docs
  * ```coffeescript [specscript]
  * unmarshalMessage(chunk ArrayBuffer) -> message {
  *   headers: DataView,
@@ -245,7 +249,9 @@ const unmarshalMessage = function (chunk) {
 }
 
 /**
- * @synopsis
+ * @name marshalStringHeaderValue
+ *
+ * @docs
  * ```coffeescript [specscript]
  * marshalStringHeaderValue(value string) -> bytes Uint8Array
  * ```
@@ -261,7 +267,9 @@ const marshalStringHeaderValue = function (value) {
 }
 
 /**
- * @synopsis
+ * @name unmarshalHeaders
+ *
+ * @docs
  * ```coffeescript [specscript]
  * unmarshalHeaders(headersView DataView) -> headers Object
  * ```

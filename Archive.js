@@ -17,7 +17,7 @@ const pick = require('rubico/pick')
  *
  * @synopsis
  * ```coffeescript [specscript]
- * new Archive(base Object<path=>(content string)>) -> Archive
+ * new Archive(base Object<string>) -> archive Archive
  * ```
  */
 const Archive = function (base) {
@@ -33,9 +33,11 @@ const Archive = function (base) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * new Archive(base?).tar(path string, options {
+ * module tar 'https://github.com/mafintosh/tar-stream'
+ *
+ * archive.tar(path string, options {
  *   ignore: Array<string>, // paths or names to ignore
- * }) -> HotReadableStream
+ * }) -> pack tar.Pack
  * ```
  *
  * @description
@@ -75,15 +77,17 @@ Archive.prototype.tar = function archiveTar(path, options) {
  *
  * @synopsis
  * ```coffeescript [specscript]
- * new Archive(base?).untar(
- *   archive Archive,
+ * module tar 'https://github.com/mafintosh/tar-stream'
+ *
+ * archive.untar(
+ *   pack tar.Pack,
  *   options {
  *     ignore: Array<string>, // paths or names to ignore
  *   },
  * ) -> Map<(header EntryHeader)=>(stream EntryStream)>
  * ```
  */
-Archive.prototype.untar = function archiveUntar(archive) {
+Archive.prototype.untar = function archiveUntar(pack) {
   const extractStream = tar.extract(),
     extracted = new Map()
   return new Promise((resolve, reject) => {
@@ -94,7 +98,7 @@ Archive.prototype.untar = function archiveUntar(archive) {
     })
     extractStream.on('finish', thunkify(resolve, extracted))
     extractStream.on('error', reject)
-    archive.pipe(extractStream)
+    pack.pipe(extractStream)
   })
 }
 

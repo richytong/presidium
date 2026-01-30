@@ -1,7 +1,7 @@
 require('rubico/global')
 const fs = require('fs/promises')
 const { minimatch } = require('minimatch')
-const pathResolve = require('./pathResolve')
+const resolvePath = require('./resolvePath')
 const isArray = require('./isArray')
 
 /**
@@ -23,13 +23,13 @@ const isArray = require('./isArray')
  */
 const pathWalk = async function (path, options = {}) {
   const { ignore = [] } = options
-  const absPath = pathResolve(path)
+  const absPath = resolvePath(path)
   const dirents = await fs.readdir(absPath, { withFileTypes: true })
   const result = []
 
   for (const dirent of dirents) {
     const dirName = dirent.name
-    const dirPath = pathResolve(path, dirName)
+    const dirPath = resolvePath(path, dirName)
     let shouldIgnore = false
     for (const pattern of ignore) {
       if (minimatch(dirPath, pattern) || minimatch(dirName, pattern)) {

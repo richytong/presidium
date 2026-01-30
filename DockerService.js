@@ -308,9 +308,9 @@ DockerService.prototype.getLogs = async function getLogs(options) {
       'stdout', 'stderr', 'follow',
       'since', 'timestamps', 'tail',
     ])(options)).then(response => {
-      response.body.on('end', resolve)
-      response.body.on('error', reject)
-      response.body.pipe(result)
+      response.on('end', resolve)
+      response.on('error', reject)
+      response.pipe(result)
     })
   })
   return result
