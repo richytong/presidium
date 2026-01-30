@@ -1,6 +1,11 @@
 require('rubico/global')
-const ECRClient = require('aws-sdk/clients/ecr')
-require('aws-sdk/lib/maintenance_mode_message').suppress = true
+const crypto = require('crypto')
+const HTTP = require('./HTTP')
+const AmzDate = require('./internal/AmzDate')
+const AwsAuthorization = require('./internal/AwsAuthorization')
+const AwsError = require('./internal/AwsError')
+const userAgent = require('./userAgent')
+const Readable = require('./Readable')
 
 /**
  * @name ECR
@@ -17,15 +22,74 @@ require('aws-sdk/lib/maintenance_mode_message').suppress = true
  */
 class ECR {
   constructor(options) {
-    this.client = new ECRClient({
-      ...pick(options, [
-        'accessKeyId',
-        'secretAccessKey',
-        'endpoint',
-      ]),
-      region: options.region ?? 'default-region',
-      apiVersion: '2015-09-21',
+    this.accessKeyId = options.accessKeyId ?? ''
+    this.secretAccessKey = options.secretAccessKey ?? ''
+    this.region = options.region ?? ''
+    this.apiVersion = '2015-09-21'
+
+    this.endpoint = `ecr.${this.region}.amazonaws.com`
+    this.protocol = 'https'
+
+    this.http = new HTTP(`${this.protocol}://${this.endpoint}`)
+  }
+
+  /**
+   * @name _awsRequest
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * module http 'https://nodejs.org/api/http.html'
+   *
+   * _awsRequest(
+   *   method string,
+   *   url string,
+   *   action string,
+   *   payload string
+   * ) -> response Promise<http.ServerResponse>
+   * ```
+   */
+  _awsRequest(method, url, action, payload) {
+    const amzDate = AmzDate()
+    const amzTarget = `AmazonEC2ContainerRegistry_V${this.apiVersion.replace(/-/g, '')}.${action}`
+
+    const headers = {
+      'Host': this.endpoint,
+      'Accept-Encoding': 'identity',
+      'Content-Length': Buffer.byteLength(payload, 'utf8'),
+      'User-Agent': userAgent,
+      'Content-Type': 'application/x-amz-json-1.1',
+      'Authorization': 'AUTHPARAMS',
+      'X-Amz-Date': amzDate,
+      'X-Amz-Target': amzTarget
+    }
+
+    const amzHeaders = {}
+    for (const key in headers) {
+      if (key.toLowerCase().startsWith('x-amz')) {
+        amzHeaders[key] = headers[key]
+      }
+    }
+
+    headers['Authorization'] = AwsAuthorization({
+      accessKeyId: this.accessKeyId,
+      secretAccessKey: this.secretAccessKey,
+      region: this.region,
+      method,
+      endpoint: this.endpoint,
+      protocol: this.protocol,
+      canonicalUri: url,
+      serviceName: 'ecr',
+      payloadHash:
+        crypto.createHash('sha256').update(payload, 'utf8').digest('hex'),
+      expires: 300,
+      queryParams: new URLSearchParams(),
+      headers: {
+        'Host': this.endpoint,
+        ...amzHeaders
+      }
     })
+
+    return this.http[method](url, { headers, body: payload })
   }
 
   /**
@@ -66,12 +130,18 @@ class ECR {
    * }>
    * ```
    */
-  createRepository(repositoryName, options = {}) {
-    const params = {
+  async createRepository(repositoryName, options = {}) {
+    const payload = JSON.stringify({
       repositoryName,
       ...options
+    })
+    const response = await this._awsRequest('POST', '/', 'CreateRepository', payload)
+
+    if (response.ok) {
+      const data = await Readable.JSON(response)
+      return data
     }
-    return this.client.createRepository(params).promise()
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -94,12 +164,18 @@ class ECR {
    * }>
    * ```
    */
-  deleteRepository(repositoryName, options = {}) {
-    const params = {
+  async deleteRepository(repositoryName, options = {}) {
+    const payload = JSON.stringify({
       repositoryName,
       ...options
+    })
+    const response = await this._awsRequest('POST', '/', 'DeleteRepository', payload)
+
+    if (response.ok) {
+      const data = await Readable.JSON(response)
+      return data
     }
-    return this.client.deleteRepository(params).promise()
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
@@ -110,9 +186,15 @@ class ECR {
    * ecr.getAuthorizationToken() -> authToken Promise<string>
    * ```
    */
-  getAuthorizationToken() {
-    return this.client.getAuthorizationToken()
-      .promise().then(get('authorizationData[0].authorizationToken'))
+  async getAuthorizationToken() {
+    const response = await this._awsRequest('POST', '/', 'GetAuthorizationToken', '{}')
+
+    if (response.ok) {
+      const data = await Readable.JSON(response)
+      const authToken = data.authorizationData[0].authorizationToken
+      return authToken
+    }
+    throw new AwsError(await Readable.Text(response), response.status)
   }
 }
 
