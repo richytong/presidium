@@ -2,7 +2,7 @@ const Test = require('thunk-test')
 const assert = require('assert')
 const Password = require('./Password')
 
-const test = new Test('Password', async function () {
+const test = new Test('Password', async function integration() {
   const plaintext = 'MyPassword!123'
   const hashed = await Password.hash(plaintext)
   await assert.rejects(
