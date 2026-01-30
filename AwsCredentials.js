@@ -10,8 +10,6 @@ const resolvePath = require('./internal/resolvePath')
  * AwsCredentials(profile string, options? {
  *   credentialsFileDirname: string
  *   credentialsFilename: string,
- *   configFileDirname: string
- *   configFilename: string,
  *   recurse: boolean,
  * }) -> awsCreds Promise<{
  *   accessKeyId: string,
@@ -59,30 +57,6 @@ const AwsCredentials = async function (profile, options = {}) {
       && index - startingLineNumber < 3
   )?.split(' = ')[1]
 
-  const configFileDirname = options.configFileDirname ?? '.aws'
-  const configFilename = options.configFilename ?? 'config'
-  let configFileDir = resolvePath(process.cwd())
-  let lines2 = ''
-  while (configFileDir != '/') {
-    const configFilePath = resolvePath(configFileDir, `${configFileDirname}/${configFilename}`)
-    if (fs.existsSync(configFilePath)) {
-      lines2 = await (
-        fs.promises.readFile(configFilePath)
-        .then(buffer => `${buffer}`.split('\n'))
-      )
-      break
-    }
-    configFileDir = resolvePath(configFileDir, '..')
-  }
-
-  const startingLineNumber2 = lines2.findIndex(line => line == `[${profile}]`)
-
-  const region = startingLineNumber2 == -1 ? undefined : lines2.find(
-    (line, index) => index > startingLineNumber2
-      && line.startsWith('region')
-      && index - startingLineNumber2 < 2
-  )?.split(' = ')[1]
-
   if (accessKeyId == null) {
     throw new Error(`unable to find aws_access_key_id for profile ${profile}`)
   }
@@ -90,11 +64,7 @@ const AwsCredentials = async function (profile, options = {}) {
     throw new Error(`unable to find aws_secret_access_key for profile ${profile}`)
   }
 
-  if (region == null) {
-    return { accessKeyId, secretAccessKey }
-  }
-
-  return { accessKeyId, secretAccessKey, region }
+  return { accessKeyId, secretAccessKey }
 }
 
 module.exports = AwsCredentials
