@@ -7,7 +7,8 @@ const ECR = require('../ECR')
 const package = require('./package.json')
 
 ;(async function () {
-  const awsCreds = await AwsCredentials('solum')
+  const awsCreds = await AwsCredentials('presidium')
+  awsCreds.region = 'us-east-1'
 
   const docker = new Docker()
 
