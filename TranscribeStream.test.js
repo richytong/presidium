@@ -43,10 +43,9 @@ const test = new Test('TranscribeStream', async function integration() {
   assert(testTranscription.toLowerCase().includes('hello'), testTranscription)
   assert(testTranscription.toLowerCase().includes('world'), testTranscription)
 
-  // wait for timeout error to test error handling
+  console.log('Waiting for timeout error to test error handling...')
   await new Promise(resolve => {
     testTranscribeStream.on('error', error => {
-      console.error(error)
       testTranscribeStream.close()
       resolve()
     })
