@@ -89,13 +89,12 @@ region = us-east-presidium
   {
     await assert.rejects(
       async () => {
-        const awsCreds = await AwsCredentials('missing-access-key-id', {
+        await AwsCredentials('missing-access-key-id', {
           credentialsFileDirname,
           credentialsFilename,
           configFileDirname,
           configFilename,
         })
-        console.error('awsCreds', awsCreds)
       },
       new Error('unable to find aws_access_key_id for profile missing-access-key-id')
     )
@@ -104,13 +103,12 @@ region = us-east-presidium
   {
     await assert.rejects(
       async () => {
-        const awsCreds = await AwsCredentials('missing-secret-access-key', {
+        await AwsCredentials('missing-secret-access-key', {
           credentialsFileDirname,
           credentialsFilename,
           configFileDirname,
           configFilename,
         })
-        console.error('awsCreds', awsCreds)
       },
       new Error('unable to find aws_secret_access_key for profile missing-secret-access-key')
     )
@@ -129,6 +127,18 @@ region = us-east-presidium
   }
 
   await fs.promises.rm(`${__dirname}/../${credentialsFileDirname}`, { recursive: true })
+
+  await assert.rejects(
+    AwsCredentials('missing-region', {
+      credentialsFileDirname,
+      credentialsFilename,
+      configFileDirname,
+      configFilename,
+      recurse: false,
+    }),
+    new Error('Missing .aws/credentials file')
+  )
+
 }).case()
 
 if (process.argv[1] == __filename) {

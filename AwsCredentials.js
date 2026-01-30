@@ -8,16 +8,16 @@ const resolvePath = require('./internal/resolvePath')
  * @synopsis
  * ```coffeescript [specscript]
  * AwsCredentials(profile string, options? {
- *   noenv?: boolean,
- *   credentialsFileDirname?: string
- *   credentialsFilename?: string,
- *   configFileDirname?: string
- *   configFilename?: string,
- * }) -> awsCreds {
+ *   credentialsFileDirname: string
+ *   credentialsFilename: string,
+ *   configFileDirname: string
+ *   configFilename: string,
+ *   recurse: boolean,
+ * }) -> awsCreds Promise<{
  *   accessKeyId: string,
  *   secretAccessKey: string,
  *   region: string,
- * }
+ * }>
  * ```
  */
 
@@ -26,21 +26,24 @@ const AwsCredentials = async function (profile, options = {}) {
     profile = 'default'
   }
 
+  const recurse = options.recurse ?? true
   const credentialsFileDirname = options.credentialsFileDirname ?? '.aws'
   const credentialsFilename = options.credentialsFilename ?? 'credentials'
   let credentialsFileDir = resolvePath(process.cwd())
   let lines = ''
-  while (credentialsFileDir != '/') {
+  while (recurse && credentialsFileDir != '/') {
     const credentialsFilePath =
       resolvePath(credentialsFileDir, `${credentialsFileDirname}/${credentialsFilename}`)
     if (fs.existsSync(credentialsFilePath)) {
-      lines = await (
-        fs.promises.readFile(credentialsFilePath)
-        .then(buffer => `${buffer}`.split('\n'))
-      )
+      lines = await fs.promises.readFile(credentialsFilePath)
+        .then(buffer => buffer.toString('utf8').split('\n'))
       break
     }
     credentialsFileDir = resolvePath(credentialsFileDir, '..')
+  }
+
+  if (lines == '') {
+    throw new Error('Missing .aws/credentials file')
   }
 
   const startingLineNumber = lines.findIndex(line => line == `[${profile}]`)
