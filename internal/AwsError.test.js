@@ -13,7 +13,7 @@ describe('AwsError', () => {
     assert.equal(error.code, 500)
   })
 
-  it('Creates error for JSON message', async () => {
+  it('Creates error for JSON message with name after # in __type', async () => {
     const message = JSON.stringify({
       __type: 'com.test.presidium#TestError',
       Message: 'test'
@@ -21,6 +21,17 @@ describe('AwsError', () => {
     const error = new AwsError(message)
     assert.equal(error.name, 'TestError')
     assert.equal(error.message, 'test')
+    assert.equal(error.code, 500)
+  })
+
+  it('Creates error for JSON message with full name for __type', async () => {
+    const message = JSON.stringify({
+      __type: 'TestErrorFullName',
+      Message: 'test2'
+    })
+    const error = new AwsError(message)
+    assert.equal(error.name, 'TestErrorFullName')
+    assert.equal(error.message, 'test2')
     assert.equal(error.code, 500)
   })
 
