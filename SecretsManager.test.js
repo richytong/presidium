@@ -3,7 +3,7 @@ const assert = require('assert')
 const AwsCredentials = require('./internal/AwsCredentials')
 const SecretsManager = require('./SecretsManager')
 
-const test = new Test('SecretsManager', async function () {
+const test = new Test('SecretsManager', async function integration() {
   const awsCreds = await AwsCredentials('default').catch(error => {
     if (error.code == 'ENOENT') {
       const accessKeyId = process.env.AWS_ACCESS_KEY_ID
@@ -27,7 +27,7 @@ const test = new Test('SecretsManager', async function () {
   let didRerunTooSoon = false
 
   try {
-    const result0 = await secretsManager.createSecret(mySecret.name, mySecret.value)
+    const result0 = await secretsManager.putSecret(mySecret.name, mySecret.value)
     assert.equal(result0.Name, mySecret.name)
 
     mySecret.value = 'helloworld2'
@@ -44,7 +44,7 @@ const test = new Test('SecretsManager', async function () {
   }
 
   try {
-    const result0 = await secretsManager.getSecretValue(mySecret.name)
+    const result0 = await secretsManager.getSecret(mySecret.name)
     assert.equal(result0.Name, mySecret.name)
     assert.equal(result0.SecretString, mySecret.value)
 

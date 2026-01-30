@@ -1,6 +1,11 @@
 require('rubico/global')
-const AWSSecretsManager = require('aws-sdk/clients/secretsmanager')
-require('aws-sdk/lib/maintenance_mode_message').suppress = true
+const crypto = require('crypto')
+const HTTP = require('./HTTP')
+const AmzDate = require('./internal/AmzDate')
+const AwsAuthorization = require('./internal/AwsAuthorization')
+const AwsError = require('./internal/AwsError')
+const userAgent = require('./userAgent')
+const Readable = require('./Readable')
 
 /**
  * @name SecretsManager
@@ -17,135 +22,202 @@ require('aws-sdk/lib/maintenance_mode_message').suppress = true
  * }) -> secretsManager Object
  * ```
  */
-const SecretsManager = function (options) {
-  this.awsSecretsManager = new AWSSecretsManager({
-    apiVersion: '2017-10-17',
-    ...pick([
-      'accessKeyId',
-      'secretAccessKey',
-      'region',
-      'endpoint',
-    ])(options),
-  })
-}
+class SecretsManager {
+  constructor(options) {
+    this.accessKeyId = options.accessKeyId ?? ''
+    this.secretAccessKey = options.secretAccessKey ?? ''
+    this.region = options.region ?? ''
+    this.apiVersion = '2017-10-17'
 
-/**
- * @name SecretsManager.prototype.createSecret
- *
- * @synopsis
- * ```coffeescript [specscript]
- * new SecretsManager(...).createSecret(
- *   name string,
- *   secretString string,
- * ) -> result Promise<{
- *   ARN: string,
- *   Name: string,
- *   VersionId: string,
- * }>
- * ```
- */
-SecretsManager.prototype.createSecret = function (name, secretString) {
-  return this.awsSecretsManager.createSecret({
-    Name: name,
-    SecretString: secretString,
-  }).promise().catch(async error => {
-    if (error.name == 'ResourceExistsException') {
-      const secretValue = await this.getSecretValue(name)
-      return this.awsSecretsManager.updateSecret({
-        SecretId: secretValue.ARN,
-        SecretString: secretString,
-      }).promise()
+    this.endpoint = `secretsmanager.${this.region}.amazonaws.com`
+    this.protocol = 'https'
+
+    this.http = new HTTP(`${this.protocol}://${this.endpoint}`)
+  }
+
+  /**
+   * @name _awsRequest
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * module http 'https://nodejs.org/api/http.html'
+   *
+   * _awsRequest(
+   *   method string,
+   *   url string,
+   *   action string,
+   *   payload string
+   * ) -> response Promise<http.ServerResponse>
+   * ```
+   */
+  _awsRequest(method, url, action, payload) {
+    const amzDate = AmzDate()
+    const amzTarget = `secretsmanager.${action}`
+
+    const headers = {
+      'Host': this.endpoint,
+      'Accept-Encoding': 'identity',
+      'Content-Length': Buffer.byteLength(payload, 'utf8'),
+      'User-Agent': userAgent,
+      'Content-Type': 'application/x-amz-json-1.1',
+      'X-Amz-Date': amzDate,
+      'X-Amz-Target': amzTarget
     }
-    throw error
-  })
-}
 
-/**
- * @name SecretsManager.prototype.updateSecret
- *
- * @synopsis
- * ```coffeescript [specscript]
- * new SecretsManager(...).updateSecret(
- *   name string,
- *   secretString string,
- * ) -> result Promise<{}>
- * ```
- */
-SecretsManager.prototype.updateSecret = function (name, secretString) {
-  return this.awsSecretsManager.updateSecret({
-    Name: name,
-    SecretString: secretString,
-  }).promise()
-}
+    const amzHeaders = {}
+    for (const key in headers) {
+      if (key.toLowerCase().startsWith('x-amz')) {
+        amzHeaders[key] = headers[key]
+      }
+    }
 
-/**
- * @name SecretsManager.prototype.putSecret
- *
- * @alias SecretsManager.prototype.createSecret
- */
-SecretsManager.prototype.putSecret = function (...args) {
-  return this.createSecret(...args)
-}
+    headers['Authorization'] = AwsAuthorization({
+      accessKeyId: this.accessKeyId,
+      secretAccessKey: this.secretAccessKey,
+      region: this.region,
+      method,
+      endpoint: this.endpoint,
+      protocol: this.protocol,
+      canonicalUri: url,
+      serviceName: 'secretsmanager',
+      payloadHash:
+        crypto.createHash('sha256').update(payload, 'utf8').digest('hex'),
+      expires: 300,
+      queryParams: new URLSearchParams(),
+      headers: {
+        'Host': this.endpoint,
+        ...amzHeaders
+      }
+    })
 
-/**
- * @name SecretsManager.prototype.getSecretValue
- *
- * @synopsis
- * ```coffeescript [specscript]
- * new SecretsManager(...).getSecretValue(name string) -> result Promise<{
- *   ARN: string,
- *   CreatedDate: Date,
- *   Name: string,
- *   SecretString: string,
- *   VersionId: string,
- *   VersionStages: Array<string>,
- * }>
- * ```
- */
-SecretsManager.prototype.getSecretValue = function (name) {
-  return this.awsSecretsManager.getSecretValue({
-    SecretId: name,
-  }).promise()
-}
+    return this.http[method](url, { headers, body: payload })
+  }
 
-/**
- * @name SecretsManager.prototype.getSecretValue
- *
- * @synopsis
- * ```coffeescript [specscript]
- * new SecretsManager(...).getSecretValue(name string) -> result Promise<{
- *   ARN: string,
- *   CreatedDate: Date,
- *   Name: string,
- *   SecretString: string,
- *   VersionId: string,
- *   VersionStages: Array<string>,
- * }>
- * ```
- */
-SecretsManager.prototype.getSecretString = function (name) {
-  return this.awsSecretsManager.getSecretValue({
-    SecretId: name,
-  }).promise().then(get('SecretString'))
-}
+  /**
+   * @name putSecret
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * putSecret(name string, secretString string) -> result Promise<{
+   *   ARN: string,
+   *   Name: string,
+   *   VersionId: string,
+   * }>
+   * ```
+   */
+  async putSecret(name, secretString) {
+    const createSecretPayload = JSON.stringify({
+      ClientRequestToken: crypto.randomUUID(),
+      Name: name,
+      SecretString: secretString,
+    })
+    const createSecretResponse =
+      await this._awsRequest('POST', '/', 'CreateSecret', createSecretPayload)
 
-/**
- * @name SecretsManager.prototype.deleteSecret
- *
- * @synopsis
- * ```coffeescript [specscript]
- * new SecretsManager(...).deleteSecret(name string) -> result Promise<{
- *   ARN: string,
- *   DeletionDate: Date,
- *   Name: string,
- * }>
- * ```
- */
-SecretsManager.prototype.deleteSecret = function (name) {
-  return this.awsSecretsManager.deleteSecret({
-    SecretId: name,
-    ForceDeleteWithoutRecovery: true,
-  }).promise()
+    if (createSecretResponse.ok) {
+      const data = await Readable.JSON(createSecretResponse)
+      return data
+    }
+
+    const createSecretAwsError = new AwsError(
+      await Readable.Text(createSecretResponse),
+      createSecretResponse.status
+    )
+    if (createSecretAwsError.name != 'ResourceExistsException') {
+      throw createSecretAwsError
+    }
+
+    const secret = await this.getSecret(name)
+
+    const updateSecretPayload = JSON.stringify({
+      ClientRequestToken: crypto.randomUUID(),
+      SecretId: secret.ARN,
+      SecretString: secretString,
+    })
+    const updateSecretResponse =
+      await this._awsRequest('POST', '/', 'UpdateSecret', updateSecretPayload)
+
+    if (updateSecretResponse.ok) {
+      const data = await Readable.JSON(updateSecretResponse)
+      return data
+    }
+
+    const updateSecretAwsError = new AwsError(
+      await Readable.Text(updateSecretResponse),
+      updateSecretResponse.status
+    )
+    throw updateSecretAwsError
+  }
+
+  /**
+   * @name getSecret
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * getSecret(name string) -> result Promise<{
+   *   ARN: string,
+   *   CreatedDate: Date,
+   *   Name: string,
+   *   SecretString: string,
+   *   VersionId: string,
+   *   VersionStages: Array<string>,
+   * }>
+   * ```
+   */
+  async getSecret(name) {
+    const payload = JSON.stringify({
+      SecretId: name,
+    })
+    const response =
+      await this._awsRequest('POST', '/', 'GetSecretValue', payload)
+
+    if (response.ok) {
+      const data = await Readable.JSON(response)
+      return data
+    }
+    throw new AwsError(await Readable.Text(response), response.status)
+  }
+
+  /**
+   * @name SecretsManager.prototype.getSecretString
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * new SecretsManager(...).getSecretString(name string) -> SecretString string
+   * ```
+   */
+  async getSecretString(name) {
+    const secret = await this.getSecret(name)
+    return secret.SecretString
+  }
+
+  /**
+   * @name deleteSecret
+   *
+   * @synopsis
+   * ```coffeescript [specscript]
+   * deleteSecret(name string) -> result Promise<{
+   *   ARN: string,
+   *   DeletionDate: Date,
+   *   Name: string,
+   * }>
+   * ```
+   */
+  async deleteSecret(name) {
+    const payload = JSON.stringify({
+      SecretId: name,
+      ForceDeleteWithoutRecovery: true,
+    })
+    const response =
+      await this._awsRequest('POST', '/', 'DeleteSecret', payload)
+
+    if (response.ok) {
+      const data = await Readable.JSON(response)
+      return data
+    }
+    throw new AwsError(await Readable.Text(response), response.status)
+  }
+
 }
 
 module.exports = SecretsManager
