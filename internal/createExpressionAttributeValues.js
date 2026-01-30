@@ -1,4 +1,4 @@
-const Dynamo = require('./Dynamo')
+const DynamoDBAttributeValue = require('./DynamoDBAttributeValue')
 
 /**
  * @name createExpressionAttributeValues
@@ -15,7 +15,7 @@ const createExpressionAttributeValues = function (options) {
   const result = {}
   for (const key in values) {
     const value = values[key]
-    result[`:${key}`] = Dynamo.AttributeValue(value)
+    result[`:${key}`] = DynamoDBAttributeValue(value)
   }
   return result
 }
