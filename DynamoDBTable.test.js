@@ -9,6 +9,9 @@ const test1 = new Test('DynamoDBTable', async function integration1() {
   const awsCreds = await AwsCredentials('presidium')
   awsCreds.region = 'us-east-1'
 
+  console.log(awsCreds.accessKeyId.slice(0, 3))
+  console.log(awsCreds.secretAccessKey.slice(0, 3))
+
   {
     const testTable = new DynamoDBTable({
       name: 'test-tablename',
