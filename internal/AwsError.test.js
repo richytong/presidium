@@ -35,6 +35,17 @@ describe('AwsError', () => {
     assert.equal(error.code, 500)
   })
 
+  it('Creates error for JSON message with lowercase message', async () => {
+    const message = JSON.stringify({
+      __type: 'TestErrorLowerCase',
+      message: 'testlowercase'
+    })
+    const error = new AwsError(message)
+    assert.equal(error.name, 'TestErrorLowerCase')
+    assert.equal(error.message, 'testlowercase')
+    assert.equal(error.code, 500)
+  })
+
   it('Creates error for basic message', async () => {
     const message = 'test'
     const error = new AwsError(message)
