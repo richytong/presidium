@@ -10,6 +10,27 @@
     "url": "github:richytong/presidium"
   },
   "homepage": "https://github.com/richytong/presidium",
+  "files": [
+    "Archive.js",
+    "AwsCredentials.js",
+    "Docker.js",
+    "DynamoDBGlobalSecondaryIndex.js",
+    "DynamoDBStream.js",
+    "DynamoDBTable.js",
+    "ECR.js",
+    "HTTP.js",
+    "NpmToken.js",
+    "OptionalValidator.js",
+    "Password.js",
+    "Readable.js",
+    "S3Bucket.js",
+    "SecretsManager.js",
+    "StrictValidator.js",
+    "TranscribeStream.js",
+    "userAgent.js",
+    "WebSocket.js",
+    "XML.js"
+  ],
   "keywords": [
     "aws",
     "http",
