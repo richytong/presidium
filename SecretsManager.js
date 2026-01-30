@@ -6,6 +6,8 @@ const AwsAuthorization = require('./internal/AwsAuthorization')
 const AwsError = require('./internal/AwsError')
 const userAgent = require('./userAgent')
 const Readable = require('./Readable')
+const handleAwsResponse = require('./internal/handleAwsResponse')
+const retryableErrorNames = require('./internal/retryableErrorNames')
 
 /**
  * @name SecretsManager
@@ -123,7 +125,13 @@ class SecretsManager {
       await Readable.Text(createSecretResponse),
       createSecretResponse.status
     )
-    if (createSecretAwsError.name != 'ResourceExistsException') {
+
+    if (createSecretAwsError.name == 'ResourceExistsException') {
+      // continue
+    } else if (retryableErrorNames.includes(error.name)) {
+      await sleep(1000)
+      return putSecret.call(this, name, secretString)
+    } else {
       throw createSecretAwsError
     }
 
@@ -137,16 +145,13 @@ class SecretsManager {
     const updateSecretResponse =
       await this._awsRequest('POST', '/', 'UpdateSecret', updateSecretPayload)
 
-    if (updateSecretResponse.ok) {
-      const data = await Readable.JSON(updateSecretResponse)
-      return data
-    }
-
-    const updateSecretAwsError = new AwsError(
-      await Readable.Text(updateSecretResponse),
-      updateSecretResponse.status
+    return handleAwsResponse.call(
+      this,
+      updateSecretResponse,
+      this.putSecret,
+      name,
+      secretString
     )
-    throw updateSecretAwsError
   }
 
   /**
@@ -171,11 +176,7 @@ class SecretsManager {
     const response =
       await this._awsRequest('POST', '/', 'GetSecretValue', payload)
 
-    if (response.ok) {
-      const data = await Readable.JSON(response)
-      return data
-    }
-    throw new AwsError(await Readable.Text(response), response.status)
+    return handleAwsResponse.call(this, response, this.getSecret, name)
   }
 
   /**
@@ -211,11 +212,7 @@ class SecretsManager {
     const response =
       await this._awsRequest('POST', '/', 'DeleteSecret', payload)
 
-    if (response.ok) {
-      const data = await Readable.JSON(response)
-      return data
-    }
-    throw new AwsError(await Readable.Text(response), response.status)
+    return handleAwsResponse.call(this, response, this.deleteSecret, name)
   }
 
 }
