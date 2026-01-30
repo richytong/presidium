@@ -19,11 +19,11 @@ const test = Test.all([
   require('./TranscribeStream.test'),
   require('./WebSocket.test'),
 
-  require('./internal/createUpdateServiceSpec.test')
-  require('./internal/StatusCodeMessage.test')
-  require('./internal/handleDynamoDBStreamGetRecordsError.test')
-  require('./internal/StatusCodeMessage.test')
-  require('./internal/pathWalk.test')
+  require('./internal/createUpdateServiceSpec.test'),
+  require('./internal/StatusCodeMessage.test'),
+  require('./internal/handleDynamoDBStreamGetRecordsError.test'),
+  require('./internal/StatusCodeMessage.test'),
+  require('./internal/pathWalk.test'),
 ])
 
 if (process.argv[1] == __filename) {
