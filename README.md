@@ -289,7 +289,7 @@ const docker = new Docker()
 // initialize docker swarm
 await docker.initSwarm('eth0:2377')
 
-const myService = await docker.createService({
+await docker.createService({
   name: 'my-service',
   image: 'nginx:1.19',
   publish: { 80: 80 },
