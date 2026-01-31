@@ -228,8 +228,14 @@ await myBucket.delete()
 > No more --build-arg for npm tokens!
 ```javascript
 const Docker = require('presidium/Docker')
+const NpmToken = require('presidium/NpmToken')
+const fs = require('fs')
 
 const myImage = 'my-app:1.0.0'
+
+const npmrc = fs.createWriteStream('.npmrc')
+npmrc.write(`//registry.npmjs.org/:_authToken=${await NpmToken()}`)
+npmrc.end()
 
 const buildStream = await docker.buildImage(__dirname, {
   image: myImage,
@@ -239,8 +245,7 @@ const buildStream = await docker.buildImage(__dirname, {
 FROM node:15-alpine
 WORKDIR /opt
 COPY . .
-RUN echo //registry.npmjs.org/:_authToken=${myNpmToken} > .npmrc \
-  && npm i \
+RUN npm i \
   && rm .npmrc
   && rm Dockerfile
 EXPOSE 8080
