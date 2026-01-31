@@ -255,14 +255,13 @@ CMD ["npm", "start"]
 })
 
 buildStream.pipe(process.stdout)
+await new Promise(resolve => buildStream.on('end', resolve))
 
-buildStream.on('end', () => {
-  const pushStream = await docker.pushImage({
-    image: myImage,
-    repository: 'my-registry.io',
-  })
-  pushStream.pipe(process.stdout)
+const pushStream = await docker.pushImage({
+  image: myImage,
+  repository: 'my-registry.io',
 })
+pushStream.pipe(process.stdout)
 ```
 
 ## Run Docker Containers
