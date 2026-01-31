@@ -19,6 +19,7 @@
     "DynamoDBTable.js",
     "ECR.js",
     "HTTP.js",
+    "index.js",
     "NpmToken.js",
     "OptionalValidator.js",
     "Password.js",
