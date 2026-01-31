@@ -246,7 +246,7 @@ FROM node:15-alpine
 WORKDIR /opt
 COPY . .
 RUN npm i \
-  && rm .npmrc
+  && rm .npmrc \
   && rm Dockerfile
 EXPOSE 8080
 CMD ["npm", "start"]
