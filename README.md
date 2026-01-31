@@ -80,24 +80,24 @@ await myTable.putItemJSON({ id: '2', name: 'Joe', age: 19, type: 'person' })
 await myTable.putItemJSON({ id: '3', name: 'Jane', age: 33, type: 'person' })
 
 {
-  const response = await myTable.getItem({ id: { S: '1' } }),
-  console.log(response)
+  const data = await myTable.getItem({ id: { S: '1' } }),
+  console.log(data)
   // { Item: { id: { S: '1' }, name: { S: 'John' }, age: { N: '32' } } }
 }
 
 {
-  const response = await myTable.getItemJSON({ id: '1' })
-  console.log(response)
+  const data = await myTable.getItemJSON({ id: '1' })
+  console.log(data)
   // { item: { id: '1', name: 'John', age: 32 } }
 }
 
 {
-  const response = await myTypeAgeIndex.query(
+  const data = await myTypeAgeIndex.query(
     'type = :type AND age < :age',
     { type: { S: 'person' }, age: { N: '100' } },
     { Limit: 2, ScanIndexForward: true },
   )
-  console.log(response)
+  console.log(data)
   // {
   //   Items: [
   //     { id: { S: '1' }, name: { S: 'John' }, age: { N: '32' }, type: { S: 'person' } },
@@ -109,12 +109,12 @@ await myTable.putItemJSON({ id: '3', name: 'Jane', age: 33, type: 'person' })
 }
 
 {
-  const response = await myTypeAgeIndex.queryJSON(
+  const data = await myTypeAgeIndex.queryJSON(
     'type = :type AND age < :age',
     { type: 'person', age: 100 },
     { Limit: 2, ScanIndexForward: true },
   )
-  console.log(response)
+  console.log(data)
   // {
   //   ItemsJSON: [
   //     { id: '1', name: 'John', age: 32, type: 'person' },
@@ -216,10 +216,9 @@ await myBucket.putObject('some-key', '{"hello":"world"}', {
   ContentType: 'application/json',
 })
 
-{
-  const response = await myBucket.getObject('some-key')
-  console.log(response) // { Etag: '...', Body: '{"hello":"world"}', ContentType: 'application/json' }
-}
+const data = await myBucket.getObject('some-key')
+console.log(data)
+// { Etag: '...', Body: <Buffer 7b 22 68 ...>, ContentType: 'application/json' }
 
 await myBucket.deleteAllObjects()
 await myBucket.delete()
