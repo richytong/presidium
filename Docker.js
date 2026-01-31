@@ -455,8 +455,7 @@ class Docker {
    *   Id: string,
    *   Warnings: Array<string>,
    * }>
-   *
-   * https://docs.docker.com/engine/reference/commandline/create/
+   * ```
    *
    * Restart policies:
    *   * `no` - do not restart the container when it exits
@@ -469,7 +468,9 @@ class Docker {
    *   * `['NONE']` - disable healthcheck
    *   * `['CMD', ...args]` - exec arguments directly
    *   * `['CMD-SHELL', command string]` - run command with system's default shell
-   * ```
+   *
+   * References:
+   * https://docs.docker.com/engine/reference/commandline/create/
    */
   async createContainer(options) {
     const response = await this.http.post(`/containers/create?${
@@ -848,10 +849,11 @@ class Docker {
    * }) -> message Promise<string>
    * ```
    *
-   * Options:
+   * Arguments:
    *   * `address` - address used for inter-manager communication that is also advertised to other nodes.
-   *   * `RemoteAddrs` - address or interface for data path traffic. Used to separate data traffic from management traffic.
-   *   * `JoinToken` - worker or manager token for joining the swarm.
+   *   * `options`:
+   *     * `RemoteAddrs` - address or interface for data path traffic. Used to separate data traffic from management traffic.
+   *     * `JoinToken` - worker or manager token for joining the swarm.
    */
   async joinSwarm(address, options) {
     const response = await this.http.post('/swarm/join', {
