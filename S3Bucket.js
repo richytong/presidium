@@ -14,8 +14,6 @@ const XML = require('./XML')
  * @name S3Bucket
  *
  * @docs
- * Presidium S3Bucket client for [Amazon S3](https://aws.amazon.com/s3/). Creates a new S3 bucket under `name` if a bucket does not already exist. Access to the newly creaed S3 bucket is private.
- *
  * ```coffeescript [specscript]
  * new S3Bucket(options {
  *   name string,
@@ -37,14 +35,14 @@ const XML = require('./XML')
  * }) -> bucket S3Bucket
  * ```
  *
+ * Presidium S3Bucket client for [Amazon S3](https://aws.amazon.com/s3/). Creates a new S3 bucket under `name` if a bucket does not already exist. Access to the newly creaed S3 bucket is private.
+ *
  * ```javascript
  * const S3Bucket = require('presidium/S3Bucket')
+ * const AwsCredentials = require('presidium/AwsCredentials')
  *
- * const awsCreds = {
- *   accessKeyId: 'my-access-key-id',
- *   secretAccessKey: 'my-secret-access-key',
- *   region: 'my-region'
- * }
+ * const awsCreds = await AwsCredentials('default')
+ * awsCreds.region = 'us-east-1'
  *
  * const myBucket = new S3Bucket({
  *   name: 'my-bucket-name',
@@ -74,16 +72,22 @@ const XML = require('./XML')
  *   * `VersioningStatus` - if `'Enabled'`, AWS S3 enables versioning for objects in this bucket, and all objects added to the bucket receive a unique Version ID. If `'Suspended'`, existing object versions remain in the bucket, new objects receive a `null` Version ID, and overwrites of objects behave as they would in an unversioned bucket. Defaults to `'Suspended'`.
  *
  * Methods:
- *   * [putObject](#putobject)
- *   * [upload](#upload)
- *   * [deleteObject](#deleteobject)
- *   * [deleteObjects](#deleteobjects)
- *   * [deleteAllObjects](#deleteallobjects)
+ *   * [getLocation](#getLocation)
+ *   * [create](#create)
+ *   * [create](#create)
+ *   * [putPolicy](#putPolicy)
+ *   * [getPolicy](#getPolicy)
+ *   * [closeConnections](#closeConnections)
  *   * [delete](#delete)
- *   * [getObject](#getobject)
- *   * [headObject](#headobject)
- *   * [getObjectStream](#getobjectstream)
- *   * [listObjects](#listobjects)
+ *   * [putObject](#putObject)
+ *   * [getObject](#getObject)
+ *   * [getObjectACL](#getObjectACL)
+ *   * [headObject](#headObject)
+ *   * [deleteObject](#deleteObject)
+ *   * [deleteObjects](#deleteObjects)
+ *   * [deleteAllObjects](#deleteAllObjects)
+ *   * [listObjects](#listObjects)
+ *   * [listObjectVersions](#listObjectVersions)
  *
  * Attributes:
  *   * [ready](#ready)
@@ -333,11 +337,11 @@ class S3Bucket {
    * @name create
    *
    * @docs
-   * Create the Amazon S3 bucket.
-   *
    * ```coffeescript [specscript]
    * bucket.create() -> data Promise<{}>
    * ```
+   *
+   * Create the Amazon S3 bucket.
    *
    * ```javascript
    * await myBucket.create()
@@ -378,11 +382,12 @@ class S3Bucket {
    * @name putPublicAccessBlock
    *
    * @docs
-   * Create or replace the `PublicAccessBlock` configuration for the Amazon S3 Bucket.
-   *
    * ```coffeescript [specscript]
    * putPublicAccessBlock() -> data Promise<{}>
    * ```
+   *
+   * Create or replace the `PublicAccessBlock` configuration for the Amazon S3 Bucket.
+   *
    */
   async putPublicAccessBlock() {
     const headers = {}
@@ -412,11 +417,12 @@ class S3Bucket {
    * @name putRequestPayment
    *
    * @docs
-   * Create or replace the `RequestPayment` configuration for the Amazon S3 Bucket.
-   *
    * ```coffeescript [specscript]
    * putRequestPayment() -> data Promise<{}> 
    * ```
+   *
+   * Create or replace the `RequestPayment` configuration for the Amazon S3 Bucket.
+   *
    */
   async putRequestPayment() {
     const headers = {}
@@ -443,11 +449,12 @@ class S3Bucket {
    * @name putObjectLockConfiguration
    *
    * @docs
-   * Apply an AWS S3 bucket policy to an AWS S3 bucket.
-   *
    * ```coffeescript [specscript]
    * putObjectLockConfiguration() -> Promise<{}>
    * ```
+   *
+   * Apply an AWS S3 bucket policy to an AWS S3 bucket.
+   *
    */
   async putObjectLockConfiguration() {
     const headers = {}
@@ -486,11 +493,12 @@ class S3Bucket {
    * @name putVersioning
    *
    * @docs
-   * Apply an AWS S3 bucket policy to an AWS S3 bucket.
-   *
    * ```coffeescript [specscript]
    * putVersioning() -> Promise<{}>
    * ```
+   *
+   * Apply an AWS S3 bucket policy to an AWS S3 bucket.
+   *
    */
   async putVersioning() {
     const headers = {}
@@ -518,13 +526,13 @@ class S3Bucket {
    * @name putPolicy
    *
    * @docs
-   * Apply an AWS S3 bucket policy to an AWS S3 bucket.
-   *
    * ```coffeescript [specscript]
    * putPolicy(options {
    *   policy: object,
    * }) -> Promise<{}>
    * ```
+   *
+   * Apply an AWS S3 bucket policy to an AWS S3 bucket.
    *
    * Example policy:
    * ```
@@ -560,8 +568,6 @@ class S3Bucket {
    * @name getPolicy
    *
    * @docs
-   * Apply an AWS S3 bucket policy to an AWS S3 bucket.
-   *
    * ```coffeescript [specscript]
    * getPolicy() -> BucketPolicy Promise<{
    *   Version: string,
@@ -569,6 +575,7 @@ class S3Bucket {
    *   Statement: Array,
    * }>
    * ```
+   * Apply an AWS S3 bucket policy to an AWS S3 bucket.
    *
    * Example policy:
    * ```
@@ -600,11 +607,12 @@ class S3Bucket {
    * @name closeConnections
    *
    * @docs
-   * Close underlying TCP connections.
-   *
    * ```coffeescript [specscript]
    * closeConnections() -> ()
    * ```
+   *
+   * Close underlying TCP connections.
+   *
    */
   closeConnections() {
     this.http0.closeConnections()
@@ -615,13 +623,13 @@ class S3Bucket {
    * @name delete
    *
    * @docs
-   * Delete the Amazon S3 Bucket.
-   *
    * ```coffeescript [specscript]
    * bucket.delete(options {
    *   Id: string,
    * }) -> response Promise<{}>
    * ```
+   *
+   * Delete the Amazon S3 Bucket.
    *
    * ```javascript
    * await myBucket.delete()
@@ -644,8 +652,6 @@ class S3Bucket {
    * @name putObject
    *
    * @docs
-   * Add an object to the Amazon S3 Bucket.
-   *
    * ```coffeescript [specscript]
    * type DateString = string # Wed Dec 31 1969 16:00:00 GMT-0800 (PST)
    * type TimestampSeconds = number # 1751111429
@@ -710,6 +716,8 @@ class S3Bucket {
    *   BucketKeyEnabled: boolean,
    * }>
    * ```
+   *
+   * Add an object to the Amazon S3 Bucket.
    *
    * ```javascript
    * await myBucket.putObject('some-key', '{"hello":"world"}', {
@@ -978,8 +986,6 @@ class S3Bucket {
    * @name getObject
    *
    * @docs
-   * Retrieve an object from the Amazon S3 Bucket.
-   *
    * ```coffeescript [specscript]
    * type DateString = string # Wed Dec 31 1969 16:00:00 GMT-0800 (PST)
    * type TimestampSeconds = number # 1751111429
@@ -1048,6 +1054,8 @@ class S3Bucket {
    *   ObjectLockLegalHoldStatus: 'ON'|'OFF'
    * }>
    * ```
+   *
+   * Retrieve an object from the Amazon S3 Bucket.
    *
    * ```javascript
    * const data = await myBucket.getObject('my-key')
@@ -1382,8 +1390,6 @@ class S3Bucket {
    * @name getObjectACL
    *
    * @docs
-   * Retrieve the access control list (ACL) of an object from the Amazon S3 Bucket.
-   *
    * ```coffeescript [specscript]
    * getObjectACL(key string, options {
    * }) -> data Promise<{
@@ -1397,6 +1403,9 @@ class S3Bucket {
    *   }>
    * }>
    * ```
+   *
+   * Retrieve the access control list (ACL) of an object from the Amazon S3 Bucket.
+   *
    */
   async getObjectACL(key, options = {}) {
     const headers = {}
@@ -1440,8 +1449,6 @@ class S3Bucket {
    * @name headObject
    *
    * @docs
-   * Retrieve the headers of an object from the Amazon S3 Bucket.
-   *
    * ```coffeescript [specscript]
    * headObject(
    *   key string,
@@ -1499,6 +1506,8 @@ class S3Bucket {
    *   ObjectLockLegalHoldStatus: 'ON'|'OFF'
    * }>
    * ```
+   *
+   * Retrieve the headers of an object from the Amazon S3 Bucket.
    *
    * ```javascript
    * const response = await myBucket.headObject('my-key')
@@ -1810,8 +1819,6 @@ class S3Bucket {
    * @name deleteObject
    *
    * @docs
-   * Remove an object from the Amazon S3 Bucket.
-   *
    * ```coffeescript [specscript]
    * deleteObject(key string, options {
    *   MFA: string,
@@ -1822,6 +1829,8 @@ class S3Bucket {
    *   VersionId: string,
    * }>
    * ```
+   *
+   * Remove an object from the Amazon S3 Bucket.
    *
    * ```javascript
    * await myBucket.deleteObject('my-key')
@@ -1887,8 +1896,6 @@ class S3Bucket {
    * @name deleteObjects
    *
    * @docs
-   * Remove multiple objects from the Amazon S3 Bucket.
-   *
    * ```coffeescript [specscript]
    * bucket.deleteObjects(
    *   keys Array<string|{ Key: string, VersionId: string }>,
@@ -1910,6 +1917,8 @@ class S3Bucket {
    *   }>
    * }>
    * ```
+   *
+   * Remove multiple objects from the Amazon S3 Bucket.
    *
    * Options:
    *   * `BypassGovernanceRetention` - if `true`, S3 Object Lock bypasses [Governance mode](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html#object-lock-retention-modes) restrictions to process this operation. Requires the `s3:BypassGovernanceRetention` permission.
@@ -1991,8 +2000,6 @@ class S3Bucket {
    * @name deleteAllObjects
    *
    * @docs
-   * Remove all objects from an S3 Bucket.
-   *
    * ```coffeescript [specscript]
    * bucket.deleteAllObjects(options {
    *   Quiet: boolean,
@@ -2013,6 +2020,8 @@ class S3Bucket {
    *   }>
    * }>
    * ```
+   *
+   * Remove all objects from an S3 Bucket.
    *
    * ```javascript
    * await myBucket.deleteAllObjects()
@@ -2096,8 +2105,6 @@ class S3Bucket {
    * @name listObjects
    *
    * @docs
-   * Retrieve some or all (up to 1,000) objects from the Amazon S3 Bucket. Objects are returned in [lexicographical order](https://help.splunk.com/en/splunk-cloud-platform/search/spl2-search-manual/sort-and-order/lexicographical-order).
-   *
    * ```coffeescript [specscript]
    * bucket.listObjects(options {
    *   Delimiter: string,
@@ -2128,6 +2135,8 @@ class S3Bucket {
    *   NextContinuationToken: string,
    * }>
    * ```
+   *
+   * Retrieve some or all (up to 1,000) objects from the Amazon S3 Bucket. Objects are returned in [lexicographical order](https://help.splunk.com/en/splunk-cloud-platform/search/spl2-search-manual/sort-and-order/lexicographical-order).
    *
    * ```javascript
    * const response = await myBucket.listObjects()
@@ -2236,8 +2245,6 @@ class S3Bucket {
    * @name listObjectVersions
    *
    * @docs
-   * Retrieve some or all (up to 1,000) objects from the Amazon S3 Bucket. Objects are returned in [lexicographical order](https://help.splunk.com/en/splunk-cloud-platform/search/spl2-search-manual/sort-and-order/lexicographical-order).
-   *
    * ```coffeescript [specscript]
    * bucket.listObjectVersions(options {
    *   Delimiter: string,
@@ -2280,6 +2287,8 @@ class S3Bucket {
    *   NextVersionIdMarker: string,
    * }>
    * ```
+   *
+   * Retrieve some or all (up to 1,000) objects from the Amazon S3 Bucket. Objects are returned in [lexicographical order](https://help.splunk.com/en/splunk-cloud-platform/search/spl2-search-manual/sort-and-order/lexicographical-order).
    *
    * ```javascript
    * const response = await myBucket.listObjectVersions()
