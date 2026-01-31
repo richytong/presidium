@@ -53,14 +53,11 @@ websocket.on('message', message => {
 ## CRUD and Query DynamoDB
 ```javascript
 const DynamoDBTable = require('presidium/DynamoDBTable')
-const DynamoDBGlobalSecondaryIndex =
-require('presidium/DynamoDBGlobalSecondaryIndex')
+const DynamoDBGlobalSecondaryIndex = require('presidium/DynamoDBGlobalSecondaryIndex')
+const AwsCredentials = require('presidium/AwsCredentials')
 
-const awsCreds = {
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_REGION,
-}
+const awsCreds = await AwsCredentials('default')
+awsCreds.region = 'us-east-1'
 
 const myTable = new DynamoDBTable({
   name: 'my-table',
@@ -161,12 +158,10 @@ await myTable.putItemJSON({ id: '3', name: 'Jane', age: 33, type: 'person' })
 ```javascript
 const DynamoDBTable = require('presidium/DynamoDBTable')
 const DynamoDBStream = require('presidium/DynamoDBStream')
+const AwsCredentials = require('presidium/AwsCredentials')
 
-const awsCreds = {
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_REGION,
-}
+const awsCreds = await AwsCredentials('default')
+awsCreds.region = 'us-east-1'
 
 const myTable = new DynamoDBTable({
   name: 'my-table',
@@ -206,12 +201,10 @@ for await (const record of myStreamJSON) {
 ## Upload to S3
 ```javascript
 const S3Bucket = require('presidium/S3Bucket')
+const AwsCredentials = require('presidium/AwsCredentials')
 
-const awsCreds = {
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_REGION,
-}
+const awsCreds = await AwsCredentials('default')
+awsCreds.region = 'us-east-1'
 
 const myBucket = new S3Bucket({
   name: 'my-bucket',
