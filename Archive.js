@@ -52,14 +52,14 @@ class Archive {
     pipe(path, [
       curry.arity(2, pathWalk, __, { ignore }),
 
-      reduce(async (pack, filePath) => {
+      reduce(async (pack, filepath) => {
         pack.entry({
-          name: filePath.replace(pathWithSlash, ''),
+          name: filepath.replace(pathWithSlash, ''),
           ...pipe([
             fs.stat,
             pick(['size', 'mode', 'mtime', 'uid', 'gid']),
-          ])(filePath),
-        }, await fs.readFile(filePath))
+          ])(filepath),
+        }, await fs.readFile(filepath))
         return pack
       }, pack),
 
@@ -83,7 +83,7 @@ class Archive {
    * module presidium 'https://presidium.services/docs'
    *
    * untar(pack tar.Pack) ->
-   *   contentMap Promise<Map<(filePath string)=>(content presidium.Readable)> >
+   *   contentMap Promise<Map<(filepath string)=>(content presidium.Readable)> >
    * ```
    *
    * Extract a tarball into a map of file paths to content streams.
