@@ -327,9 +327,11 @@ class DynamoDBTable {
    * @docs
    * ```coffeescript [specscript]
    * type DynamoDBJSONObject = Object<
-   *   [key string]: { S: string }|{ N: number }|{ B: Buffer }
-   *     |{ L: Array<DynamoDBJSONObject> }
-   *     |{ M: Object<DynamoDBJSONObject> }
+   *   [key string]: { S: string }
+   *                 |{ N: number }
+   *                 |{ B: Buffer }
+   *                 |{ L: Array<DynamoDBJSONObject> }
+   *                 |{ M: Object<DynamoDBJSONObject> }
    * >
    *
    * putItem(item DynamoDBJSONObject, options {
@@ -437,9 +439,11 @@ class DynamoDBTable {
    *   [sortKey string]: { S: string }|{ N: number }|{ B: Buffer },
    * }
    * type DynamoDBJSONObject = Object<
-   *   [key string]: { S: string }|{ N: number }|{ B: Buffer }
-   *     |{ L: Array<DynamoDBJSONObject> }
-   *     |{ M: Object<DynamoDBJSONObject> }
+   *   [key string]: { S: string }
+   *                 |{ N: number }
+   *                 |{ B: Buffer }
+   *                 |{ L: Array<DynamoDBJSONObject> }
+   *                 |{ M: Object<DynamoDBJSONObject> }
    * >
    *
    * getItem(key DynamoDBJSONKey) ->
@@ -530,9 +534,11 @@ class DynamoDBTable {
    * }
    *
    * type DynamoDBJSONObject = Object<
-   *   [key string]: { S: string }|{ N: number }|{ B: Buffer }
-   *     |{ L: Array<DynamoDBJSONObject> }
-   *     |{ M: Object<DynamoDBJSONObject> }
+   *   [key string]: { S: string }
+   *                 |{ N: number }
+   *                 |{ B: Buffer }
+   *                 |{ L: Array<DynamoDBJSONObject> }
+   *                 |{ M: Object<DynamoDBJSONObject> }
    * >
    *
    * updateItem(
@@ -688,9 +694,11 @@ class DynamoDBTable {
    * type DynamoDBJSONIncrementObject = Object<{ N: number }>
    *
    * type DynamoDBJSONObject = Object<
-   *   [key string]: { S: string }|{ N: number }|{ B: Buffer }
-   *     |{ L: Array<DynamoDBJSONObject> }
-   *     |{ M: Object<DynamoDBJSONObject> }
+   *   [key string]: { S: string }
+   *                 |{ N: number }
+   *                 |{ B: Buffer }
+   *                 |{ L: Array<DynamoDBJSONObject> }
+   *                 |{ M: Object<DynamoDBJSONObject> }
    * >
    *
    * incrementItem(
@@ -832,9 +840,11 @@ class DynamoDBTable {
    * }
    *
    * type DynamoDBJSONObject = Object<
-   *   [key string]: { S: string }|{ N: number }|{ B: Buffer }
-   *     |{ L: Array<DynamoDBJSONObject> }
-   *     |{ M: Object<DynamoDBJSONObject> }
+   *   [key string]: { S: string }
+   *                 |{ N: number }
+   *                 |{ B: Buffer }
+   *                 |{ L: Array<DynamoDBJSONObject> }
+   *                 |{ M: Object<DynamoDBJSONObject> }
    * >
    *
    * deleteItem(
@@ -923,9 +933,11 @@ class DynamoDBTable {
    * @docs
    * ```coffeescript [specscript]
    * type DynamoDBJSONObject = Object<
-   *   [key string]: { S: string }|{ N: number }|{ B: Buffer }
-   *     |{ L: Array<DynamoDBJSONObject> }
-   *     |{ M: Object<DynamoDBJSONObject> }
+   *   [key string]: { S: string }
+   *                 |{ N: number }
+   *                 |{ B: Buffer }
+   *                 |{ L: Array<DynamoDBJSONObject> }
+   *                 |{ M: Object<DynamoDBJSONObject> }
    * >
    * type DynamoDBJSONKey = {
    *   [hashKey string]: { S: string }|{ N: number }|{ B: Buffer },
@@ -972,9 +984,11 @@ class DynamoDBTable {
    * @docs
    * ```coffeescript [specscript]
    * type DynamoDBJSONObject = Object<
-   *   [key string]: { S: string }|{ N: number }|{ B: Buffer }
-   *     |{ L: Array<DynamoDBJSONObject> }
-   *     |{ M: Object<DynamoDBJSONObject> }
+   *   [key string]: { S: string }
+   *                 |{ N: number }
+   *                 |{ B: Buffer }
+   *                 |{ L: Array<DynamoDBJSONObject> }
+   *                 |{ M: Object<DynamoDBJSONObject> }
    * >
    *
    * scanItemsIterator(options {
@@ -1036,9 +1050,11 @@ class DynamoDBTable {
    * }
    *
    * type DynamoDBJSONObject = Object<
-   *   [key string]: { S: string }|{ N: number }|{ B: Buffer }
-   *     |{ L: Array<DynamoDBJSONObject> }
-   *     |{ M: Object<DynamoDBJSONObject> }
+   *   [key string]: { S: string }
+   *                 |{ N: number }
+   *                 |{ B: Buffer }
+   *                 |{ L: Array<DynamoDBJSONObject> }
+   *                 |{ M: Object<DynamoDBJSONObject> }
    * >
    *
    * query(
@@ -1294,9 +1310,11 @@ class DynamoDBTable {
    * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
    *
    * type DynamoDBJSONObject = Object<
-   *   [key string]: { S: string }|{ N: number }|{ B: Buffer }
-   *     |{ L: Array<DynamoDBJSONObject> }
-   *     |{ M: Object<DynamoDBJSONObject> }
+   *   [key string]: { S: string }
+   *                 |{ N: number }
+   *                 |{ B: Buffer }
+   *                 |{ L: Array<DynamoDBJSONObject> }
+   *                 |{ M: Object<DynamoDBJSONObject> }
    * >
    *
    * queryItemsIterator(

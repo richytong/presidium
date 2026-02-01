@@ -358,9 +358,11 @@ class DynamoDBGlobalSecondaryIndex {
    * }
    *
    * type DynamoDBJSONObject = Object<
-   *   [key string]: { S: string }|{ N: number }|{ B: Buffer }
-   *     |{ L: Array<DynamoDBJSONObject> }
-   *     |{ M: Object<DynamoDBJSONObject> }
+   *   [key string]: { S: string }
+   *                 |{ N: number }
+   *                 |{ B: Buffer }
+   *                 |{ L: Array<DynamoDBJSONObject> }
+   *                 |{ M: Object<DynamoDBJSONObject> }
    * >
    *
    * query(
@@ -610,9 +612,11 @@ class DynamoDBGlobalSecondaryIndex {
    * ```coffeescript [specscript]
    * type JSONObject = Object<[key string]: string|number|binary|Array|Object>
    * type DynamoDBJSONObject = Object<
-   *   [key string]: { S: string }|{ N: number }|{ B: Buffer }
-   *     |{ L: Array<DynamoDBJSONObject> }
-   *     |{ M: Object<DynamoDBJSONObject> }
+   *   [key string]: { S: string }
+   *                 |{ N: number }
+   *                 |{ B: Buffer }
+   *                 |{ L: Array<DynamoDBJSONObject> }
+   *                 |{ M: Object<DynamoDBJSONObject> }
    * >
    *
    * index.queryItemsIterator(
