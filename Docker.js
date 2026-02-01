@@ -23,7 +23,11 @@ const handleDockerHTTPResponse = require('./internal/handleDockerHTTPResponse')
  * @name Docker
  *
  * @docs
- * new Docker() -> Docker
+ * ```coffeescript [specscript]
+ * new Docker() -> docker Docker
+ * ```
+ *
+ * Presidium Docker client. Connects to the Docker socket.
  */
 class Docker {
   constructor() {
@@ -44,11 +48,34 @@ class Docker {
    *   username: string,
    *   password: string,
    *   email: string,
-   *   serveraddress: string, // domain/IP without a protocol
+   *   serveraddress: string,
    * }) -> data Promise<{
    *   Status: string,
    *   IdentityToken: string,
    * }>
+   * ```
+   *
+   * Validates credentials for a Docker container registry. If available, gets an identity token for accessing the registry without password.
+   *
+   * Arguments:
+   *   * `options` - address used for inter-manager communication that is also advertised to other nodes.
+   *     * `username` - authentication credentials.
+   *     * `password` - authentication credentials.
+   *     * `email` - authentication credentials.
+   *     * `serveraddress` - domain or IP of the registry server.
+   *
+   * Return:
+   *   * `data`
+   *     * `Status` - the status message of the authentication
+   *     * `IdentityToken` - a token used to authenticate the user in place of a username and password. 
+   *
+   * ```javascript
+   * const data = await docker.auth({
+   *   username: 'admin',
+   *   password: 'password',
+   *   email: 'test@example.com',
+   *   serveraddress: 'localhost:5000',
+   * })
    * ```
    */
   async auth(options) {
@@ -86,6 +113,28 @@ class Docker {
    *   Manifests: Array<DockerDocs.ImageManifestSummary>,
    *   Descriptor: DockerDocs.OCIDescriptor,
    * ]>
+   * ```
+   *
+   * Returns a list of Docker images stored on the server.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `Id` - the image ID.
+   *   * `ParentId` - ID of the parent image.
+   *   * `RepoTags` - list of image names and tags in the local image cache that reference the image.
+   *   * `RepoDigests` - list of content-addressable digests of locally available image manifests that the image is referenced from.
+   *   * `Created` - date and time at which the image was created as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
+   *   * `Size` - total size in bytes of the image including all layers that the image is composed of.
+   *   * `SharedSize` - total size of image layers that are shared between the image and other images. `-1` indicates that this value has not been calculated.
+   *   * `Labels` - object of user-defined key/value metadata.
+   *   * `Containers` - number of containers using this image. Includes both stopped and running containers. `-1` indicates that this value has not been calculated.
+   *   * `Manifests` - list of manifests available in the image. Warning: `Manifests` is experimental and may change at any time without any backward compatibility.
+   *   * `Descriptor` - an object containing digest, media type, and size for the image, as defined in the [OCI Content Descriptors Specification](https://github.com/opencontainers/image-spec/blob/v1.0.1/descriptor.md).
+   *
+   * ```javascript
+   * const data = await docker.listImages()
    * ```
    */
   async listImages() {
@@ -129,6 +178,30 @@ class Docker {
    *   },
    * ]>
    * ```
+   *
+   * Returns a list of Docker containers on the server.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `Id` - the container ID
+   *   * `Names` - the names associated with the container.
+   *   * `Image` - the name or ID of the image used to create the container.
+   *   * `ImageID` - the ID of the image used to create the container.
+   *   * `ImageManifestDescriptor` - an object containing digest, media type, and size for the image used to create the container, as defined in the [OCI Content Descriptors Specification](https://github.com/opencontainers/image-spec/blob/v1.0.1/descriptor.md).
+   *   * `Command` - the command to run when starting the container.
+   *   * `Created` - date and time at which the image was created as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
+   *   * `Ports` - port-mappings for the container.
+   *   * `SizeRw` - the size of files that have been created or changed by the container.
+   *   * `SizeRootFs` - the total size of all files in the read-only layers of the image that are used by the container.
+   *   * `Labels` - object of user-defined key/value metadata.
+   *   * `State` - the state of the container.
+   *   * `Status` - additional human-readable status of the container, e.g. `'Exit 0'`.
+   *   * `HostConfig` - summary of host-specific runtime information of the container.
+   *   * `NetworkSettings` - summary of the container's network settings.
+   *   * `Mounts` - list of mounts used by the container.
+   *   * `Health` - summary of the container's health status.
    */
   async listContainers() {
     const response = await this.http.get('/containers/json')
@@ -146,18 +219,36 @@ class Docker {
    * pullImage(
    *   name string,
    *   options {
-   *     repo: string, // additional path prefix saved on this machine
-   *     tag?: string, // if not in name
-   *     message?: string, // commit message for image
-   *     platform?: ''|'<os>[/arch[/variant]]'
+   *     repo: string,
+   *     tag: string,
+   *     message: string,
+   *     platform: string, # '<os>[/arch[/variant]]'
    *     username: string,
    *     password: string,
-   *     email?: string,
-   *     serveraddress?: string,
-   *     identitytoken?: string,
+   *     email: string,
+   *     serveraddress: string,
+   *     identitytoken: string,
    *   },
    * ) -> dataStream Promise<stream.Readable>
    * ```
+   *
+   * Pulls or downloads a Docker image to the server.
+   *
+   * Arguments:
+   *   * `name` - name of the image to pull. May include a tag or digest.
+   *   * `options`
+   *     * `repo` - repository name given to the image after it is pulled. May include a tag or digest.
+   *     * `tag` - the tag or digest of the image.
+   *     * `message` - sets the commit message for the pulled image.
+   *     * `platform` - the platform of the image. If present, the Docker daemon checks if the given image is present in the local image cache with the given OS and Architecture instead of the host's native OS and Architecture. If the given image does exist in the local image cache, but its OS and Architecture do not match, a warning is produced.
+   *     * `username` - authentication credentials.
+   *     * `password` - authentication credentials.
+   *     * `email` - authentication credentials.
+   *     * `serveraddress` - domain or IP of the registry server.
+   *     * `IdentityToken` - a token used to authenticate the user in place of a username and password. 
+   *
+   * Return:
+   *   * `dataStream` - a readable stream of the progress from the `pullImage` operation.
    */
   async pullImage(name, options = {}) {
     const response = await this.http.post(`/images/create?${querystring.stringify({
@@ -194,13 +285,24 @@ class Docker {
    * buildImage(path string, options {
    *   image: string,
    *   ignore: Array<string>, // paths or names to ignore in build context tarball
-   *   archive: Object<[path string]: content string>, // object representation of the base archive for build context
+   *   archive: Object<
+   *     Dockerfile: content string,
+   *     [filepath string]: content string,
+   *     ...
+   *   >, // object representation of the base archive for build context
    *   archiveDockerfile: string, // path to Dockerfile in archive
    *   platform: string, // e.g. linux/x86_64
    * }) -> dataStream Promise<stream.Readable>
    * ```
    *
    * Build a Docker Image.
+   *
+   * Arguments:
+   *   * `path` - parent directory of the build context.
+   *   * `image` - the name and optional tag of the image. If no tag is present, `'LATEST'` is assumed as the value for the tag.
+   *   * `ignore` - filepaths or filenames to ignore when bundling files and directories for the build context.
+   *   * `archive` - an object of filenames and file contents that will be present in the build context.
+   *   * `archiveDockerfile` - the filepath
    *
    * ```javascript
    * const docker = new Docker()
@@ -215,36 +317,37 @@ class Docker {
    *   },
    *   ignore: ['Dockerfile'],
    * })
+   * ```
    *
-   * Dockerfile Syntax
+   * ### Dockerfile Syntax
    * ```sh
    * HEALTHCHECK \
    *   [--interval=<duration '30s'|string>] \
    *   [--timeout=<duration '30s'|string>] \
    *   [--start-period=<duration '0s'|string>] \
-   *   [--retries=<3|number>] \
-   * CMD <string>
+   *   [--start-interval=<duration '5s'|string>] \
+   *   [--retries=<3|number>]
    *
-   * ENV <key>=<value> ...<key>=<value>
+   * ENV <key>=<value> ...
    *
-   * EXPOSE <port> [...<port>/<protocol 'tcp'|'udp'>]
+   * EXPOSE <port>/<protocol 'tcp'|'udp'> ...
    *
    * WORKDIR <path>
    *
-   * VOLUME ["<path>", ..."<paths>"]|<paths string>
+   * VOLUME ["<path>", ...]
+   * VOLUME <path> ...
    *
    * USER <user>[:<group>]|<UID>[:<GID>]
    *
-   * ENTRYPOINT ["<executable>", ..."<parameter>"]
-   *   |"<command> ...<parameter>"
+   * ENTRYPOINT ["<command>", "<parameter>", ...]
+   * ENTRYPOINT <command> <parameter> ...
    *
-   * CMD ["<executable>", ..."<parameter>"] # exec form
-   *   |[..."<parameter>"] # default parameters to ENTRYPOINT
-   *   |"<command> ...<parameter>" # shell form
+   * CMD ["<command>", "<parameter>", ...]
+   * CMD ["<parameter>", ...]
+   * CMD <command> <parameter> ...
    * ```
    *
-   * References:
-   * [Dockerfile docs](https://docs.docker.com/engine/reference/builder/)
+   * Dockerfile reference: [https://docs.docker.com/engine/reference/builder/](https://docs.docker.com/engine/reference/builder/)
    */
   async buildImage(path, options = {}) {
     const archive = new Archive(options.archive)
