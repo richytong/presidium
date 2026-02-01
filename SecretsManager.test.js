@@ -1,6 +1,6 @@
 const Test = require('thunk-test')
 const assert = require('assert')
-const AwsCredentials = require('./internal/AwsCredentials')
+const AwsCredentials = require('./AwsCredentials')
 const SecretsManager = require('./SecretsManager')
 
 const test = new Test('SecretsManager', async function integration() {
