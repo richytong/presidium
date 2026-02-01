@@ -11,6 +11,7 @@
   },
   "homepage": "https://github.com/richytong/presidium",
   "files": [
+    "internal",
     "Archive.js",
     "AwsCredentials.js",
     "Docker.js",
