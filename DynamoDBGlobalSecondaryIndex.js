@@ -358,11 +358,9 @@ class DynamoDBGlobalSecondaryIndex {
    * }
    *
    * type DynamoDBJSONObject = Object<
-   *   { S: string }
-   *   |{ N: number }
-   *   |{ B: Buffer }
-   *   |{ L: Array<DynamoDBJSONObject> }
-   *   |{ M: Object<DynamoDBJSONObject> }
+   *   [key string]: { S: string }|{ N: number }|{ B: Buffer }
+   *     |{ L: Array<DynamoDBJSONObject> }
+   *     |{ M: Object<DynamoDBJSONObject> }
    * >
    *
    * query(
@@ -612,11 +610,9 @@ class DynamoDBGlobalSecondaryIndex {
    * ```coffeescript [specscript]
    * type JSONObject = Object<[key string]: string|number|binary|Array|Object>
    * type DynamoDBJSONObject = Object<
-   *   { S: string }
-   *   |{ N: number }
-   *   |{ B: Buffer }
-   *   |{ L: Array<DynamoDBJSONObject> }
-   *   |{ M: Object<DynamoDBJSONObject> }
+   *   [key string]: { S: string }|{ N: number }|{ B: Buffer }
+   *     |{ L: Array<DynamoDBJSONObject> }
+   *     |{ M: Object<DynamoDBJSONObject> }
    * >
    *
    * index.queryItemsIterator(
@@ -717,7 +713,7 @@ class DynamoDBGlobalSecondaryIndex {
    *
    * Get an `AsyncIterator` of all items represented by a query on a DynamoDB Table in JSON format.
    *
-   * The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey <!-- < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
+   * The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
    *
    * ```javascript
    * // myIndex has hashKey type and sortKey time

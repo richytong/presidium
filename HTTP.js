@@ -8,7 +8,9 @@ const stream = require('stream')
  *
  * @docs
  * ```coffeescript [specscript]
- * requestOptions {
+ * module http 'https://nodejs.org/api/http.html'
+ *
+ * type RequestOptions = {
  *   agent: http.Agent,
  *   auth: string,
  *   createConnection: function,

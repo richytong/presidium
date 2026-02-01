@@ -362,11 +362,9 @@ class DynamoDBStream {
    * @docs
    * ```coffeescript [specscript]
    * type DynamoDBJSONObject = Object<
-   *   { S: string }
-   *   |{ N: number }
-   *   |{ B: Buffer }
-   *   |{ L: Array<DynamoDBJSONObject> }
-   *   |{ M: Object<DynamoDBJSONObject> }
+   *   [key string]: { S: string }|{ N: number }|{ B: Buffer }
+   *     |{ L: Array<DynamoDBJSONObject> }
+   *     |{ M: Object<DynamoDBJSONObject> }
    * >
    *
    * stream[Symbol.asyncIterator]() -> asyncIterator AsyncIterator<Record {
