@@ -1,7 +1,7 @@
 const Test = require('thunk-test')
 const assert = require('assert')
 const ECR = require('./ECR')
-const AwsCredentials = require('./internal/AwsCredentials')
+const AwsCredentials = require('./AwsCredentials')
 const Docker = require('./Docker')
 
 const test = new Test('ECR', async function integration() {

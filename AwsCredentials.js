@@ -7,16 +7,23 @@ const resolvePath = require('./internal/resolvePath')
  *
  * @docs
  * ```coffeescript [specscript]
- * AwsCredentials(profile string, options? {
+ * AwsCredentials(profile string, options {
  *   credentialsFileDirname: string
  *   credentialsFilename: string,
  *   recurse: boolean,
  * }) -> awsCreds Promise<{
  *   accessKeyId: string,
  *   secretAccessKey: string,
- *   region: string,
  * }>
  * ```
+ *
+ * Finds and reads the AWS Access Key Id and Secret Access Key from local files. Looks in the `~/.aws/credentials` file by default.
+ *
+ * Arguments:
+ *   * `profile` - the AWS profile associated with the credentials. Defaults to 'default'.
+ *   * `options`
+ *     * `credentialsFileDirname` - the name of the directory that stores the credentials file. Defaults to `.aws`.
+ *     * `credentialsFilename` - the name of the credentials file. Defaults to `credentials`.
  */
 
 const AwsCredentials = async function (profile, options = {}) {
