@@ -6,7 +6,7 @@ const resolvePath = require('./internal/resolvePath')
 const map = require('rubico/map')
 const reduce = require('rubico/reduce')
 
-const test = new Test('Archive', Archive)
+const test = new Test('Archive', (...args) => new Archive(...args))
 
 .case(async archive => {
   const pack = await archive.tar(resolvePath(__dirname), {

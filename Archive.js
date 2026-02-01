@@ -17,88 +17,82 @@ const pick = require('rubico/pick')
  *
  * @docs
  * ```coffeescript [specscript]
- * new Archive(base Object<string>) -> archive Archive
+ * new Archive(contentObject Object<string>) -> archive Archive
  * ```
  */
-const Archive = function (base) {
-  if (this == null || this.constructor != Archive) {
-    return new Archive(base)
+class Archive {
+  constructor(contentObject) {
+    this.contentObject = contentObject == null ? {} : contentObject
   }
-  this.base = base == null ? {} : base
-  return this
-}
 
-/**
- * @name Archive.prototype.tar
- *
- * @docs
- * ```coffeescript [specscript]
- * module tar 'https://github.com/mafintosh/tar-stream'
- *
- * archive.tar(path string, options {
- *   ignore: Array<string>, // paths or names to ignore
- * }) -> pack tar.Pack
- * ```
- *
- * Note: `path` must be absolute
- * Note: Returned readable stream is hot, so please pipe this immediately
- * Note: pack.packing is a Promise that represents the entire packing operation of the tar
- * Note: pack.packing resolves when the tar operation is complete
- */
-Archive.prototype.tar = function archiveTar(path, options) {
-  const pathWithSlash = path.endsWith('/') ? path : `${path}/`,
-    ignore = get('ignore')(options),
-    pack = tar.pack()
-  pack.packing = pipe([
-    curry.arity(2, pathWalk, __, { ignore }),
-    reduce(async (pack, filePath) => {
-      pack.entry({
-        name: filePath.replace(pathWithSlash, ''),
-        ...pipe([
-          fs.stat,
-          pick(['size', 'mode', 'mtime', 'uid', 'gid']),
-        ])(filePath),
-      }, await fs.readFile(filePath))
-      return pack
-    }, pack),
-    tap(pack => {
-      for (const basePath in this.base) {
-        pack.entry({ name: basePath }, this.base[basePath])
-      }
-      pack.finalize()
-    }),
-  ])(path)
-  return pack
-}
+  /**
+   * @name tar
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * module tar 'https://github.com/mafintosh/tar-stream'
+   *
+   * tar(path string, options {
+   *   ignore: Array<string>, // paths or names to ignore
+   * }) -> pack tar.Pack
+   * ```
+   */
+  tar(path, options) {
+    const pathWithSlash = path.endsWith('/') ? path : `${path}/`
+    const ignore = get(options, 'ignore')
+    const pack = tar.pack()
 
-/**
- * @name Archive.prototype.untar
- *
- * @docs
- * ```coffeescript [specscript]
- * module tar 'https://github.com/mafintosh/tar-stream'
- *
- * archive.untar(
- *   pack tar.Pack,
- *   options {
- *     ignore: Array<string>, // paths or names to ignore
- *   },
- * ) -> Map<(header EntryHeader)=>(stream EntryStream)>
- * ```
- */
-Archive.prototype.untar = function archiveUntar(pack) {
-  const extractStream = tar.extract(),
-    extracted = new Map()
-  return new Promise((resolve, reject) => {
-    extractStream.on('entry', (header, stream, next) => {
-      stream.header = header
-      extracted.set(header.name, stream)
-      next()
+    pipe(path, [
+      curry.arity(2, pathWalk, __, { ignore }),
+
+      reduce(async (pack, filePath) => {
+        pack.entry({
+          name: filePath.replace(pathWithSlash, ''),
+          ...pipe([
+            fs.stat,
+            pick(['size', 'mode', 'mtime', 'uid', 'gid']),
+          ])(filePath),
+        }, await fs.readFile(filePath))
+        return pack
+      }, pack),
+
+      tap(pack => {
+        for (const filename in this.contentObject) {
+          pack.entry({ name: filename }, this.contentObject[filename])
+        }
+        pack.finalize()
+      }),
+    ])
+
+    return pack
+  }
+
+  /**
+   * @name untar
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * module tar 'https://github.com/mafintosh/tar-stream'
+   *
+   * untar(pack tar.Pack) ->
+   *   extracted Promise<Map<(header EntryHeader)=>(stream EntryStream)> >
+   * ```
+   */
+  untar(pack) {
+    const extractStream = tar.extract(),
+      extracted = new Map()
+    return new Promise((resolve, reject) => {
+      extractStream.on('entry', (header, stream, next) => {
+        stream.header = header
+        extracted.set(header.name, stream)
+        next()
+      })
+      extractStream.on('finish', thunkify(resolve, extracted))
+      extractStream.on('error', reject)
+      pack.pipe(extractStream)
     })
-    extractStream.on('finish', thunkify(resolve, extracted))
-    extractStream.on('error', reject)
-    pack.pipe(extractStream)
-  })
+  }
+
 }
 
 module.exports = Archive
