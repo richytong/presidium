@@ -1,10 +1,12 @@
 const assert = require('assert')
+const stream = require('stream')
 const fs = require('fs/promises')
 const Test = require('thunk-test')
 const Archive = require('./Archive')
 const resolvePath = require('./internal/resolvePath')
 const map = require('rubico/map')
 const reduce = require('rubico/reduce')
+const Readable = require('./Readable')
 
 const test = new Test('Archive', (...args) => new Archive(...args))
 
@@ -14,11 +16,12 @@ const test = new Test('Archive', (...args) => new Archive(...args))
   })
   const extracted = await archive.untar(pack)
   assert(extracted.size > 0)
-  for (const [path, stream] of extracted) {
-    assert('header' in stream)
+  for (const [path, entry] of extracted) {
+    assert('header' in entry)
     assert(!path.startsWith('/'))
     assert.equal(typeof path, 'string')
-    assert.equal(typeof stream[Symbol.asyncIterator], 'function')
+    assert.equal(typeof entry[Symbol.asyncIterator], 'function')
+    assert(entry.readable)
   }
 })
 

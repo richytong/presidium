@@ -33,9 +33,16 @@ class Archive {
    * module tar 'https://github.com/mafintosh/tar-stream'
    *
    * tar(path string, options {
-   *   ignore: Array<string>, // paths or names to ignore
+   *   ignore: Array<string>,
    * }) -> pack tar.Pack
    * ```
+   *
+   * Bundle multiple files and directories from a parent directory into a tarball.
+   *
+   * Arguments:
+   *   * `path` - the path to the parent directory which contains the files and directories to bundle.
+   *   * `options`
+   *     * `ignore` - filepaths, filenames, or patterns to ignore.
    */
   tar(path, options) {
     const pathWithSlash = path.endsWith('/') ? path : `${path}/`
@@ -73,14 +80,20 @@ class Archive {
    * @docs
    * ```coffeescript [specscript]
    * module tar 'https://github.com/mafintosh/tar-stream'
+   * module presidium 'https://presidium.services/docs'
    *
    * untar(pack tar.Pack) ->
-   *   extracted Promise<Map<(header EntryHeader)=>(stream EntryStream)> >
+   *   contentMap Promise<Map<(filePath string)=>(content presidium.Readable)> >
    * ```
+   *
+   * Extract a tarball into a map of file paths to content streams.
+   *
+   * Arguments:
+   *   * `pack` - a tarball represented by the `tar.Pack` type. Returned by the [tar](#tar) method.
    */
   untar(pack) {
-    const extractStream = tar.extract(),
-      extracted = new Map()
+    const extractStream = tar.extract()
+    const extracted = new Map()
     return new Promise((resolve, reject) => {
       extractStream.on('entry', (header, stream, next) => {
         stream.header = header
