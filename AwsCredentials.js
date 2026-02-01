@@ -17,13 +17,13 @@ const resolvePath = require('./internal/resolvePath')
  * }>
  * ```
  *
- * Finds and reads the AWS Access Key Id and Secret Access Key from local files. Looks in the `~/.aws/credentials` file by default.
+ * Finds and reads the AWS access key ID and secret access key from local files. Looks in the `~/.aws/credentials` file by default.
  *
  * Arguments:
  *   * `profile` - the AWS profile associated with the credentials. Defaults to 'default'.
  *   * `options`
- *     * `credentialsFileDirname` - the name of the directory that stores the credentials file. Defaults to `.aws`.
- *     * `credentialsFilename` - the name of the credentials file. Defaults to `credentials`.
+ *     * `credentialsFileDirname` - the name of the directory that stores the credentials file. Defaults to '.aws'.
+ *     * `credentialsFilename` - the name of the credentials file. Defaults to 'credentials'.
  */
 
 const AwsCredentials = async function (profile, options = {}) {
