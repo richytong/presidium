@@ -4,18 +4,8 @@ const AwsCredentials = require('./AwsCredentials')
 const SecretsManager = require('./SecretsManager')
 
 const test = new Test('SecretsManager', async function integration() {
-  const awsCreds = await AwsCredentials('default').catch(error => {
-    if (error.code == 'ENOENT') {
-      const accessKeyId = process.env.AWS_ACCESS_KEY_ID
-      const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY
-      if (accessKeyId == null || secretAccessKey == null) {
-        throw new Error('No AWS credential file or environment variables')
-      }
-      return { accessKeyId, secretAccessKey }
-    }
-    throw error
-  })
-  awsCreds.region = 'us-west-1'
+  const awsCreds = await AwsCredentials('presidium')
+  awsCreds.region = 'us-east-1'
 
   const secretsManager = new SecretsManager({ ...awsCreds })
 
