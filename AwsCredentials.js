@@ -24,6 +24,12 @@ const resolvePath = require('./internal/resolvePath')
  *   * `options`
  *     * `credentialsFileDirname` - the name of the directory that stores the credentials file. Defaults to `'.aws'`.
  *     * `credentialsFilename` - the name of the credentials file. Defaults to `'credentials'`.
+ *     * `recurse` - if `true`, AwsCredentials will look for the AWS credential file in every parent directory up to the root directory (`/`). If `false`, AwsCredentials will only look for the AWS credential file in the current working directory. Defaults to `true`.
+ *
+ * Return:
+ *   * `awsCreds` - the AWS credentials object.
+ *     * `accessKeyId` - the AWS access key ID retrieved from the credentials file.
+ *     * `secretAccessKey` - the AWS secret access key retrieved from the credentials.
  */
 
 const AwsCredentials = async function (profile, options = {}) {
