@@ -782,6 +782,8 @@ class Docker {
           },
 
           ...options.memory && { Memory: options.memory },
+          ...options.cpus && { NanoCpus: options.cpus * 1e9 },
+
           ...options.publish && {
             PortBindings: map.entries(all([ // publish and PortBindings are reversed
               pipe([ // container port

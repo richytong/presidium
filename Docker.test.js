@@ -151,6 +151,11 @@ const test4 = new Test('Docker - container', async function integration() {
     assert.equal(typeof data.Id, 'string')
     assert(Array.isArray(data.Warnings))
     const containerId = data.Id
+
+    const inspectData = await docker.inspectContainer(containerId)
+    assert.notEqual(inspectData.HostConfig.NanoCpus, 2e9)
+    assert.notEqual(inspectData.HostConfig.Memory, 512e6)
+
     const attachDataStream = await docker.attachContainer(containerId)
     const startMessage = await docker.startContainer(containerId)
     assert.equal(typeof startMessage, 'string')
@@ -185,6 +190,7 @@ const test4 = new Test('Docker - container', async function integration() {
         readonly: true,
       }],
       memory: 512e6, // bytes
+      cpus: 2,
       restart: 'on-failure:5',
 
       healthCmd: ['echo', 'ok'],
@@ -204,7 +210,11 @@ const test4 = new Test('Docker - container', async function integration() {
       },
     })
     const containerId = data.Id
-    this.containerId = containerId
+
+    const inspectData = await docker.inspectContainer(containerId)
+    assert.equal(inspectData.HostConfig.NanoCpus, 2e9)
+    assert.equal(inspectData.HostConfig.Memory, 512e6)
+
     const attachDataStream = await docker.attachContainer(containerId)
     const startMessage = await docker.startContainer(containerId)
     assert.equal(typeof startMessage, 'string')
@@ -220,6 +230,8 @@ const test4 = new Test('Docker - container', async function integration() {
     assert.strictEqual(body[6], 0) // SIZE3
     assert.strictEqual(body[7], 5) // SIZE4
     assert.strictEqual(body.slice(8).toString(), 'test\n')
+
+    this.containerId = containerId
   }
 
   {
