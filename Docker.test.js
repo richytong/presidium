@@ -514,6 +514,7 @@ const test5 = new Test('Docker - swarm', async function integration() {
 
   { // updateService
     const data1 = await docker.updateService('service2', {
+      image: 'node:17-alpine',
       memory: 512e6, // bytes
       cpus: 2,
     })
