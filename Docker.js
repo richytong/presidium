@@ -401,7 +401,7 @@ class Docker {
    * module stream 'https://nodejs.org/api/stream.html'
    *
    * pushImage(options {
-   *   image: string,
+   *   image: string, # '[<repo>/]<name>:<tag>'
    *   registry: string,
    *   authToken: string,
    *   username: string,
@@ -416,14 +416,15 @@ class Docker {
    *
    * Arguments:
    *   * `options`
-   *     * `image` - the name and tag of the image.
-   *     * `registry` - the remote registry to which to push the image
+   *     * `image` - the name, optional repo, and tag of the image.
+   *     * `registry` - the remote registry to which to push the image.
    *     * `authToken` - a base64-encoded token containing the username and password authentication credentials. Returned from [ECR getAuthorizationToken](/docs/ECR#getAuthorizationToken).
    *     * `username` - authentication credentials.
    *     * `password` - authentication credentials.
    *     * `email` - authentication credentials.
    *     * `serveraddress` - domain or IP of the registry server.
    *     * `identitytoken` - a token used to authenticate the user in place of a username and password.
+   *
    * Return:
    *   * `dataStream` - a readable stream of the progress of the Docker `pushImage` operation.
    *
@@ -507,6 +508,8 @@ class Docker {
    *   },
    * }>
    * ```
+   *
+   * Arguments:
    */
   async inspectImage(image) {
     const response = await this.http.get(`/images/${image}/json`)
