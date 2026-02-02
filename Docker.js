@@ -643,34 +643,28 @@ class Docker {
    *   logDriverOptions: Object<string>,
    *   publish: Object<
    *     [hostPort string]: containerPort string # 8080
-   *       |containerPortWithProtocol string # '<containerPort>[/"tcp"|"udp"|"sctp"]'
+   *       |containerPortWithProtocol string # '<containerPort>[/<"tcp"|"udp"|"sctp">]'
    *   >,
    *   healthCmd: Array<string>,
-   *   healthInterval: 10e9|number, # nanoseconds, minimum 1e6
-   *   healthTimeout: 20e9|number, # nanoseconds, minimum 1e6
-   *   healthRetries: 5|number,
+   *   healthInterval: number, # nanoseconds, minimum 1e6, default 10e9
+   *   healthTimeout: number, # nanoseconds, minimum 1e6, default 20e9
+   *   healthRetries: number, # default 5
    *   healthStartPeriod: number, # nanoseconds, minimum 1e6
    *   memory: number, # bytes
-   *   cpus: number, // number of cpus
-   *   gpus?: 'all', // expose gpus
+   *   cpus: number,
    *   mounts: Array<{
-   *     source: string, // name of volume
-   *     target: string, // mounted path inside container
+   *     source: string,
+   *     target: string,
    *     readonly: boolean,
-   *     type?: string, // default volume
-   *   }>|Array<string>, // '<source>:<target>[:readonly]'
+   *     type: 'bind'|'cluster'|'image'|'npipe'|'tmpfs'|'volume',
+   *   }>|Array<string>, # '<source>:<target>[:<readonly>]'
    *
-   *   // Dockerfile defaults
-   *   cmd: Array<string|number>, // CMD
-   *   expose: Array<(port string)>, // EXPOSE
-   *   volume: Array<path string>, // VOLUME
-   *   workdir: path string, // WORKDIR
-   *   env: {
-   *     HOME: string,
-   *     HOSTNAME: string,
-   *     PATH: string, // $PATH
-   *     ...(moreEnvOptions Object<string>),
-   *   }, // ENV; environment variables exposed to container during run time
+   *   # Dockerfile defaults
+   *   cmd: Array<string|number>,
+   *   expose: Array<port string>, # '<port>[/<"tcp"|"udp"|"sctp">]'
+   *   volume: Array<path string>,
+   *   workdir: path string,
+   *   env: Object<string>,
    * }) -> data Promise<{
    *   Id: string,
    *   Warnings: Array<string>,
@@ -687,14 +681,39 @@ class Docker {
    *     * `restart` - the restart policy for the container.
    *     * `logDriver` - the logging driver used for the container.
    *     * `logDriverOptions` - driver-specific configuration options for the logging driver.
-   *     * `publish` - object of mappings of host ports to container ports.
+   *     * `publish` - object of mappings of host ports to container ports with optional protocols.
    *     * `healthCmd` - a command that checks the health of the container. The health check fails if the command errors. The command is run inside the container.
    *     * `healthInterval` - time in nanoseconds to wait between healthchecks.
    *     * `healthTimeout` - time in nanoseconds to wait before the healthcheck fails.
    *     * `healthRetries` - number of times to retry the health check before the container is considered unhealhty.
    *     * `healthStartPeriod` - time in nanoseconds to wait when the container starts up before running the first health check command.
    *     * `memory` - memory limit of the container in bytes.
-   *     * `cpus` - number of CPUs
+   *     * `cpus` - CPU quota in CPUs.
+   *     * `mounts` - specification of the container's volumes or mounts
+   *       * `source` - the mount source (e.g. a volume name or a host path).
+   *       * `target` - the mounted path inside the container.
+   *       * `readonly`- if `true`, the mount is read-only. If `false`, the mount may be written to. Defaults to `false`.
+   *       * `type` - the mount type.
+   *     * `cmd` - the command that is run by the Docker container.
+   *     * `expose` - an array of ports with optional protocols that the Docker container exposes.
+   *     * `volume` - an array of mount point paths inside the Docker container.
+   *     * `workdir` - the working directory of the Docker container.
+   *     * `env` - an object of the Docker container's environment variables. Maps environment variable names to environment variable values, e.g. `{ FOO: 'bar' }`.
+   *
+   * Return:
+   *   * `data`
+   *     * `Id` - the ID of the Docker container.
+   *     * `Warnings` - warnings encountered when creating the Docker container.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * const data = await docker.createContainer({
+   *   image: 'node:15-alpine',
+   *   cmd: ['node', '-e', 'console.log(\'Hello World.\')'],
+   *   rm: true,
+   * })
+   * ```
    *
    * Restart policies:
    *   * `no` - do not restart the container when it exits
@@ -708,8 +727,13 @@ class Docker {
    *   * `['CMD', ...args]` - exec arguments directly
    *   * `['CMD-SHELL', command string]` - run command with system's default shell
    *
-   * References:
-   * https://docs.docker.com/engine/reference/commandline/create/
+   * Mount types:
+   *   * `bind` - mounts a file or directory from the host into the container. The `source` must exist prior to creating the container.
+   *   * `cluster` - a Docker Swarm cluster volume.
+   *   * `image` - mounts a Docker image.
+   *   * `npipe` - mounts a named pipe from the host into the container.
+   *   * `tmpfs` - create a tmpfs with the given options. The `source` cannot be specified with mount type `tmpfs`.
+   *   * `volume` - creates a volume with the given name and options or uses a pre-existing volume with the same name and options. The volume persists when the container is removed.
    */
   async createContainer(options) {
     const response = await this.http.post(`/containers/create?${
@@ -834,18 +858,49 @@ class Docker {
    * ```coffeescript [specscript]
    * module stream 'https://nodejs.org/api/stream.html'
    *
-   * attachContainer(containerId string, options? {
+   * attachContainer(containerId string, options {
    *   stdout: boolean,
    *   stderr: boolean,
    * }) -> dataStream Promise<stream.Readable>
+   * ```
+   *
+   * Attaches to a Docker container.
+   *
+   * Arguments:
+   *   * `containerId` - the ID of the Docker container.
+   *   * `options`
+   *     * `stdin` - if `true`, `attachContainer` attaches to the Docker container's `stdin`. If `false`, `attachContainer` does not attach to the Docker container's `stdin`. Defaults to `true`.
+   *     * `stdout` - if `true`, `attachContainer` attaches to the Docker container's `stdout`. If `false`, `attachContainer` does not attach to the Docker container's `stdout`. Defaults to `true`.
+   *     * `stderr` - if `true`, `attachContainer` attaches to the Docker container's `stderr`. If `false`, `attachContainer` does not attach to the Docker container's `stderr`. Defaults to `true`.
+   *
+   * Returns:
+   *   * `dataStream` - a readable stream of the Docker container's `stdout` and/or `stdin`.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * const data = await docker.createContainer({
+   *   image: 'node:15-alpine',
+   *   cmd: ['node', '-e', 'console.log(\'Hello World.\')'],
+   *   rm: true,
+   * })
+   * const containerId = data.Id
+   *
+   * const attachStream = await docker.attachContainer(containerId)
+   * attachStream.pipe(process.stdout) // Hello World.
+   * attachStream.on('end', () => {
+   *   console.log('Attach success')
+   * })
+   *
+   * await docker.startContainer(containerId)
    * ```
    */
   async attachContainer(containerId, options = {}) {
     const response = await this.http.post(`/containers/${containerId}/attach?${
       querystring.stringify({
-        stream: 1,
-        stdout: options.stdout ?? 1,
-        stderr: options.stderr ?? 1,
+        stream: true,
+        stdout: Boolean(options.stdout ?? true),
+        stderr: Boolean(options.stderr ?? true),
       })
     }`)
     const dataStream = await handleDockerHTTPResponse(response, { stream: true })
@@ -868,7 +923,7 @@ class Docker {
    *   logDriverOptions: Object<string>,
    *   publish: Object<
    *     [hostPort string]: containerPort string # 8080
-   *       |containerPortWithProtocol string # '<containerPort>[/"tcp"|"udp"|"sctp"]'
+   *       |containerPortWithProtocol string # '<containerPort>[/<"tcp"|"udp"|"sctp">]'
    *   >,
    *   healthCmd: Array<string>, // healthcheck command. See description
    *   healthInterval: 10e9|>1e6, // nanoseconds to wait between healthchecks; 0 means inherit
@@ -877,13 +932,12 @@ class Docker {
    *   healthStartPeriod: >=1e6, // nanoseconds to wait on container init before starting first healthcheck
    *   memory: number, // memory limit in bytes
    *   cpus: number, // number of cpus
-   *   gpus?: 'all', // expose gpus
    *   mounts: Array<{
-   *     source: string, // name of volume
-   *     target: string, // mounted path inside container
+   *     source: string,
+   *     target: string,
    *     readonly: boolean,
-   *     type?: string, // default volume
-   *   }>|Array<string>, // '<source>:<target>[:readonly]'
+   *     type: 'bind'|'cluster'|'image'|'npipe'|'tmpfs'|'volume',
+   *   }>|Array<string>, # '<source>:<target>[:<readonly>]'
    *
    *   // Dockerfile defaults
    *   cmd: Array<string|number>, // CMD
@@ -1146,7 +1200,7 @@ class Docker {
    *   logDriverOptions: Object<string>,
    *   publish: Object<
    *     [hostPort string]: containerPort string # 8080
-   *       |containerPortWithProtocol string # '<containerPort>[/"tcp"|"udp"|"sctp"]'
+   *       |containerPortWithProtocol string # '<containerPort>[/<"tcp"|"udp"|"sctp">]'
    *   >,
    *   healthCmd: Array<string>, // healthcheck command. See description
    *   healthInterval: 10e9|>1e6, // nanoseconds to wait between healthchecks; 0 means inherit
@@ -1156,10 +1210,11 @@ class Docker {
    *   memory: number, // memory limit in bytes
    *   cpus: number, // number of cpus
    *   mounts: Array<{
-   *     source: string, // name of volume
-   *     target: string, // mounted path inside container
+   *     source: string,
+   *     target: string,
    *     readonly: boolean,
-   *   }>|Array<string>, // '<source>:<target>[:readonly]'
+   *     type: 'bind'|'cluster'|'image'|'npipe'|'tmpfs'|'volume',
+   *   }>|Array<string>, # '<source>:<target>[:<readonly>]'
    *
    *   updateParallelism: 2|number, // maximum number of tasks updated simultaneously
    *   updateDelay: 1e9|number, // ns delay between updates
@@ -1378,7 +1433,7 @@ class Docker {
    *   logDriverOptions: Object<string>,
    *   publish: Object<
    *     [hostPort string]: containerPort string # 8080
-   *       |containerPortWithProtocol string # '<containerPort>[/"tcp"|"udp"|"sctp"]'
+   *       |containerPortWithProtocol string # '<containerPort>[/<"tcp"|"udp"|"sctp">]'
    *   >,
    *   healthCmd: Array<string>, // healthcheck command. See description
    *   healthInterval: 10e9|>1e6, // nanoseconds to wait between healthchecks; 0 means inherit
@@ -1388,10 +1443,11 @@ class Docker {
    *   memory: number, // memory limit in bytes
    *   cpus: number, // number of cpus
    *   mounts: Array<{
-   *     source: string, // name of volume
-   *     target: string, // mounted path inside container
+   *     source: string,
+   *     target: string,
    *     readonly: boolean,
-   *   }>|Array<string>, // '<source>:<target>[:readonly]'
+   *     type: 'bind'|'cluster'|'image'|'npipe'|'tmpfs'|'volume',
+   *   }>|Array<string>, # '<source>:<target>[:<readonly>]'
    *
    *   cmd: Array<string|number>, // CMD
    *   workdir: path string, // WORKDIR

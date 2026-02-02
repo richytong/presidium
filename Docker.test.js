@@ -157,8 +157,12 @@ const test4 = new Test('Docker - container', async function integration() {
     assert.notEqual(inspectData.HostConfig.Memory, 512e6)
 
     const attachDataStream = await docker.attachContainer(containerId)
+    const emptyAttachDataStream = await docker.attachContainer(containerId, {
+      stdout: false,
+    })
     const startMessage = await docker.startContainer(containerId)
     assert.equal(typeof startMessage, 'string')
+
 
     const body = await Readable.Buffer(attachDataStream)
     assert.equal(body.constructor, Buffer)
@@ -170,9 +174,54 @@ const test4 = new Test('Docker - container', async function integration() {
     assert.strictEqual(body[5], 0) // SIZE2
     assert.strictEqual(body[6], 0) // SIZE3
     assert.strictEqual(body[7], 6) // SIZE4
-    assert.strictEqual(body.slice(8).toString(), 'test0\n')
+    assert.strictEqual(body.slice(8).toString('utf8'), 'test0\n')
 
     this.removedContainerId = containerId
+
+    const emptyBody = await Readable.Buffer(emptyAttachDataStream)
+    assert.equal(Buffer.byteLength(emptyBody, 'utf8'), 0)
+    assert.equal(emptyBody.slice(8).toString('utf8'), '')
+  }
+
+  {
+    const data = await docker.createContainer({
+      name: `test-alpine-30-${Date.now()}`,
+      image: 'node:15-alpine',
+      cmd: ['node', '-e', 'console.error(\'test0\')'],
+      rm: true,
+    })
+    assert.equal(typeof data.Id, 'string')
+    assert(Array.isArray(data.Warnings))
+    const containerId = data.Id
+
+    const inspectData = await docker.inspectContainer(containerId)
+    assert.notEqual(inspectData.HostConfig.NanoCpus, 2e9)
+    assert.notEqual(inspectData.HostConfig.Memory, 512e6)
+
+    const attachDataStream = await docker.attachContainer(containerId)
+    const emptyAttachDataStream = await docker.attachContainer(containerId, {
+      stderr: false,
+    })
+    const startMessage = await docker.startContainer(containerId)
+    assert.equal(typeof startMessage, 'string')
+
+    const body = await Readable.Buffer(attachDataStream)
+    assert.equal(body.constructor, Buffer)
+    assert.strictEqual(body[0], 2) // stderr
+    assert.strictEqual(body[1], 0) // empty
+    assert.strictEqual(body[2], 0) // empty
+    assert.strictEqual(body[3], 0) // empty
+    assert.strictEqual(body[4], 0) // SIZE1
+    assert.strictEqual(body[5], 0) // SIZE2
+    assert.strictEqual(body[6], 0) // SIZE3
+    assert.strictEqual(body[7], 6) // SIZE4
+    assert.strictEqual(body.slice(8).toString('utf8'), 'test0\n')
+
+    this.removedContainerId2 = containerId
+
+    const emptyBody = await Readable.Buffer(emptyAttachDataStream)
+    assert.equal(Buffer.byteLength(emptyBody, 'utf8'), 0)
+    assert.equal(emptyBody.slice(8).toString('utf8'), '')
   }
 
   {
@@ -229,7 +278,7 @@ const test4 = new Test('Docker - container', async function integration() {
     assert.strictEqual(body[5], 0) // SIZE2
     assert.strictEqual(body[6], 0) // SIZE3
     assert.strictEqual(body[7], 5) // SIZE4
-    assert.strictEqual(body.slice(8).toString(), 'test\n')
+    assert.strictEqual(body.slice(8).toString('utf8'), 'test\n')
 
     this.containerId = containerId
   }
@@ -255,7 +304,7 @@ const test4 = new Test('Docker - container', async function integration() {
     assert.strictEqual(body[5], 0) // SIZE2
     assert.strictEqual(body[6], 0) // SIZE3
     assert.strictEqual(body[7], 8) // SIZE4
-    assert.strictEqual(body.slice(8).toString(), 'test123\n')
+    assert.strictEqual(body.slice(8).toString('utf8'), 'test123\n')
     await docker.stopContainer(containerId, { time: 1 })
   }
 
@@ -276,7 +325,7 @@ const test4 = new Test('Docker - container', async function integration() {
     assert.strictEqual(body[5], 0) // SIZE2
     assert.strictEqual(body[6], 0) // SIZE3
     assert.strictEqual(body[7], 3) // SIZE4
-    assert.strictEqual(body.slice(8).toString(), 'x0\n')
+    assert.strictEqual(body.slice(8).toString('utf8'), 'x0\n')
   }
 
   await assert.rejects(
@@ -325,6 +374,7 @@ const test4 = new Test('Docker - container', async function integration() {
     const data = await docker.listContainers()
     assert(data.length > 0)
     assert(!data.map(get('Id')).includes(this.removedContainerId))
+    assert(!data.map(get('Id')).includes(this.removedContainerId2))
     for (item of data) {
       assert.equal(typeof item.Id, 'string')
       assert.equal(typeof item.Image, 'string')
