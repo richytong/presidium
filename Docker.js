@@ -190,23 +190,24 @@ class Docker {
    *   * (none)
    *
    * Return:
-   *   * `Id` - the container ID
-   *   * `Names` - the names associated with the container.
-   *   * `Image` - the name or ID of the image used to create the container.
-   *   * `ImageID` - the ID of the image used to create the container.
-   *   * `ImageManifestDescriptor` - an object containing digest, media type, and size for the image used to create the container, as defined in the [OCI Content Descriptors Specification](https://github.com/opencontainers/image-spec/blob/v1.0.1/descriptor.md).
-   *   * `Command` - the command to run when starting the container.
-   *   * `Created` - the date and time at which the image was created as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
-   *   * `Ports` - port-mappings for the container.
-   *   * `SizeRw` - the size of files that have been created or changed by the container.
-   *   * `SizeRootFs` - the total size of all files in the read-only layers of the image that are used by the container.
-   *   * `Labels` - object of user-defined key/value metadata.
-   *   * `State` - the state of the container.
-   *   * `Status` - additional human-readable status of the container, e.g. `'Exit 0'`.
-   *   * `HostConfig` - summary of host-specific runtime information of the container.
-   *   * `NetworkSettings` - summary of the container's network settings.
-   *   * `Mounts` - list of mounts used by the container.
-   *   * `Health` - summary of the container's health status.
+   *   * `data`
+   *     * `Id` - the Docker container ID
+   *     * `Names` - the names associated with the Docker container.
+   *     * `Image` - the name or ID of the image used to create the Docker container.
+   *     * `ImageID` - the ID of the image used to create the Docker container.
+   *     * `ImageManifestDescriptor` - an object containing digest, media type, and size for the image used to create the Docker container, as defined in the [OCI Content Descriptors Specification](https://github.com/opencontainers/image-spec/blob/v1.0.1/descriptor.md).
+   *     * `Command` - the command to run when starting the Docker container.
+   *     * `Created` - the date and time at which the image was created as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
+   *     * `Ports` - port-mappings for the Docker container.
+   *     * `SizeRw` - the size of files that have been created or changed by the Docker container.
+   *     * `SizeRootFs` - the total size of all files in the read-only layers of the image that are used by the Docker container.
+   *     * `Labels` - object of user-defined key/value metadata.
+   *     * `State` - the state of the Docker container.
+   *     * `Status` - additional human-readable status of the Docker container, e.g. `'Exit 0'`.
+   *     * `HostConfig` - summary of host-specific runtime information of the Docker container.
+   *     * `NetworkSettings` - summary of the Docker container's network settings.
+   *     * `Mounts` - list of mounts used by the Docker container.
+   *     * `Health` - summary of the Docker container's health status.
    */
   async listContainers() {
     const response = await this.http.get('/containers/json')
@@ -537,7 +538,7 @@ class Docker {
    *     * `Os` - the operating system that the image is built to run on.
    *     * `OsVersion` - the version of the operating system that the image is built to run on.
    *     * `Size` - the total size in bytes of the image including all layers that the image is composed of.
-   *     * `GraphDriver` - information about the storage driver that stores the filesystem used by the container and the image.
+   *     * `GraphDriver` - information about the storage driver that stores the filesystem used by the Docker container and the image.
    *     * `RootFS` - information about the image's RootFS, including the layer IDs.
    *     * `Metadata` - additional metadata of the image in the local cache. This information is not part of the image itself.
    *
@@ -657,7 +658,9 @@ class Docker {
    *     target: string,
    *     readonly: boolean,
    *     type: 'bind'|'cluster'|'image'|'npipe'|'tmpfs'|'volume',
-   *   }>|Array<string>, # '<source>:<target>[:<readonly>]'
+   *   }>|Array<
+   *     mount string, # '<source>:<target>[:<readonly true|false>]'
+   *   >,
    *
    *   # Dockerfile defaults
    *   cmd: Array<string|number>,
@@ -675,24 +678,24 @@ class Docker {
    *
    * Arguments:
    *   * `options`
-   *     * `name` - the name that will be assigned to the container.
+   *     * `name` - the name that will be assigned to the Docker container.
    *     * `image` - the name and tag of the image.
-   *     * `rm` - automatically remove the container when it exits.
-   *     * `restart` - the restart policy for the container.
-   *     * `logDriver` - the logging driver used for the container.
+   *     * `rm` - automatically remove the Docker container when it exits.
+   *     * `restart` - the restart policy for the Docker container.
+   *     * `logDriver` - the logging driver used for the Docker container.
    *     * `logDriverOptions` - driver-specific configuration options for the logging driver.
    *     * `publish` - object of mappings of host ports to container ports with optional protocols.
-   *     * `healthCmd` - a command that checks the health of the container. The health check fails if the command errors. The command is run inside the container.
+   *     * `healthCmd` - a command that checks the health of the Docker container. The health check fails if the command errors. The command is run inside the Docker container.
    *     * `healthInterval` - time in nanoseconds to wait between healthchecks.
    *     * `healthTimeout` - time in nanoseconds to wait before the healthcheck fails.
-   *     * `healthRetries` - number of times to retry the health check before the container is considered unhealhty.
-   *     * `healthStartPeriod` - time in nanoseconds to wait when the container starts up before running the first health check command.
-   *     * `memory` - memory limit of the container in bytes.
+   *     * `healthRetries` - number of times to retry the health check before the Docker container is considered unhealhty.
+   *     * `healthStartPeriod` - time in nanoseconds to wait when the Docker container starts up before running the first health check command.
+   *     * `memory` - memory limit of the Docker container in bytes.
    *     * `cpus` - CPU quota in CPUs.
-   *     * `mounts` - specification of the container's volumes or mounts
+   *     * `mounts` - specification of the Docker container's volumes or mounts
    *       * `source` - the mount source (e.g. a volume name or a host path).
-   *       * `target` - the mounted path inside the container.
-   *       * `readonly`- if `true`, the mount is read-only. If `false`, the mount may be written to. Defaults to `false`.
+   *       * `target` - the mounted path inside the Docker container.
+   *       * `readonly`- if `true`, the mount is read-only. If `false`, the mount is writable. Defaults to `false`.
    *       * `type` - the mount type.
    *     * `cmd` - the command that is run by the Docker container.
    *     * `expose` - an array of ports with optional protocols that the Docker container exposes.
@@ -716,10 +719,10 @@ class Docker {
    * ```
    *
    * Restart policies:
-   *   * `no` - do not restart the container when it exits
+   *   * `no` - do not restart the Docker container when it exits
    *   * `on-failure` - restart only if container exits with non-zero exit code
    *   * `always` - always restart container regardless of exit code
-   *   * `unless-stopped` - like `always` except if the container was put into a stopped state before the Docker daemon was stopped
+   *   * `unless-stopped` - like `always` except if the Docker container was put into a stopped state before the Docker daemon was stopped
    *
    * Health checks:
    *   * `[]` - inherit healthcheck from image or parent image
@@ -728,12 +731,12 @@ class Docker {
    *   * `['CMD-SHELL', command string]` - run command with system's default shell
    *
    * Mount types:
-   *   * `bind` - mounts a file or directory from the host into the container. The `source` must exist prior to creating the container.
+   *   * `bind` - mounts a file or directory from the host into the Docker container. The `source` must exist prior to creating the Docker container.
    *   * `cluster` - a Docker Swarm cluster volume.
    *   * `image` - mounts a Docker image.
-   *   * `npipe` - mounts a named pipe from the host into the container.
+   *   * `npipe` - mounts a named pipe from the host into the Docker container.
    *   * `tmpfs` - create a tmpfs with the given options. The `source` cannot be specified with mount type `tmpfs`.
-   *   * `volume` - creates a volume with the given name and options or uses a pre-existing volume with the same name and options. The volume persists when the container is removed.
+   *   * `volume` - creates a volume with the given name and options or uses a pre-existing volume with the same name and options. The volume persists when the Docker container is removed.
    */
   async createContainer(options) {
     const response = await this.http.post(`/containers/create?${
@@ -869,12 +872,11 @@ class Docker {
    * Arguments:
    *   * `containerId` - the ID of the Docker container.
    *   * `options`
-   *     * `stdin` - if `true`, `attachContainer` attaches to the Docker container's `stdin`. If `false`, `attachContainer` does not attach to the Docker container's `stdin`. Defaults to `true`.
    *     * `stdout` - if `true`, `attachContainer` attaches to the Docker container's `stdout`. If `false`, `attachContainer` does not attach to the Docker container's `stdout`. Defaults to `true`.
    *     * `stderr` - if `true`, `attachContainer` attaches to the Docker container's `stderr`. If `false`, `attachContainer` does not attach to the Docker container's `stderr`. Defaults to `true`.
    *
-   * Returns:
-   *   * `dataStream` - a readable stream of the Docker container's `stdout` and/or `stdin`.
+   * Return:
+   *   * `dataStream` - a readable stream of the Docker container's `stdout` and/or `stderr`.
    *
    * ```javascript
    * const docker = new Docker()
@@ -916,42 +918,106 @@ class Docker {
    *
    * runContainer(options {
    *   name: string,
-   *   image: string, // image to run in the container
-   *   rm: boolean, // automatically remove the container when it exits
+   *   image: string,
+   *   rm: boolean,
    *   restart: 'no'|'on-failure[:<max-retries>]'|'always'|'unless-stopped',
-   *   logDriver: 'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'none',
+   *   logDriver: 'local'|'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'etwlogs'|'none',
    *   logDriverOptions: Object<string>,
    *   publish: Object<
    *     [hostPort string]: containerPort string # 8080
    *       |containerPortWithProtocol string # '<containerPort>[/<"tcp"|"udp"|"sctp">]'
    *   >,
-   *   healthCmd: Array<string>, // healthcheck command. See description
-   *   healthInterval: 10e9|>1e6, // nanoseconds to wait between healthchecks; 0 means inherit
-   *   healthTimeout: 20e9|>1e6, // nanoseconds to wait before healthcheck fails
-   *   healthRetries: 5|number, // number of retries before unhealhty
-   *   healthStartPeriod: >=1e6, // nanoseconds to wait on container init before starting first healthcheck
-   *   memory: number, // memory limit in bytes
-   *   cpus: number, // number of cpus
+   *   healthCmd: Array<string>,
+   *   healthInterval: number, # nanoseconds, minimum 1e6, default 10e9
+   *   healthTimeout: number, # nanoseconds, minimum 1e6, default 20e9
+   *   healthRetries: number, # default 5
+   *   healthStartPeriod: number, # nanoseconds, minimum 1e6
+   *   memory: number, # bytes
+   *   cpus: number,
    *   mounts: Array<{
    *     source: string,
    *     target: string,
    *     readonly: boolean,
    *     type: 'bind'|'cluster'|'image'|'npipe'|'tmpfs'|'volume',
-   *   }>|Array<string>, # '<source>:<target>[:<readonly>]'
+   *   }>|Array<
+   *     mount string, # '<source>:<target>[:<readonly true|false>]'
+   *   >,
    *
-   *   // Dockerfile defaults
-   *   cmd: Array<string|number>, // CMD
-   *   expose: Array<(port string)>, // EXPOSE
-   *   volume: Array<path string>, // VOLUME
-   *   workdir: path string, // WORKDIR
-   *   env: {
-   *     HOME: string,
-   *     HOSTNAME: string,
-   *     PATH: string, // $PATH
-   *     ...(moreEnvOptions Object<string>),
-   *   }, // ENV; environment variables exposed to container during run time
+   *   # Dockerfile defaults
+   *   cmd: Array<string|number>,
+   *   expose: Array<port string>, # '<port>[/<"tcp"|"udp"|"sctp">]'
+   *   volume: Array<path string>,
+   *   workdir: path string,
+   *   env: Object<string>,
    * }) -> dataStream Promise<stream.Readable>
    * ```
+   *
+   * Creates, attaches to, and starts a Docker container.
+   *
+   * Arguments:
+   *   * `options`
+   *     * `name` - the name that will be assigned to the Docker container.
+   *     * `image` - the name and tag of the image.
+   *     * `rm` - automatically remove the Docker container when it exits.
+   *     * `restart` - the restart policy for the Docker container.
+   *     * `logDriver` - the logging driver used for the Docker container.
+   *     * `logDriverOptions` - driver-specific configuration options for the logging driver.
+   *     * `publish` - object of mappings of host ports to container ports with optional protocols.
+   *     * `healthCmd` - a command that checks the health of the Docker container. The health check fails if the command errors. The command is run inside the Docker container.
+   *     * `healthInterval` - time in nanoseconds to wait between healthchecks.
+   *     * `healthTimeout` - time in nanoseconds to wait before the healthcheck fails.
+   *     * `healthRetries` - number of times to retry the health check before the Docker container is considered unhealhty.
+   *     * `healthStartPeriod` - time in nanoseconds to wait when the Docker container starts up before running the first health check command.
+   *     * `memory` - memory limit of the Docker container in bytes.
+   *     * `cpus` - CPU quota in CPUs.
+   *     * `mounts` - specification of the Docker container's volumes or mounts
+   *       * `source` - the mount source (e.g. a volume name or a host path).
+   *       * `target` - the mounted path inside the Docker container.
+   *       * `readonly`- if `true`, the mount is read-only. If `false`, the mount is writable. Defaults to `false`.
+   *       * `type` - the mount type.
+   *     * `cmd` - the command that is run by the Docker container.
+   *     * `expose` - an array of ports with optional protocols that the Docker container exposes.
+   *     * `volume` - an array of mount point paths inside the Docker container.
+   *     * `workdir` - the working directory of the Docker container.
+   *     * `env` - an object of the Docker container's environment variables. Maps environment variable names to environment variable values, e.g. `{ FOO: 'bar' }`.
+   *
+   * Return:
+  *   * `dataStream` - a readable stream of the Docker container's `stdout` and/or `stderr`.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * const dataStream = await docker.runContainer({
+   *   image: 'node:15-alpine',
+   *   cmd: ['node', '-e', 'console.log(\'Hello World.\')'],
+   *   rm: true,
+   * })
+   *
+   * dataStream.pipe(process.stdout) // Hello World.
+   * dataStream.on('end', () => {
+   *   console.log('Run success')
+   * })
+   * ```
+   *
+   * Restart policies:
+   *   * `no` - do not restart the Docker container when it exits
+   *   * `on-failure` - restart only if container exits with non-zero exit code
+   *   * `always` - always restart container regardless of exit code
+   *   * `unless-stopped` - like `always` except if the Docker container was put into a stopped state before the Docker daemon was stopped
+   *
+   * Health checks:
+   *   * `[]` - inherit healthcheck from image or parent image
+   *   * `['NONE']` - disable healthcheck
+   *   * `['CMD', ...args]` - exec arguments directly
+   *   * `['CMD-SHELL', command string]` - run command with system's default shell
+   *
+   * Mount types:
+   *   * `bind` - mounts a file or directory from the host into the Docker container. The `source` must exist prior to creating the Docker container.
+   *   * `cluster` - a Docker Swarm cluster volume.
+   *   * `image` - mounts a Docker image.
+   *   * `npipe` - mounts a named pipe from the host into the Docker container.
+   *   * `tmpfs` - create a tmpfs with the given options. The `source` cannot be specified with mount type `tmpfs`.
+   *   * `volume` - creates a volume with the given name and options or uses a pre-existing volume with the same name and options. The volume persists when the Docker container is removed.
    */
   async runContainer(options) {
     const createData = await this.createContainer(options)
@@ -968,7 +1034,42 @@ class Docker {
    * ```coffeescript [specscript]
    * module stream 'https://nodejs.org/api/stream.html'
    *
-   * execContainer(containerId string, cmd Array<string>) -> dataStream Promise<stream.Readable>
+   * execContainer(
+   *   containerId string,
+   *   cmd Array<string>
+   * ) -> dataStream Promise<stream.Readable>
+   * ```
+   *
+   * Runs a command inside a running Docker container.
+   *
+   * Arguments:
+   *   * `containerId` - the ID of the Docker container.
+   *   * `cmd` - the command to be run by the running Docker container.
+   *
+   * Return:
+   *   * `dataStream` - a readable stream of the Docker exec instance's `stdout` and `stderr`.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * const data = await docker.createContainer({
+   *   image: 'node:15-alpine',
+   *   cmd: ['node', '-e', 'setTimeout(() => {}, 500)'],
+   *   rm: true,
+   * })
+   *
+   * const containerId = data.Id
+   *
+   * await docker.startContainer(containerId)
+   * const execDataStream = await docker.execContainer(
+   *   containerId,
+   *   ['node', '-e', 'console.log(\'Hello from Exec.\')']
+   * )
+   *
+   * execDataStream.pipe(process.stdout) // Hello from Exec.
+   * execDataStream.on('end', () => {
+   *   console.log('Exec success.')
+   * })
    * ```
    */
   async execContainer(containerId, cmd) {
@@ -1008,6 +1109,51 @@ class Docker {
    *
    * startContainer(containerId string) -> message string
    * ```
+   *
+   * Starts a Docker container.
+   *
+   * Arguments:
+   *   * `containerId` - the ID of the Docker container.
+   *
+   * Return:
+   *   * `message` - the start message.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * const data = await docker.createContainer({
+   *   image: 'node:15-alpine',
+   *   cmd: ['node', '-e', `
+   * const server = http.createServer((request, response) => {
+   *   request.pipe(response)
+   *   request.on('end', () => {
+   *     response.end()
+   *     server.close()
+   *   })
+   * })
+   * server.listen(8081)
+   *   `],
+   *   publish: { 8081: '8081' },
+   *   expose: ['8081'],
+   *   rm: true,
+   * })
+   * const containerId = data.Id
+   *
+   * await docker.startContainer(containerId)
+   *
+   * const http = new HTTP('http://localhost:8081')
+   *
+   * let response = await http.post('/', {
+   *   body: 'Echo Message.',
+   * }).catch(() => ({ ok: false }))
+   * while (!response.ok) {
+   *   response = await http.post('/', {
+   *     body: 'Echo Message.',
+   *   }).catch(() => ({ ok: false }))
+   * }
+   *
+   * console.log(await Readable.Text(response)) // Echo Message.
+   * ```
    */
   async startContainer(containerId) {
     const response = await this.http.post(`/containers/${containerId}/start`)
@@ -1025,8 +1171,32 @@ class Docker {
    * }) -> message Promise<string>
    * ```
    *
-   * Options:
-   *   * `time` - seconds before killing container
+   * Stops a Docker container.
+   *
+   * Arguments:
+   *   * `containerId` - the ID of the Docker container.
+   *   * `options`
+   *     * `time` - number of seconds to wait before stopping the Docker container.
+   *
+   * Return:
+   *   * `message` - the stop message
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * const data = await docker.createContainer({
+   *   image: 'node:15-alpine',
+   *   cmd: ['node', '-e', 'http.createServer(() => {})'],
+   *   rm: true,
+   * })
+   *
+   * const containerId = data.Id
+   *
+   * await docker.startContainer(containerId)
+   *
+   * await docker.stopContainer(containerId)
+   * console.log('Stop success')
+   * ```
    */
   async stopContainer(containerId, options = {}) {
     const response = await this.http.post(`/containers/${containerId}/stop?${
@@ -1075,6 +1245,55 @@ class Docker {
    *   NetworkSettings: DockerDocs.NetworkSettings,
    * }>
    * ```
+   *
+   * Returns low-level information about a Docker container.
+   *
+   * Arguments:
+   *   * `containerId` - the ID of the Docker container.
+   *
+   * Return:
+   *   * `data`
+   *     * `Id` - the ID of the Docker container.
+   *     * `Created` - the date and time at which the Docker container was created as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
+   *     * `Path` - the path to the command run by the Docker container.
+   *     * `Args` - the arguments to the command being run by the Docker container.
+   *     * `State` - `DockerDocs.ContainerState` stores the Docker container's running state.
+   *     * `Image` - the ID (digest) of the image that the Docker container was created from.
+   *     * `ResolveConfPath` - the location of `/etc/resolve.conf` generated for the Docker container on the host.
+   *     * `HostnamePath` - the location of `/etc/hostname` generated for the Docker container on the host.
+   *     * `HostsPath` - the location of `/etc/hosts` generated for the Docker container on the host.
+   *     * `LogPath` - the location of the file used to buffer the Docker container's logs.
+   *     * `Name` - the name associated with the Docker container.
+   *     * `RestartCount` - the number of times the Docker container was restarted since it was created or since the Docker daemon was started.
+   *     * `Driver` - the storage-driver used for the Docker container's filesystem.
+   *     * `Platform` - the platform (operating system) for which the Docker container was created.
+   *     * `ImageManifestDescriptor` - an object containing digest, media type, and size for the image from which the Docker container was created, as defined in the [OCI Content Descriptors Specification](https://github.com/opencontainers/image-spec/blob/v1.0.1/descriptor.md).
+   *     * `MountLabel` - the SELinux mount label set for the Docker container.
+   *     * `ProcessLabel` - the SELinux process label set for the Docker container.
+   *     * `AppArmorProfile` - the AppArmor profile set for the Docker container.
+   *     * `ExecIDs` - the IDs of exec instances that are running in the Docker container.
+   *     * `HostConfig` - host configuration for the Docker container.
+   *     * `GraphDriver` - information about the storage driver that stores the filesystem used by the Docker container and the image.
+   *     * `Storage` - information about the storage used by the Docker container.
+   *     * `SizeRw` - the size of files that have been created or changed by the Docker container.
+   *     * `SizeRootFs` - the total size of all files in the read-only layers of the image that are used by the Docker container.
+   *     * `Mounts` - list of mounts used by the Docker container.
+   *     * `Config` - the configuration of the Docker container.
+   *     * `NetworkSettings` - summary of the Docker container's network settings.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * const data = await docker.createContainer({
+   *   image: 'node:15-alpine',
+   *   cmd: ['node', '-e', 'http.createServer(() => {})'],
+   *   rm: true,
+   * })
+   *
+   * const containerId = data.Id
+   *
+   * const inspectData = await docker.inspectContainer(containerId)
+   * ```
    */
   async inspectContainer(containerId) {
     const response = await this.http.get(`/containers/${containerId}/json`)
@@ -1106,6 +1325,35 @@ class Docker {
    *   },
    * }>
    * ```
+   *
+   * Inspects a Docker swarm.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `data`
+   *     * `ID` - the ID of the Docker swarm.
+   *     * `Version` - the version of the Docker swarm configuration.
+   *     * `CreatedAt` - the date and time at which the Docker swarm was created as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
+   *     * `UpdatedAt` - the date and time at which the Docker swarm was updated as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
+   *     * `Spec` - the Docker swarm configuration.
+   *     * `TLSInfo` - information about the issuer of the Docker swarm's leaf TLS certificates and the trusted CA certificate.
+   *     * `RootRotationInProgress` - if `true`, there is currently a root CA rotation in progress for the swarm. If `false`, there is currently no root CA rotation in progress.
+   *     * `DataPathPort` - the data path port number for data traffic of the Docker swarm. Defaults to `4789`.
+   *     * `DefaultAddrPool` - the default subnet pools for global scope networks of the Docker swarm.
+   *     * `SubnetSize` - the subnet size of the networks created from the default address pool.
+   *     * `JoinTokens` - tokens for worker and manager nodes to join the Docker swarm.
+   *       * `Worker` - the token that worker nodes can use to join the Docker swarm.
+   *       * `Manager` - the token that manager nodes can use to join the Docker swarm.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * await docker.initSwarm('[::1]:2377')
+   *
+   * const data = await docker.inspectSwarm()
+   * ```
    */
   async inspectSwarm() {
     const response = await this.http.get('/swarm')
@@ -1119,6 +1367,20 @@ class Docker {
    * @docs
    * ```coffeescript [specscript]
    * initSwarm(address string) -> nodeId string
+   * ```
+   *
+   * Initializes a new Docker swarm.
+   *
+   * Arguments:
+   *   * `address` - address used for inter-manager communication that is also advertised to other nodes.
+   *
+   * Return:
+   *   * `nodeId` - the ID of the current Docker swarm manager node.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * await docker.initSwarm('[::1]:2377')
    * ```
    */
   async initSwarm(address) {
@@ -1147,11 +1409,27 @@ class Docker {
    * }) -> message Promise<string>
    * ```
    *
+   * Joins the current node (server) to a Docker swarm.
+   *
    * Arguments:
    *   * `address` - address used for inter-manager communication that is also advertised to other nodes.
    *   * `options`:
    *     * `RemoteAddrs` - address or interface for data path traffic. Used to separate data traffic from management traffic.
    *     * `JoinToken` - worker or manager token for joining the swarm.
+   *
+   * Return:
+   *   * `message` - the message from joining the Docker swarm.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * const workerJoinToken = 'token'
+   *
+   * await docker.joinSwarm('[::1]:2377', {
+   *   RemoteAddrs: ['ip-102-30-0-70.ec2.internal'],
+   *   JoinToken: workerJoinToken,
+   * })
+   * ```
    */
   async joinSwarm(address, options) {
     const response = await this.http.post('/swarm/join', {
@@ -1175,7 +1453,22 @@ class Docker {
    *
    * @docs
    * ```coffeescript [specscript]
-   * leaveSwarm(options? { force: boolean }) -> message Promise<string>
+   * leaveSwarm(options { force: boolean }) -> message Promise<string>
+   * ```
+   *
+   * Removes the current node (server) from a Docker swarm.
+   *
+   * Arguments:
+   *   * `options`
+   *     * `force` - force remove the current node from the Docker swarm, even if the current node is the last manager node.
+   *
+   * Return:
+   *   * `message` - the message from leaving the Docker swarm.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * await docker.leaveSwarm({ force: true })
    * ```
    */
   async leaveSwarm(options = {}) {
@@ -1195,64 +1488,118 @@ class Docker {
    *   image: string,
    *   replicas: 1|number,
    *   restart: 'no'|'on-failure[:<max-retries>]'|'any',
-   *   restartDelay: 10e9|number, // nanoseconds to delay between restarts
+   *   restartDelay: 10e9|number,
    *   logDriver: 'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'none',
    *   logDriverOptions: Object<string>,
    *   publish: Object<
    *     [hostPort string]: containerPort string # 8080
    *       |containerPortWithProtocol string # '<containerPort>[/<"tcp"|"udp"|"sctp">]'
    *   >,
-   *   healthCmd: Array<string>, // healthcheck command. See description
-   *   healthInterval: 10e9|>1e6, // nanoseconds to wait between healthchecks; 0 means inherit
-   *   healthTimeout: 20e9|>1e6, // nanoseconds to wait before healthcheck fails
-   *   healthRetries: 5|number, // number of retries before unhealhty
-   *   healthStartPeriod: >=1e6, // nanoseconds to wait on container init before starting first healthcheck
-   *   memory: number, // memory limit in bytes
-   *   cpus: number, // number of cpus
+   *   healthCmd: Array<string>,
+   *   healthInterval: number, # number greater than 1e6
+   *   healthTimeout: number, # number greater than 1e6
+   *   healthRetries: number,
+   *   healthStartPeriod: number, # number greater than or equal to 1e6
+   *   memory: number,
+   *   cpus: number,
    *   mounts: Array<{
    *     source: string,
    *     target: string,
    *     readonly: boolean,
    *     type: 'bind'|'cluster'|'image'|'npipe'|'tmpfs'|'volume',
-   *   }>|Array<string>, # '<source>:<target>[:<readonly>]'
-   *
-   *   updateParallelism: 2|number, // maximum number of tasks updated simultaneously
-   *   updateDelay: 1e9|number, // ns delay between updates
+   *   }>|Array<
+   *     mount string, # '<source>:<target>[:<readonly true|false>]'
+   *   >,
+   *   updateParallelism: number,
+   *   updateDelay: number,
    *   updateFailureAction: 'pause'|'continue'|'rollback',
-   *   updateMonitor: 15e9|number, // ns after each task update to monitor for failure
-   *   updateMaxFailureRatio: 0.15|number, // failure rate to tolerate during an update
-   *
-   *   rollbackParallelism: 2|number, // maximum number of tasks rolledback simultaneously
-   *   rollbackDelay: 1e9|number, // ns delay between task rollbacks
+   *   updateMonitor: number,
+   *   updateMaxFailureRatio: number, # [0, 1]
+   *   rollbackParallelism: 2|number,
+   *   rollbackDelay: 1e9|number,
    *   rollbackFailureAction: 'pause'|'continue',
-   *   rollbackMonitor: 15e9|number, // ns after each task rollback to monitor for failure
-   *   rollbackMaxFailureRatio: 0.15|number, // failure rate to tolerate during a rollback
+   *   rollbackMonitor: 15e9|number,
+   *   rollbackMaxFailureRatio: 0.15|number,
+   *   network: string,
+   *   cmd: Array<string|number>,
+   *   workdir: path string,
+   *   env: Object<string>,
+   *   labels: Object<string>,
    *
-   *   network?: string, // name or id of network to attach service
-   *
-   *   cmd: Array<string|number>, // CMD
-   *   workdir: path string, // WORKDIR
-   *   env: {
-   *     HOME: string,
-   *     HOSTNAME: string,
-   *     PATH: string, // $PATH
-   *     ...(moreEnvOptions Object<string>),
-   *   }, // ENV; environment variables exposed to container during run time
-   *
-   *   // auth options
+   *   # auth options
    *   username: string,
    *   password: string,
-   *   email?: string,
-   *   serveraddress?: string,
-   *   identitytoken?: string,
-   *
-   *   // user-defined metadata
-   *   labels: object,
+   *   email: string,
+   *   serveraddress: string,
+   *   identitytoken: string,
    * }) -> data Promise<{
    *   ID: string,
    *   Warnings: Array<string>,
    * }>
    * ```
+   *
+   * Creates a Docker service. The current node (server) needs to be a manager node in a Docker swarm.
+   *
+   * Arguments:
+   *   * `service` - the Docker service name.
+   *   * `options`
+   *     * `image` - the Docker image that will be used by the Docker service.
+   *     * `replicas` - the number of containers that the Docker service will run across all nodes of the Docker swarm. If `replicas` is set to 'global', the Docker service will run containers on each node of the Docker swarm.
+   *     * `restart` - the restart policy for the Docker service.
+   *     * `restartDelay` - the delay between restarts for the Docker service.
+   *     * `logDriver` - the logging driver used for the Docker service.
+   *     * `logDriverOptions` - driver-specific configuration options for the logging driver.
+   *     * `publish` - object of mappings of host ports to Docker service ports with optional protocols.
+   *     * `healthCmd` - a command that checks the health of the Docker service. The health check fails if the command errors. The command is run inside each Docker container of the Docker service.
+   *     * `healthInterval` - time in nanoseconds to wait between healthchecks. Defaults to `10e9`.
+   *     * `healthTimeout` - time in nanoseconds to wait before the healthcheck fails. Defaults to `20e9`.
+   *     * `healthRetries` - number of times to retry the health check before the Docker container is considered unhealhty. Defaults to `5`.
+   *     * `healthStartPeriod` - time in nanoseconds to wait when the Docker container starts up before running the first health check command.
+   *     * `memory` - memory limit of each container of the Docker service in bytes.
+   *     * `cpus` - CPU quota of each container of the Docker service in CPUs.
+   *     * `mounts` - specification of each Docker service container's volumes or mounts.
+   *     * `updateParallelism` - the maximum number of tasks to be updated in one iteration. `0` means unlimited parallelism. Defaults to `2`.
+   *     * `updateDelay` - the delay in nanoseconds between task updates. Defaults to `1e9`.
+   *     * `updateFailureAction` - the action to take if an updated task fails to run, or stops running during the task updates.
+   *     * `updateMonitor` - the amount of time in nanoseconds to monitor each updated task for failures. Defaults to `15e9`.
+   *     * `updateMaxFailureRatio` - the maximum ratio of tasks that may fail during an update before the failure action is invoked. Defaults to `0.15`.
+   *     * `rollbackParallelism` - the maximum number of tasks to be rolled back in one iteration. `0` means unlimited parallelism. Defaults to `1`.
+   *     * `rollbackDelay` - the delay in nanoseconds between rollback iterations. Defaults to `1e9`.
+   *     * `rollbackFailureAction` - the action to take if a rolled back task fails to run, or stops running during the rollback. Defaults to `'pause'`.
+   *     * `rollbackMonitor` - the amount of time in nanoseconds to monitor each rolled back task for failures. Defaults to `15e9`.
+   *     * `rollbackMaxFailureRatio` - the maximum ratio of tasks that may fail during a rollback before the failure action is invoked. Defaults to `0.15`.
+   *     * `network` - the network name or ID for attachment.
+   *     * `cmd` - the command that to be run by the Docker service.
+   *     * `workdir` - the working directory of the containers of the Docker service.
+   *     * `env` - an object of the Docker service's environment variables. Maps environment variable names to environment variable values, e.g. `{ FOO: 'bar' }`.
+   *     * `labels` - object of user-defined key/value metadata.
+   *     * `username` - authentication credentials.
+   *     * `password` - authentication credentials.
+   *     * `email` - authentication credentials.
+   *     * `serveraddress` - domain or IP of the registry server.
+   *     * `identitytoken` - a token used to authenticate the user in place of a username and password.
+   *
+   * Return:
+   *   * `data`
+   *     * `ID` - the ID of the created Docker service.
+   *     * `Warnings` - warnings encountered when creating the Docker service.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * await docker.createService('my-service', {
+   *   image: 'node:15-alpine',
+   *   replicas: 3,
+   *   cmd: ['node', '-e', 'http.createServer((request, response) => response.end(\'Hello World.\')).listen(3001)'],
+   *   workdir: '/home/node',
+   *   env: { TEST: 'test' },
+   *   restart: 'on-failure',
+   *   publish: { 8081: 3001 },
+   *   healthCmd: ['wget', '--no-verbose', '--tries=1', '--spider', 'localhost:3001'],
+    })
+   * ```
+   *
+   * Docker Swarm reference: [https://docs.docker.com/engine/swarm/](https://docs.docker.com/engine/swarm/)
    */
   async createService(service, options = {}) {
     const body = JSON.stringify({
@@ -1416,63 +1763,98 @@ class Docker {
    * @docs
    * ```coffeescript [specscript]
    * updateService(service string, options {
-   *   version: number, // current version of service
-   *   rollback: 'previous', // roll service back to previous version
-   *   authorization: {
-   *     username: string,
-   *     password: string,
-   *     email: string,
-   *     serveraddress: string,
-   *   }|{ identitytoken: string },
-   *
+   *   version: number,
+   *   rollback: 'previous',
+   *   force: boolean,
    *   image: string,
    *   replicas: 1|number,
-   *   restart: 'no'|'on-failure[:<max-retries>]'|'always'|'unless-stopped',
-   *   restartDelay: 10e9|number, // nanoseconds to delay between restarts
+   *   restart: 'no'|'on-failure[:<max-retries>]'|'any',
+   *   restartDelay: 10e9|number,
    *   logDriver: 'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'none',
    *   logDriverOptions: Object<string>,
    *   publish: Object<
    *     [hostPort string]: containerPort string # 8080
    *       |containerPortWithProtocol string # '<containerPort>[/<"tcp"|"udp"|"sctp">]'
    *   >,
-   *   healthCmd: Array<string>, // healthcheck command. See description
-   *   healthInterval: 10e9|>1e6, // nanoseconds to wait between healthchecks; 0 means inherit
-   *   healthTimeout: 20e9|>1e6, // nanoseconds to wait before healthcheck fails
-   *   healthRetries: 5|number, // number of retries before unhealhty
-   *   healthStartPeriod: >=1e6, // nanoseconds to wait on container init before starting first healthcheck
-   *   memory: number, // memory limit in bytes
-   *   cpus: number, // number of cpus
+   *   healthCmd: Array<string>,
+   *   healthInterval: number, # number greater than 1e6
+   *   healthTimeout: number, # number greater than 1e6
+   *   healthRetries: number,
+   *   healthStartPeriod: number, # number greater than or equal to 1e6
+   *   memory: number,
+   *   cpus: number,
    *   mounts: Array<{
    *     source: string,
    *     target: string,
    *     readonly: boolean,
    *     type: 'bind'|'cluster'|'image'|'npipe'|'tmpfs'|'volume',
-   *   }>|Array<string>, # '<source>:<target>[:<readonly>]'
+   *   }>|Array<
+   *     mount string, # '<source>:<target>[:<readonly true|false>]'
+   *   >,
+   *   cmd: Array<string|number>,
+   *   workdir: path string,
+   *   env: Object<string>,
+   *   labels: Object<string>,
    *
-   *   cmd: Array<string|number>, // CMD
-   *   workdir: path string, // WORKDIR
-   *   env: {
-   *     HOME: string,
-   *     HOSTNAME: string,
-   *     PATH: string, // $PATH
-   *     ...(moreEnvOptions Object<string>),
-   *   }, // ENV; environment variables exposed to container during run time
-   *
-   *   // auth options
+   *   # auth options
    *   username: string,
    *   password: string,
-   *   email?: string,
-   *   serveraddress?: string,
-   *   identitytoken?: string,
-   *
-   *   // user-defined metadata
-   *   labels: object,
-   *
-   *   force?: boolean,
+   *   email: string,
+   *   serveraddress: string,
+   *   identitytoken: string
    * }) -> data Promise<{
    *   Warnings: Array<string>,
    * }>
    * ```
+   *
+   * Updates a Docker service. The current node (server) needs to be a manager node in a Docker swarm.
+   *
+   * Arguments:
+   *   * `service` - the Docker service name.
+   *   * `options`
+   *     * `rollback` - causes a rollback to the previous Docker service version.
+   *     * `force` - if `true`, a Docker service update will occur even if no relevant parameters have been changed. If `false`, no update will occur if no relevant parameters have been changed.
+   *     * `image` - the Docker image that will be used by the Docker service.
+   *     * `replicas` - the number of containers that the Docker service will run across all nodes of the Docker swarm. If `replicas` is set to 'global', the Docker service will run containers on each node of the Docker swarm.
+   *     * `restart` - the restart policy for the Docker service.
+   *     * `restartDelay` - the delay between restarts for the Docker service.
+   *     * `logDriver` - the logging driver used for the Docker service.
+   *     * `logDriverOptions` - driver-specific configuration options for the logging driver.
+   *     * `publish` - object of mappings of host ports to Docker service ports with optional protocols.
+   *     * `healthCmd` - a command that checks the health of the Docker service. The health check fails if the command errors. The command is run inside each Docker container of the Docker service.
+   *     * `healthInterval` - time in nanoseconds to wait between healthchecks. Defaults to `10e9`.
+   *     * `healthTimeout` - time in nanoseconds to wait before the healthcheck fails. Defaults to `20e9`.
+   *     * `healthRetries` - number of times to retry the health check before the Docker container is considered unhealhty. Defaults to `5`.
+   *     * `healthStartPeriod` - time in nanoseconds to wait when the Docker container starts up before running the first health check command.
+   *     * `memory` - memory limit of each container of the Docker service in bytes.
+   *     * `cpus` - CPU quota of each container of the Docker service in CPUs.
+   *     * `mounts` - specification of each Docker service container's volumes or mounts.
+   *     * `updateParallelism` - the maximum number of tasks to be updated in one iteration. `0` means unlimited parallelism. Defaults to `2`.
+   *     * `cmd` - the command that to be run by the Docker service.
+   *     * `workdir` - the working directory of the containers of the Docker service.
+   *     * `env` - an object of the Docker service's environment variables. Maps environment variable names to environment variable values, e.g. `{ FOO: 'bar' }`.
+   *     * `labels` - object of user-defined key/value metadata.
+   *     * `username` - authentication credentials.
+   *     * `password` - authentication credentials.
+   *     * `email` - authentication credentials.
+   *     * `serveraddress` - domain or IP of the registry server.
+   *     * `identitytoken` - a token used to authenticate the user in place of a username and password.
+   *
+   * Return:
+   *   * `data`
+   *     * `Warnings` - warnings encountered when updating the Docker service.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * await docker.updateService('my-service', {
+   *   image: 'node:16-alpine',
+   *   memory: 512e6,
+   *   cpus: 2,
+   * })
+   * ```
+   *
+   * Docker Swarm reference: [https://docs.docker.com/engine/swarm/](https://docs.docker.com/engine/swarm/)
    */
   async updateService(service, options = {}) {
     const serviceData = await this.inspectService(service)
