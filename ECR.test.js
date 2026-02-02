@@ -67,17 +67,11 @@ EXPOSE 8888`,
     assert.equal(Object.keys(data).length, 0)
   }
 
-  const decoded = Buffer.from(authorizationToken, 'base64').toString('utf8')
-  const [username, password] = decoded.split(':')
-
-  // TODO
-  // {"errorDetail":{"message":"no basic auth credentials"},"error":"no basic auth credentials"
   {
     const dataStream = await docker.pushImage({
       image: 'test-repo/p1:test',
       repository: `${awsAccountId}.dkr.ecr.${awsCreds.region}.amazonaws.com`,
-      username,
-      password,
+      authToken: authorizationToken,
     })
     dataStream.pipe(process.stdout)
     await new Promise(resolve => {
