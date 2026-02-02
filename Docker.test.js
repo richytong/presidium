@@ -267,6 +267,15 @@ const test4 = new Test('Docker - container', async function integration() {
     assert.strictEqual(body.slice(8).toString(), 'x0\n')
   }
 
+  await assert.rejects(
+    docker.removeImage('node:15-alpine'),
+    error => {
+      assert(error.message.includes('conflict'))
+      assert.equal(error.code, 409)
+      return true
+    },
+  )
+
   {
     const data = await docker.inspectContainer(this.containerId)
     assert.equal(data.Config.Image, 'node:15-alpine')
