@@ -70,6 +70,8 @@ class Docker {
    *     * `IdentityToken` - a token used to authenticate the user in place of a username and password.
    *
    * ```javascript
+   * const docker = new Docker()
+   *
    * const data = await docker.auth({
    *   username: 'admin',
    *   password: 'password',
@@ -121,19 +123,22 @@ class Docker {
    *   * (none)
    *
    * Return:
-   *   * `Id` - the image ID.
-   *   * `ParentId` - ID of the parent image.
-   *   * `RepoTags` - list of image names and tags in the local image cache that reference the image.
-   *   * `RepoDigests` - list of content-addressable digests of locally available image manifests that the image is referenced from.
-   *   * `Created` - date and time at which the image was created as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
-   *   * `Size` - total size in bytes of the image including all layers that the image is composed of.
-   *   * `SharedSize` - total size of image layers that are shared between the image and other images. `-1` indicates that this value has not been calculated.
-   *   * `Labels` - object of user-defined key/value metadata.
-   *   * `Containers` - number of containers using this image. Includes both stopped and running containers. `-1` indicates that this value has not been calculated.
-   *   * `Manifests` - list of manifests available in the image. Warning: `Manifests` is experimental and may change at any time without any backward compatibility.
-   *   * `Descriptor` - an object containing digest, media type, and size for the image, as defined in the [OCI Content Descriptors Specification](https://github.com/opencontainers/image-spec/blob/v1.0.1/descriptor.md).
+   *   * `data`
+   *     * `Id` - the image ID.
+   *     * `ParentId` - ID of the parent image.
+   *     * `RepoTags` - list of image names and tags in the local image cache that reference the image.
+   *     * `RepoDigests` - list of content-addressable digests of locally available image manifests that the image is referenced from.
+   *     * `Created` - the date and time at which the image was created as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
+   *     * `Size` - the total size in bytes of the image including all layers that the image is composed of.
+   *     * `SharedSize` - total size of image layers that are shared between the image and other images. `-1` indicates that this value has not been calculated.
+   *     * `Labels` - object of user-defined key/value metadata.
+   *     * `Containers` - number of containers using this image. Includes both stopped and running containers. `-1` indicates that this value has not been calculated.
+   *     * `Manifests` - list of [image manifests](https://docs.docker.com/reference/cli/docker/manifest/) available in the image. Warning: `Manifests` is experimental and may change at any time without any backward compatibility.
+   *     * `Descriptor` - an object containing digest, media type, and size for the image, as defined in the [OCI Content Descriptors Specification](https://github.com/opencontainers/image-spec/blob/v1.0.1/descriptor.md).
    *
    * ```javascript
+   * const docker = new Docker()
+   *
    * const data = await docker.listImages()
    * ```
    */
@@ -191,7 +196,7 @@ class Docker {
    *   * `ImageID` - the ID of the image used to create the container.
    *   * `ImageManifestDescriptor` - an object containing digest, media type, and size for the image used to create the container, as defined in the [OCI Content Descriptors Specification](https://github.com/opencontainers/image-spec/blob/v1.0.1/descriptor.md).
    *   * `Command` - the command to run when starting the container.
-   *   * `Created` - date and time at which the image was created as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
+   *   * `Created` - the date and time at which the image was created as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
    *   * `Ports` - port-mappings for the container.
    *   * `SizeRw` - the size of files that have been created or changed by the container.
    *   * `SizeRootFs` - the total size of all files in the read-only layers of the image that are used by the container.
@@ -232,7 +237,7 @@ class Docker {
    * ) -> dataStream Promise<stream.Readable>
    * ```
    *
-   * Pulls a Docker image to the server.
+   * Pulls or imports a Docker image to the server.
    *
    * Arguments:
    *   * `name` - name of the image to pull. May include a tag or digest.
@@ -251,6 +256,8 @@ class Docker {
    *   * `dataStream` - a readable stream of the progress of the Docker `pullImage` operation.
    *
    * ```javascript
+   * const docker = new Docker()
+   *
    * const pullStream = await docker.pullImage('nginx:1.19')
    *
    * pullStream.pipe(process.stdout)
@@ -509,7 +516,36 @@ class Docker {
    * }>
    * ```
    *
+   * Returns low-level information about a Docker image.
+   *
    * Arguments:
+   *   * `image` - the name or ID of the image to inspect
+   *
+   * Return:
+   *   * `data`
+   *     * `Id` - the content-addressable ID of an image.
+   *     * `Descriptor` - an object containing digest, media type, and size for the image, as defined in the [OCI Content Descriptors Specification](https://github.com/opencontainers/image-spec/blob/v1.0.1/descriptor.md).
+   *     * `Manifests` - list of [image manifests](https://docs.docker.com/reference/cli/docker/manifest/) available in the image. Warning: `Manifests` is experimental and may change at any time without any backward compatibility.
+   *     * `RepoTags` - list of image names and tags in the local image cache that reference the image.
+   *     * `RepoDigests` - list of content-addressable digests of locally available image manifests that the image is referenced from.
+   *     * `Comment` - optional message that was set when committing or importing the image.
+   *     * `Created` - the date and time at which the image was created as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
+   *     * `Author` - the name of the author that was specified when committing the image.
+   *     * `Config` - the configuration of the image. `Config` fields are used as defaults when starting a container from an image.
+   *     * `Architecture` - the CPU architecture that the image runs on.
+   *     * `Variant` - a CPU architecture variant.
+   *     * `Os` - the operating system that the image is built to run on.
+   *     * `OsVersion` - the version of the operating system that the image is built to run on.
+   *     * `Size` - the total size in bytes of the image including all layers that the image is composed of.
+   *     * `GraphDriver` - information about the storage driver that stores the filesystem used by the container and the image.
+   *     * `RootFS` - information about the image's RootFS, including the layer IDs.
+   *     * `Metadata` - additional metadata of the image in the local cache. This information is not part of the image itself.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * const data = await docker.inspectImage('my-image:example')
+   * ```
    */
   async inspectImage(image) {
     const response = await this.http.get(`/images/${image}/json`)
@@ -523,12 +559,26 @@ class Docker {
    * @docs
    * ```coffeescript [specscript]
    * tagImage(
-   *   sourceImageTag string, # '<image>:<tag>'
-   *   targetImageTag string, # '<image>:<tag>'
+   *   sourceImageTag string, # '[<repo>/]<image>:<tag>'
+   *   targetImageTag string, # '[<repo>/]<image>:<tag>'
    * ) -> data Promise<{}>
    * ```
+   *
+   * Creates a Docker image tag that refers to a source Docker image tag.
+   *
+   * Arguments:
+   *   * `sourceImageTag` - the source Docker image tag
+   *   * `targetImageTag` - the Docker image tag to create
+   *
+   * Return:
+   *   * `data` - empty object.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * await docker.tagImage('my-image:example', 'my-registry/my-image:example')
+   * ```
    */
-  // async tagImage(image, options = {}) {
   async tagImage(sourceImageTag, targetImageTag) {
     const targetImageTagParts = targetImageTag.split(':')
     const tag = targetImageTagParts[targetImageTagParts.length - 1]
@@ -547,11 +597,28 @@ class Docker {
    * ```coffeescript [specscript]
    * removeImage(image string, options? {
    *   force: boolean,
-   *   noprune: boolean, // do not delete untagged parent images
+   *   noprune: boolean,
    * }) -> data Promise<Array<{ Untagged: string }|{ Deleted: string }>>
    * ```
    *
-   * `image` is a docker image name or ID
+   * Removes a Docker image and any untagged parent images that were referenced by the Docker image from the server. Docker images can't be removed if they have descendant images, are being used by a running container, or are being used by a build.
+   *
+   * Arguments:
+   *   * `image` - the name or ID of the image to remove.
+   *   * `options`
+   *     * `force` - if `true`, removes the image even if it is being used by stopped containers or has other tags. If `false`, the operation will error if the image is being used by stopped containers. Defaults to `false`.
+   *     * `noprune` - if `true`, the operation will not delete untagged parent images. If `false`, the operation will delete untagged parent images. Defaults to `false`.
+   *
+   * Return:
+   *   * `data`
+   *     * `Untagged` - the image ID of an image that was untagged.
+   *     * `Deleted` - the image ID of an image that was deleted.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * await docker.removeImage('my-image:example')
+   * ```
    */
   async removeImage(image, options = {}) {
     const response = await this.http.delete(`/images/${image}?${
