@@ -104,7 +104,7 @@ EXPOSE 8888`,
   {
     const dataStream = await docker.pushImage({
       image: 'presidium-test:test',
-      repository: 'localhost:5000',
+      registry: 'localhost:5000',
       identitytoken: this.identitytoken,
     })
     dataStream.pipe(process.stdout)

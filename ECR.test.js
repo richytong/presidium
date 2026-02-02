@@ -70,7 +70,7 @@ EXPOSE 8888`,
   {
     const dataStream = await docker.pushImage({
       image: 'test-repo/p1:test',
-      repository: `${awsAccountId}.dkr.ecr.${awsCreds.region}.amazonaws.com`,
+      registry: `${awsAccountId}.dkr.ecr.${awsCreds.region}.amazonaws.com`,
       authToken: authorizationToken,
     })
     dataStream.pipe(process.stdout)

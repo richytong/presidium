@@ -67,7 +67,7 @@ class Docker {
    * Return:
    *   * `data`
    *     * `Status` - the status message of the authentication
-   *     * `IdentityToken` - a token used to authenticate the user in place of a username and password. 
+   *     * `IdentityToken` - a token used to authenticate the user in place of a username and password.
    *
    * ```javascript
    * const data = await docker.auth({
@@ -232,7 +232,7 @@ class Docker {
    * ) -> dataStream Promise<stream.Readable>
    * ```
    *
-   * Pulls or downloads a Docker image to the server.
+   * Pulls a Docker image to the server.
    *
    * Arguments:
    *   * `name` - name of the image to pull. May include a tag or digest.
@@ -245,10 +245,19 @@ class Docker {
    *     * `password` - authentication credentials.
    *     * `email` - authentication credentials.
    *     * `serveraddress` - domain or IP of the registry server.
-   *     * `IdentityToken` - a token used to authenticate the user in place of a username and password. 
+   *     * `identitytoken` - a token used to authenticate the user in place of a username and password.
    *
    * Return:
-   *   * `dataStream` - a readable stream of the progress from the `pullImage` operation.
+   *   * `dataStream` - a readable stream of the progress of the Docker `pullImage` operation.
+   *
+   * ```javascript
+   * const pullStream = await docker.pullImage('nginx:1.19')
+   *
+   * pullStream.pipe(process.stdout)
+   * pullStream.on('end', () => {
+   *   console.log('pullImage success')
+   * })
+   * ```
    */
   async pullImage(name, options = {}) {
     const response = await this.http.post(`/images/create?${querystring.stringify({
@@ -284,38 +293,48 @@ class Docker {
    *
    * buildImage(path string, options {
    *   image: string,
-   *   ignore: Array<string>, // paths or names to ignore in build context tarball
+   *   ignore: Array<string>,
    *   archive: Object<
    *     Dockerfile: content string,
    *     [filepath string]: content string,
    *     ...
-   *   >, // object representation of the base archive for build context
-   *   archiveDockerfile: string, // path to Dockerfile in archive
-   *   platform: string, // e.g. linux/x86_64
+   *   >,
+   *   archiveDockerfile: string,
+   *   platform: string, # '<os>[/arch[/variant]]'
    * }) -> dataStream Promise<stream.Readable>
    * ```
    *
-   * Build a Docker Image.
+   * Builds a Docker Image.
    *
    * Arguments:
    *   * `path` - parent directory of the build context.
-   *   * `image` - the name and optional tag of the image. If no tag is present, `'LATEST'` is assumed as the value for the tag.
-   *   * `ignore` - filepaths or filenames to ignore when bundling files and directories for the build context.
-   *   * `archive` - an object of filenames and file contents that will be present in the build context.
-   *   * `archiveDockerfile` - the filepath
+   *   * `options`
+   *     * `image` - the name and optional tag of the image. If no tag is present, `'LATEST'` is assumed as the value for the tag.
+   *     * `ignore` - filepaths or filenames to ignore when bundling files and directories for the build context.
+   *     * `archive` - an object of filenames and file contents that will be present in the build context.
+   *     * `archiveDockerfile` - the filepath including filename of the Dockerfile, e.g. `'Dockerfiles/Dockerfile2'`. Defaults to `'Dockerfile'`.
+   *     * `platform` - target platform for the build, e.g. `'linux/arm64'`.
+   *
+   * Return:
+   *   * `dataStream` - a readable stream of the progress of the Docker `buildImage` operation.
    *
    * ```javascript
    * const docker = new Docker()
    *
-   * await docker.buildImage(path string, {
+   * const buildStream = await docker.buildImage(__dirname, {
    *   image: 'my-image',
    *   archive: {
    *     Dockerfile: `
    * FROM node:15-alpine
    * RUN apk add openssh neovim
-   * EXPOSE 8080`,
+   * EXPOSE 8080
+   *     `,
    *   },
-   *   ignore: ['Dockerfile'],
+   * })
+   *
+   * buildStream.pipe(process.stdout)
+   * buildStream.on('end', () => {
+   *   console.log('Build success')
    * })
    * ```
    *
@@ -383,19 +402,44 @@ class Docker {
    *
    * pushImage(options {
    *   image: string,
-   *   repository: string,
-   *   authorization: {
-   *     username: string,
-   *     password: string,
-   *     email: string,
-   *     serveraddress: string,
-   *   }|{
-   *     identitytoken: string,
-   *   },
+   *   registry: string,
+   *   authToken: string,
+   *   username: string,
+   *   password: string,
+   *   email: string,
+   *   serveraddress: string,
+   *   identitytoken: string,
    * }) -> dataStream Promise<stream.Readable>
    * ```
    *
-   * https://docs.docker.com/registry/deploying/
+   * Pushes a Docker image to a registry.
+   *
+   * Arguments:
+   *   * `options`
+   *     * `image` - the name and tag of the image.
+   *     * `registry` - the remote registry to which to push the image
+   *     * `authToken` - a base64-encoded token containing the username and password authentication credentials. Returned from [ECR getAuthorizationToken](/docs/ECR#getAuthorizationToken).
+   *     * `username` - authentication credentials.
+   *     * `password` - authentication credentials.
+   *     * `email` - authentication credentials.
+   *     * `serveraddress` - domain or IP of the registry server.
+   *     * `identitytoken` - a token used to authenticate the user in place of a username and password.
+   * Return:
+   *   * `dataStream` - a readable stream of the progress of the Docker `pushImage` operation.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * const dataStream = await docker.pushImage({
+   *   image: 'repo/my-image:mytag',
+   *   registry: 'my-registry.io',
+   * })
+   * dataStream.pipe(process.stdout)
+   * dataStream.on('end', () => {
+   *   console.log('Push success')
+   * })
+   * ```
+   *
    */
   async pushImage(options = {}) {
     const authOptions = pick(options, [
@@ -419,7 +463,7 @@ class Docker {
     }
 
     const [name, tag] = options.image.split(':')
-    const remoteImageName = `${options.repository}/${name}`
+    const remoteImageName = `${options.repository ?? options.registry}/${name}`
     const queryParams = `tag=${encodeURIComponent(tag)}`
 
     const response = await this.http.post(
