@@ -636,18 +636,21 @@ class Docker {
    * ```coffeescript [specscript]
    * createContainer(options {
    *   name: string,
-   *   image: string, // image to run in the container
-   *   rm: boolean, // automatically remove the container when it exits
+   *   image: string,
+   *   rm: boolean,
    *   restart: 'no'|'on-failure[:<max-retries>]'|'always'|'unless-stopped',
-   *   logDriver: 'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'none',
+   *   logDriver: 'local'|'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'etwlogs'|'none',
    *   logDriverOptions: Object<string>,
-   *   publish: Array<string>, // '<hostPort>:<containerPort>[:"tcp"|"udp"|"sctp"]'
-   *   healthCmd: Array<string>, // healthcheck command. See description
-   *   healthInterval: 10e9|>1e6, // nanoseconds to wait between healthchecks; 0 means inherit
-   *   healthTimeout: 20e9|>1e6, // nanoseconds to wait before healthcheck fails
-   *   healthRetries: 5|number, // number of retries before unhealhty
-   *   healthStartPeriod: >=1e6, // nanoseconds to wait on container init before starting first healthcheck
-   *   memory: number, // memory limit in bytes
+   *   publish: Object<
+   *     [hostPort string]: containerPort string # 8080
+   *       |containerPortWithProtocol string # '<containerPort>[/"tcp"|"udp"|"sctp"]'
+   *   >,
+   *   healthCmd: Array<string>,
+   *   healthInterval: 10e9|number, # nanoseconds, minimum 1e6
+   *   healthTimeout: 20e9|number, # nanoseconds, minimum 1e6
+   *   healthRetries: 5|number,
+   *   healthStartPeriod: number, # nanoseconds, minimum 1e6
+   *   memory: number, # bytes
    *   cpus: number, // number of cpus
    *   gpus?: 'all', // expose gpus
    *   mounts: Array<{
@@ -673,6 +676,25 @@ class Docker {
    *   Warnings: Array<string>,
    * }>
    * ```
+   *
+   * Creates a Docker container.
+   *
+   * Arguments:
+   *   * `options`
+   *     * `name` - the name that will be assigned to the container.
+   *     * `image` - the name and tag of the image.
+   *     * `rm` - automatically remove the container when it exits.
+   *     * `restart` - the restart policy for the container.
+   *     * `logDriver` - the logging driver used for the container.
+   *     * `logDriverOptions` - driver-specific configuration options for the logging driver.
+   *     * `publish` - object of mappings of host ports to container ports.
+   *     * `healthCmd` - a command that checks the health of the container. The health check fails if the command errors. The command is run inside the container.
+   *     * `healthInterval` - time in nanoseconds to wait between healthchecks.
+   *     * `healthTimeout` - time in nanoseconds to wait before the healthcheck fails.
+   *     * `healthRetries` - number of times to retry the health check before the container is considered unhealhty.
+   *     * `healthStartPeriod` - time in nanoseconds to wait when the container starts up before running the first health check command.
+   *     * `memory` - memory limit of the container in bytes.
+   *     * `cpus` - number of CPUs
    *
    * Restart policies:
    *   * `no` - do not restart the container when it exits
@@ -842,7 +864,10 @@ class Docker {
    *   restart: 'no'|'on-failure[:<max-retries>]'|'always'|'unless-stopped',
    *   logDriver: 'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'none',
    *   logDriverOptions: Object<string>,
-   *   publish: Array<string>, // '<hostPort>:<containerPort>[:"tcp"|"udp"|"sctp"]'
+   *   publish: Object<
+   *     [hostPort string]: containerPort string # 8080
+   *       |containerPortWithProtocol string # '<containerPort>[/"tcp"|"udp"|"sctp"]'
+   *   >,
    *   healthCmd: Array<string>, // healthcheck command. See description
    *   healthInterval: 10e9|>1e6, // nanoseconds to wait between healthchecks; 0 means inherit
    *   healthTimeout: 20e9|>1e6, // nanoseconds to wait before healthcheck fails
@@ -1117,7 +1142,10 @@ class Docker {
    *   restartDelay: 10e9|number, // nanoseconds to delay between restarts
    *   logDriver: 'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'none',
    *   logDriverOptions: Object<string>,
-   *   publish: Object<(hostPort string)=>(containerPort string)>,
+   *   publish: Object<
+   *     [hostPort string]: containerPort string # 8080
+   *       |containerPortWithProtocol string # '<containerPort>[/"tcp"|"udp"|"sctp"]'
+   *   >,
    *   healthCmd: Array<string>, // healthcheck command. See description
    *   healthInterval: 10e9|>1e6, // nanoseconds to wait between healthchecks; 0 means inherit
    *   healthTimeout: 20e9|>1e6, // nanoseconds to wait before healthcheck fails
@@ -1346,7 +1374,10 @@ class Docker {
    *   restartDelay: 10e9|number, // nanoseconds to delay between restarts
    *   logDriver: 'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'none',
    *   logDriverOptions: Object<string>,
-   *   publish: Object<(hostPort string)=>(containerPort string)>,
+   *   publish: Object<
+   *     [hostPort string]: containerPort string # 8080
+   *       |containerPortWithProtocol string # '<containerPort>[/"tcp"|"udp"|"sctp"]'
+   *   >,
    *   healthCmd: Array<string>, // healthcheck command. See description
    *   healthInterval: 10e9|>1e6, // nanoseconds to wait between healthchecks; 0 means inherit
    *   healthTimeout: 20e9|>1e6, // nanoseconds to wait before healthcheck fails
