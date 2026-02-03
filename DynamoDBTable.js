@@ -46,7 +46,7 @@ const createFilterExpression = require('./internal/createFilterExpression')
  * }) -> table DynamoDBTable
  * ```
  *
- * The presidium DynamoDBTable client. Creates the DynamoDB Table if it doesn't exist.
+ * Presidium DynamoDBTable client for [AWS DynamoDB](https://aws.amazon.com/dynamodb/). Creates the DynamoDB Table if it doesn't exist.
  *
  * DynamoDBTable instances have a `ready` promise that resolves when the table is active.
  *
@@ -71,24 +71,15 @@ const createFilterExpression = require('./internal/createFilterExpression')
  * const awsCreds = await AwsCredentials('my-profile')
  * awsCreds.region = 'us-east-1'
  *
- * // local testing
- * const myLocalTable = new DynamoDBTable({
- *   name: 'my-local-table',
+ * const myTable = new DynamoDBTable({
+ *   name: 'my-table',
  *   key: [{ id: 'string' }],
  *   ...awsCreds,
  * })
- * await myLocalTable.ready
- *
- * // production
- * const myProductionTable = new DynamoDBTable({
- *   name: 'my-production-table',
- *   key: [{ id: 'string' }],
- *   ...awsCreds,
- * })
- * await myProductionTable.ready
  * ```
  *
- * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+ * References:
+ *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
  */
 class DynamoDBTable {
   constructor(options) {
@@ -113,6 +104,30 @@ class DynamoDBTable {
 
     this.http = new HTTP(`${this.protocol}://${this.endpoint}`)
 
+    /**
+     * @name ready
+     *
+     * @docs
+     * ```coffeescript [specscript]
+     * ready -> promise Promise<>
+     * ```
+     *
+     * The ready promise for the DynamoDBTable instance. Resolves when the DynamoDB Table is active.
+     *
+     * ```javascript
+     * const awsCreds = await AwsCredentials('default')
+     * awsCreds.region = 'us-east-1'
+     *
+     * const env = process.env.NODE_ENV
+     *
+     * const myTable = new DynamoDBTable({
+     *   name: `${env}-my-table`,
+     *   key: [{ id: 'string' }],
+     *   ...awsCreds,
+     * })
+     * await myTable.ready
+     * ```
+     */
     this.autoReady = options.autoReady ?? true
     if (this.autoReady) {
       this.ready = this._readyPromise()
@@ -232,7 +247,8 @@ class DynamoDBTable {
    * const data = await myTable.describe()
    * ```
    *
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async describe() {
     const payload = JSON.stringify({
@@ -282,7 +298,8 @@ class DynamoDBTable {
    * await myTable.create()
    * ```
    *
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async create() {
     let payload = {
@@ -335,7 +352,8 @@ class DynamoDBTable {
    * await myTable.waitForActive()
    * ```
    *
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async waitForActive() {
     const payload = JSON.stringify({
@@ -390,7 +408,8 @@ class DynamoDBTable {
    * await myTable.waitForNotExists()
    * ```
    *
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async waitForNotExists() {
     const payload = JSON.stringify({
@@ -480,7 +499,8 @@ class DynamoDBTable {
    * await myTable.delete()
    * ```
    *
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async delete() {
     const payload = JSON.stringify({
@@ -567,7 +587,8 @@ class DynamoDBTable {
    * })
    * ```
    *
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async putItem(Item, options = {}) {
     const payload = JSON.stringify({
@@ -651,7 +672,8 @@ class DynamoDBTable {
    * })
    * ```
    *
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async putItemJSON(item, options = {}) {
     const payload = JSON.stringify({
@@ -720,7 +742,8 @@ class DynamoDBTable {
    * console.log(data) // { Item: { id: { S: '1' }, name: { S: 'Name' } } }
    * ```
    *
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async getItem(Key) {
     const payload = JSON.stringify({
@@ -781,7 +804,8 @@ class DynamoDBTable {
    * console.log(data) // { ItemJSON: { id: '1', name: 'Name' } }
    * ```
    *
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async getItemJSON(key) {
     const payload = JSON.stringify({
@@ -886,7 +910,8 @@ class DynamoDBTable {
    * })
    * ```
    *
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    *
    * ### ConditionExpression Syntax
    * ```sh [DynamoDB_ConditionExpression_Syntax]
@@ -938,8 +963,9 @@ class DynamoDBTable {
    *   * `OR` - or.
    *   * `NOT` - not.
    *
-   * `ConditionExpression` reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html)
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [Condition Expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html)
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async updateItem(Key, Updates, options = {}) {
     const updates = map(Updates, DynamoDBAttributeValueJSON)
@@ -1055,7 +1081,8 @@ class DynamoDBTable {
    * })
    * ```
    *
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    *
    * ### ConditionExpression Syntax
    * ```sh [DynamoDB_ConditionExpression_Syntax]
@@ -1107,8 +1134,10 @@ class DynamoDBTable {
    *   * `OR` - or.
    *   * `NOT` - not.
    *
-   * `ConditionExpression` reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html)
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [Condition Expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html)
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   *
    */
   async updateItemJSON(key, updates, options = {}) {
     const payload = JSON.stringify({
@@ -1226,7 +1255,8 @@ class DynamoDBTable {
    * await userTable.incrementItem({ id: { S: '1' } }, { age: { N: 1 } })
    * ```
    *
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    *
    * ### ConditionExpression Syntax
    * ```sh [DynamoDB_ConditionExpression_Syntax]
@@ -1278,8 +1308,9 @@ class DynamoDBTable {
    *   * `OR` - or.
    *   * `NOT` - not.
    *
-   * `ConditionExpression` reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html)
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [Condition Expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html)
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async incrementItem(Key, IncrementUpdates, options = {}) {
     const incrementUpdates = map(IncrementUpdates, DynamoDBAttributeValueJSON)
@@ -1387,7 +1418,8 @@ class DynamoDBTable {
    * await userTable.incrementItemJSON({ id: '1' }, { age: 1 })
    * ```
    *
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    *
    * ### ConditionExpression Syntax
    * ```sh [DynamoDB_ConditionExpression_Syntax]
@@ -1439,8 +1471,9 @@ class DynamoDBTable {
    *   * `OR` - or.
    *   * `NOT` - not.
    *
-   * `ConditionExpression` reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html)
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [Condition Expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html)
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async incrementItemJSON(key, incrementUpdates, options = {}) {
     const payload = JSON.stringify({
@@ -1560,7 +1593,8 @@ class DynamoDBTable {
    * await userTable.deleteItem({ id: { S: '1' } })
    * ```
    *
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async deleteItem(Key, options) {
     const payload = JSON.stringify({
@@ -1647,8 +1681,8 @@ class DynamoDBTable {
    *
    * await userTable.deleteItemJSON({ id: '1' })
    * ```
-   *
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async deleteItemJSON(key, options) {
     const payload = JSON.stringify({
@@ -1728,7 +1762,8 @@ class DynamoDBTable {
    * const data = await userTable.scan()
    * ```
    *
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async scan(options = {}) {
     const payload = JSON.stringify({
@@ -1791,8 +1826,9 @@ class DynamoDBTable {
    * }
    * ```
    *
-   * AsyncIterator reference: [https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AsyncIterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async * scanItemsIterator(options = {}) {
     const BatchLimit = options.BatchLimit ?? 1000
@@ -1847,8 +1883,9 @@ class DynamoDBTable {
    * }
    * ```
    *
-   * AsyncIterator reference: [https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AsyncIterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async * scanItemsIteratorJSON(options = {}) {
     const BatchLimit = options.BatchLimit ?? 1000
@@ -1947,7 +1984,8 @@ class DynamoDBTable {
    * // }
    * ```
    *
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    *
    * ### FilterExpression Syntax
    * ```sh [DynamoDB_ConditionExpression_Syntax]
@@ -2149,7 +2187,8 @@ class DynamoDBTable {
    * // }
    * ```
    *
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    *
    * ### FilterExpression Syntax
    * ```sh [DynamoDB_ConditionExpression_Syntax]
@@ -2346,8 +2385,9 @@ class DynamoDBTable {
    * }
    * ```
    *
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
-   * AsyncIterator reference: [https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
+   * References:
+   *  * [AsyncIterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    *
    * ### FilterExpression Syntax
    * ```sh [DynamoDB_ConditionExpression_Syntax]
@@ -2501,8 +2541,10 @@ class DynamoDBTable {
    * }
    * ```
    *
-   * AsyncIterator reference: [https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AsyncIterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   *
    */
   async * queryItemsIteratorJSON(keyConditionExpression, values, options = {}) {
     const BatchLimit = options.BatchLimit ?? 1000

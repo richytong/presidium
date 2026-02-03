@@ -32,10 +32,35 @@ const XML = require('./XML')
  *   ObjectLockDefaultRetentionYears: number,
  *   VersioningMfaDelete: 'Enabled'|'Disabled',
  *   VersioningStatus: 'Enabled'|'Suspended',
- * }) -> bucket S3Bucket
+ * }) -> s3bucket S3Bucket
  * ```
  *
  * Presidium S3Bucket client for [Amazon S3](https://aws.amazon.com/s3/). Creates a new S3 bucket under `name` if a bucket does not already exist. Access to the newly creaed S3 bucket is private.
+ *
+ * S3Bucket instances have a `ready` promise that resolves when the S3 bucket is active.
+ *
+ * Arguments:
+ *   * `options`
+ *     * `name` - globally unique name of the AWS S3 Bucket.
+ *     * `accessKeyId` - long term credential (ID) of an [IAM](https://aws.amazon.com/iam/) user.
+ *     * `secretAccessKey` - long term credential (secret) of an [IAM](https://aws.amazon.com/iam/) user.
+ *     * `region` - geographic location of data center cluster, e.g. `us-east-1` or `us-west-2`. [Full list of AWS regions](https://docs.aws.amazon.com/global-infrastructure/latest/regions/aws-regions.html#available-regions)
+ *     * `BlockPublicACLs` - if `false`, AWS S3 does not block public access control lists (ACLs) for this bucket and objects in this bucket. Default `true`.
+ *     * `IgnorePublicACLs` - if `false`, AWS S3 does not ignore public access control lists (ACLs) for this bucket and objects in this bucket. Default `true`.
+ *     * `BlockPublicPolicy` - if `false`, AWS S3 does not block public bucket policies for this bucket. Default `true`.
+ *     * `RestrictPublicBuckets` - if `false`, AWS S3 does not restrict public bucket policies for this bucket. Default `true`.
+ *     * `RequestPayer` - the payer for requests to the AWS S3 bucket. Defaults to `BucketOwner`.
+ *     * `ObjectLockEnabled` - if `true`, AWS S3 enables Object Lock for this bucket. Defaults to `false`.
+ *     * `ObjectLockDefaultRetentionMode` - the default Object Lock mode (`'GOVERNANCE'` or `'COMPLIANCE'`) for this bucket. Defaults to `'COMPLIANCE'`
+ *       * `'COMPLIANCE'` - no one, including the root user, can delete a locked object.
+ *       * `'GOVERNANCE'` - users with special permissions can delete a locked object.
+ *     * `ObjectLockDefaultRetentionDays` - number of days that a locked object is protected by Object Lock for this bucket.
+ *     * `ObjectLockDefaultRetentionYears` - number of years that a locked object is protected by Object Lock for this bucket.
+ *     * `VersioningMfaDelete` - if `'Enabled'`, AWS S3 requires multifactor authentication (MFA) before permanently deleting object versions or change bucket versioning states for this bucket. Defaults to `'Disabled'`.
+ *     * `VersioningStatus` - if `'Enabled'`, AWS S3 enables versioning for objects in this bucket, and all objects added to the bucket receive a unique Version ID. If `'Suspended'`, existing object versions remain in the bucket, new objects receive a `null` Version ID, and overwrites of objects behave as they would in an unversioned bucket. Defaults to `'Suspended'`.
+ *
+ * Return:
+ *   * `s3Bucket` - an S3Bucket instance.
  *
  * ```javascript
  * const S3Bucket = require('presidium/S3Bucket')
@@ -48,52 +73,8 @@ const XML = require('./XML')
  *   name: 'my-bucket-name',
  *   ...awsCreds,
  * })
- * await myBucket.ready
- * // myBucket is operational
  * ```
  *
- * Options:
- *   * `name` - globally unique name of the AWS S3 Bucket.
- *   * `accessKeyId` - long term credential (ID) of an [IAM](https://aws.amazon.com/iam/) user.
- *   * `secretAccessKey` - long term credential (secret) of an [IAM](https://aws.amazon.com/iam/) user.
- *   * `region` - geographic location of data center cluster, e.g. `us-east-1` or `us-west-2`. [Full list of AWS regions](https://docs.aws.amazon.com/global-infrastructure/latest/regions/aws-regions.html#available-regions)
- *   * `BlockPublicACLs` - if `false`, AWS S3 does not block public access control lists (ACLs) for this bucket and objects in this bucket. Default `true`.
- *   * `IgnorePublicACLs` - if `false`, AWS S3 does not ignore public access control lists (ACLs) for this bucket and objects in this bucket. Default `true`.
- *   * `BlockPublicPolicy` - if `false`, AWS S3 does not block public bucket policies for this bucket. Default `true`.
- *   * `RestrictPublicBuckets` - if `false`, AWS S3 does not restrict public bucket policies for this bucket. Default `true`.
- *   * `RequestPayer` - the payer for requests to the AWS S3 bucket. Defaults to `BucketOwner`.
- *   * `ObjectLockEnabled` - if `true`, AWS S3 enables Object Lock for this bucket. Defaults to `false`.
- *   * `ObjectLockDefaultRetentionMode` - the default Object Lock mode (`'GOVERNANCE'` or `'COMPLIANCE'`) for this bucket. Defaults to `'COMPLIANCE'`
- *     * `'COMPLIANCE'` - no one, including the root user, can delete a locked object.
- *     * `'GOVERNANCE'` - users with special permissions can delete a locked object.
- *   * `ObjectLockDefaultRetentionDays` - number of days that a locked object is protected by Object Lock for this bucket.
- *   * `ObjectLockDefaultRetentionYears` - number of years that a locked object is protected by Object Lock for this bucket.
- *   * `VersioningMfaDelete` - if `'Enabled'`, AWS S3 requires multifactor authentication (MFA) before permanently deleting object versions or change bucket versioning states for this bucket. Defaults to `'Disabled'`.
- *   * `VersioningStatus` - if `'Enabled'`, AWS S3 enables versioning for objects in this bucket, and all objects added to the bucket receive a unique Version ID. If `'Suspended'`, existing object versions remain in the bucket, new objects receive a `null` Version ID, and overwrites of objects behave as they would in an unversioned bucket. Defaults to `'Suspended'`.
- *
- * Methods:
- *   * [getLocation](#getLocation)
- *   * [create](#create)
- *   * [create](#create)
- *   * [putPolicy](#putPolicy)
- *   * [getPolicy](#getPolicy)
- *   * [closeConnections](#closeConnections)
- *   * [delete](#delete)
- *   * [putObject](#putObject)
- *   * [getObject](#getObject)
- *   * [getObjectACL](#getObjectACL)
- *   * [headObject](#headObject)
- *   * [deleteObject](#deleteObject)
- *   * [deleteObjects](#deleteObjects)
- *   * [deleteAllObjects](#deleteAllObjects)
- *   * [listObjects](#listObjects)
- *   * [listObjectVersions](#listObjectVersions)
- *
- * Attributes:
- *   * [ready](#ready)
- *
- * @reference
- * https://docs.aws.amazon.com/AmazonS3/latest/API/API_Operations_Amazon_Simple_Storage_Service.html
  */
 class S3Bucket {
   constructor(options) {
@@ -143,6 +124,27 @@ class S3Bucket {
     this.VersioningMfaDelete = options.VersioningMfaDelete ?? 'Disabled'
     this.VersioningStatus = options.VersioningStatus ?? 'Suspended'
 
+    /**
+     * @name ready
+     *
+     * @docs
+     * ```coffeescript [specscript]
+     * ready -> promise Promise<>
+     * ```
+     *
+     * The ready promise for the S3Bucket instance. Resolves when the S3 bucket is active.
+     *
+     * ```javascript
+     * const awsCreds = await AwsCredentials('default')
+     * awsCreds.region = 'us-east-1'
+     *
+     * const myBucket = new S3Bucket({
+     *   name: 'my-bucket-name',
+     *   ...awsCreds,
+     * })
+     * await myBucket.ready
+     * ```
+     */
     this.autoReady = options.autoReady ?? true
     if (this.autoReady) {
       this.ready = this._readyPromise()

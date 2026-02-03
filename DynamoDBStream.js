@@ -39,7 +39,7 @@ const SymbolUpdateShards = Symbol('UpdateShards')
  * }) -> stream DynamoDBStream
  * ```
  *
- * The presidium DynamoDBStream client. Creates the DynamoDB Stream if it doesn't exist.
+ * Presidium DynamoDBStream client for [AWS DynamoDB](https://aws.amazon.com/dynamodb/). Creates the DynamoDB Stream if it doesn't exist.
  *
  * DynamoDBStream instances have a `ready` promise that resolves when the DynamoDB Stream is active.
  *
@@ -84,10 +84,10 @@ const SymbolUpdateShards = Symbol('UpdateShards')
  *   table: `${env}-my-table`,
  *   ...awsCreds,
  * })
- * await myStream.ready
  * ```
  *
- * DynamoDB Streams reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html)
+ * References:
+ *   * [DynamoDB Streams](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html)
  */
 class DynamoDBStream {
   constructor(options) {
@@ -114,6 +114,36 @@ class DynamoDBStream {
     this.http = new HTTP(`${this.protocol}://${this.endpoint}`)
     this.streamsHttp = new HTTP(`${this.protocol}://${this.streamsEndpoint}`)
 
+    /**
+     * @name ready
+     *
+     * @docs
+     * ```coffeescript [specscript]
+     * ready -> promise Promise<>
+     * ```
+     *
+     * The ready promise for the DynamoDBStream instance. Resolves when the DynamoDB Stream is active.
+     *
+     * ```javascript
+     * const awsCreds = await AwsCredentials('default')
+     * awsCreds.region = 'us-east-1'
+     *
+     * const env = process.env.NODE_ENV
+     *
+     * const myTable = new DynamoDBTable({
+     *   name: `${env}-my-table`,
+     *   key: [{ id: 'string' }],
+     *   ...awsCreds,
+     * })
+     * await myTable.ready
+     *
+     * const myStream = new DynamoDBStream({
+     *   table: `${env}-my-table`,
+     *   ...awsCreds,
+     * })
+     * await myStream.ready
+     * ```
+     */
     this.autoReady = options.autoReady ?? true
     if (this.autoReady) {
       this.ready = this._readyPromise()

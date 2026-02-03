@@ -43,7 +43,7 @@ const createFilterExpression = require('./internal/createFilterExpression')
  * }) -> gsi DynamoDBGlobalSecondaryIndex
  * ```
  *
- * The presidium DynamoDBGlobalSecondaryIndex client. Creates the DynamoDB Global Secondary Index (GSI) if it doesn't exist.
+ * Presidium DynamoDBGlobalSecondaryIndex client for [AWS DynamoDB](https://aws.amazon.com/dynamodb/). Creates the DynamoDB Global Secondary Index (GSI) if it doesn't exist.
  *
  * DynamoDBGlobalSecondaryIndex instances have a `ready` promise that resolves when the GSI is active.
  *
@@ -77,10 +77,10 @@ const createFilterExpression = require('./internal/createFilterExpression')
  *   key: [{ status: 'string' }, { updateTime: 'number' }],
  *   ...awsCreds,
  * })
- * await myStatusUpdateTimeGSI.ready
  * ```
  *
- * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+ * References:
+ *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
  */
 class DynamoDBGlobalSecondaryIndex {
 
@@ -107,6 +107,37 @@ class DynamoDBGlobalSecondaryIndex {
 
     this.http = new HTTP(`${this.protocol}://${this.endpoint}`)
 
+    /**
+     * @name ready
+     *
+     * @docs
+     * ```coffeescript [specscript]
+     * ready -> promise Promise<>
+     * ```
+     *
+     * The ready promise for the DynamoDBGlobalSecondaryIndex instance. Resolves when the DynamoDB Global Secondary Index is active.
+     *
+     * ```javascript
+     * const awsCreds = await AwsCredentials('default')
+     * awsCreds.region = 'us-east-1'
+     *
+     * const env = process.env.NODE_ENV
+     *
+     * const myTable = new DynamoDBTable({
+     *   name: `${env}-my-table`,
+     *   key: [{ id: 'string' }],
+     *   ...awsCreds,
+     * })
+     * await myTable.ready
+     *
+     * const myTypeTimeGSI = new DynamoDBGlobalSecondaryIndex({
+     *   table: `${env}-my-table`,
+     *   key: [{ type: 'string' }, { time: 'number' }],
+     *   ...awsCreds,
+     * })
+     * await myTypeTimeGSI.ready
+     * ```
+     */
     this.autoReady = options.autoReady ?? true
     if (this.autoReady) {
       this.ready = this._readyPromise()
@@ -233,7 +264,8 @@ class DynamoDBGlobalSecondaryIndex {
    * const data = await myTypeTimeGSI.describeTable()
    * ```
    *
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async describeTable() {
     const payload = JSON.stringify({
@@ -314,7 +346,8 @@ class DynamoDBGlobalSecondaryIndex {
    * const data = await myTypeTimeGSI.describe()
    * ```
    *
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async describe() {
     const payload = JSON.stringify({
@@ -403,7 +436,8 @@ class DynamoDBGlobalSecondaryIndex {
    * await myTypeTimeGSI.create()
    * ```
    *
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async create() {
     const tableData = await this.describeTable()
@@ -478,7 +512,8 @@ class DynamoDBGlobalSecondaryIndex {
    * await myTypeTimeGSI.waitForActive()
    * ```
    *
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async waitForActive() {
     let indexData = await this.describe()
@@ -576,7 +611,8 @@ class DynamoDBGlobalSecondaryIndex {
    * // ]
    * ```
    *
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    *
    * ### FilterExpression Syntax
    * ```sh [DynamoDB_ConditionExpression_Syntax]
@@ -788,7 +824,8 @@ class DynamoDBGlobalSecondaryIndex {
    * // ]
    * ```
    *
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    *
    * ### FilterExpression Syntax
    * ```sh [DynamoDB_ConditionExpression_Syntax]
@@ -986,8 +1023,9 @@ class DynamoDBGlobalSecondaryIndex {
    * }
    * ```
    *
-   * AsyncIterator reference: [https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AsyncIterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    *
    * ### FilterExpression Syntax
    * ```sh [DynamoDB_ConditionExpression_Syntax]
@@ -1143,8 +1181,9 @@ class DynamoDBGlobalSecondaryIndex {
    * }
    * ```
    *
-   * AsyncIterator reference: [https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
-   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * References:
+   *  * [AsyncIterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
+   *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    *
    * ### FilterExpression Syntax
    * ```sh [DynamoDB_ConditionExpression_Syntax]

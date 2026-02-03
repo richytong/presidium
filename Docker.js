@@ -27,7 +27,7 @@ const handleDockerHTTPResponse = require('./internal/handleDockerHTTPResponse')
  * new Docker() -> docker Docker
  * ```
  *
- * Presidium Docker client.
+ * Presidium Docker client for [Docker](https://docs.docker.com/reference/).
  *
  * Note: the Presidium Docker client connects to the Docker socket. Please use caution when creating production services using the Presidium Docker client, see [How would an attacker gain access to the host machine from within a Docker container?](https://www.google.com/search?hl=en&q=how%20would%20an%20attacker%20gain%20access%20to%20the%20host%20machine%20from%20within%20a%20docker%20container).
  */
@@ -382,7 +382,8 @@ class Docker {
    * CMD <command> <parameter> ...
    * ```
    *
-   * Dockerfile reference: [https://docs.docker.com/engine/reference/builder/](https://docs.docker.com/engine/reference/builder/)
+   * References:
+   *   * [Dockerfile](https://docs.docker.com/engine/reference/builder/)
    */
   async buildImage(path, options = {}) {
     const archive = new Archive(options.archive)
@@ -1609,7 +1610,8 @@ class Docker {
     })
    * ```
    *
-   * Docker Swarm reference: [https://docs.docker.com/engine/swarm/](https://docs.docker.com/engine/swarm/)
+   * References:
+   *   * [Docker Swarm](https://docs.docker.com/engine/swarm/)
    */
   async createService(service, options = {}) {
     const body = JSON.stringify({
@@ -1863,7 +1865,8 @@ class Docker {
    * })
    * ```
    *
-   * Docker Swarm reference: [https://docs.docker.com/engine/swarm/](https://docs.docker.com/engine/swarm/)
+   * References:
+   *   * [Docker Swarm](https://docs.docker.com/engine/swarm/)
    */
   async updateService(service, options = {}) {
     const serviceData = await this.inspectService(service)
@@ -1925,7 +1928,8 @@ class Docker {
    * await docker.deleteService('my-service')
    * ```
    *
-   * Docker Swarm reference: [https://docs.docker.com/engine/swarm/](https://docs.docker.com/engine/swarm/)
+   * References:
+   *   * [Docker Swarm](https://docs.docker.com/engine/swarm/)
    */
   async deleteService(id) {
     const response = await this.http.delete(`/services/${id}`)
@@ -2001,7 +2005,8 @@ class Docker {
    * const data = await docker.listServices()
    * ```
    *
-   * Docker Swarm reference: [https://docs.docker.com/engine/swarm/](https://docs.docker.com/engine/swarm/)
+   * References:
+   *   * [Docker Swarm](https://docs.docker.com/engine/swarm/)
    */
   async listServices(options = {}) {
     const response = await this.http.get(`/services?${
@@ -2072,7 +2077,8 @@ class Docker {
    * const data = await docker.inspectService('my-service')
    * ```
    *
-   * Docker Swarm reference: [https://docs.docker.com/engine/swarm/](https://docs.docker.com/engine/swarm/)
+   * References:
+   *   * [Docker Swarm](https://docs.docker.com/engine/swarm/)
    */
   async inspectService(serviceId) {
     const response = await this.http.get(`/services/${serviceId}`)
@@ -2126,7 +2132,8 @@ class Docker {
    * })
    * ```
    *
-   * Docker Swarm reference: [https://docs.docker.com/engine/swarm/](https://docs.docker.com/engine/swarm/)
+   * References:
+   *   * [Docker Swarm](https://docs.docker.com/engine/swarm/)
    */
   async getServiceLogs(serviceId, options = {}) {
     const response = await this.http.get(`/services/${serviceId}/logs?${
@@ -2201,7 +2208,8 @@ class Docker {
    * const runningTasksData = await docker.listTasks({ desiredState: 'running' })
    * ```
    *
-   * Docker Swarm reference: [https://docs.docker.com/engine/swarm/](https://docs.docker.com/engine/swarm/)
+   * References:
+   *   * [Docker Swarm](https://docs.docker.com/engine/swarm/)
    */
   async listTasks(options = {}) {
     const filters = pipe({
@@ -2260,7 +2268,8 @@ class Docker {
    * const data = await docker.listNodes()
    * ```
    *
-   * Docker Swarm reference: [https://docs.docker.com/engine/swarm/](https://docs.docker.com/engine/swarm/)
+   * References:
+   *   * [Docker Swarm](https://docs.docker.com/engine/swarm/)
    */
   async listNodes() {
     const response = await this.http.get('/nodes')
@@ -2290,7 +2299,8 @@ class Docker {
    * await docker.deleteNode('node-id')
    * ```
    *
-   * Docker Swarm reference: [https://docs.docker.com/engine/swarm/](https://docs.docker.com/engine/swarm/)
+   * References:
+   *   * [Docker Swarm](https://docs.docker.com/engine/swarm/)
    */
   async deleteNode(id) {
     const response = await this.http.delete(`/nodes/${id}`)
