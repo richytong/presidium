@@ -79,6 +79,8 @@ const createFilterExpression = require('./internal/createFilterExpression')
  * })
  * await myStatusUpdateTimeGSI.ready
  * ```
+ *
+ * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
  */
 class DynamoDBGlobalSecondaryIndex {
 
@@ -230,6 +232,8 @@ class DynamoDBGlobalSecondaryIndex {
    *
    * const data = await myTypeTimeGSI.describeTable()
    * ```
+   *
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async describeTable() {
     const payload = JSON.stringify({
@@ -309,6 +313,8 @@ class DynamoDBGlobalSecondaryIndex {
    *
    * const data = await myTypeTimeGSI.describe()
    * ```
+   *
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async describe() {
     const payload = JSON.stringify({
@@ -396,6 +402,8 @@ class DynamoDBGlobalSecondaryIndex {
    *
    * await myTypeTimeGSI.create()
    * ```
+   *
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async create() {
     const tableData = await this.describeTable()
@@ -469,6 +477,8 @@ class DynamoDBGlobalSecondaryIndex {
    *
    * await myTypeTimeGSI.waitForActive()
    * ```
+   *
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async waitForActive() {
     let indexData = await this.describe()
@@ -566,6 +576,57 @@ class DynamoDBGlobalSecondaryIndex {
    * // ]
    * ```
    *
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   *
+   * ### FilterExpression Syntax
+   * ```sh [DynamoDB_ConditionExpression_Syntax]
+   * <attribute_name> = :<variable_name>
+   * <attribute_name> <> :<variable_name>
+   * <attribute_name> < :<variable_name>
+   * <attribute_name> <= :<variable_name>
+   * <attribute_name> > :<variable_name>
+   * <attribute_name> >= :<variable_name>
+   *
+   * <attribute_name> BETWEEN :<variable_name1> AND :<variable_name2>
+   *
+   * <attribute_name> IN (:<variable_name1>[, :<variable_name2>[, ...]])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name>])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name1>]) = :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <> :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) < :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <= :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) > :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) >= :<variable_name2>
+   *
+   * <expression> AND <expression>
+   *
+   * NOT <expression>
+   *
+   * (<expression>)
+   * ```
+   *
+   * `FilterExpression` Functions:
+   *   * `attribute_exists(<attribute_name>)` - test if `<attribute_name>` exists.
+   *   * `attribute_not_exists(<attribute_name>)` - test if `<attribute_name>` does not exist.
+   *   * `attribute_type(<attribute_name>, <attribute_type>)` - test if the DynamoDB attribute type of the DynamoDB attribute value of `<attribute_name>` equals `attribute_type`.
+   *   * `contains(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `begins_with(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `size(<attribute_name>)` - returns for evaluation a number that represents the size of the attribute value of `<attribute_name>`
+   *
+   * `FilterExpression` Logical Operators:
+   *   * `=` - equals.
+   *   * `<>` - does not equal.
+   *   * `<` - less than.
+   *   * `>` - greater than.
+   *   * `<=` - less than or equal to .
+   *   * `>=` - greater than or equal to.
+   *   * `BETWEEN` - between.
+   *   * `IN` - in.
+   *   * `AND` - and.
+   *   * `OR` - or.
+   *   * `NOT` - not.
    */
   async query(keyConditionExpression, Values, options = {}) {
     const values = map(Values, DynamoDBAttributeValueJSON)
@@ -726,6 +787,58 @@ class DynamoDBGlobalSecondaryIndex {
    * //   ...
    * // ]
    * ```
+   *
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   *
+   * ### FilterExpression Syntax
+   * ```sh [DynamoDB_ConditionExpression_Syntax]
+   * <attribute_name> = :<variable_name>
+   * <attribute_name> <> :<variable_name>
+   * <attribute_name> < :<variable_name>
+   * <attribute_name> <= :<variable_name>
+   * <attribute_name> > :<variable_name>
+   * <attribute_name> >= :<variable_name>
+   *
+   * <attribute_name> BETWEEN :<variable_name1> AND :<variable_name2>
+   *
+   * <attribute_name> IN (:<variable_name1>[, :<variable_name2>[, ...]])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name>])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name1>]) = :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <> :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) < :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <= :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) > :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) >= :<variable_name2>
+   *
+   * <expression> AND <expression>
+   *
+   * NOT <expression>
+   *
+   * (<expression>)
+   * ```
+   *
+   * `FilterExpression` Functions:
+   *   * `attribute_exists(<attribute_name>)` - test if `<attribute_name>` exists.
+   *   * `attribute_not_exists(<attribute_name>)` - test if `<attribute_name>` does not exist.
+   *   * `attribute_type(<attribute_name>, <attribute_type>)` - test if the DynamoDB attribute type of the DynamoDB attribute value of `<attribute_name>` equals `attribute_type`.
+   *   * `contains(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `begins_with(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `size(<attribute_name>)` - returns for evaluation a number that represents the size of the attribute value of `<attribute_name>`
+   *
+   * `FilterExpression` Logical Operators:
+   *   * `=` - equals.
+   *   * `<>` - does not equal.
+   *   * `<` - less than.
+   *   * `>` - greater than.
+   *   * `<=` - less than or equal to .
+   *   * `>=` - greater than or equal to.
+   *   * `BETWEEN` - between.
+   *   * `IN` - in.
+   *   * `AND` - and.
+   *   * `OR` - or.
+   *   * `NOT` - not.
    */
   async queryJSON(keyConditionExpression, values, options = {}) {
     const keyConditionStatements = keyConditionExpression.trim().split(/\s+AND\s+/)
@@ -874,6 +987,57 @@ class DynamoDBGlobalSecondaryIndex {
    * ```
    *
    * AsyncIterator reference: [https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   *
+   * ### FilterExpression Syntax
+   * ```sh [DynamoDB_ConditionExpression_Syntax]
+   * <attribute_name> = :<variable_name>
+   * <attribute_name> <> :<variable_name>
+   * <attribute_name> < :<variable_name>
+   * <attribute_name> <= :<variable_name>
+   * <attribute_name> > :<variable_name>
+   * <attribute_name> >= :<variable_name>
+   *
+   * <attribute_name> BETWEEN :<variable_name1> AND :<variable_name2>
+   *
+   * <attribute_name> IN (:<variable_name1>[, :<variable_name2>[, ...]])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name>])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name1>]) = :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <> :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) < :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <= :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) > :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) >= :<variable_name2>
+   *
+   * <expression> AND <expression>
+   *
+   * NOT <expression>
+   *
+   * (<expression>)
+   * ```
+   *
+   * `FilterExpression` Functions:
+   *   * `attribute_exists(<attribute_name>)` - test if `<attribute_name>` exists.
+   *   * `attribute_not_exists(<attribute_name>)` - test if `<attribute_name>` does not exist.
+   *   * `attribute_type(<attribute_name>, <attribute_type>)` - test if the DynamoDB attribute type of the DynamoDB attribute value of `<attribute_name>` equals `attribute_type`.
+   *   * `contains(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `begins_with(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `size(<attribute_name>)` - returns for evaluation a number that represents the size of the attribute value of `<attribute_name>`
+   *
+   * `FilterExpression` Logical Operators:
+   *   * `=` - equals.
+   *   * `<>` - does not equal.
+   *   * `<` - less than.
+   *   * `>` - greater than.
+   *   * `<=` - less than or equal to .
+   *   * `>=` - greater than or equal to.
+   *   * `BETWEEN` - between.
+   *   * `IN` - in.
+   *   * `AND` - and.
+   *   * `OR` - or.
+   *   * `NOT` - not.
    */
   async * queryItemsIterator(keyConditionExpression, Values, options = {}) {
     const BatchLimit = options.BatchLimit ?? 1000
@@ -980,6 +1144,57 @@ class DynamoDBGlobalSecondaryIndex {
    * ```
    *
    * AsyncIterator reference: [https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   *
+   * ### FilterExpression Syntax
+   * ```sh [DynamoDB_ConditionExpression_Syntax]
+   * <attribute_name> = :<variable_name>
+   * <attribute_name> <> :<variable_name>
+   * <attribute_name> < :<variable_name>
+   * <attribute_name> <= :<variable_name>
+   * <attribute_name> > :<variable_name>
+   * <attribute_name> >= :<variable_name>
+   *
+   * <attribute_name> BETWEEN :<variable_name1> AND :<variable_name2>
+   *
+   * <attribute_name> IN (:<variable_name1>[, :<variable_name2>[, ...]])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name>])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name1>]) = :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <> :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) < :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <= :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) > :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) >= :<variable_name2>
+   *
+   * <expression> AND <expression>
+   *
+   * NOT <expression>
+   *
+   * (<expression>)
+   * ```
+   *
+   * `FilterExpression` Functions:
+   *   * `attribute_exists(<attribute_name>)` - test if `<attribute_name>` exists.
+   *   * `attribute_not_exists(<attribute_name>)` - test if `<attribute_name>` does not exist.
+   *   * `attribute_type(<attribute_name>, <attribute_type>)` - test if the DynamoDB attribute type of the DynamoDB attribute value of `<attribute_name>` equals `attribute_type`.
+   *   * `contains(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `begins_with(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `size(<attribute_name>)` - returns for evaluation a number that represents the size of the attribute value of `<attribute_name>`
+   *
+   * `FilterExpression` Logical Operators:
+   *   * `=` - equals.
+   *   * `<>` - does not equal.
+   *   * `<` - less than.
+   *   * `>` - greater than.
+   *   * `<=` - less than or equal to .
+   *   * `>=` - greater than or equal to.
+   *   * `BETWEEN` - between.
+   *   * `IN` - in.
+   *   * `AND` - and.
+   *   * `OR` - or.
+   *   * `NOT` - not.
    */
   async * queryItemsIteratorJSON(keyConditionExpression, values, options = {}) {
     const BatchLimit = options.BatchLimit ?? 1000

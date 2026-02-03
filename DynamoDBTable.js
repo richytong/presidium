@@ -939,6 +939,7 @@ class DynamoDBTable {
    *   * `NOT` - not.
    *
    * `ConditionExpression` reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html)
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async updateItem(Key, Updates, options = {}) {
     const updates = map(Updates, DynamoDBAttributeValueJSON)
@@ -1107,6 +1108,7 @@ class DynamoDBTable {
    *   * `NOT` - not.
    *
    * `ConditionExpression` reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html)
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async updateItemJSON(key, updates, options = {}) {
     const payload = JSON.stringify({
@@ -1277,6 +1279,7 @@ class DynamoDBTable {
    *   * `NOT` - not.
    *
    * `ConditionExpression` reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html)
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async incrementItem(Key, IncrementUpdates, options = {}) {
     const incrementUpdates = map(IncrementUpdates, DynamoDBAttributeValueJSON)
@@ -1437,6 +1440,7 @@ class DynamoDBTable {
    *   * `NOT` - not.
    *
    * `ConditionExpression` reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html)
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async incrementItemJSON(key, incrementUpdates, options = {}) {
     const payload = JSON.stringify({
@@ -1788,6 +1792,7 @@ class DynamoDBTable {
    * ```
    *
    * AsyncIterator reference: [https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async * scanItemsIterator(options = {}) {
     const BatchLimit = options.BatchLimit ?? 1000
@@ -1843,6 +1848,7 @@ class DynamoDBTable {
    * ```
    *
    * AsyncIterator reference: [https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async * scanItemsIteratorJSON(options = {}) {
     const BatchLimit = options.BatchLimit ?? 1000
@@ -1901,7 +1907,7 @@ class DynamoDBTable {
    *   * `Values` - DynamoDB JSON values for each variable (prefixed by `:`) of the query.
    *   * `options`
    *     * `Limit` - the maximum number of items to return for the [DynamoDB Query](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html) operation. If the processed dataset size exceeds 1MB during the operation, DynamoDB will stop the operation before reaching the maximum number of items specified by `Limit`.
-   *     * `ExclusiveStartKey` - Key after which to start reading
+   *     * `ExclusiveStartKey` - the key after which to start reading.
    *     * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
    *     * `ProjectionExpression` - list of comma-separated attribute names to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
    *     * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
@@ -1942,6 +1948,57 @@ class DynamoDBTable {
    * ```
    *
    * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   *
+   * ### FilterExpression Syntax
+   * ```sh [DynamoDB_ConditionExpression_Syntax]
+   * <attribute_name> = :<variable_name>
+   * <attribute_name> <> :<variable_name>
+   * <attribute_name> < :<variable_name>
+   * <attribute_name> <= :<variable_name>
+   * <attribute_name> > :<variable_name>
+   * <attribute_name> >= :<variable_name>
+   *
+   * <attribute_name> BETWEEN :<variable_name1> AND :<variable_name2>
+   *
+   * <attribute_name> IN (:<variable_name1>[, :<variable_name2>[, ...]])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name>])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name1>]) = :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <> :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) < :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <= :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) > :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) >= :<variable_name2>
+   *
+   * <expression> AND <expression>
+   *
+   * NOT <expression>
+   *
+   * (<expression>)
+   * ```
+   *
+   * `FilterExpression` Functions:
+   *   * `attribute_exists(<attribute_name>)` - test if `<attribute_name>` exists.
+   *   * `attribute_not_exists(<attribute_name>)` - test if `<attribute_name>` does not exist.
+   *   * `attribute_type(<attribute_name>, <attribute_type>)` - test if the DynamoDB attribute type of the DynamoDB attribute value of `<attribute_name>` equals `attribute_type`.
+   *   * `contains(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `begins_with(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `size(<attribute_name>)` - returns for evaluation a number that represents the size of the attribute value of `<attribute_name>`
+   *
+   * `FilterExpression` Logical Operators:
+   *   * `=` - equals.
+   *   * `<>` - does not equal.
+   *   * `<` - less than.
+   *   * `>` - greater than.
+   *   * `<=` - less than or equal to .
+   *   * `>=` - greater than or equal to.
+   *   * `BETWEEN` - between.
+   *   * `IN` - in.
+   *   * `AND` - and.
+   *   * `OR` - or.
+   *   * `NOT` - not.
+   *
    */
   async query(keyConditionExpression, Values, options = {}) {
     const values = map(Values, DynamoDBAttributeValueJSON)
@@ -2052,7 +2109,7 @@ class DynamoDBTable {
    *   * `values` - JSON values for each variable (prefixed by `:`) of the query.
    *   * `options`
    *     * `Limit` - the maximum number of items to return for the [DynamoDB Query](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html) operation. If the processed dataset size exceeds 1MB during the operation, DynamoDB will stop the operation before reaching the maximum number of items specified by `Limit`.
-   *     * `ExclusiveStartKey` - Key after which to start reading
+   *     * `ExclusiveStartKey` - the key after which to start reading.
    *     * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
    *     * `ProjectionExpression` - list of comma-separated attribute names to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
    *     * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
@@ -2093,6 +2150,57 @@ class DynamoDBTable {
    * ```
    *
    * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   *
+   * ### FilterExpression Syntax
+   * ```sh [DynamoDB_ConditionExpression_Syntax]
+   * <attribute_name> = :<variable_name>
+   * <attribute_name> <> :<variable_name>
+   * <attribute_name> < :<variable_name>
+   * <attribute_name> <= :<variable_name>
+   * <attribute_name> > :<variable_name>
+   * <attribute_name> >= :<variable_name>
+   *
+   * <attribute_name> BETWEEN :<variable_name1> AND :<variable_name2>
+   *
+   * <attribute_name> IN (:<variable_name1>[, :<variable_name2>[, ...]])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name>])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name1>]) = :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <> :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) < :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <= :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) > :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) >= :<variable_name2>
+   *
+   * <expression> AND <expression>
+   *
+   * NOT <expression>
+   *
+   * (<expression>)
+   * ```
+   *
+   * `FilterExpression` Functions:
+   *   * `attribute_exists(<attribute_name>)` - test if `<attribute_name>` exists.
+   *   * `attribute_not_exists(<attribute_name>)` - test if `<attribute_name>` does not exist.
+   *   * `attribute_type(<attribute_name>, <attribute_type>)` - test if the DynamoDB attribute type of the DynamoDB attribute value of `<attribute_name>` equals `attribute_type`.
+   *   * `contains(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `begins_with(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `size(<attribute_name>)` - returns for evaluation a number that represents the size of the attribute value of `<attribute_name>`
+   *
+   * `FilterExpression` Logical Operators:
+   *   * `=` - equals.
+   *   * `<>` - does not equal.
+   *   * `<` - less than.
+   *   * `>` - greater than.
+   *   * `<=` - less than or equal to .
+   *   * `>=` - greater than or equal to.
+   *   * `BETWEEN` - between.
+   *   * `IN` - in.
+   *   * `AND` - and.
+   *   * `OR` - or.
+   *   * `NOT` - not.
+   *
    */
   async queryJSON(keyConditionExpression, values, options = {}) {
     const keyConditionStatements = keyConditionExpression.trim().split(/\s+AND\s+/)
@@ -2239,6 +2347,57 @@ class DynamoDBTable {
    * ```
    *
    * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   * AsyncIterator reference: [https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
+   *
+   * ### FilterExpression Syntax
+   * ```sh [DynamoDB_ConditionExpression_Syntax]
+   * <attribute_name> = :<variable_name>
+   * <attribute_name> <> :<variable_name>
+   * <attribute_name> < :<variable_name>
+   * <attribute_name> <= :<variable_name>
+   * <attribute_name> > :<variable_name>
+   * <attribute_name> >= :<variable_name>
+   *
+   * <attribute_name> BETWEEN :<variable_name1> AND :<variable_name2>
+   *
+   * <attribute_name> IN (:<variable_name1>[, :<variable_name2>[, ...]])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name>])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name1>]) = :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <> :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) < :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <= :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) > :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) >= :<variable_name2>
+   *
+   * <expression> AND <expression>
+   *
+   * NOT <expression>
+   *
+   * (<expression>)
+   * ```
+   *
+   * `FilterExpression` Functions:
+   *   * `attribute_exists(<attribute_name>)` - test if `<attribute_name>` exists.
+   *   * `attribute_not_exists(<attribute_name>)` - test if `<attribute_name>` does not exist.
+   *   * `attribute_type(<attribute_name>, <attribute_type>)` - test if the DynamoDB attribute type of the DynamoDB attribute value of `<attribute_name>` equals `attribute_type`.
+   *   * `contains(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `begins_with(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `size(<attribute_name>)` - returns for evaluation a number that represents the size of the attribute value of `<attribute_name>`
+   *
+   * `FilterExpression` Logical Operators:
+   *   * `=` - equals.
+   *   * `<>` - does not equal.
+   *   * `<` - less than.
+   *   * `>` - greater than.
+   *   * `<=` - less than or equal to .
+   *   * `>=` - greater than or equal to.
+   *   * `BETWEEN` - between.
+   *   * `IN` - in.
+   *   * `AND` - and.
+   *   * `OR` - or.
+   *   * `NOT` - not.
    *
    */
   async * queryItemsIterator(keyConditionExpression, Values, options = {}) {
@@ -2342,13 +2501,8 @@ class DynamoDBTable {
    * }
    * ```
    *
-   * Options:
-   *   * `BatchLimit` - Max number of items to retrieve per `query` call.
-   *   * `Limit` - Maximum number of items (hard limited by the total size of the response).
-   *   * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
-   *   * `ProjectionExpression` - list of comma-separated attribute names to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
-   *   * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
-   *   * `ConsistentRead` - true to perform a strongly consistent read (eventually consistent by default). Consumes more RCUs.
+   * AsyncIterator reference: [https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async * queryItemsIteratorJSON(keyConditionExpression, values, options = {}) {
     const BatchLimit = options.BatchLimit ?? 1000
