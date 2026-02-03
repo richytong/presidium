@@ -27,7 +27,9 @@ const handleDockerHTTPResponse = require('./internal/handleDockerHTTPResponse')
  * new Docker() -> docker Docker
  * ```
  *
- * Presidium Docker client. Connects to the Docker socket.
+ * Presidium Docker client.
+ *
+ * Note: the Presidium Docker client connects to the Docker socket. Please use caution when creating production services using the Presidium Docker client, see [How would an attacker gain access to the host machine from within a Docker container?](https://www.google.com/search?hl=en&q=how%20would%20an%20attacker%20gain%20access%20to%20the%20host%20machine%20from%20within%20a%20docker%20container).
  */
 class Docker {
   constructor() {

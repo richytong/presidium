@@ -30,6 +30,11 @@ const resolvePath = require('./internal/resolvePath')
  *   * `awsCreds` - the AWS credentials object.
  *     * `accessKeyId` - the AWS access key ID retrieved from the credentials file.
  *     * `secretAccessKey` - the AWS secret access key retrieved from the credentials.
+ *
+ * ```javascript
+ * const awsCreds = await AwsCredentials('my-profile')
+ * awsCreds.region = 'us-east-1'
+ * ```
  */
 
 const AwsCredentials = async function (profile, options = {}) {
