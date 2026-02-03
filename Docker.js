@@ -1334,7 +1334,7 @@ class Docker {
    * Return:
    *   * `data`
    *     * `ID` - the ID of the Docker swarm.
-   *     * `Version` - the version of the Docker swarm configuration.
+   *     * `Version` - the version of the Docker swarm.
    *     * `CreatedAt` - the date and time at which the Docker swarm was created as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
    *     * `UpdatedAt` - the date and time at which the Docker swarm was updated as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
    *     * `Spec` - the Docker swarm configuration.
@@ -1538,7 +1538,7 @@ class Docker {
    * }>
    * ```
    *
-   * Creates a Docker service. The current node (server) needs to be a manager node in a Docker swarm.
+   * Creates a Docker service. The current node (server) must be a manager node in a Docker swarm.
    *
    * Arguments:
    *   * `service` - the Docker service name.
@@ -1763,7 +1763,6 @@ class Docker {
    * @docs
    * ```coffeescript [specscript]
    * updateService(service string, options {
-   *   version: number,
    *   rollback: 'previous',
    *   force: boolean,
    *   image: string,
@@ -1807,13 +1806,13 @@ class Docker {
    * }>
    * ```
    *
-   * Updates a Docker service. The current node (server) needs to be a manager node in a Docker swarm.
+   * Updates a Docker service. The current node (server) must be a manager node in a Docker swarm.
    *
    * Arguments:
    *   * `service` - the Docker service name.
    *   * `options`
    *     * `rollback` - causes a rollback to the previous Docker service version.
-   *     * `force` - if `true`, a Docker service update will occur even if no relevant parameters have been changed. If `false`, no update will occur if no relevant parameters have been changed.
+   *     * `force` - if `true`, an update of the Docker service will occur even if no relevant parameters have been changed. If `false`, no update will occur if no relevant parameters have been changed.
    *     * `image` - the Docker image that will be used by the Docker service.
    *     * `replicas` - the number of containers that the Docker service will run across all nodes of the Docker swarm. If `replicas` is set to 'global', the Docker service will run containers on each node of the Docker swarm.
    *     * `restart` - the restart policy for the Docker service.
@@ -1899,8 +1898,24 @@ class Docker {
    *
    * @docs
    * ```coffeescript [specscript]
-   * deleteService(id string) -> message Promise<string>
+   * deleteService(serviceId string) -> message Promise<string>
    * ```
+   *
+   * Deletes a Docker service. The current node (server) must be a manager node in a Docker swarm.
+   *
+   * Arguments:
+   *   * `serviceId` - the ID or name of the Docker service.
+   *
+   * Return:
+   *   * `message` - the message from deleting the Docker service.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * await docker.deleteService('my-service')
+   * ```
+   *
+   * Docker Swarm reference: [https://docs.docker.com/engine/swarm/](https://docs.docker.com/engine/swarm/)
    */
   async deleteService(id) {
     const response = await this.http.delete(`/services/${id}`)
@@ -1909,13 +1924,13 @@ class Docker {
   }
 
   /**
-   * @name prototype.listServices
+   * @name listServices
    *
    * @docs
    * ```coffeescript [specscript]
    * module DockerDocs 'https://docs.docker.com/reference/api/engine/version/v1.52/'
    *
-   * listServices(options? { filters: string }) -> data Promise<{
+   * listServices(options { filters: string }) -> data Promise<{
    *   ID: string,
    *   Version: DockerDocs.ObjectVersion,
    *   CreatedAt: string, # ISO 8601 date string
@@ -1946,7 +1961,37 @@ class Docker {
    * }>
    * ```
    *
-   * See https://docs.docker.com/engine/api/v1.40/#operation/ServiceList
+   * Returns a list of the Docker services running in a Docker swarm. The current node (server) must be a manager node in a Docker swarm.
+   *
+   * Arguments:
+   *   * `options`
+   *     * `filters` - filters for the returned list of Docker services.
+   *
+   * Return:
+   *   * `data`
+   *     * `ID` - the ID of the created Docker service.
+   *     * `Version` - the version of the Docker service.
+   *     * `CreatedAt` - the date and time at which the Docker service was created as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
+   *     * `UpdatedAt` - the date and time at which the Docker service was updated as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
+   *     * `Spec` - the Docker service configuration.
+   *     * `Endpoint` - configuration to access and load balance the Docker service.
+   *     * `UpdateStatus` - the status of the update of the Docker service.
+   *     * `ServiceStatus` - the status of the Docker service's tasks.
+   *     * `JobStatus` - the status of the Docker service when it is one of ReplicatedJob or GlobalJob modes.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * const data = await docker.listServices()
+   * ```
+   *
+   * Available filters:
+   *   * `id=<serviceId>`
+   *   * `label=<serviceLabel>`
+   *   * `mode=<"replicated"|"global">`
+   *   * `name=<serviceName>`
+   *
+   * Docker Swarm reference: [https://docs.docker.com/engine/swarm/](https://docs.docker.com/engine/swarm/)
    */
   async listServices(options = {}) {
     const response = await this.http.get(`/services?${
@@ -1991,9 +2036,33 @@ class Docker {
    *   JobStatus: {
    *     JobIteration: DockerDocs.ObjectVersion,
    *   },
-   *   LastExecution: string, # ISO 8601 date string
    * }>
    * ```
+   *
+   * Inspects a Docker service running in a Docker swarm. The current node (server) must be a manager node in a Docker swarm.
+   *
+   * Arguments:
+   *   * `serviceId` - the ID or name of the Docker service.
+   *
+   * Return:
+   *   * `data`
+   *     * `ID` - the ID of the created Docker service.
+   *     * `Version` - the version of the Docker service.
+   *     * `CreatedAt` - the date and time at which the Docker service was created as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
+   *     * `UpdatedAt` - the date and time at which the Docker service was updated as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
+   *     * `Spec` - the Docker service configuration.
+   *     * `Endpoint` - configuration to access and load balance the Docker service.
+   *     * `UpdateStatus` - the status of the update of the Docker service.
+   *     * `ServiceStatus` - the status of the Docker service's tasks.
+   *     * `JobStatus` - the status of the Docker service when it is one of ReplicatedJob or GlobalJob modes.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * const data = await docker.inspectService('my-service')
+   * ```
+   *
+   * Docker Swarm reference: [https://docs.docker.com/engine/swarm/](https://docs.docker.com/engine/swarm/)
    */
   async inspectService(serviceId) {
     const response = await this.http.get(`/services/${serviceId}`)
@@ -2006,15 +2075,48 @@ class Docker {
    *
    * @docs
    * ```coffeescript [specscript]
+   * module stream 'https://nodejs.org/api/stream.html'
+   *
    * getServiceLogs(serviceId string, options {
-   *   stdout: boolean, // return logs from stdout, default false
-   *   stderr: boolean, // return logs from stderr, default false
-   *   follow: boolean, // keep connection after returning logs, default false
-   *   since: number, // unix timestamp, 1612543950742
-   *   timestamps: boolean, // add timestamps to every log line
-   *   tail: 'all'|number, // only return this number of log lines from the end of logs.
-   * }) -> Promise<HttpResponse>
+   *   stdout: boolean,
+   *   stderr: boolean,
+   *   follow: boolean,
+   *   since: number,
+   *   timestamps: boolean,
+   *   tail: number,
+   * }) -> dataStream Promise<stream.Readable>
    * ```
+   *
+   * Get logs for a Docker service. The current node (server) must be a manager node in a Docker swarm.
+   *
+   * Arguments:
+   *   * `serviceId` - the ID or name of the Docker service.
+   *   * `options`
+   *     * `stdout` - return logs from the stdout of all of the containers of the Docker service.
+   *     * `stderr` - return logs from the stderr of all of the containers of the Docker service.
+   *     * `follow` - keep the connection alive and return new logs in realtime after returning the logs from the Docker service.
+   *     * `since` - a unix timestamp after which to return logs for the Docker service.
+   *     * `timestamps` - adds a timestamp to every log line of the returned logs.
+   *     * `tail` - the maximum number of log lines to return from the end of all logs for the Docker service.
+   *
+   * Return:
+   *   * `dataStream` - a readable stream of the Docker service logs.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * const logStream = await docker.getServiceLogs('my-service', {
+   *   tail: 1000,
+   *   follow: true,
+   * })
+   *
+   * logStream.pipe(process.stdout)
+   * logStream.on('end', () => {
+   *   console.log('getServiceLogs success.')
+   * })
+   * ```
+   *
+   * Docker Swarm reference: [https://docs.docker.com/engine/swarm/](https://docs.docker.com/engine/swarm/)
    */
   async getServiceLogs(serviceId, options = {}) {
     const response = await this.http.get(`/services/${serviceId}/logs?${
@@ -2037,7 +2139,7 @@ class Docker {
    *
    * listTasks(options {
    *   desiredState: 'running'|'shutdown'|'accepted'
-   *   service: string, // service name
+   *   service: string,
    * }) -> data Promise<[
    *   ID: string,
    *   Version: DockerDocs.ObjectVersion,
@@ -2057,6 +2159,39 @@ class Docker {
    *   JobIteration: DockerDocs.ObjectVersion,
    * ]>
    * ```
+   *
+   * Returns a list of tasks running on a Docker swarm. The current node (server) must be a manager node in a Docker swarm.
+   *
+   * Arguments:
+   *   * `options`
+   *     * `desiredState` - returns a list of tasks with `DesiredState` filtered by this option.
+   *     * `service` - the name or ID of the Docker service.
+   *
+   * Return:
+   *   * `data`
+   *     * `ID` - the ID of the task.
+   *     * `Version` - the version number of the task.
+   *     * `CreatedAt` - the date and time at which the task was created as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
+   *     * `UpdatedAt` - the date and time at which the task was updated as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT).
+   *     * `Name` - the name of the task.
+   *     * `Labels` - object of user-defined key/value metadata.
+   *     * `Spec` - the task configuration.
+   *     * `ServiceID` - the ID of the Docker service that the task belongs to.
+   *     * `Slot` - used by the orchestrator for scheduling purposes.
+   *     * `NodeID` - the ID of the node that the task is on.
+   *     * `AssignedGenericResources` - user-defined resources.
+   *     * `Status` - the status of the task.
+   *     * `DesiredState` - the desired status of the task.
+   *     * `JobIteration` - the version number of the task.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * const tasksData = await docker.listTasks()
+   * const runningTasksData = await docker.listTasks({ desiredState: 'running' })
+   * ```
+   *
+   * Docker Swarm reference: [https://docs.docker.com/engine/swarm/](https://docs.docker.com/engine/swarm/)
    */
   async listTasks(options = {}) {
     const filters = pipe({
@@ -2093,7 +2228,29 @@ class Docker {
    * ]>
    * ```
    *
-   * See https://docs.docker.com/engine/api/v1.40/#operation/NodeList
+   * Lists the nodes of a Docker Swarm. The current node (server) must be a manager node in a Docker swarm.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `data`
+   *     * `ID` - the node ID.
+   *     * `Version` - the version number of the node.
+   *     * `CreatedAt` - the date and time at which the node was created as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT).
+   *     * `UpdatedAt` - the date and time at which the node was updated as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT).
+   *     * `Spec` - the node configuration.
+   *     * `Description` - the properties of the node reported by the agent.
+   *     * `Status` - the current status of the node.
+   *     * `ManagerStatus` - the current status of node's manager component, if the node is a manager.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * const data = await docker.listNodes()
+   * ```
+   *
+   * Docker Swarm reference: [https://docs.docker.com/engine/swarm/](https://docs.docker.com/engine/swarm/)
    */
   async listNodes() {
     const response = await this.http.get('/nodes')
@@ -2106,8 +2263,24 @@ class Docker {
    *
    * @docs
    * ```coffeescript [specscript]
-   * deleteNode(id string) -> message Promise<string>
+   * deleteNode(nodeId string) -> message Promise<string>
    * ```
+   *
+   * Deletes a node from a Docker swarm. The current node (server) must be a manager node in a Docker swarm.
+   *
+   * Arguments:
+   *   * `nodeId` - the ID of the node to delete.
+   *
+   * Return:
+   *   * `message` - the message from deleting the node.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * await docker.deleteNode('node-id')
+   * ```
+   *
+   * Docker Swarm reference: [https://docs.docker.com/engine/swarm/](https://docs.docker.com/engine/swarm/)
    */
   async deleteNode(id) {
     const response = await this.http.delete(`/nodes/${id}`)
@@ -2121,9 +2294,25 @@ class Docker {
    * @docs
    * ```coffeescript [specscript]
    * pruneImages() -> data Promise<{
-   *   ImagesDeleted: Array<string>, # deleted image IDs
-   *   SpaceReclaimed: integer, # bytes
+   *   ImagesDeleted: Array<{ Untagged: string }|{ Deleted: string }>,
+   *   SpaceReclaimed: number, # bytes
    * }>
+   * ```
+   *
+   * Prunes Docker images. Deletes unused Docker images from the server.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `data`
+   *     * `ImagesDeleted` - Docker images that were deleted.
+   *     * `SpaceReclaimed` - disk space reclaimed in bytes.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * await docker.pruneImages()
    * ```
    */
   async pruneImages() {
@@ -2139,9 +2328,25 @@ class Docker {
    * @docs
    * ```coffeescript [specscript]
    * pruneContainers() -> data Promise<{
-   *   ContainersDeleted: Array<string>, # deleted container IDs
+   *   ContainersDeleted: Array<string>,
    *   SpaceReclaimed: integer, # bytes
    * }>
+   * ```
+   *
+   * Prunes Docker containers. Deletes stopped Docker containers from the server.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `data`
+   *     * `ContainersDeleted` - Docker container IDs that were deleted.
+   *     * `SpaceReclaimed` - disk space reclaimed in bytes.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * await docker.pruneContainers()
    * ```
    */
   async pruneContainers() {
@@ -2161,6 +2366,22 @@ class Docker {
    *   SpaceReclaimed: integer, # bytes
    * }>
    * ```
+   *
+   * Prunes Docker volumes. Deletes unused volumes from the server.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `data`
+   *     * `VolumesDeleted` - IDs of volumes that were deleted.
+   *     * `SpaceReclaimed` - disk space reclaimed in bytes.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * await docker.pruneVolumes()
+   * ```
    */
   async pruneVolumes() {
     const response = await this.http.post('/volumes/prune')
@@ -2178,6 +2399,21 @@ class Docker {
    *   NetworksDeleted: Array<string>, # network IDs
    * }>
    * ```
+   *
+   * Prunes Docker networks. Removes unused networks from the server.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `data`
+   *     * `NetworksDeleted` - IDs of networks that were deleted.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * await docker.pruneNetworks()
+   * ```
    */
   async pruneNetworks() {
     const response = await this.http.post('/networks/prune')
@@ -2192,15 +2428,39 @@ class Docker {
    * @docs
    * ```coffeescript [specscript]
    * createNetwork(options {
-   *   name: string, // name of the network
-   *   driver?: 'bridge'|'host'|'overlay'|'ipvlan'|'macvlan', // default 'bridge'
-   *   ingress?: boolean,
-   *   subnet?: string, // e.g. '10.0.0.0/20'
-   *   gateway?: string, // e.g. '10.0.0.1'
+   *   name: string,
+   *   driver: 'bridge'|'host'|'overlay'|'ipvlan'|'macvlan',
+   *   ingress: boolean,
+   *   subnet: string,
+   *   gateway: string,
    * }) -> data Promise<{
    *   Id: string,
    *   Warning: string,
    * }>
+   * ```
+   *
+   * Creates a Docker network.
+   *
+   * Arguments:
+   *   * `options`
+   *     * `name` - the name of the network to create.
+   *     * `driver` - the name of the network driver plugin to use.
+   *     * `ingress` - if `true`, creates an ingress network. The ingress network is the network that provides the routing-mesh in swarm mode. If `false`, does not create an ingress network.
+   *     * `subnet` - the subnet of the network.
+   *     * `gateway` - the gateway of the network.
+   *
+   * Return:
+   *   * `data`
+   *     * `Id` - the ID of the created network.
+   *     * `Warning` - warnings encountered when creating the network.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * const data = await docker.createNetwork({
+   *   name: 'my-network',
+   *   driver: 'overlay',
+   * })
    * ```
    */
   async createNetwork(options) {
@@ -2237,7 +2497,7 @@ class Docker {
    * ```coffeescript [specscript]
    * module DockerDocs 'https://docs.docker.com/reference/api/engine/version/v1.52/'
    *
-   * inspectNetwork(id string) -> data Promise<{
+   * inspectNetwork(networkId string) -> data Promise<{
    *   Containers: Object<DockerDocs.EndpointResource>,
    *   Services: Object<any>,
    *   Status: DockerDocs.NetworkStatus,
@@ -2249,15 +2509,48 @@ class Docker {
    *   EnableIPv4: boolean,
    *   EnableIPv6: boolean,
    *   IPAM: DockerDocs.IPAM,
-   *   Internal: boolean, # default false
-   *   Attachable: boolean, # default false
-   *   Ingress: boolean, # default false
+   *   Internal: boolean,
+   *   Attachable: boolean,
+   *   Ingress: boolean,
    *   ConfigFrom: DockerDocs.ConfigReference,
-   *   ConfigOnly: boolean, # default false
+   *   ConfigOnly: boolean,
    *   Options: Object<string>,
    *   Labels: Object<string>,
    *   Peers: Array<DockerDocs.PeerInfo>,
    * }>
+   * ```
+   *
+   * Inspects a Docker network.
+   *
+   * Arguments:
+   *   * `networkId` - the ID of the network to inspect.
+   *
+   * Return:
+   *   * `data`
+   *     * `Containers` - the endpoints attached to the network.
+   *     * `Services` - the services using the network.
+   *     * `Status` - runtime information about the network.
+   *     * `Name` - the name of the network.
+   *     * `Id` - the network ID.
+   *     * `Created` - the date and time at which the network was created as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
+   *     * `Scope` - the level at which the network exists.
+   *     * `Driver` - the name of the driver used to create the network.
+   *     * `EnableIPv4` - whether the network was created with IPv4 enabled.
+   *     * `EnableIPv6` - whether the network was created with IPv6 enabled.
+   *     * `IPAM` - the network's IPAM configuration.
+   *     * `Internal` - whether the network was created to only allow internal networking connectivity.
+   *     * `Attachable` - whether the network is manually attachable by regular containers from worker nodes in a Docker swarm.
+   *     * `Ingress` - whether the network is providing the routing-mesh for a Docker swarm.
+   *     * `ConfigFrom` - the config-only network source that provides the configuration for the network.
+   *     * `ConfigOnly` - whether the network is a config-only network. Config-only networks are placeholder networks for network configurations to be used by other networks. Config-only networks cannot be used directly to run containers or services.
+   *     * `Options` - network-specific options used when creating the network.
+   *     * `Labels` - object of user-defined key/value metadata.
+   *     * `Peers` - list of peer nodes for the network. `Peers` is only present if the network is an overlay network.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * const data = await docker.inspectNetwork('my-network')
    * ```
    */
   async inspectNetwork(id) {
@@ -2271,7 +2564,21 @@ class Docker {
    *
    * @docs
    * ```coffeescript [specscript]
-   * deleteNetwork(id string) -> message Promise<string>
+   * deleteNetwork(networkId string) -> message Promise<string>
+   * ```
+   *
+   * Deletes a Docker network.
+   *
+   * Arguments:
+   *   * `networkId` - the ID of the network to delete.
+   *
+   * Return:
+   *   * `message` - the message from deleting the network.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * await docker.deleteNetwork('my-network')
    * ```
    */
   async deleteNetwork(id) {
