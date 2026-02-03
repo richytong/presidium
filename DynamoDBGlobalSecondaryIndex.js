@@ -31,22 +31,33 @@ const createFilterExpression = require('./internal/createFilterExpression')
  * @docs
  * ```coffeescript [specscript]
  * new DynamoDBGlobalSecondaryIndex(options {
- *   name: string,
+ *   table: string,
  *   key: [
  *     { [hashKey string]: 'S'|'string'|'N'|'number'|'B'|'binary' },
  *     { [sortKey string]: 'S'|'string'|'N'|'number'|'B'|'binary' },
  *   ],
- *   table: string,
  *   accessKeyId: string,
  *   secretAccessKey: string,
  *   region: string,
- *   endpoint: string,
- * }) -> globalSecondaryIndex DynamoDBGlobalSecondaryIndex
+ *   autoReady: boolean,
+ * }) -> gsi DynamoDBGlobalSecondaryIndex
  * ```
  *
  * The presidium DynamoDBGlobalSecondaryIndex client. Creates the DynamoDB Global Secondary Index (GSI) if it doesn't exist.
  *
  * DynamoDBGlobalSecondaryIndex instances have a `ready` promise that resolves when the GSI is active.
+ *
+ * Arguments:
+ *   * `options`
+ *     * `table` - the name of the DynamoDB Table to which the DynamoDB Global Secondary Index belongs.
+ *     * `key` - the primary key of the DynamoDB Global Secondary Index.
+ *     * `accessKeyId` - the AWS access key id.
+ *     * `secretAccessKey` - the AWS secret access key.
+ *     * `region` - the AWS region.
+ *     * `autoReady` - whether to automatically create the DynamoDB Global Secondary Index if it doesn't exist. Defaults to `true`.
+ *
+ * Return:
+ *   * `gsi` - a DynamoDBGlobalSecondaryIndex instance.
  *
  * ```javascript
  * const awsCreds = await AwsCredentials('my-profile')
@@ -68,9 +79,6 @@ const createFilterExpression = require('./internal/createFilterExpression')
  * })
  * await myStatusUpdateTimeGSI.ready
  * ```
- *
- * @note
- * [AWS DynamoDB Docs](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html)
  */
 class DynamoDBGlobalSecondaryIndex {
 
@@ -199,7 +207,8 @@ class DynamoDBGlobalSecondaryIndex {
    *   * (none)
    *
    * Return:
-   *   * `Table` - [`AWSDynamoDBDocs.TableDescription`](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TableDescription.html) - the DynamoDB Table properties.
+   *   * `data`
+   *     * `Table` - [`AWSDynamoDBDocs.TableDescription`](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TableDescription.html) - the DynamoDB Table properties.
    *
    * ```javascript
    * const awsCreds = await AwsCredentials('my-profile')
@@ -276,7 +285,7 @@ class DynamoDBGlobalSecondaryIndex {
    *     * `ReadCapacityUnits` - number of 4KB strong reads per second.
    *     * `WriteCapacityUnits` - number of 1KB writes per second.
    *
-   * Billing Modes:
+   * `BillingModes` values:
    *   * `PAY_PER_REQUEST` - on-demand capacity mode. The AWS account is billed per read and write request.
    *   * `PROVISIONED` - a capacity mode where the reads (RCUs) and writes (WCUs) are predefined.
    *
@@ -466,60 +475,6 @@ class DynamoDBGlobalSecondaryIndex {
     while (indexData.IndexStatus != 'ACTIVE') {
       await sleep(100)
       indexData = await this.describe()
-    }
-  }
-
-  /**
-   * @name waitForNotExists
-   *
-   * @docs
-   * ```coffeescript [specscript]
-   * waitForNotExists() -> promise Promise<>
-   * ```
-   *
-   * Waits for the DynamoDB Global Secondary Index to not exist.
-   *
-   * Returns 
-   *
-   * Arguments:
-   *   * (none)
-   *
-   * Return:
-   *   * `promise` - a JavaScript promise that resolves when the DynamoDB Global Secondary Index is deleted.
-   *
-   * ```javascript
-   * const awsCreds = await AwsCredentials('my-profile')
-   * awsCreds.region = 'us-east-1'
-   *
-   * const myTable = new DynamoDBTable({
-   *   name: 'my-table'
-   *   key: [{ id: 'string' }],
-   *   ...awsCreds,
-   * })
-   * await myTable.ready
-   *
-   * const myTypeTimeGSI = new DynamoDBGlobalSecondaryIndex({
-   *   table: 'my-table',
-   *   key: [{ type: 'string' }, { time: 'number' }],
-   *   ...awsCreds,
-   *   autoReady: false
-   * })
-   *
-   * await myTypeTimeGSI.delete()
-   * await myTypeTimeGSI.waitForNotExists()
-   * ```
-   */
-  async waitForNotExists() {
-    let exists = true
-    while (exists) {
-      await sleep(100)
-      await this.describe().catch(error => {
-        if (error.message == `DynamoDB Global Secondary Index ${this.name} not found`) {
-          exists = false
-        } else {
-          throw error
-        }
-      })
     }
   }
 
