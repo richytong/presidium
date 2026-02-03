@@ -49,25 +49,24 @@ const createFilterExpression = require('./internal/createFilterExpression')
  * DynamoDBGlobalSecondaryIndex instances have a `ready` promise that resolves when the GSI is active.
  *
  * ```javascript
- * const awsCreds = {
- *   accessKeyId: 'my-access-key-id',
- *   secretAccessKey: 'my-secret-access-key',
- *   region: 'my-region',
- * }
+ * const awsCreds = await AwsCredentials('my-profile')
+ * awsCreds.region = 'us-east-1'
  *
- * const myProductionTable = new DynamoTable({
- *   name: 'my-production-table',
+ * const env = process.env.NODE_ENV
+ *
+ * const myTable = new DynamoTable({
+ *   name: `${env}-my-table`,
  *   key: [{ id: 'string' }],
  *   ...awsCreds,
  * })
- * await myProductionTable.ready
+ * await myTable.ready
  *
- * const myProductionStatusUpdateTimeIndex = new DynamoDBGlobalSecondaryIndex({
- *   table: 'my-production-table',
+ * const myStatusUpdateTimeGSI = new DynamoDBGlobalSecondaryIndex({
+ *   table: `${env}-my-table`,
  *   key: [{ status: 'string' }, { updateTime: 'number' }],
  *   ...awsCreds,
  * })
- * await myProductionStatusUpdateTimeIndex.ready
+ * await myStatusUpdateTimeGSI.ready
  * ```
  *
  * @note
@@ -187,7 +186,40 @@ class DynamoDBGlobalSecondaryIndex {
    *
    * @docs
    * ```coffeescript [specscript]
-   * describeTable() -> data Promise<>
+   * module AWSDynamoDBDocs 'https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Types.html'
+   *
+   * describeTable() -> data Promise<{
+   *   Table: AWSDynamoDBDocs.TableDescription,
+   * }>
+   * ```
+   *
+   * Returns information about the DynamoDB Table of the DynamoDB Global Secondary Index.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `Table` - `AWSDynamoDBDocs.TableDescription` - the DynamoDB Table properties.
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const myTable = new DynamoDBTable({
+   *   name: 'my-table'
+   *   key: [{ id: 'string' }],
+   *   ...awsCreds,
+   * })
+   * await myTable.ready
+   *
+   * const myTypeTimeGSI = new DynamoDBGlobalSecondaryIndex({
+   *   table: 'my-table',
+   *   key: [{ type: 'string' }, { time: 'number' }],
+   *   ...awsCreds,
+   * })
+   * await myTypeTimeGSI.ready
+   *
+   * const data = await myTypeTimeGSI.describeTable()
    * ```
    */
   async describeTable() {
@@ -208,10 +240,12 @@ class DynamoDBGlobalSecondaryIndex {
    *
    * @docs
    * ```coffeescript [specscript]
+   * module AWSDynamoDBDocs 'https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Types.html'
+   *
    * describe() -> indexData Promise<{
    *   IndexArn: string,
    *   IndexName: string,
-   *   IndexStatus: string,
+   *   IndexStatus: 'CREATING'|'UPDATING'|'DELETING'|'ACTIVE',
    *   KeySchema: [
    *     { AttributeName: string, KeyType: 'HASH' },
    *     { AttributeName: string, KeyType: 'RANGE' },
@@ -225,6 +259,47 @@ class DynamoDBGlobalSecondaryIndex {
    *   },
    * }>
    * ```
+   *
+   * Returns information about the DynamoDB Global Secondary Index.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `IndexArn` - the ARN (Amazon Resource Name) of the Global Secondary Index.
+   *   * `IndexName` - the name of the Global Secondary Index.
+   *   * `IndexStatus` - the currentn status of the Global Secondary Index.
+   *   * `KeySchema` - the [key schema](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_KeySchemaElement.html) of the Global Secondary Index.
+   *   * `BillingModeSummary` - information about the read/write capacity mode of the Global Secondary Index.
+   *     * `BillingMode` - a mode that controls how read and write throughput is billed and how DynamoDB manages capacity for the Global Secondary Index.
+   *   * `ProvisionedThroughput` - information about the provisioned throughput settings of the Global Secondary Index.
+   *     * `ReadCapacityUnits` - number of 4KB strong reads per second.
+   *     * `WriteCapacityUnits` - number of 1KB writes per second.
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const myTable = new DynamoDBTable({
+   *   name: 'my-table'
+   *   key: [{ id: 'string' }],
+   *   ...awsCreds,
+   * })
+   * await myTable.ready
+   *
+   * const myTypeTimeGSI = new DynamoDBGlobalSecondaryIndex({
+   *   table: 'my-table',
+   *   key: [{ type: 'string' }, { time: 'number' }],
+   *   ...awsCreds,
+   * })
+   * await myTypeTimeGSI.ready
+   *
+   * const data = await myTypeTimeGSI.describe()
+   * ```
+   *
+   * Billing Modes:
+   *   * `PAY_PER_REQUEST` - on-demand capacity mode. The AWS account is billed per read and write request.
+   *   * `PROVISIONED` - a capacity mode where the reads (RCUs) and writes (WCUs) are predefined.
    */
   async describe() {
     const payload = JSON.stringify({
@@ -271,6 +346,47 @@ class DynamoDBGlobalSecondaryIndex {
    *   },
    * }>
    * ```
+   *
+   * Creates the DynamoDB Global Secondary Index.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `IndexArn` - the ARN (Amazon Resource Name) of the Global Secondary Index.
+   *   * `IndexName` - the name of the Global Secondary Index.
+   *   * `IndexStatus` - the currentn status of the Global Secondary Index.
+   *   * `KeySchema` - the [key schema](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_KeySchemaElement.html) of the Global Secondary Index.
+   *   * `BillingModeSummary` - information about the read/write capacity mode of the Global Secondary Index.
+   *     * `BillingMode` - a mode that controls how read and write throughput is billed and how DynamoDB manages capacity for the Global Secondary Index.
+   *   * `ProvisionedThroughput` - information about the provisioned throughput settings of the Global Secondary Index.
+   *     * `ReadCapacityUnits` - number of 4KB strong reads per second.
+   *     * `WriteCapacityUnits` - number of 1KB writes per second.
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const myTable = new DynamoDBTable({
+   *   name: 'my-table'
+   *   key: [{ id: 'string' }],
+   *   ...awsCreds,
+   * })
+   * await myTable.ready
+   *
+   * const myTypeTimeGSI = new DynamoDBGlobalSecondaryIndex({
+   *   table: 'my-table',
+   *   key: [{ type: 'string' }, { time: 'number' }],
+   *   ...awsCreds,
+   *   autoReady: false,
+   * })
+   *
+   * await myTypeTimeGSI.create()
+   * ```
+   *
+   * Billing Modes:
+   *   * `PAY_PER_REQUEST` - on-demand capacity mode. The AWS account is billed per read and write request.
+   *   * `PROVISIONED` - a capacity mode where the reads (RCUs) and writes (WCUs) are predefined.
    */
   async create() {
     const tableData = await this.describeTable()
@@ -314,7 +430,37 @@ class DynamoDBGlobalSecondaryIndex {
    *
    * @docs
    * ```coffeescript [specscript]
-   * waitForActive() -> empty Promise<>
+   * waitForActive() -> promise Promise<>
+   * ```
+   *
+   * Waits for the DynamoDB Global Secondary Index to be active.
+   *
+   * Returns 
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `promise` - a JavaScript promise that resolves when the DynamoDB Global Secondary Index is active.
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const myTable = new DynamoDBTable({
+   *   name: 'my-table'
+   *   key: [{ id: 'string' }],
+   *   ...awsCreds,
+   * })
+   * await myTable.ready
+   *
+   * const myTypeTimeGSI = new DynamoDBGlobalSecondaryIndex({
+   *   table: 'my-table',
+   *   key: [{ type: 'string' }, { time: 'number' }],
+   *   ...awsCreds,
+   * })
+   *
+   * await myTypeTimeGSI.waitForActive()
    * ```
    */
   async waitForActive() {
@@ -330,7 +476,39 @@ class DynamoDBGlobalSecondaryIndex {
    *
    * @docs
    * ```coffeescript [specscript]
-   * waitForNotExists() -> empty Promise<>
+   * waitForNotExists() -> promise Promise<>
+   * ```
+   *
+   * Waits for the DynamoDB Global Secondary Index to not exist.
+   *
+   * Returns 
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `promise` - a JavaScript promise that resolves when the DynamoDB Global Secondary Index is deleted.
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const myTable = new DynamoDBTable({
+   *   name: 'my-table'
+   *   key: [{ id: 'string' }],
+   *   ...awsCreds,
+   * })
+   * await myTable.ready
+   *
+   * const myTypeTimeGSI = new DynamoDBGlobalSecondaryIndex({
+   *   table: 'my-table',
+   *   key: [{ type: 'string' }, { time: 'number' }],
+   *   ...awsCreds,
+   *   autoReady: false
+   * })
+   *
+   * await myTypeTimeGSI.delete()
+   * await myTypeTimeGSI.waitForNotExists()
    * ```
    */
   async waitForNotExists() {
@@ -366,30 +544,63 @@ class DynamoDBGlobalSecondaryIndex {
    * >
    *
    * query(
-   *   keyConditionExpression string, // hashKey = :a AND sortKey < :b
+   *   keyConditionExpression string, # 'hashKey = :a AND sortKey < :b'
    *   Values DynamoDBJSONObject,
    *   options {
    *     Limit: number,
    *     ExclusiveStartKey: DynamoDBJSONKey,
-   *     ScanIndexForward: boolean, // default true for ASC
-   *     ProjectionExpression: string, // 'fieldA,fieldB,fieldC'
-   *     FilterExpression: string, // 'fieldA >= :someValue'
+   *     ScanIndexForward: boolean, # defaults to true for ASC
+   *     ProjectionExpression: string, # 'fieldA,fieldB,fieldC'
+   *     FilterExpression: string, # 'fieldA >= :someValue'
    *   },
-   * ) -> data Promise<{ Items: Array<DynamoDBJSONObject> }>
+   * ) -> data Promise<{
+   *   Items: Array<DynamoDBJSONObject>,
+   *   LastEvaluatedKey: DynamoDBJSONKey,
+   * }>
    * ```
    *
    * Query a DynamoDB Global Secondary Index using DynamoDB JSON format.
    *
    * Use the hash and sort keys as query parameters and to construct the key condition expression. The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
    *
-   * ```javascript
-   * // myIndex has hashKey status and sortKey time
+   * Arguments:
+   *   * `keyConditionExpression` - a query on the hash key and/or sort key of the Global Secondary Index.
+   *   * `Values` - DynamoDB JSON values for each variable (prefixed by `:`) of the query.
+   *   * `options`
+   *     * `Limit` - Maximum number of items (hard limited by the total size of the response).
+   *     * `ExclusiveStartKey` - the primary key after which to start reading.
+   *     * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
+   *     * `ProjectionExpression` - list of attributes to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
+   *     * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
    *
-   * const pendingItemsLast24h = await myIndex.query(
+   * Return:
+   *   * `data`
+   *     * `Items` - the items of the DynamoDB Global Secondary Index returned from the query.
+   *     * `LastEvaluatedKey` - the primary key of the item where the query stopped.
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const myTable = new DynamoDBTable({
+   *   name: 'my-table'
+   *   key: [{ id: 'string' }],
+   *   ...awsCreds,
+   * })
+   * await myTable.ready
+   *
+   * const myStatusTimeIndex = new DynamoDBGlobalSecondaryIndex({
+   *   table: 'my-table',
+   *   key: [{ status: 'string' }, { time: 'number' }],
+   *   ...awsCreds,
+   * })
+   * await myStatusTimeIndex.ready
+   *
+   * const pendingItemsLast24h = await myStatusTimeIndex.query(
    *   'status = :status AND time > :time',
    *   {
-   *     status: 'pending',
-   *     time: Date.now() - (24 * 60 * 60 * 1000),
+   *     status: { S: 'pending' },
+   *     time: { N: Date.now() - (24 * 60 * 60 * 1000) },
    *   },
    *   { ScanIndexForward: true },
    * )
@@ -402,12 +613,6 @@ class DynamoDBGlobalSecondaryIndex {
    * // ]
    * ```
    *
-   * Options:
-   *   * `Limit` - Maximum number of items (hard limited by the total size of the response).
-   *   * `ExclusiveStartKey` - DynamoDB JSON Key after which to start reading.
-   *   * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
-   *   * `ProjectionExpression` - list of attributes to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
-   *   * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
    */
   async query(keyConditionExpression, Values, options = {}) {
     const values = map(Values, DynamoDBAttributeValueJSON)
@@ -488,30 +693,71 @@ class DynamoDBGlobalSecondaryIndex {
    *   [sortKey string]: { S: string }|{ N: number }|{ B: Buffer },
    * }
    *
+   * type DynamoDBJSONObject = Object<
+   *   [key string]: { S: string }
+   *                 |{ N: number }
+   *                 |{ B: Buffer }
+   *                 |{ L: Array<DynamoDBJSONObject> }
+   *                 |{ M: Object<DynamoDBJSONObject> }
+   * >
+   *
    * type JSONArray = Array<string|number|Buffer|JSONArray|JSONObject>
    * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
    *
    * queryJSON(
-   *   keyConditionExpression string, // hashKey = :a AND sortKey < :b
+   *   keyConditionExpression string, # 'hashKey = :a AND sortKey < :b'
    *   values JSONObject,
    *   options {
    *     Limit: number,
    *     ExclusiveStartKey: DynamoDBJSONKey,
-   *     ScanIndexForward: boolean, // default true for ASC
-   *     ProjectionExpression: string, // 'fieldA,fieldB,fieldC'
-   *     FilterExpression: string, // 'fieldA >= :someValue'
+   *     ScanIndexForward: boolean, # defaults to true for ASC
+   *     ProjectionExpression: string, # 'fieldA,fieldB,fieldC'
+   *     FilterExpression: string, # 'fieldA >= :someValue'
    *   },
-   * ) -> Promise<{ ItemsJSON: Array<JSONObject> }>
+   * ) -> data Promise<{
+   *   ItemsJSON: Array<JSONObject>,
+   *   LastEvaluatedKey: DynamoDBJSONKey,
+   * }>
    * ```
    *
    * Query a DynamoDB Global Secondary Index using JSON format.
    *
    * Use the hash and sort keys as query parameters and to construct the key condition expression. The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
    *
-   * ```javascript
-   * // myIndex has hashKey status and sortKey time
+   * Arguments:
+   *   * `keyConditionExpression` - a query on the hash key and/or sort key of the Global Secondary Index.
+   *   * `values` - values for each variable (prefixed by `:`) of the query.
+   *   * `options`
+   *     * `Limit` - Maximum number of items (hard limited by the total size of the response).
+   *     * `ExclusiveStartKey` - the primary key after which to start reading.
+   *     * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
+   *     * `ProjectionExpression` - list of attributes to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
+   *     * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
    *
-   * const pendingItemsJSONLast24h = await myIndex.queryJSON(
+   * Return:
+   *   * `data`
+   *     * `ItemsJSON` - the items of the DynamoDB Global Secondary Index returned from the query.
+   *     * `LastEvaluatedKey` - the primary key of the item where the query stopped.
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const myTable = new DynamoDBTable({
+   *   name: 'my-table'
+   *   key: [{ id: 'string' }],
+   *   ...awsCreds,
+   * })
+   * await myTable.ready
+   *
+   * const myStatusTimeIndex = new DynamoDBGlobalSecondaryIndex({
+   *   table: 'my-table',
+   *   key: [{ status: 'string' }, { time: 'number' }],
+   *   ...awsCreds,
+   * })
+   * await myStatusTimeIndex.ready
+   *
+   * const pendingItemsJSONLast24h = await myStatusTimeIndex.queryJSON(
    *   'status = :status AND time > :time',
    *   {
    *     status: 'pending',
@@ -527,13 +773,6 @@ class DynamoDBGlobalSecondaryIndex {
    * //   ...
    * // ]
    * ```
-   *
-   * Options:
-   *   * `Limit` - Maximum number of items (hard limited by the total size of the response).
-   *   * `ExclusiveStartKey` - DynamoDB JSON Key after which to start reading.
-   *   * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
-   *   * `ProjectionExpression` - list of attributes to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
-   *   * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
    */
   async queryJSON(keyConditionExpression, values, options = {}) {
     const keyConditionStatements = keyConditionExpression.trim().split(/\s+AND\s+/)
@@ -619,9 +858,9 @@ class DynamoDBGlobalSecondaryIndex {
    *                 |{ M: Object<DynamoDBJSONObject> }
    * >
    *
-   * index.queryItemsIterator(
+   * queryItemsIterator(
    *   keyConditionExpression string,
-   *   queryValues JSONObject,
+   *   Values DynamoDBJSONObject,
    *   options {
    *     BatchLimit: number,
    *     Limit: number,
@@ -629,17 +868,45 @@ class DynamoDBGlobalSecondaryIndex {
    *     ProjectionExpression: string, // 'fieldA,fieldB,fieldC'
    *     FilterExpression: string, // 'fieldA >= :someValue'
    *   }
-   * ) -> AsyncIterator<DynamoDBJSONObject>
+   * ) -> asyncIterator AsyncIterator<DynamoDBJSONObject>
    * ```
    *
-   * Get an `AsyncIterator` of all items represented by a query on a DynamoDB Global Secondary Index (GSI) in DynamoDB JSON format.
+   * Returns an async iterator of all items represented by a query on a DynamoDB Global Secondary Index (GSI) in DynamoDB JSON format.
    *
    * The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
    *
-   * ```javascript
-   * // myIndex has hashKey type and sortKey time
+   * Arguments:
+   *   * `keyConditionExpression` - a query on the hash key and/or sort key of the Global Secondary Index.
+   *   * `Values` - DynamoDB JSON values for each variable (prefixed by `:`) of the query.
+   *   * `options`
+   *     * `BatchLimit` - Maximum number of items to retrieve per `query` call.
+   *     * `Limit` - Maximum number of items (hard limited by the total size of the response).
+   *     * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
+   *     * `ProjectionExpression` - list of attributes to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
+   *     * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
    *
-   * const iter = myIndex.queryItemsIterator(
+   * Return:
+   *   * `asyncIterator` - an async iterator of all items in DynamoDB JSON format represented by the query on the DynamoDB Global Secondary Index.
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const myTable = new DynamoDBTable({
+   *   name: 'my-table'
+   *   key: [{ id: 'string' }],
+   *   ...awsCreds,
+   * })
+   * await myTable.ready
+   *
+   * const myTypeTimeGSI = new DynamoDBGlobalSecondaryIndex({
+   *   table: 'my-table',
+   *   key: [{ type: 'string' }, { time: 'number' }],
+   *   ...awsCreds,
+   * })
+   * await myTypeTimeGSI.ready
+   *
+   * const iter = myTypeTimeGSI.queryItemsIterator(
    *   'type = :type AND time > :time',
    *   { type: 'page_view', time: 0 },
    * )
@@ -653,12 +920,7 @@ class DynamoDBGlobalSecondaryIndex {
    * }
    * ```
    *
-   * Options:
-   *   * `BatchLimit` - Max number of items to retrieve per `query` call.
-   *   * `Limit` - Maximum number of items (hard limited by the total size of the response).
-   *   * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
-   *   * `ProjectionExpression` - list of attributes to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
-   *   * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
+   * AsyncIterator reference: [https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
    */
   async * queryItemsIterator(keyConditionExpression, Values, options = {}) {
     const BatchLimit = options.BatchLimit ?? 1000
@@ -712,17 +974,45 @@ class DynamoDBGlobalSecondaryIndex {
    *     ProjectionExpression: string, // 'fieldA,fieldB,fieldC'
    *     FilterExpression: string, // 'fieldA >= :someValue'
    *   }
-   * ) -> AsyncIterator<JSONObject>
+   * ) -> asyncIteratorJSON AsyncIterator<JSONObject>
    * ```
    *
-   * Get an `AsyncIterator` of all items represented by a query on a DynamoDB Table in JSON format.
+   * Returns an async iterator of all items represented by a query on a DynamoDB Global Secondary Index (GSI) in JSON format.
    *
    * The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
    *
-   * ```javascript
-   * // myIndex has hashKey type and sortKey time
+   * Arguments:
+   *   * `keyConditionExpression` - a query on the hash key and/or sort key of the Global Secondary Index.
+   *   * `Values` - DynamoDB JSON values for each variable (prefixed by `:`) of the query.
+   *   * `options`
+   *     * `BatchLimit` - Maximum number of items to retrieve per `query` call.
+   *     * `Limit` - Maximum number of items (hard limited by the total size of the response).
+   *     * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
+   *     * `ProjectionExpression` - list of attributes to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
+   *     * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
    *
-   * const iter = myIndex.queryItemsIterator(
+   * Return:
+   *   * `asyncIteratorJSON` - an async iterator of all items in JSON format represented by the query on the DynamoDB Global Secondary Index.
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const myTable = new DynamoDBTable({
+   *   name: 'my-table'
+   *   key: [{ id: 'string' }],
+   *   ...awsCreds,
+   * })
+   * await myTable.ready
+   *
+   * const myTypeTimeGSI = new DynamoDBGlobalSecondaryIndex({
+   *   table: 'my-table',
+   *   key: [{ type: 'string' }, { time: 'number' }],
+   *   ...awsCreds,
+   * })
+   * await myTypeTimeGSI.ready
+   *
+   * const iter = myTypeTimeGSI.queryItemsIterator(
    *   'type = :type AND time > :time',
    *   { type: 'page_view', time: 0 },
    * )
@@ -736,12 +1026,7 @@ class DynamoDBGlobalSecondaryIndex {
    * }
    * ```
    *
-   * Options:
-   *   * `BatchLimit` - Max number of items to retrieve per `query` call.
-   *   * `Limit` - Maximum number of items (hard limited by the total size of the response).
-   *   * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
-   *   * `ProjectionExpression` - list of attributes to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
-   *   * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
+   * AsyncIterator reference: [https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
    */
   async * queryItemsIteratorJSON(keyConditionExpression, values, options = {}) {
     const BatchLimit = options.BatchLimit ?? 1000
