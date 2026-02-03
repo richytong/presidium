@@ -16,9 +16,15 @@ const Readable = require('./Readable')
  *   accessKeyId: string,
  *   secretAccessKey: string,
  *   region: string,
- *   endpoint: string,
  * }) -> ecr ECR
  * ```
+ * Presidium ECR client for [Amazon ECR](https://aws.amazon.com/ecr/).
+ *
+ * Arguments:
+ *   * `options`
+ *     * `accessKeyId` - long term credential (ID) of an [IAM](https://aws.amazon.com/iam/) user.
+ *     * `secretAccessKey` - long term credential (secret) of an [IAM](https://aws.amazon.com/iam/) user.
+ *     * `region` - geographic location of data center cluster, e.g. `us-east-1` or `us-west-2`. [Full list of AWS regions](https://docs.aws.amazon.com/global-infrastructure/latest/regions/aws-regions.html#available-regions)
  */
 class ECR {
   constructor(options) {
