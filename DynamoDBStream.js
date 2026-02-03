@@ -423,7 +423,37 @@ class DynamoDBStream {
    *
    * @docs
    * ```coffeescript [specscript]
-   * close() -> ()
+   * close() -> undefined
+   * ```
+   *
+   * Closes the DynamoDB Stream.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * undefined
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const myTable = new DynamoDBTable({
+   *   name: 'my-table'
+   *   key: [{ id: 'string' }],
+   *   ...awsCreds,
+   * })
+   * await myTable.ready
+   *
+   * const myStream = new DynamoDBStream({
+   *   table: 'my-table',
+   *   ...awsCreds,
+   * })
+   * await myStream.ready
+   *
+   * // ...
+   *
+   * myStream.close()
    * ```
    */
   close() {
@@ -444,14 +474,16 @@ class DynamoDBStream {
    * >
    *
    * stream[Symbol.asyncIterator]() -> asyncIterator AsyncIterator<Record {
-   *   eventID,
+   *   eventID: string,
    *   eventName: 'INSERT'|'MODIFY'|'REMOVE',
    *   eventVersion: string,
-   *   eventSource: string,
+   *   eventSource: 'aws:dynamodb',
    *   awsRegion: string,
    *   dynamodb: {
    *     ApproximateCreationDateTime: Date,
+   *     Keys: DynamoDBJSONObject,
    *     NewImage: DynamoDBJSONObject,
+   *     OldImage: DynamoDBJSONObject,
    *     SequenceNumber: string,
    *     SizeBytes: number,
    *     StreamViewType: 'NEW_AND_OLD_IMAGES'|'NEW_IMAGE'|'OLD_IMAGE'|'KEYS_ONLY',
@@ -459,14 +491,41 @@ class DynamoDBStream {
    * }>
    * ```
    *
-   * Implements the [async iterable protocol](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_async_iterator_and_async_iterable_protocols). Allows for consumption of the DynamoDB stream as an async iterable.
+   * Implements the [async iterable protocol](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_async_iterator_and_async_iterable_protocols) for the Presidium DynamoDBStream client. Allows for consumption of the DynamoDB Stream as an async iterable.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `asyncIterator` - an async iterator of DynamoDB Stream Records.
+   *     * `eventID` - a globally unique identifier that was recorded for the stream record.
+   *     * `eventName` - the type of data modification that was performed on the DynamoDB Table.
+   *     * `eventVersion` - the version number of the stream record format.
+   *     * `eventSource` - the AWS service from which the stream record origintaed.
+   *     * `awsRegion` - the AWS region in which the `GetRecords` request was received.
+   *     * `dynamodb` - the main body of the stream record, containing all of the DynamoDB-specific fields.
+   *       * `ApproximateCreationDateTime` - the approximate date and time when the stream record was created, in ISO 8601 format and rounded down to the closest second.
+   *       * `Keys` - the primary key attribute(s) for the DynamoDB item.
+   *       * `NewImage` - the item in the DynamoDB Table after it was modified.
+   *       * `OldImage` - the item in the DynamoDB Table before it was modified.
+   *       * `SequenceNumber` - the sequence number of the stream record.
+   *       * `SizeBytes` - the size of the stream record in bytes.
+   *       * `StreamViewType` - the type of data from the DynamoDB item that was captured in this stream record.
+   *
+   * `eventName` values:
+   *   * `INSERT` - a new item was added to the DynamoDB Table.
+   *   * `MODIFY` - one or more of an existing item's attributes were modified.
+   *   * `REMOVE` - the item was deleted from the DynamoDB Table.
+   *
+   * `StreamViewType` values:
+   *   * `KEYS_ONLY` - only the key attributes of the modified item are written to the DynamoDB Stream.
+   *   * `NEW_IMAGE` - the entire item after it was modified is written to the DynamoDB Stream.
+   *   * `OLD_IMAGE` - the entire item before it was modified is written to the DynamoDB Stream.
+   *   * `NEW_AND_OLD_IMAGES` - both the entire item before it was modified and the entire item after it was modified is written to the DynamoDB Stream.
    *
    * ```
-   * const awsCreds = {
-   *   accessKeyId: 'my-access-key-id',
-   *   secretAccessKey: 'my-secret-access-key',
-   *   region: 'my-region',
-   * }
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
    *
    * const myTable = new DynamoTable({
    *   name: 'my-table'
@@ -475,7 +534,7 @@ class DynamoDBStream {
    * })
    * await myTable.ready
    *
-   * cons myStream = new DynamoDBStream({
+   * const myStream = new DynamoDBStream({
    *   table: 'my-table',
    *   ...awsCreds,
    * })
@@ -489,28 +548,24 @@ class DynamoDBStream {
    * }
    * ```
    *
-   * Same DynamoDBStream instance [Symbol.asyncIterator] interface may be invoked to produce multiple streams of the same records
+   * The same DynamoDBStream instance `[Symbol.asyncIterator]` interface may be invoked to produce multiple streams of the same records.
    *
    * ```javascript
-   * ;(async () => {
-   *   for await (const record of myStream) {
-   *     console.log(record)
-   *     // { eventID: '...', eventName: '...', dynamodb: {...}, ... }
-   *     // { eventID: '...', eventName: '...', dynamodb: {...}, ... }
-   *     // { eventID: '...', eventName: '...', dynamodb: {...}, ... }
-   *   }
-   * })()
+   * for await (const record of myStream) {
+   *   console.log(record)
+   *   // { eventID: '...', eventName: '...', dynamodb: {...}, ... }
+   *   // { eventID: '...', eventName: '...', dynamodb: {...}, ... }
+   *   // { eventID: '...', eventName: '...', dynamodb: {...}, ... }
+   * }
    *
-   * // records from above and below invokations are duplicated and streamed in parallel
+   * // records from above and below invokations are duplicated and able to be streamed in parallel
    *
-   * ;(async () => {
-   *   for await (const record of myStream) {
-   *     console.log(record)
-   *     // { eventID: '...', eventName: '...', dynamodb: {...}, ... }
-   *     // { eventID: '...', eventName: '...', dynamodb: {...}, ... }
-   *     // { eventID: '...', eventName: '...', dynamodb: {...}, ... }
-   *   }
-   * })()
+   * for await (const record of myStream) {
+   *   console.log(record)
+   *   // { eventID: '...', eventName: '...', dynamodb: {...}, ... }
+   *   // { eventID: '...', eventName: '...', dynamodb: {...}, ... }
+   *   // { eventID: '...', eventName: '...', dynamodb: {...}, ... }
+   * }
    * ```
    */
   async * [Symbol.asyncIterator]() {

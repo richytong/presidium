@@ -276,6 +276,10 @@ class DynamoDBGlobalSecondaryIndex {
    *     * `ReadCapacityUnits` - number of 4KB strong reads per second.
    *     * `WriteCapacityUnits` - number of 1KB writes per second.
    *
+   * Billing Modes:
+   *   * `PAY_PER_REQUEST` - on-demand capacity mode. The AWS account is billed per read and write request.
+   *   * `PROVISIONED` - a capacity mode where the reads (RCUs) and writes (WCUs) are predefined.
+   *
    * ```javascript
    * const awsCreds = await AwsCredentials('my-profile')
    * awsCreds.region = 'us-east-1'
@@ -296,10 +300,6 @@ class DynamoDBGlobalSecondaryIndex {
    *
    * const data = await myTypeTimeGSI.describe()
    * ```
-   *
-   * Billing Modes:
-   *   * `PAY_PER_REQUEST` - on-demand capacity mode. The AWS account is billed per read and write request.
-   *   * `PROVISIONED` - a capacity mode where the reads (RCUs) and writes (WCUs) are predefined.
    */
   async describe() {
     const payload = JSON.stringify({
@@ -363,6 +363,10 @@ class DynamoDBGlobalSecondaryIndex {
    *     * `ReadCapacityUnits` - number of 4KB strong reads per second.
    *     * `WriteCapacityUnits` - number of 1KB writes per second.
    *
+   * Billing Modes:
+   *   * `PAY_PER_REQUEST` - on-demand capacity mode. The AWS account is billed per read and write request.
+   *   * `PROVISIONED` - a capacity mode where the reads (RCUs) and writes (WCUs) are predefined.
+   *
    * ```javascript
    * const awsCreds = await AwsCredentials('my-profile')
    * awsCreds.region = 'us-east-1'
@@ -383,10 +387,6 @@ class DynamoDBGlobalSecondaryIndex {
    *
    * await myTypeTimeGSI.create()
    * ```
-   *
-   * Billing Modes:
-   *   * `PAY_PER_REQUEST` - on-demand capacity mode. The AWS account is billed per read and write request.
-   *   * `PROVISIONED` - a capacity mode where the reads (RCUs) and writes (WCUs) are predefined.
    */
   async create() {
     const tableData = await this.describeTable()

@@ -208,6 +208,12 @@ class Docker {
    *     * `NetworkSettings` - summary of the Docker container's network settings.
    *     * `Mounts` - list of mounts used by the Docker container.
    *     * `Health` - summary of the Docker container's health status.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * const data = await docker.listContainers()
+   * ```
    */
   async listContainers() {
     const response = await this.http.get('/containers/json')
@@ -708,16 +714,6 @@ class Docker {
    *     * `Id` - the ID of the Docker container.
    *     * `Warnings` - warnings encountered when creating the Docker container.
    *
-   * ```javascript
-   * const docker = new Docker()
-   *
-   * const data = await docker.createContainer({
-   *   image: 'node:15-alpine',
-   *   cmd: ['node', '-e', 'console.log(\'Hello World.\')'],
-   *   rm: true,
-   * })
-   * ```
-   *
    * Restart policies:
    *   * `no` - do not restart the Docker container when it exits
    *   * `on-failure` - restart only if container exits with non-zero exit code
@@ -737,6 +733,17 @@ class Docker {
    *   * `npipe` - mounts a named pipe from the host into the Docker container.
    *   * `tmpfs` - create a tmpfs with the given options. The `source` cannot be specified with mount type `tmpfs`.
    *   * `volume` - creates a volume with the given name and options or uses a pre-existing volume with the same name and options. The volume persists when the Docker container is removed.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * const data = await docker.createContainer({
+   *   image: 'node:15-alpine',
+   *   cmd: ['node', '-e', 'console.log(\'Hello World.\')'],
+   *   rm: true,
+   * })
+   * ```
+   *
    */
   async createContainer(options) {
     const response = await this.http.post(`/containers/create?${
@@ -984,21 +991,6 @@ class Docker {
    * Return:
   *   * `dataStream` - a readable stream of the Docker container's `stdout` and/or `stderr`.
    *
-   * ```javascript
-   * const docker = new Docker()
-   *
-   * const dataStream = await docker.runContainer({
-   *   image: 'node:15-alpine',
-   *   cmd: ['node', '-e', 'console.log(\'Hello World.\')'],
-   *   rm: true,
-   * })
-   *
-   * dataStream.pipe(process.stdout) // Hello World.
-   * dataStream.on('end', () => {
-   *   console.log('Run success')
-   * })
-   * ```
-   *
    * Restart policies:
    *   * `no` - do not restart the Docker container when it exits
    *   * `on-failure` - restart only if container exits with non-zero exit code
@@ -1018,6 +1010,22 @@ class Docker {
    *   * `npipe` - mounts a named pipe from the host into the Docker container.
    *   * `tmpfs` - create a tmpfs with the given options. The `source` cannot be specified with mount type `tmpfs`.
    *   * `volume` - creates a volume with the given name and options or uses a pre-existing volume with the same name and options. The volume persists when the Docker container is removed.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * const dataStream = await docker.runContainer({
+   *   image: 'node:15-alpine',
+   *   cmd: ['node', '-e', 'console.log(\'Hello World.\')'],
+   *   rm: true,
+   * })
+   *
+   * dataStream.pipe(process.stdout) // Hello World.
+   * dataStream.on('end', () => {
+   *   console.log('Run success')
+   * })
+   * ```
+   *
    */
   async runContainer(options) {
     const createData = await this.createContainer(options)
@@ -1979,17 +1987,17 @@ class Docker {
    *     * `ServiceStatus` - the status of the Docker service's tasks.
    *     * `JobStatus` - the status of the Docker service when it is one of ReplicatedJob or GlobalJob modes.
    *
-   * ```javascript
-   * const docker = new Docker()
-   *
-   * const data = await docker.listServices()
-   * ```
-   *
    * Available filters:
    *   * `id=<serviceId>`
    *   * `label=<serviceLabel>`
    *   * `mode=<"replicated"|"global">`
    *   * `name=<serviceName>`
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * const data = await docker.listServices()
+   * ```
    *
    * Docker Swarm reference: [https://docs.docker.com/engine/swarm/](https://docs.docker.com/engine/swarm/)
    */
