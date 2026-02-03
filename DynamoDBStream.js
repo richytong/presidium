@@ -37,6 +37,30 @@ const SymbolUpdateShards = Symbol('UpdateShards')
  *   ListStreamsLimit: number,
  * }) -> stream DynamoDBStream
  * ```
+ *
+ * The presidium DynamoDBStream client. Creates the DynamoDB Stream if it doesn't exist.
+ *
+ * DynamoDBStream instances have a `ready` promise that resolves when the DynamoDB Stream is active.
+ *
+ * ```javascript
+ * const awsCreds = await AwsCredentials('my-profile')
+ * awsCreds.region = 'us-east-1'
+ *
+ * const env = process.env.NODE_ENV
+ *
+ * const myTable = new DynamoTable({
+ *   name: `${env}-my-table`,
+ *   key: [{ id: 'string' }],
+ *   ...awsCreds,
+ * })
+ * await myTable.ready
+ *
+ * const myStream = new DynamoDBStream({
+ *   table: `${env}-my-table`,
+ *   ...awsCreds,
+ * })
+ * await myStream.ready
+ * ```
  */
 class DynamoDBStream {
   constructor(options) {
@@ -216,6 +240,52 @@ class DynamoDBStream {
    *   TableStatus: 'CREATING'|'UPDATING'|'DELETING'|'ACTIVE'|'INACCESSIBLE_ENCRYPTION_CREDENTIALS'|'ARCHIVING'|'ARCHIVED'
    * }>
    * ```
+   *
+   * Returns information about the DynamoDB Stream.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `streamData`
+   *     * `StreamEnabled` - whether the DynamoDB Stream is enabled for the DynamoDB Table.
+   *     * `StreamViewType` - determines what information is written to the DynamoDB Stream.
+   *     * `TableStatus` - the current state of the DynamoDB Table to which the DynamoDB Stream belongs.
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const myTable = new DynamoTable({
+   *   name: 'my-table',
+   *   key: [{ id: 'string' }],
+   *   ...awsCreds,
+   * })
+   * await myTable.ready
+   *
+   * const myStream = new DynamoDBStream({
+   *   table: 'my-table',
+   *   ...awsCreds,
+   * })
+   * await myStream.ready
+   *
+   * const data = await myStream.describe()
+   * ```
+   *
+   * `StreamViewType` values:
+   *   * `KEYS_ONLY` - only the key attributes of the modified item are written to the DynamoDB Stream.
+   *   * `NEW_IMAGE` - the entire item after it was modified is written to the DynamoDB Stream.
+   *   * `OLD_IMAGE` - the entire item before it was modified is written to the DynamoDB Stream.
+   *   * `NEW_AND_OLD_IMAGES` - both the entire item before it was modified and the entire item after it was modified is written to the DynamoDB Stream.
+   *
+   * `TableStatus` values:
+   *   * `CREATING` - the DynamoDB Table is being created.
+   *   * `UPDATING` - the DynamoDB Table is being updated.
+   *   * `DELETING` - the DynamoDB Table is being deleted.
+   *   * `ACTIVE` - the DynamoDB Table is ready for use.
+   *   * `INACCESSIBLE_ENCRYPTION_CREDENTIALS` - the AWS KMS key used to encrypt the DynamoDB Table is inaccessible. DynamoDB Table operations may fail. DynamoDB will initiate the table archival process when a DynamoDB Table's AWS KMS key remains inaccessible for more than seven days.
+   *   * `ARCHIVING` - the DynamoDB Table is being archived. Operations are not allowed until archival is complete.
+   *   * `ARCHIVED` - the DynamoDB Table is archived.
    */
   async describe() {
     const payload = JSON.stringify({
@@ -245,6 +315,34 @@ class DynamoDBStream {
    * ```coffeescript [specscript]
    * create() -> data Promise<{}>
    * ```
+   *
+   * Creates the DynamoDB Stream.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `data` - empty object.
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const myTable = new DynamoTable({
+   *   name: 'my-table',
+   *   key: [{ id: 'string' }],
+   *   ...awsCreds,
+   * })
+   * await myTable.ready
+   *
+   * const myStream = new DynamoDBStream({
+   *   table: 'my-table',
+   *   ...awsCreds,
+   *   autoReady: false,
+   * })
+   *
+   * const data = await myStream.create()
+   * ```
    */
   async create() {
     const payload = JSON.stringify({
@@ -271,7 +369,36 @@ class DynamoDBStream {
    *
    * @docs
    * ```coffeescript [specscript]
-   * waitForActive() -> Promise<>
+   * waitForActive() -> promise Promise<>
+   * ```
+   *
+   * Waits for the DynamoDB Stream to be active.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `promise` - a JavaScript promise that resolves when the DynamoDB Global Secondary Index is active.
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const myTable = new DynamoDBTable({
+   *   name: 'my-table'
+   *   key: [{ id: 'string' }],
+   *   ...awsCreds,
+   * })
+   * await myTable.ready
+   *
+   * const myStream = new DynamoDBStream({
+   *   table: 'my-table',
+   *   ...awsCreds,
+   *   autoReady: false,
+   * })
+   *
+   * await myStream.create()
+   * await myStream.waitForActive()
    * ```
    */
   async waitForActive() {
@@ -289,59 +416,6 @@ class DynamoDBStream {
         exists = true
       }
     }
-  }
-
-  /**
-   * @name describeStream
-   *
-   * @docs
-   * ```coffeescript [specscript]
-   * describeStream(options {
-   *   StreamArn: string,
-   *   Limit: number,
-   * }) -> streamData Promise<{
-   *   StreamDescription: {
-   *     KeySchema: [
-   *       { AttributeName: string, KeyType: string },
-   *       { AttributeName: string, KeyType: string },
-   *     ],
-   *     LastEvaluatedShardId: string,
-   *     Shards: Array<{
-   *       ParentShardId: string,
-   *       SequenceNumberRange: {
-   *         EndingSequenceNumber: string,
-   *         StartingSequenceNumber: string,
-   *       },
-   *       ShardId: string,
-   *     }>,
-   *     StreamArn: string,
-   *     StreamLabel: string, # ISO 8601 Date string
-   *     StreamStatus: string,
-   *     StreamViewType: string,
-   *     TableName: string,
-   *   },
-   * }>
-   * ```
-   */
-  async describeStream(options) {
-    const payload = JSON.stringify({
-      StreamArn: options.StreamArn,
-      Limit: options.Limit
-    })
-
-    const response = await this._awsDynamoDBStreamsRequest(
-      'POST',
-      '/',
-      'DescribeStream',
-      payload,
-    )
-
-    if (response.ok) {
-      const data = await Readable.JSON(response)
-      return data
-    }
-
-    throw new AwsError(await Readable.Text(response), response.status)
   }
 
   /**
