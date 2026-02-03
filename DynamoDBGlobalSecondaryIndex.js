@@ -523,7 +523,7 @@ class DynamoDBGlobalSecondaryIndex {
    *     * `Limit` - Maximum number of items (hard limited by the total size of the response).
    *     * `ExclusiveStartKey` - the primary key after which to start reading.
    *     * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
-   *     * `ProjectionExpression` - list of attributes to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
+   *     * `ProjectionExpression` - list of comma-separated attribute names to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
    *     * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
    *
    * Return:
@@ -684,7 +684,7 @@ class DynamoDBGlobalSecondaryIndex {
    *     * `Limit` - Maximum number of items (hard limited by the total size of the response).
    *     * `ExclusiveStartKey` - the primary key after which to start reading.
    *     * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
-   *     * `ProjectionExpression` - list of attributes to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
+   *     * `ProjectionExpression` - list of comma-separated attribute names to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
    *     * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
    *
    * Return:
@@ -833,9 +833,9 @@ class DynamoDBGlobalSecondaryIndex {
    *   * `Values` - DynamoDB JSON values for each variable (prefixed by `:`) of the query.
    *   * `options`
    *     * `BatchLimit` - Maximum number of items to retrieve per `query` call.
-   *     * `Limit` - Maximum number of items (hard limited by the total size of the response).
+   *     * `Limit` - the maximum number of items to return for the [DynamoDB Query](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html) operation. If the processed dataset size exceeds 1MB during the operation, DynamoDB will stop the operation before reaching the maximum number of items specified by `Limit`.
    *     * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
-   *     * `ProjectionExpression` - list of attributes to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
+   *     * `ProjectionExpression` - list of comma-separated attribute names to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
    *     * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
    *
    * Return:
@@ -936,12 +936,12 @@ class DynamoDBGlobalSecondaryIndex {
    *
    * Arguments:
    *   * `keyConditionExpression` - a query on the hash key and/or sort key of the Global Secondary Index.
-   *   * `Values` - DynamoDB JSON values for each variable (prefixed by `:`) of the query.
+   *   * `values` - JSON values for each variable (prefixed by `:`) of the query.
    *   * `options`
    *     * `BatchLimit` - Maximum number of items to retrieve per `query` call.
-   *     * `Limit` - Maximum number of items (hard limited by the total size of the response).
+   *     * `Limit` - the maximum number of items to return for the [DynamoDB Query](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html) operation. If the processed dataset size exceeds 1MB during the operation, DynamoDB will stop the operation before reaching the maximum number of items specified by `Limit`.
    *     * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
-   *     * `ProjectionExpression` - list of attributes to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
+   *     * `ProjectionExpression` - list of comma-separated attribute names to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
    *     * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
    *
    * Return:

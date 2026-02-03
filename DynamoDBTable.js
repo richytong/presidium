@@ -231,6 +231,8 @@ class DynamoDBTable {
    *
    * const data = await myTable.describe()
    * ```
+   *
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async describe() {
     const payload = JSON.stringify({
@@ -279,6 +281,8 @@ class DynamoDBTable {
    *
    * await myTable.create()
    * ```
+   *
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async create() {
     let payload = {
@@ -330,6 +334,8 @@ class DynamoDBTable {
    * await myTable.create()
    * await myTable.waitForActive()
    * ```
+   *
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async waitForActive() {
     const payload = JSON.stringify({
@@ -383,6 +389,8 @@ class DynamoDBTable {
    * await myTable.delete()
    * await myTable.waitForNotExists()
    * ```
+   *
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async waitForNotExists() {
     const payload = JSON.stringify({
@@ -406,7 +414,33 @@ class DynamoDBTable {
    *
    * @docs
    * ```coffeescript [specscript]
-   * closeConnections() -> ()
+   * closeConnections() -> undefined
+   * ```
+   *
+   * Closes all underlying HTTP connections used by the DynamoDB Table.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * undefined
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const env = process.env.NODE_ENV
+   *
+   * const myTable = new DynamoDBTable({
+   *   name: `${env}-my-table`,
+   *   key: [{ id: 'string' }],
+   *   ...awsCreds,
+   * })
+   * await myTable.ready
+   *
+   * // ...
+   *
+   * myTable.closeConnections()
    * ```
    */
   closeConnections() {
@@ -418,14 +452,35 @@ class DynamoDBTable {
    *
    * @docs
    * ```coffeescript [specscript]
-   * delete() -> data Promise<>
+   * module AWSDynamoDBDocs 'https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Types.html'
+   *
+   * delete() -> data Promise<{ TableDescription: AWSDynamoDBDocs.TableDescription }>
    * ```
    *
-   * Delete the DynamoDB Table.
+   * Deletes the DynamoDB Table.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `data`
+   *     * `TableDescription` - [`AWSDynamoDBDocs.TableDescription`](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TableDescription.html) - the DynamoDB Table properties.
    *
    * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const myTable = new DynamoDBTable({
+   *   name: `${env}-my-table`,
+   *   key: [{ id: 'string' }],
+   *   ...awsCreds,
+   *   autoReady: false,
+   * })
+   *
    * await myTable.delete()
    * ```
+   *
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async delete() {
     const payload = JSON.stringify({
@@ -452,31 +507,67 @@ class DynamoDBTable {
    *                 |{ M: Object<DynamoDBJSONObject> }
    * >
    *
-   * putItem(item DynamoDBJSONObject, options {
+   * putItem(Item DynamoDBJSONObject, options {
    *   ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
    *   ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *   ReturnValues: 'NONE'|'ALL_OLD',
    * }) -> data Promise<{
-   *   Attributes: {...},
+   *   Attributes: DynamoDBJSONObject,
    *   ConsumedCapacity: {
    *     CapacityUnits: number,
-   *     TableName: string
-   *   }
+   *     TableName: string,
+   *   },
    * }>
    * ```
    *
-   * Write an item to a DynamoDB Table using DyanmoDB JSON.
+   * Writes an item to a DynamoDB Table using DynamoDB JSON format.
+   *
+   * Arguments:
+   *   * `Item` - the full item in DynamoDB JSON format that will be written to the DynamoDB Table.
+   *   * `options`
+   *     * `ReturnConsumedCapacity` - determines the level of detail about provisioned or on-demand throughput consumption that is returned in the response.
+   *     * `ReturnItemCollectionMetrics` - determines whether item collection metrics will be returned in the response.
+   *     * `ReturnValues` - includes the item attributes in DynamoDB JSON format in the response. The values returned are strongly consistent. There is no additional cost or read capacity units consumed when with requesting a return value aside from the incurred network overhead.
+   *
+   * Return:
+   *   * `data`
+   *     * `Attributes` - the attribute values of the item in DynamoDB JSON format as they appeared before the [DynamoDB PutItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_PutItem.html) operation. Requires `ReturnValues` to be specified as `ALL_OLD`.
+   *     * `ConsumedCapacity` - the capacity units consumed by the [DynamoDB PutItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_PutItem.html) operation. `ConsumedCapacity` is only returned if the `ReturnConsumedCapacity` option is specified.
+   *
+   * `ReturnConsumedCapacity` values:
+   *   * `INDEXES` - the response will include the aggregate consumed capacity (`ConsumedCapacity`) for the operation, together with the consumed capacity (`ConsumedCapacity`) for each table and secondary index that was accessed.
+   *   * `TOTAL` - the response will include only the aggregate consumed capacity (`ConsumedCapacity`) for the operation.
+   *   * `NONE` - no consumed capacity (`ConsumedCapacity`) details will be included in the response.
+   *
+   * `ReturnItemCollectionMetrics` values:
+   *   * `SIZE` - the response will include statistics about item collections, if any.
+   *   * `NONE` - no statistics will be returned in the response.
+   *
+   * `ReturnValues` values for `putItem`:
+   *   * `NONE` - no item attributes will be returned in the response.
+   *   * `ALL_OLD` - if the operation overwrote an item, then the attributes of the full old item is returned.
    *
    * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const env = process.env.NODE_ENV
+   *
+   * const userTable = new DynamoDBTable({
+   *   name: `${env}_user`,
+   *   key: [{ id: 'string' }]
+   *   ...awsCreds,
+   * })
+   * await userTable.ready
+   *
    * await userTable.putItem({
    *   id: { S: '1' },
-   *   name: { S: 'John' },
+   *   name: { S: 'Name' },
    *   age: { N: 32 },
    * })
    * ```
    *
-   * @note
-   * [AWS DynamoDB putItem](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#putItem-property)
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async putItem(Item, options = {}) {
     const payload = JSON.stringify({
@@ -513,18 +604,54 @@ class DynamoDBTable {
    * }>
    * ```
    *
-   * Write an item to a DynamoDB Table using JSON format.
+   * Writes an item to a DynamoDB Table using JSON format.
+   *
+   * Arguments:
+   *   * `item` - the full item in JSON format that will be written to the DynamoDB Table.
+   *   * `options`
+   *     * `ReturnConsumedCapacity` - determines the level of detail about provisioned or on-demand throughput consumption that is returned in the response.
+   *     * `ReturnItemCollectionMetrics` - determines whether item collection metrics will be returned in the response.
+   *     * `ReturnValues` - includes the item attributes in DynamoDB JSON format in the response. The values returned are strongly consistent. There is no additional cost or read capacity units consumed when with requesting a return value aside from the incurred network overhead.
+   *
+   * Return:
+   *   * `data`
+   *     * `AttributesJSON` - the attribute values of the item in JSON format as they appeared before the [DynamoDB PutItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_PutItem.html) operation. Requires `ReturnValues` to be specified as `ALL_OLD`.
+   *     * `ConsumedCapacity` - the capacity units consumed by the [DynamoDB PutItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_PutItem.html) operation. `ConsumedCapacity` is only returned if the `ReturnConsumedCapacity` option is specified.
+   *
+   * `ReturnConsumedCapacity` values:
+   *   * `INDEXES` - the response will include the aggregate consumed capacity (`ConsumedCapacity`) for the operation, together with the consumed capacity (`ConsumedCapacity`) for each table and secondary index that was accessed.
+   *   * `TOTAL` - the response will include only the aggregate consumed capacity (`ConsumedCapacity`) for the operation.
+   *   * `NONE` - no consumed capacity (`ConsumedCapacity`) details will be included in the response.
+   *
+   * `ReturnItemCollectionMetrics` values (`putItemJSON` only):
+   *   * `SIZE` - the response will include statistics about item collections, if any.
+   *   * `NONE` - no statistics will be returned in the response.
+   *
+   * `ReturnValues` values for `putItemJSON`:
+   *   * `NONE` - no item attributes will be returned in the response.
+   *   * `ALL_OLD` - if the operation overwrote an item, then the attributes of the full old item is returned.
    *
    * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const env = process.env.NODE_ENV
+   *
+   * const userTable = new DynamoDBTable({
+   *   name: `${env}_user`,
+   *   key: [{ id: 'string' }]
+   *   ...awsCreds,
+   * })
+   * await userTable.ready
+   *
    * await userTable.putItemJSON({
    *   id: '1',
-   *   name: 'John',
-   *   age: 32
+   *   name: 'Name',
+   *   age: 32,
    * })
    * ```
    *
-   * @note
-   * [AWS DynamoDB putItem](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#putItem-property)
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async putItemJSON(item, options = {}) {
     const payload = JSON.stringify({
@@ -564,19 +691,36 @@ class DynamoDBTable {
    *                 |{ M: Object<DynamoDBJSONObject> }
    * >
    *
-   * getItem(key DynamoDBJSONKey) ->
-   *   data Promise<{ Item: DynamoDBJSONObject }>
+   * getItem(Key DynamoDBJSONKey) -> data Promise<{ Item: DynamoDBJSONObject }>
    * ```
    *
-   * Retrieve an item from a DynamoDB Table using DynamoDB JSON format.
+   * Retrieves an item from a DynamoDB Table using DynamoDB JSON format.
+   *
+   * Arguments:
+   *   * `Key` - the primary key in DynamoDB JSON format of the item to retrieve.
+   *
+   * Return:
+   *   * `data`
+   *     * `Item` - the full item in DynamoDB JSON format.
    *
    * ```javascript
-   * const res = await userTable.getItem({ id: { S: '1' } })
-   * console.log(res) // { Item: { id: { S: '1' }, name: { S: 'John' } } }
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const env = process.env.NODE_ENV
+   *
+   * const userTable = new DynamoDBTable({
+   *   name: `${env}_user`,
+   *   key: [{ id: 'string' }]
+   *   ...awsCreds,
+   * })
+   * await userTable.ready
+   *
+   * const data = await userTable.getItem({ id: { S: '1' } })
+   * console.log(data) // { Item: { id: { S: '1' }, name: { S: 'Name' } } }
    * ```
    *
-   * @note
-   * [AWS DynamoDB getItem](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#getItem-property)
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async getItem(Key) {
     const payload = JSON.stringify({
@@ -611,15 +755,33 @@ class DynamoDBTable {
    * getItemJSON(key JSONKey) -> data Promise<{ ItemJSON: JSONObject }>
    * ```
    *
-   * Retrieve an item from a DynamoDB Table using JSON format.
+   * Retrieves an item from a DynamoDB Table using JSON format.
+   *
+   * Arguments:
+   *   * `key` - the primary key in JSON format of the item to retrieve.
+   *
+   * Return:
+   *   * `data`
+   *     * `ItemJSON` - the full item in JSON format.
    *
    * ```javascript
-   * const user = await userTable.getItemJSON({ id: '1' })
-   * console.log(user) // { id: '1', name: 'John' }
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const env = process.env.NODE_ENV
+   *
+   * const userTable = new DynamoDBTable({
+   *   name: `${env}_user`,
+   *   key: [{ id: 'string' }]
+   *   ...awsCreds,
+   * })
+   * await userTable.ready
+   *
+   * const data = await userTable.getItemJSON({ id: '1' })
+   * console.log(data) // { ItemJSON: { id: '1', name: 'Name' } }
    * ```
    *
-   * @note
-   * [AWS DynamoDB getItem](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#getItem-property)
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async getItemJSON(key) {
     const payload = JSON.stringify({
@@ -663,26 +825,120 @@ class DynamoDBTable {
    *   Key DynamoDBJSONKey,
    *   Updates DynamoDBJSONObject,
    *   options {
-   *     ConditionExpression: string, // 'attribute_exists(username)'
+   *     ConditionExpression: string,
    *     ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
    *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *     ReturnValues: 'NONE'|'ALL_OLD'|'UPDATED_OLD'|'ALL_NEW'|'UPDATED_NEW',
    *   }
-   * ) -> data Promise<{ Attributes: DynamoDBJSONObject }>
+   * ) -> data Promise<{
+   *   Attributes: DynamoDBJSONObject,
+   *   ConsumedCapacity: {
+   *     CapacityUnits: number,
+   *     TableName: string,
+   *   },
+   * }>
    * ```
    *
-   * Update an item in a DynamoDB Table using DynamoDB JSON format.
+   * Updates an item in a DynamoDB Table using DynamoDB JSON format.
+   *
+   * Arguments:
+   *   * `Key` - the primary key in DynamoDB JSON format of the item to update.
+   *   * `Updates` - the item updates in DynamoDB JSON format.
+   *   * `options`
+   *     * `ConditionExpression` - a condition that must be satisfied in order for a conditional update to succeed.
+   *     * `ReturnConsumedCapacity` - determines the level of detail about provisioned or on-demand throughput consumption that is returned in the response.
+   *     * `ReturnValues` - includes the item attributes in DynamoDB JSON format in the response. The values returned are strongly consistent. There is no additional cost or read capacity units consumed when with requesting a return value aside from the incurred network overhead.
+   *
+   * Return:
+   *   * `data`
+   *     * `Attributes` - the attribute values of the item in DynamoDB JSON format.
+   *     * `ConsumedCapacity` - the capacity units consumed by the [DynamoDB UpdateItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html) operation. `ConsumedCapacity` is only returned if the `ReturnConsumedCapacity` option is specified.
+   *
+   * `ReturnConsumedCapacity` values:
+   *   * `INDEXES` - the response will include the aggregate consumed capacity (`ConsumedCapacity`) for the operation, together with the consumed capacity (`ConsumedCapacity`) for each table and secondary index that was accessed.
+   *   * `TOTAL` - the response will include only the aggregate consumed capacity (`ConsumedCapacity`) for the operation.
+   *   * `NONE` - no consumed capacity (`ConsumedCapacity`) details will be included in the response.
+   *
+   * `ReturnValues` values for `updateItem`:
+   *   * `NONE` - no item attributes will be returned in the response.
+   *   * `ALL_OLD` - returns all of the attributes of the item as they appeared before the [DynamoDB UpdateItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html) operation.
+   *   * `UPDATED_OLD` - returns only the updated attributes as they appeared before the [DynamoDB UpdateItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html) operation.
+   *   * `ALL_NEW` - returns all of the attributes of the item as they appear after the [DynamoDB UpdateItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html) operation.
+   *   * `ALL_NEW` - returns only the updated attributes as they appear after the [DynamoDB UpdateItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html) operation.
    *
    * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const env = process.env.NODE_ENV
+   *
+   * const userTable = new DynamoDBTable({
+   *   name: `${env}_user`,
+   *   key: [{ id: 'string' }]
+   *   ...awsCreds,
+   * })
+   * await userTable.ready
+   *
    * await userTable.updateItem({ id: { S: '1' } }, {
-   *   name: { S: 'James' },
+   *   name: { S: 'Name' },
    *   height: { N: 180 },
    *   heightUnits: { S: 'cm' },
    * })
    * ```
    *
-   * @note
-   * [aws-sdk DynamoDB updateItem](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#updateItem-property)
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   *
+   * ### ConditionExpression Syntax
+   * ```sh [DynamoDB_ConditionExpression_Syntax]
+   * <attribute_name> = :<variable_name>
+   * <attribute_name> <> :<variable_name>
+   * <attribute_name> < :<variable_name>
+   * <attribute_name> <= :<variable_name>
+   * <attribute_name> > :<variable_name>
+   * <attribute_name> >= :<variable_name>
+   *
+   * <attribute_name> BETWEEN :<variable_name1> AND :<variable_name2>
+   *
+   * <attribute_name> IN (:<variable_name1>[, :<variable_name2>[, ...]])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name>])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name1>]) = :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <> :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) < :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <= :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) > :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) >= :<variable_name2>
+   *
+   * <expression> AND <expression>
+   *
+   * NOT <expression>
+   *
+   * (<expression>)
+   * ```
+   *
+   * `ConditionExpression` Functions:
+   *   * `attribute_exists(<attribute_name>)` - test if `<attribute_name>` exists.
+   *   * `attribute_not_exists(<attribute_name>)` - test if `<attribute_name>` does not exist.
+   *   * `attribute_type(<attribute_name>, <attribute_type>)` - test if the DynamoDB attribute type of the DynamoDB attribute value of `<attribute_name>` equals `attribute_type`.
+   *   * `contains(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `begins_with(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `size(<attribute_name>)` - returns for evaluation a number that represents the size of the attribute value of `<attribute_name>`
+   *
+   * `ConditionExpression` Logical Operators:
+   *   * `=` - equals.
+   *   * `<>` - does not equal.
+   *   * `<` - less than.
+   *   * `>` - greater than.
+   *   * `<=` - less than or equal to .
+   *   * `>=` - greater than or equal to.
+   *   * `BETWEEN` - between.
+   *   * `IN` - in.
+   *   * `AND` - and.
+   *   * `OR` - or.
+   *   * `NOT` - not.
+   *
+   * `ConditionExpression` reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html)
    */
   async updateItem(Key, Updates, options = {}) {
     const updates = map(Updates, DynamoDBAttributeValueJSON)
@@ -737,17 +993,60 @@ class DynamoDBTable {
    *   key JSONKey,
    *   updates JSONObject,
    *   options {
-   *     ConditionExpression: string, // 'attribute_exists(username)'
+   *     ConditionExpression: string,
    *     ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
    *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *     ReturnValues: 'NONE'|'ALL_OLD'|'UPDATED_OLD'|'ALL_NEW'|'UPDATED_NEW',
    *   }
-   * ) -> data Promise<{ AttributesJSON: JSONObject }>
+   * ) -> data Promise<{
+   *   AttributesJSON: JSONObject,
+   *   ConsumedCapacity: {
+   *     CapacityUnits: number,
+   *     TableName: string,
+   *   },
+   * }>
    * ```
    *
-   * Update an item in a DynamoDB Table. Accepts DynamoDB JSON and JSON formats.
+   * Updates an item in a DynamoDB Table using JSON format.
+   *
+   * Arguments:
+   *   * `key` - the primary key in JSON format of the item to update.
+   *   * `updates` - the item updates in JSON format.
+   *   * `options`
+   *     * `ConditionExpression` - a condition that must be satisfied in order for a conditional update to succeed.
+   *     * `ReturnConsumedCapacity` - determines the level of detail about provisioned or on-demand throughput consumption that is returned in the response.
+   *     * `ReturnValues` - includes the item attributes in DynamoDB JSON format in the response. The values returned are strongly consistent. There is no additional cost or read capacity units consumed when with requesting a return value aside from the incurred network overhead.
+   *
+   * Return:
+   *   * `data`
+   *     * `AttributesJSON` - the attribute values of the item in JSON format.
+   *     * `ConsumedCapacity` - the capacity units consumed by the [DynamoDB UpdateItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html) operation. `ConsumedCapacity` is only returned if the `ReturnConsumedCapacity` option is specified.
+   *
+   * `ReturnConsumedCapacity` values:
+   *   * `INDEXES` - the response will include the aggregate consumed capacity (`ConsumedCapacity`) for the operation, together with the consumed capacity (`ConsumedCapacity`) for each table and secondary index that was accessed.
+   *   * `TOTAL` - the response will include only the aggregate consumed capacity (`ConsumedCapacity`) for the operation.
+   *   * `NONE` - no consumed capacity (`ConsumedCapacity`) details will be included in the response.
+   *
+   * `ReturnValues` values for `updateItemJSON`:
+   *   * `NONE` - no item attributes will be returned in the response.
+   *   * `ALL_OLD` - returns all of the attributes of the item as they appeared before the [DynamoDB UpdateItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html) operation.
+   *   * `UPDATED_OLD` - returns only the updated attributes as they appeared before the [DynamoDB UpdateItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html) operation.
+   *   * `ALL_NEW` - returns all of the attributes of the item as they appear after the [DynamoDB UpdateItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html) operation.
+   *   * `ALL_NEW` - returns only the updated attributes as they appear after the [DynamoDB UpdateItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html) operation.
    *
    * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const env = process.env.NODE_ENV
+   *
+   * const userTable = new DynamoDBTable({
+   *   name: `${env}_user`,
+   *   key: [{ id: 'string' }]
+   *   ...awsCreds,
+   * })
+   * await userTable.ready
+   *
    * await userTable.updateItemJSON({ id: '1' }, {
    *   name: 'Name',
    *   height: 180,
@@ -755,8 +1054,59 @@ class DynamoDBTable {
    * })
    * ```
    *
-   * @note
-   * [aws-sdk DynamoDB updateItem](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#updateItem-property)
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   *
+   * ### ConditionExpression Syntax
+   * ```sh [DynamoDB_ConditionExpression_Syntax]
+   * <attribute_name> = :<variable_name>
+   * <attribute_name> <> :<variable_name>
+   * <attribute_name> < :<variable_name>
+   * <attribute_name> <= :<variable_name>
+   * <attribute_name> > :<variable_name>
+   * <attribute_name> >= :<variable_name>
+   *
+   * <attribute_name> BETWEEN :<variable_name1> AND :<variable_name2>
+   *
+   * <attribute_name> IN (:<variable_name1>[, :<variable_name2>[, ...]])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name>])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name1>]) = :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <> :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) < :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <= :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) > :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) >= :<variable_name2>
+   *
+   * <expression> AND <expression>
+   *
+   * NOT <expression>
+   *
+   * (<expression>)
+   * ```
+   *
+   * `ConditionExpression` Functions:
+   *   * `attribute_exists(<attribute_name>)` - test if `<attribute_name>` exists.
+   *   * `attribute_not_exists(<attribute_name>)` - test if `<attribute_name>` does not exist.
+   *   * `attribute_type(<attribute_name>, <attribute_type>)` - test if the DynamoDB attribute type of the DynamoDB attribute value of `<attribute_name>` equals `attribute_type`.
+   *   * `contains(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `begins_with(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `size(<attribute_name>)` - returns for evaluation a number that represents the size of the attribute value of `<attribute_name>`
+   *
+   * `ConditionExpression` Logical Operators:
+   *   * `=` - equals.
+   *   * `<>` - does not equal.
+   *   * `<` - less than.
+   *   * `>` - greater than.
+   *   * `<=` - less than or equal to .
+   *   * `>=` - greater than or equal to.
+   *   * `BETWEEN` - between.
+   *   * `IN` - in.
+   *   * `AND` - and.
+   *   * `OR` - or.
+   *   * `NOT` - not.
+   *
+   * `ConditionExpression` reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html)
    */
   async updateItemJSON(key, updates, options = {}) {
     const payload = JSON.stringify({
@@ -820,10 +1170,10 @@ class DynamoDBTable {
    * >
    *
    * incrementItem(
-   *   key DynamoDBJSONKey,
-   *   incrementUpdates DynamoDBJSONIncrementObject,
+   *   Key DynamoDBJSONKey,
+   *   IncrementUpdates DynamoDBJSONIncrementObject,
    *   options {
-   *     ConditionExpression: string, // 'attribute_exists(username)'
+   *     ConditionExpression: string,
    *     ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
    *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *     ReturnValues: 'NONE'|'ALL_OLD'|'UPDATED_OLD'|'ALL_NEW'|'UPDATED_NEW',
@@ -831,11 +1181,102 @@ class DynamoDBTable {
    * ) -> data Promise<{ Attributes: DynamoDBJSONObject }>
    * ```
    *
-   * Increment the attributes of an item in a DynamoDB Table. Negative numbers will decrement the attribute of the item. Accepts DynamoDB JSON and JSON formats.
+   * Increments the attributes of an item using DynamoDB JSON syntax. A negative number will decrement the attribute value of an item.
+   *
+   * Arguments:
+   *   * `Key` - the primary key in DynamoDB JSON format of the item to update.
+   *   * `IncrementUpdates` - the item increment updates in DynamoDB JSON format.
+   *   * `options`
+   *     * `ConditionExpression` - a condition that must be satisfied in order for a conditional update to succeed.
+   *     * `ReturnConsumedCapacity` - determines the level of detail about provisioned or on-demand throughput consumption that is returned in the response.
+   *     * `ReturnValues` - includes the item attributes in DynamoDB JSON format in the response. The values returned are strongly consistent. There is no additional cost or read capacity units consumed when with requesting a return value aside from the incurred network overhead.
+   *
+   * Return:
+   *   * `data`
+   *     * `Attributes` - the attribute values of the item in DynamoDB JSON format.
+   *     * `ConsumedCapacity` - the capacity units consumed by the [DynamoDB UpdateItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html) operation. `ConsumedCapacity` is only returned if the `ReturnConsumedCapacity` option is specified.
+   *
+   * `ReturnConsumedCapacity` values:
+   *   * `INDEXES` - the response will include the aggregate consumed capacity (`ConsumedCapacity`) for the operation, together with the consumed capacity (`ConsumedCapacity`) for each table and secondary index that was accessed.
+   *   * `TOTAL` - the response will include only the aggregate consumed capacity (`ConsumedCapacity`) for the operation.
+   *   * `NONE` - no consumed capacity (`ConsumedCapacity`) details will be included in the response.
+   *
+   * `ReturnValues` values for `incrementItem`:
+   *   * `NONE` - no item attributes will be returned in the response.
+   *   * `ALL_OLD` - returns all of the attributes of the item as they appeared before the [DynamoDB UpdateItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html) operation.
+   *   * `UPDATED_OLD` - returns only the updated attributes as they appeared before the [DynamoDB UpdateItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html) operation.
+   *   * `ALL_NEW` - returns all of the attributes of the item as they appear after the [DynamoDB UpdateItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html) operation.
+   *   * `ALL_NEW` - returns only the updated attributes as they appear after the [DynamoDB UpdateItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html) operation.
    *
    * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const env = process.env.NODE_ENV
+   *
+   * const userTable = new DynamoDBTable({
+   *   name: `${env}_user`,
+   *   key: [{ id: 'string' }]
+   *   ...awsCreds,
+   * })
+   * await userTable.ready
+   *
    * await userTable.incrementItem({ id: { S: '1' } }, { age: { N: 1 } })
    * ```
+   *
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   *
+   * ### ConditionExpression Syntax
+   * ```sh [DynamoDB_ConditionExpression_Syntax]
+   * <attribute_name> = :<variable_name>
+   * <attribute_name> <> :<variable_name>
+   * <attribute_name> < :<variable_name>
+   * <attribute_name> <= :<variable_name>
+   * <attribute_name> > :<variable_name>
+   * <attribute_name> >= :<variable_name>
+   *
+   * <attribute_name> BETWEEN :<variable_name1> AND :<variable_name2>
+   *
+   * <attribute_name> IN (:<variable_name1>[, :<variable_name2>[, ...]])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name>])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name1>]) = :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <> :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) < :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <= :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) > :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) >= :<variable_name2>
+   *
+   * <expression> AND <expression>
+   *
+   * NOT <expression>
+   *
+   * (<expression>)
+   * ```
+   *
+   * `ConditionExpression` Functions:
+   *   * `attribute_exists(<attribute_name>)` - test if `<attribute_name>` exists.
+   *   * `attribute_not_exists(<attribute_name>)` - test if `<attribute_name>` does not exist.
+   *   * `attribute_type(<attribute_name>, <attribute_type>)` - test if the DynamoDB attribute type of the DynamoDB attribute value of `<attribute_name>` equals `attribute_type`.
+   *   * `contains(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `begins_with(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `size(<attribute_name>)` - returns for evaluation a number that represents the size of the attribute value of `<attribute_name>`
+   *
+   * `ConditionExpression` Logical Operators:
+   *   * `=` - equals.
+   *   * `<>` - does not equal.
+   *   * `<` - less than.
+   *   * `>` - greater than.
+   *   * `<=` - less than or equal to .
+   *   * `>=` - greater than or equal to.
+   *   * `BETWEEN` - between.
+   *   * `IN` - in.
+   *   * `AND` - and.
+   *   * `OR` - or.
+   *   * `NOT` - not.
+   *
+   * `ConditionExpression` reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html)
    */
   async incrementItem(Key, IncrementUpdates, options = {}) {
     const incrementUpdates = map(IncrementUpdates, DynamoDBAttributeValueJSON)
@@ -892,7 +1333,7 @@ class DynamoDBTable {
    *   key JSONKey,
    *   incrementUpdates JSONIncrementObject,
    *   options {
-   *     ConditionExpression: string, // 'attribute_exists(username)'
+   *     ConditionExpression: string,
    *     ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
    *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *     ReturnValues: 'NONE'|'ALL_OLD'|'UPDATED_OLD'|'ALL_NEW'|'UPDATED_NEW',
@@ -900,11 +1341,102 @@ class DynamoDBTable {
    * ) -> data Promise<{ AttributesJSON: JSONObject }>
    * ```
    *
-   * Increment the attributes of an item in a DynamoDB Table. Negative numbers will decrement the attribute of the item. Accepts DynamoDB JSON and JSON formats.
+   * Increments the attributes of an item using JSON syntax. A negative number will decrement the attribute value of an item.
+   *
+   * Arguments:
+   *   * `key` - the primary key in JSON format of the item to update.
+   *   * `incrementUpdates` - the item increment updates in JSON format.
+   *   * `options`
+   *     * `ConditionExpression` - a condition that must be satisfied in order for a conditional update to succeed.
+   *     * `ReturnConsumedCapacity` - determines the level of detail about provisioned or on-demand throughput consumption that is returned in the response.
+   *     * `ReturnValues` - includes the item attributes in DynamoDB JSON format in the response. The values returned are strongly consistent. There is no additional cost or read capacity units consumed when with requesting a return value aside from the incurred network overhead.
+   *
+   * Return:
+   *   * `data`
+   *     * `AttributesJSON` - the attribute values of the item in JSON format.
+   *     * `ConsumedCapacity` - the capacity units consumed by the [DynamoDB UpdateItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html) operation. `ConsumedCapacity` is only returned if the `ReturnConsumedCapacity` option is specified.
+   *
+   * `ReturnConsumedCapacity` values:
+   *   * `INDEXES` - the response will include the aggregate consumed capacity (`ConsumedCapacity`) for the operation, together with the consumed capacity (`ConsumedCapacity`) for each table and secondary index that was accessed.
+   *   * `TOTAL` - the response will include only the aggregate consumed capacity (`ConsumedCapacity`) for the operation.
+   *   * `NONE` - no consumed capacity (`ConsumedCapacity`) details will be included in the response.
+   *
+   * `ReturnValues` values for `incrementItemJSON`:
+   *   * `NONE` - no item attributes will be returned in the response.
+   *   * `ALL_OLD` - returns all of the attributes of the item as they appeared before the [DynamoDB UpdateItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html) operation.
+   *   * `UPDATED_OLD` - returns only the updated attributes as they appeared before the [DynamoDB UpdateItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html) operation.
+   *   * `ALL_NEW` - returns all of the attributes of the item as they appear after the [DynamoDB UpdateItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html) operation.
+   *   * `ALL_NEW` - returns only the updated attributes as they appear after the [DynamoDB UpdateItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html) operation.
    *
    * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const env = process.env.NODE_ENV
+   *
+   * const userTable = new DynamoDBTable({
+   *   name: `${env}_user`,
+   *   key: [{ id: 'string' }]
+   *   ...awsCreds,
+   * })
+   * await userTable.ready
+   *
    * await userTable.incrementItemJSON({ id: '1' }, { age: 1 })
    * ```
+   *
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   *
+   * ### ConditionExpression Syntax
+   * ```sh [DynamoDB_ConditionExpression_Syntax]
+   * <attribute_name> = :<variable_name>
+   * <attribute_name> <> :<variable_name>
+   * <attribute_name> < :<variable_name>
+   * <attribute_name> <= :<variable_name>
+   * <attribute_name> > :<variable_name>
+   * <attribute_name> >= :<variable_name>
+   *
+   * <attribute_name> BETWEEN :<variable_name1> AND :<variable_name2>
+   *
+   * <attribute_name> IN (:<variable_name1>[, :<variable_name2>[, ...]])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name>])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name1>]) = :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <> :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) < :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <= :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) > :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) >= :<variable_name2>
+   *
+   * <expression> AND <expression>
+   *
+   * NOT <expression>
+   *
+   * (<expression>)
+   * ```
+   *
+   * `ConditionExpression` Functions:
+   *   * `attribute_exists(<attribute_name>)` - test if `<attribute_name>` exists.
+   *   * `attribute_not_exists(<attribute_name>)` - test if `<attribute_name>` does not exist.
+   *   * `attribute_type(<attribute_name>, <attribute_type>)` - test if the DynamoDB attribute type of the DynamoDB attribute value of `<attribute_name>` equals `attribute_type`.
+   *   * `contains(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `begins_with(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `size(<attribute_name>)` - returns for evaluation a number that represents the size of the attribute value of `<attribute_name>`
+   *
+   * `ConditionExpression` Logical Operators:
+   *   * `=` - equals.
+   *   * `<>` - does not equal.
+   *   * `<` - less than.
+   *   * `>` - greater than.
+   *   * `<=` - less than or equal to .
+   *   * `>=` - greater than or equal to.
+   *   * `BETWEEN` - between.
+   *   * `IN` - in.
+   *   * `AND` - and.
+   *   * `OR` - or.
+   *   * `NOT` - not.
+   *
+   * `ConditionExpression` reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html)
    */
   async incrementItemJSON(key, incrementUpdates, options = {}) {
     const payload = JSON.stringify({
@@ -966,20 +1498,65 @@ class DynamoDBTable {
    * >
    *
    * deleteItem(
-   *   key DynamoDBJSONKey,
+   *   Key DynamoDBJSONKey,
    *   options {
    *     ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
    *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *     ReturnValues: 'NONE'|'ALL_OLD',
    *   }
-   * ) -> data Promise<{ Attributes: DynamoDBJSONObject }>
+   * ) -> data Promise<{
+   *   Attributes: DynamoDBJSONObject,
+   *   ConsumedCapacity: {
+   *     CapacityUnits: number,
+   *     TableName: string,
+   *   },
+   * }>
    * ```
    *
-   * Delete an item from a DynamoDB Table using DynamoDB JSON.
+   * Deletes an item from a DynamoDB Table using DynamoDB JSON format.
+   *
+   * Arguments:
+   *   * `Key` - the primary key in DynamoDB JSON format of the item to delete.
+   *   * `options`
+   *     * `ReturnConsumedCapacity` - determines the level of detail about provisioned or on-demand throughput consumption that is returned in the response.
+   *     * `ReturnItemCollectionMetrics` - determines whether item collection metrics will be returned in the response.
+   *     * `ReturnValues` - includes the item attributes in DynamoDB JSON format in the response. The values returned are strongly consistent. There is no additional cost or read capacity units consumed when with requesting a return value aside from the incurred network overhead.
+   *
+   * Return:
+   *   * `data`
+   *     * `Attributes` - the attribute values of the item in DynamoDB JSON format.
+   *     * `ConsumedCapacity` - the capacity units consumed by the [DynamoDB DeleteItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteItem.html) operation. `ConsumedCapacity` is only returned if the `ReturnConsumedCapacity` option is specified.
+   *
+   * `ReturnConsumedCapacity` values:
+   *   * `INDEXES` - the response will include the aggregate consumed capacity (`ConsumedCapacity`) for the operation, together with the consumed capacity (`ConsumedCapacity`) for each table and secondary index that was accessed.
+   *   * `TOTAL` - the response will include only the aggregate consumed capacity (`ConsumedCapacity`) for the operation.
+   *   * `NONE` - no consumed capacity (`ConsumedCapacity`) details will be included in the response.
+   *
+   * `ReturnItemCollectionMetrics` values:
+   *   * `SIZE` - the response will include statistics about item collections, if any.
+   *   * `NONE` - no statistics will be returned in the response.
+   *
+   * `ReturnValues` values for `deleteItem`:
+   *   * `NONE` - no item attributes will be returned in the response.
+   *   * `ALL_OLD` - returns all of the attributes of the item as they appeared before the [DynamoDB UpdateItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html) operation.
    *
    * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const env = process.env.NODE_ENV
+   *
+   * const userTable = new DynamoDBTable({
+   *   name: `${env}_user`,
+   *   key: [{ id: 'string' }]
+   *   ...awsCreds,
+   * })
+   * await userTable.ready
+   *
    * await userTable.deleteItem({ id: { S: '1' } })
    * ```
+   *
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async deleteItem(Key, options) {
     const payload = JSON.stringify({
@@ -1015,14 +1592,59 @@ class DynamoDBTable {
    *     ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *     ReturnValues: 'NONE'|'ALL_OLD',
    *   }
-   * ) -> data Promise<{ AttributesJSON: JSONObject }>
+   * ) -> data Promise<{
+   *   AttributesJSON: JSONObject,
+   *   ConsumedCapacity: {
+   *     CapacityUnits: number,
+   *     TableName: string,
+   *   },
+   * }>
    * ```
    *
-   * Delete an item from a DynamoDB Table using JSON format.
+   * Deletes an item from a DynamoDB Table using JSON format.
+   *
+   * Arguments:
+   *   * `key` - the primary key in JSON format of the item to delete.
+   *   * `options`
+   *     * `ReturnConsumedCapacity` - determines the level of detail about provisioned or on-demand throughput consumption that is returned in the response.
+   *     * `ReturnItemCollectionMetrics` - determines whether item collection metrics will be returned in the response.
+   *     * `ReturnValues` - includes the item attributes in DynamoDB JSON format in the response. The values returned are strongly consistent. There is no additional cost or read capacity units consumed when with requesting a return value aside from the incurred network overhead.
+   *
+   * Return:
+   *   * `data`
+   *     * `AttributesJSON` - the attribute values of the item in JSON format.
+   *     * `ConsumedCapacity` - the capacity units consumed by the [DynamoDB DeleteItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteItem.html) operation. `ConsumedCapacity` is only returned if the `ReturnConsumedCapacity` option is specified.
+   *
+   * `ReturnConsumedCapacity` values:
+   *   * `INDEXES` - the response will include the aggregate consumed capacity (`ConsumedCapacity`) for the operation, together with the consumed capacity (`ConsumedCapacity`) for each table and secondary index that was accessed.
+   *   * `TOTAL` - the response will include only the aggregate consumed capacity (`ConsumedCapacity`) for the operation.
+   *   * `NONE` - no consumed capacity (`ConsumedCapacity`) details will be included in the response.
+   *
+   * `ReturnItemCollectionMetrics` values:
+   *   * `SIZE` - the response will include statistics about item collections, if any.
+   *   * `NONE` - no statistics will be returned in the response.
+   *
+   * `ReturnValues` values for `deleteItemJSON`:
+   *   * `NONE` - no item attributes will be returned in the response.
+   *   * `ALL_OLD` - returns all of the attributes of the item as they appeared before the [DynamoDB UpdateItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html) operation.
    *
    * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const env = process.env.NODE_ENV
+   *
+   * const userTable = new DynamoDBTable({
+   *   name: `${env}_user`,
+   *   key: [{ id: 'string' }]
+   *   ...awsCreds,
+   * })
+   * await userTable.ready
+   *
    * await userTable.deleteItemJSON({ id: '1' })
    * ```
+   *
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async deleteItemJSON(key, options) {
     const payload = JSON.stringify({
@@ -1069,16 +1691,40 @@ class DynamoDBTable {
    *   Items: Array<DynamoDBJSONObject>>
    *   Count: number,
    *   ScannedCount: number,
-   *   LastEvaluatedKey: DynamoDBJSONKey
+   *   LastEvaluatedKey: DynamoDBJSONKey,
    * }>
    * ```
    *
-   * Get an unordered, paginated list of items from a DynamoDB Table.
+   * Returns an unordered, paginated list of items from a DynamoDB Table.
+   *
+   * Arguments:
+   *   * `options`
+   *     * `Limit` - the maximum number of items to return for the [DynamoDB Scan](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html) operation. If the processed dataset size exceeds 1MB during the operation, DynamoDB will stop the operation before reaching the maximum number of items specified by `Limit`.
+   *     * `ExclusiveStartKey` - the primary key of the first item that this operation will evaluate. This field should use the value of the `LastEvaluatedKey` returned from the last `scan` operation.
+   *
+   * Return:
+   *   * `Items` - the list of items in DynamoDB JSON format from the [DynamoDB Scan](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html) operation.
+   *   * `Count` - the number of items in the response.
+   *   * `ScannedCount` - the number of items that were evaluated during the operation, may be greater than or equal to `Count`.
+   *   * `LastEvaluatedKey` - the primary key in DynamoDB JSON format of the last evaluated item of the [DynamoDB Scan](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html) operation in DynamoDB JSON format.
    *
    * ```javascript
-   * const scanResponse = await userTable.scan()
-   * console.log(userItems) // [{ id: { S: '1' }, name: { S: 'John' } }, ...]
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const env = process.env.NODE_ENV
+   *
+   * const userTable = new DynamoDBTable({
+   *   name: `${env}_user`,
+   *   key: [{ id: 'string' }]
+   *   ...awsCreds,
+   * })
+   * await userTable.ready
+   *
+   * const data = await userTable.scan()
    * ```
+   *
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async scan(options = {}) {
     const payload = JSON.stringify({
@@ -1111,10 +1757,37 @@ class DynamoDBTable {
    *
    * scanItemsIterator(options {
    *   BatchLimit: number,
-   * }) -> iter AsyncIterator<DynamoDBJSONObject>
+   * }) -> asyncIterator AsyncIterator<Item DynamoDBJSONObject>
    * ```
    *
-   * Get an async iterator of all items from a DynamoDB Table.
+   * Returns an async iterator of all items in a DynamoDB Table in DynamoDB JSON format.
+   *
+   * Arguments:
+   *   * `BatchLimit` - Max number of items to retrieve per `query` call.
+   *
+   * Return:
+   *   * `asyncIterator` - an async iterator of all items in DynamoDB JSON format in the DynamoDB Table.
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const env = process.env.NODE_ENV
+   *
+   * const userTable = new DynamoDBTable({
+   *   name: `${env}_user`,
+   *   key: [{ id: 'string' }]
+   *   ...awsCreds,
+   * })
+   *
+   * for await (const Item of userTable.scanItemsIterator()) {
+   *   console.log(Item) // { id: { S: '1' }, name: { S: 'Name' } }
+   *                     // { id: { S: '2' }, name: { S: 'Name' } }
+   *                     // ...
+   * }
+   * ```
+   *
+   * AsyncIterator reference: [https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
    */
   async * scanItemsIterator(options = {}) {
     const BatchLimit = options.BatchLimit ?? 1000
@@ -1139,10 +1812,37 @@ class DynamoDBTable {
    *
    * scanItemsIteratorJSON(options {
    *   BatchLimit: number,
-   * }) -> iter AsyncIterator<JSONObject>
+   * }) -> asyncIteratorJSON AsyncIterator<item JSONObject>
    * ```
    *
-   * Get an async iterator of all items from a DynamoDB Table in JSON format.
+   * Returns an async iterator of all items in a DynamoDB Table in JSON format.
+   *
+   * Arguments:
+   *   * `BatchLimit` - Max number of items to retrieve per `query` call.
+   *
+   * Return:
+   *   * `asyncIteratorJSON` - an async iterator of all items in JSON format in the DynamoDB Table.
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const env = process.env.NODE_ENV
+   *
+   * const userTable = new DynamoDBTable({
+   *   name: `${env}_user`,
+   *   key: [{ id: 'string' }]
+   *   ...awsCreds,
+   * })
+   *
+   * for await (const item of userTable.scanItemsIteratorJSON()) {
+   *   console.log(item) // { id: '1', name: 'Name' }
+   *                     // { id: '2', name: 'Name' }
+   *                     // ...
+   * }
+   * ```
+   *
+   * AsyncIterator reference: [https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
    */
   async * scanItemsIteratorJSON(options = {}) {
     const BatchLimit = options.BatchLimit ?? 1000
@@ -1176,25 +1876,53 @@ class DynamoDBTable {
    * >
    *
    * query(
-   *   keyConditionExpression string, // hashKey = :a AND sortKey < :b
+   *   keyConditionExpression string,
    *   Values DynamoDBJSONObject,
    *   options {
    *     Limit: number,
    *     ExclusiveStartKey: DynamoDBJSONKey,
-   *     ScanIndexForward: boolean, // default true for ASC
-   *     ProjectionExpression: string, // 'fieldA,fieldB,fieldC'
-   *     FilterExpression: string, // 'fieldA >= :someValue'
-   *     ConsistentRead: boolean // true to perform a strongly consistent read (eventually consistent by default)
+   *     ScanIndexForward: boolean, # defaults to true for ASC
+   *     ProjectionExpression: string, # 'fieldA,fieldB,fieldC'
+   *     FilterExpression: string,
+   *     ConsistentRead: boolean,
    *   },
-   * ) -> data Promise<{ Items: Array<DynamoDBJSONObject> }>
+   * ) -> data Promise<{
+   *   Items: Array<DynamoDBJSONObject>,
+   *   LastEvaluatedKey: DynamoDBJSONKey,
+   * }>
    * ```
    *
    * Query a DynamoDB Table using DynamoDB JSON format.
    *
    * Use the hash and sort keys as query parameters and to construct the key condition expression. The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
    *
+   * Arguments:
+   *   * `keyConditionExpression` - a query on the hash key and/or sort key of the DynamoDB Table.
+   *   * `Values` - DynamoDB JSON values for each variable (prefixed by `:`) of the query.
+   *   * `options`
+   *     * `Limit` - the maximum number of items to return for the [DynamoDB Query](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html) operation. If the processed dataset size exceeds 1MB during the operation, DynamoDB will stop the operation before reaching the maximum number of items specified by `Limit`.
+   *     * `ExclusiveStartKey` - Key after which to start reading
+   *     * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
+   *     * `ProjectionExpression` - list of comma-separated attribute names to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
+   *     * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
+   *     * `ConsistentRead` - whether to perform a strongly consistent read (eventually consistent by default). Consumes more RCUs.
+   *
+   * Return:
+   *   * `data`
+   *     * `Items` - the items in DynamoDB JSON format returned from the [DynamoDB Query](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html) operation.
+   *     * `LastEvaluatedKey` - the primary key of the item in DynamoDB JSON format where the query stopped.
+   *
    * ```javascript
-   * // userVersionTable has hashKey `id` and sortKey `version`
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const env = process.env.NODE_ENV
+   *
+   * const userVersionTable = new DynamoDBTable({
+   *   name: `${env}_user_version`,
+   *   key: [{ id: 'string' }, { version: 'string' }]
+   *   ...awsCreds,
+   * })
    *
    * const data = await userVersionTable.query(
    *   'id = :id AND version > :version',
@@ -1208,17 +1936,12 @@ class DynamoDBTable {
    * //     { id: { S: '1' }, version: { N: '3' } },
    * //     { id: { S: '1' }, version: { N: '2' } },
    * //     // ...
-   * //   ]
+   * //   ],
+   * //   LastEvaluatedKey: { id: { S: '51' }, version: { N: '121' } },
    * // }
    * ```
    *
-   * Options:
-   *   * `Limit` - Maximum number of items (hard limited by the total size of the response).
-   *   * `ExclusiveStartKey` - Key after which to start reading
-   *   * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
-   *   * `ProjectionExpression` - list of attributes to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
-   *   * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
-   *   * `ConsistentRead` - true to perform a strongly consistent read (eventually consistent by default). Consumes more RCUs.
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async query(keyConditionExpression, Values, options = {}) {
     const values = map(Values, DynamoDBAttributeValueJSON)
@@ -1304,49 +2027,72 @@ class DynamoDBTable {
    * type JSONObject = Object<string|number|Buffer|JSONArray|JSONObject>
    *
    * queryJSON(
-   *   keyConditionExpression string, // hashKey = :a AND sortKey < :b
+   *   keyConditionExpression string,
    *   values JSONObject,
    *   options {
    *     Limit: number,
    *     ExclusiveStartKey: DynamoDBJSONKey,
-   *     ScanIndexForward: boolean, // default true for ASC
-   *     ProjectionExpression: string, // 'fieldA,fieldB,fieldC'
-   *     FilterExpression: string, // 'fieldA >= :someValue'
-   *     ConsistentRead: boolean // true to perform a strongly consistent read (eventually consistent by default)
+   *     ScanIndexForward: boolean, # defaults to true for ASC
+   *     ProjectionExpression: string, # 'fieldA,fieldB,fieldC'
+   *     FilterExpression: string,
+   *     ConsistentRead: boolean,
    *   },
-   * ) -> Promise<{ ItemsJSON: Array<JSONObject> }>
+   * ) -> Promise<{
+   *   ItemsJSON: Array<JSONObject>,
+   *   LastEvaluatedKey: DynamoDBJSONKey,
+   * }>
    * ```
    *
    * Query a DynamoDB Table using JSON format.
    *
    * Use the hash and sort keys as query parameters and to construct the key condition expression. The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
    *
+   * Arguments:
+   *   * `keyConditionExpression` - a query on the hash key and/or sort key of the DynamoDB Table.
+   *   * `values` - JSON values for each variable (prefixed by `:`) of the query.
+   *   * `options`
+   *     * `Limit` - the maximum number of items to return for the [DynamoDB Query](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html) operation. If the processed dataset size exceeds 1MB during the operation, DynamoDB will stop the operation before reaching the maximum number of items specified by `Limit`.
+   *     * `ExclusiveStartKey` - Key after which to start reading
+   *     * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
+   *     * `ProjectionExpression` - list of comma-separated attribute names to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
+   *     * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
+   *     * `ConsistentRead` - whether to perform a strongly consistent read (eventually consistent by default). Consumes more RCUs.
+   *
+   * Return:
+   *   * `data`
+   *     * `ItemsJSON` - the items in JSON format returned from the [DynamoDB Query](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html) operation.
+   *     * `LastEvaluatedKey` - the primary key of the item in DynamoDB JSON format where the query stopped.
+   *
    * ```javascript
-   * // userVersionTable has hashKey `id` and sortKey `version`
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const env = process.env.NODE_ENV
+   *
+   * const userVersionTable = new DynamoDBTable({
+   *   name: `${env}_user_version`,
+   *   key: [{ id: 'string' }, { version: 'string' }]
+   *   ...awsCreds,
+   * })
    *
    * const data = await userVersionTable.queryJSON(
    *   'id = :id AND version > :version',
-   *   { id: '1', version: 0 },
+   *   { id: { S: '1' }, version: { N: '0' } },
    *   { ScanIndexForward: false },
    * )
    *
    * console.log(data)
    * // {
-   * //   items: [
-   * //     { id: '1', version: 3 },
-   * //     { id: '1', version: 2 },
+   * //   ItemsJSON: [
+   * //     { id: '1', version: '3' },
+   * //     { id: '1', version: '2' },
    * //     // ...
-   * //   ]
+   * //   ],
+   * //   LastEvaluatedKey: { id: { S: '51' }, version: { N: '121' } },
    * // }
    * ```
    *
-   * Options:
-   *   * `Limit` - Maximum number of items (hard limited by the total size of the response).
-   *   * `ExclusiveStartKey` - Key after which to start reading
-   *   * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
-   *   * `ProjectionExpression` - list of attributes to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
-   *   * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
-   *   * `ConsistentRead` - true to perform a strongly consistent read (eventually consistent by default). Consumes more RCUs.
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async queryJSON(keyConditionExpression, values, options = {}) {
     const keyConditionStatements = keyConditionExpression.trim().split(/\s+AND\s+/)
@@ -1441,42 +2187,59 @@ class DynamoDBTable {
    *   options {
    *     BatchLimit: number,
    *     Limit: number,
-   *     ScanIndexForward: boolean, // default true for ASC
-   *     ProjectionExpression: string, // 'fieldA,fieldB,fieldC'
-   *     FilterExpression: string, // 'fieldA >= :someValue'
+   *     ScanIndexForward: boolean, # defaults to true for ASC
+   *     ProjectionExpression: string, # 'fieldA,fieldB,fieldC'
+   *     FilterExpression: string,
+   *     ConsistentRead: boolean,
    *   }
-   * ) -> AsyncIterator<DynamoDBJSONObject>
+   * ) -> asyncIterator AsyncIterator<Item DynamoDBJSONObject>
    * ```
    *
-   * Get an `AsyncIterator` of all items represented by a query on a DynamoDB Table in DynamoDB JSON format.
+   * Returns an async iterator of all items represented by a query on a DynamoDB Table in DynamoDB JSON format.
    *
    * The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
    *
-   * ```javascript
-   * // userVersionTable has hashKey `id` and sortKey `version`
+   * Arguments:
+   *   * `keyConditionExpression` - a query on the hash key and/or sort key of the Global Secondary Index.
+   *   * `Values` - DynamoDB JSON values for each variable (prefixed by `:`) of the query.
+   *   * `options`
+   *     * `BatchLimit` - Maximum number of items to retrieve per `query` call.
+   *     * `Limit` - the maximum number of items to return for the [DynamoDB Query](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html) operation. If the processed dataset size exceeds 1MB during the operation, DynamoDB will stop the operation before reaching the maximum number of items specified by `Limit`.
+   *     * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
+   *     * `ProjectionExpression` - list of comma-separated attribute names to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
+   *     * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
+   *     * `ConsistentRead` - whether to perform a strongly consistent read (eventually consistent by default). Consumes more RCUs.
    *
-   * const iter = userVersionTable.queryItemsIterator(
+   * Return:
+   *   * `asyncIterator` - an async iterator of all items in DynamoDB JSON format represented by the query on the DynamoDB Table.
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const env = process.env.NODE_ENV
+   *
+   * const userVersionTable = new DynamoDBTable({
+   *   name: `${env}_user_version`,
+   *   key: [{ id: 'string' }, { version: 'string' }]
+   *   ...awsCreds,
+   * })
+   *
+   * const iter = await userVersionTable.queryItemsIterator(
    *   'id = :id AND version > :version',
-   *   { id: '1', version: 0 },
-   *   { ScanIndexForward: true },
+   *   { id: { S: '1' }, version: { N: '0' } },
+   *   { ScanIndexForward: false },
    * )
    *
    * for await (const item of iter) {
-   *   console.log(item)
-   *   // { id: { S: '1' }, version: { N: '1' } }
-   *   // { id: { S: '1' }, version: { N: '2' } }
-   *   // { id: { S: '1' }, version: { N: '3' } }
-   *   // ...
+   *   console.log(Item) // { id: { S: '1' }, version: { S: '1' }, name: { S: 'Name' } }
+   *                     // { id: { S: '1' }, version: { S: '2' }, name: { S: 'Name' } }
+   *                     // ...
    * }
    * ```
    *
-   * Options:
-   *   * `BatchLimit` - Max number of items to retrieve per `query` call.
-   *   * `Limit` - Maximum number of items (hard limited by the total size of the response).
-   *   * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
-   *   * `ProjectionExpression` - list of attributes to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
-   *   * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
-   *   * `ConsistentRead` - true to perform a strongly consistent read (eventually consistent by default). Consumes more RCUs.
+   * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+   *
    */
   async * queryItemsIterator(keyConditionExpression, Values, options = {}) {
     const BatchLimit = options.BatchLimit ?? 1000
@@ -1526,31 +2289,55 @@ class DynamoDBTable {
    *   options {
    *     BatchLimit: number,
    *     Limit: number,
-   *     ScanIndexForward: boolean // default true for ASC
-   *     ProjectionExpression: string, // 'fieldA,fieldB,fieldC'
-   *     FilterExpression: string, // 'fieldA >= :someValue'
+   *     ScanIndexForward: boolean, # defaults to true for ASC
+   *     ProjectionExpression: string, # 'fieldA,fieldB,fieldC'
+   *     FilterExpression: string,
+   *     ConsistentRead: boolean,
    *   }
-   * ) -> AsyncIterator<JSONObject>
+   * ) -> asyncIteratorJSON AsyncIterator<ItemJSON JSONObject>
    * ```
    *
-   * Get an `AsyncIterator` of all items represented by a query on a DynamoDB Table in JSON format.
+   * Returns an async iterator of all items represented by a query on a DynamoDB Table in JSON format.
    *
    * The key condition expression is a SQL-like query language comprised of the table's hashKey and sortKey, e.g. `myHashKey = :a AND mySortKey < :b`. Read more about [key condition expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
    *
+   * Arguments:
+   *   * `keyConditionExpression` - a query on the hash key and/or sort key of the Global Secondary Index.
+   *   * `values` - JSON values for each variable (prefixed by `:`) of the query.
+   *   * `options`
+   *     * `BatchLimit` - Maximum number of items to retrieve per `query` call.
+   *     * `Limit` - the maximum number of items to return for the [DynamoDB Query](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html) operation. If the processed dataset size exceeds 1MB during the operation, DynamoDB will stop the operation before reaching the maximum number of items specified by `Limit`.
+   *     * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
+   *     * `ProjectionExpression` - list of comma-separated attribute names to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
+   *     * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
+   *     * `ConsistentRead` - whether to perform a strongly consistent read (eventually consistent by default). Consumes more RCUs.
+   *
+   * Return:
+   *   * `asyncIteratorJSON` - an async iterator of all items in JSON format represented by the query on the DynamoDB Table.
+   *
    * ```javascript
-   * // userVersionTable has hashKey `id` and sortKey `version`
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const env = process.env.NODE_ENV
+   *
+   * const userVersionTable = new DynamoDBTable({
+   *   name: `${env}_user_version`,
+   *   key: [{ id: 'string' }, { version: 'string' }]
+   *   ...awsCreds,
+   * })
    *
    * const iter = userVersionTable.queryItemsIteratorJSON(
-   *   'id = :id AND version > --> :version',
+   *   'id = :id AND version > :version',
    *   { id: '1', version: 0 },
    *   { ScanIndexForward: true },
    * )
    *
    * for await (const item of iter) {
    *   console.log(item)
-   *   // { id: '1', version: 1 }
-   *   // { id: '1', version: 2 }
-   *   // { id: '1', version: 3 }
+   *   // { id: '1', version: '1' }
+   *   // { id: '1', version: '2' }
+   *   // { id: '1', version: '3' }
    *   // ...
    * }
    * ```
@@ -1559,7 +2346,7 @@ class DynamoDBTable {
    *   * `BatchLimit` - Max number of items to retrieve per `query` call.
    *   * `Limit` - Maximum number of items (hard limited by the total size of the response).
    *   * `ScanIndexForward` - if `true`, returned items are sorted in ascending order. If `false` returned items are sorted in descending order. Defaults to `true`.
-   *   * `ProjectionExpression` - list of attributes to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
+   *   * `ProjectionExpression` - list of comma-separated attribute names to be returned for each item in query result, e.g. `fieldA,fieldB,fieldC`.
    *   * `FilterExpression` - filter queried results by this expression, e.g. `fieldA >= :someValue`.
    *   * `ConsistentRead` - true to perform a strongly consistent read (eventually consistent by default). Consumes more RCUs.
    */

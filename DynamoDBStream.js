@@ -52,6 +52,7 @@ const SymbolUpdateShards = Symbol('UpdateShards')
  *     * `autoReady` - whether to automatically create the DynamoDB Stream if it doesn't exist. Defaults to `true`.
  *     * `StreamViewType` - determines what information is written to the DynamoDB Stream.
  *     * `ShardIteratorType` - determines how the shard iterator is used to start reading stream records from a shard of the stream. A shard is a replica of a stream for enhanced throughput purposes.
+ *     * `JSON` - replaces `NewImage` in DynamoDB JSON format with `NewImageJSON` in JSON format and `OldImage` in DynamoDB JSON format with `OldImageJSON` in JSON format for all stream records.
  *
  * `StreamViewType` values:
  *   * `KEYS_ONLY` - only the key attributes of the modified item are written to the DynamoDB Stream.
