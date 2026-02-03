@@ -199,7 +199,7 @@ class DynamoDBGlobalSecondaryIndex {
    *   * (none)
    *
    * Return:
-   *   * `Table` - `AWSDynamoDBDocs.TableDescription` - the DynamoDB Table properties.
+   *   * `Table` - [`AWSDynamoDBDocs.TableDescription`](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TableDescription.html) - the DynamoDB Table properties.
    *
    * ```javascript
    * const awsCreds = await AwsCredentials('my-profile')
@@ -434,8 +434,6 @@ class DynamoDBGlobalSecondaryIndex {
    * ```
    *
    * Waits for the DynamoDB Global Secondary Index to be active.
-   *
-   * Returns 
    *
    * Arguments:
    *   * (none)
