@@ -41,6 +41,7 @@ const createFilterExpression = require('./internal/createFilterExpression')
  *   secretAccessKey: string,
  *   region: string,
  *   endpoint: string,
+ *   autoReady: boolean,
  *   BillingMode: 'PAY_PER_REQUEST'|'PROVISIONED',
  * }) -> table DynamoDBTable
  * ```
@@ -49,12 +50,32 @@ const createFilterExpression = require('./internal/createFilterExpression')
  *
  * DynamoDBTable instances have a `ready` promise that resolves when the table is active.
  *
+ * Arguments:
+ *   * `options`
+ *     * `name` - the name of the DynamoDB Table.
+ *     * `key` - the primary key of the DynamoDB Table.
+ *     * `accessKeyId` - the AWS access key id.
+ *     * `secretAccessKey` - the AWS secret access key.
+ *     * `region` - the AWS region.
+ *     * `autoReady` - whether to automatically create the DynamoDB Table if it doesn't exist. Defaults to `true`.
+ *     * `BillingMode` - a mode that controls how read and write throughput is billed and how DynamoDB manages capacity for the DynamoDB Table.
+ *
+ * Return:
+ *   * `table` - a DynamoDBTable instance.
+ *
+ * `BillingModes` values:
+ *   * `PAY_PER_REQUEST` - on-demand capacity mode. The AWS account is billed per read and write request.
+ *   * `PROVISIONED` - a capacity mode where the reads (RCUs) and writes (WCUs) are predefined.
+ *
  * ```javascript
+ * const awsCreds = await AwsCredentials('my-profile')
+ * awsCreds.region = 'us-east-1'
+ *
  * // local testing
  * const myLocalTable = new DynamoDBTable({
  *   name: 'my-local-table',
  *   key: [{ id: 'string' }],
- *   endpoint: 'http://localhost:8000/',
+ *   ...awsCreds,
  * })
  * await myLocalTable.ready
  *
@@ -62,15 +83,12 @@ const createFilterExpression = require('./internal/createFilterExpression')
  * const myProductionTable = new DynamoDBTable({
  *   name: 'my-production-table',
  *   key: [{ id: 'string' }],
- *   accessKeyId: 'my-access-key-id',
- *   secretAccessKey: 'my-secret-access-key',
- *   region: 'my-region',
+ *   ...awsCreds,
  * })
  * await myProductionTable.ready
  * ```
  *
- * @note
- * [AWS DynamoDB Docs](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html)
+ * DynamoDB reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
  */
 class DynamoDBTable {
   constructor(options) {
@@ -184,7 +202,34 @@ class DynamoDBTable {
    *
    * @docs
    * ```coffeescript [specscript]
-   * describe() -> data Promise<>
+   * module AWSDynamoDBDocs 'https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Types.html'
+   *
+   * describe() -> data Promise<{ Table: AWSDynamoDBDocs.TableDescription }>
+   * ```
+   *
+   * Returns information about the DynamoDB Table.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `data`
+   *     * `Table` - [`AWSDynamoDBDocs.TableDescription`](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TableDescription.html) - the DynamoDB Table properties.
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const env = process.env.NODE_ENV
+   *
+   * const myTable = new DynamoDBTable({
+   *   name: `${env}-my-table`,
+   *   key: [{ id: 'string' }],
+   *   ...awsCreds,
+   * })
+   * await myTable.ready
+   *
+   * const data = await myTable.describe()
    * ```
    */
   async describe() {
@@ -205,7 +250,34 @@ class DynamoDBTable {
    *
    * @docs
    * ```coffeescript [specscript]
-   * create() -> data Promise<>
+   * module AWSDynamoDBDocs 'https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Types.html'
+   *
+   * create() -> data Promise<{ TableDescription: AWSDynamoDBDocs.TableDescription }>
+   * ```
+   *
+   * Creates the DynamoDB Table.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `data`
+   *     * `TableDescription` - [`AWSDynamoDBDocs.TableDescription`](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TableDescription.html) - the DynamoDB Table properties.
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const env = process.env.NODE_ENV
+   *
+   * const myTable = new DynamoDBTable({
+   *   name: `${env}-my-table`,
+   *   key: [{ id: 'string' }],
+   *   ...awsCreds,
+   *   autoReady: false,
+   * })
+   *
+   * await myTable.create()
    * ```
    */
   async create() {
@@ -233,7 +305,30 @@ class DynamoDBTable {
    *
    * @docs
    * ```coffeescript [specscript]
-   * waitForActive() -> data Promise<>
+   * waitForActive() -> promise Promise<>
+   * ```
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `promise` - a JavaScript promise that resolves when the DynamoDB Table is active.
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const env = process.env.NODE_ENV
+   *
+   * const myTable = new DynamoDBTable({
+   *   name: `${env}-my-table`,
+   *   key: [{ id: 'string' }],
+   *   ...awsCreds,
+   *   autoReady: false,
+   * })
+   *
+   * await myTable.create()
+   * await myTable.waitForActive()
    * ```
    */
   async waitForActive() {
@@ -263,7 +358,30 @@ class DynamoDBTable {
    *
    * @docs
    * ```coffeescript [specscript]
-   * waitForNotExists() -> data Promise<>
+   * waitForNotExists() -> promise Promise<>
+   * ```
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `promise` - a JavaScript promise that resolves when the DynamoDB Table is deleted.
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const env = process.env.NODE_ENV
+   *
+   * const myTable = new DynamoDBTable({
+   *   name: `${env}-my-table`,
+   *   key: [{ id: 'string' }],
+   *   ...awsCreds,
+   *   autoReady: false,
+   * })
+   *
+   * await myTable.delete()
+   * await myTable.waitForNotExists()
    * ```
    */
   async waitForNotExists() {

@@ -28,19 +28,43 @@ const SymbolUpdateShards = Symbol('UpdateShards')
  *   accessKeyId: string,
  *   secretAccessKey: string,
  *   region: string,
- *   endpoint: string,
+ *   autoReady: boolean,
  *   StreamViewType: 'NEW_AND_OLD_IMAGES'|'NEW_IMAGE'|'OLD_IMAGE'|'KEYS_ONLY',
  *   ShardIteratorType: 'TRIM_HORIZON'|'LATEST',
  *   GetRecordsLimit: number,
  *   GetRecordsInterval: number,
  *   ShardUpdatePeriod: number,
  *   ListStreamsLimit: number,
+ *   JSON: boolean,
  * }) -> stream DynamoDBStream
  * ```
  *
  * The presidium DynamoDBStream client. Creates the DynamoDB Stream if it doesn't exist.
  *
  * DynamoDBStream instances have a `ready` promise that resolves when the DynamoDB Stream is active.
+ *
+ * Arguments:
+ *   * `options`
+ *     * `table` - the name of the DynamoDB Table to which the DynamoDB Stream belongs.
+ *     * `accessKeyId` - the AWS access key id.
+ *     * `secretAccessKey` - the AWS secret access key.
+ *     * `region` - the AWS region.
+ *     * `autoReady` - whether to automatically create the DynamoDB Stream if it doesn't exist. Defaults to `true`.
+ *     * `StreamViewType` - determines what information is written to the DynamoDB Stream.
+ *     * `ShardIteratorType` - determines how the shard iterator is used to start reading stream records from a shard of the stream. A shard is a replica of a stream for enhanced throughput purposes.
+ *
+ * `StreamViewType` values:
+ *   * `KEYS_ONLY` - only the key attributes of the modified item are written to the DynamoDB Stream.
+ *   * `NEW_IMAGE` - the entire item after it was modified is written to the DynamoDB Stream.
+ *   * `OLD_IMAGE` - the entire item before it was modified is written to the DynamoDB Stream.
+ *   * `NEW_AND_OLD_IMAGES` - both the entire item before it was modified and the entire item after it was modified is written to the DynamoDB Stream.
+ *
+ * `ShardIteratorType` values:
+ *   * `TRIM_HORIZON` - start reading at the last (untrimmed) stream record, which is the oldest record in the stream shard. In DynamoDB Streams, there is a 24 hour limit on data retention. Stream records older than this limit are subject to removal (trimming) from the DynamoDB Stream.
+ *   * `LATEST` - start reading just after the most recent stream record in the stream shard, so that the most recent data in the shard is always read.
+ *
+ * Return:
+ *   * `stream` - a DynamoDBStream instance.
  *
  * ```javascript
  * const awsCreds = await AwsCredentials('my-profile')
@@ -61,6 +85,8 @@ const SymbolUpdateShards = Symbol('UpdateShards')
  * })
  * await myStream.ready
  * ```
+ *
+ * DynamoDB Streams reference: [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html)
  */
 class DynamoDBStream {
   constructor(options) {
@@ -252,6 +278,21 @@ class DynamoDBStream {
    *     * `StreamViewType` - determines what information is written to the DynamoDB Stream.
    *     * `TableStatus` - the current state of the DynamoDB Table to which the DynamoDB Stream belongs.
    *
+   * `StreamViewType` values:
+   *   * `KEYS_ONLY` - only the key attributes of the modified item are written to the DynamoDB Stream.
+   *   * `NEW_IMAGE` - the entire item after it was modified is written to the DynamoDB Stream.
+   *   * `OLD_IMAGE` - the entire item before it was modified is written to the DynamoDB Stream.
+   *   * `NEW_AND_OLD_IMAGES` - both the entire item before it was modified and the entire item after it was modified is written to the DynamoDB Stream.
+   *
+   * `TableStatus` values:
+   *   * `CREATING` - the DynamoDB Table is being created.
+   *   * `UPDATING` - the DynamoDB Table is being updated.
+   *   * `DELETING` - the DynamoDB Table is being deleted.
+   *   * `ACTIVE` - the DynamoDB Table is ready for use.
+   *   * `INACCESSIBLE_ENCRYPTION_CREDENTIALS` - the AWS KMS key used to encrypt the DynamoDB Table is inaccessible. DynamoDB Table operations may fail. DynamoDB will initiate the table archival process when a DynamoDB Table's AWS KMS key remains inaccessible for more than seven days.
+   *   * `ARCHIVING` - the DynamoDB Table is being archived. Operations are not allowed until archival is complete.
+   *   * `ARCHIVED` - the DynamoDB Table is archived.
+   *
    * ```javascript
    * const awsCreds = await AwsCredentials('my-profile')
    * awsCreds.region = 'us-east-1'
@@ -272,20 +313,6 @@ class DynamoDBStream {
    * const data = await myStream.describe()
    * ```
    *
-   * `StreamViewType` values:
-   *   * `KEYS_ONLY` - only the key attributes of the modified item are written to the DynamoDB Stream.
-   *   * `NEW_IMAGE` - the entire item after it was modified is written to the DynamoDB Stream.
-   *   * `OLD_IMAGE` - the entire item before it was modified is written to the DynamoDB Stream.
-   *   * `NEW_AND_OLD_IMAGES` - both the entire item before it was modified and the entire item after it was modified is written to the DynamoDB Stream.
-   *
-   * `TableStatus` values:
-   *   * `CREATING` - the DynamoDB Table is being created.
-   *   * `UPDATING` - the DynamoDB Table is being updated.
-   *   * `DELETING` - the DynamoDB Table is being deleted.
-   *   * `ACTIVE` - the DynamoDB Table is ready for use.
-   *   * `INACCESSIBLE_ENCRYPTION_CREDENTIALS` - the AWS KMS key used to encrypt the DynamoDB Table is inaccessible. DynamoDB Table operations may fail. DynamoDB will initiate the table archival process when a DynamoDB Table's AWS KMS key remains inaccessible for more than seven days.
-   *   * `ARCHIVING` - the DynamoDB Table is being archived. Operations are not allowed until archival is complete.
-   *   * `ARCHIVED` - the DynamoDB Table is archived.
    */
   async describe() {
     const payload = JSON.stringify({
@@ -523,7 +550,7 @@ class DynamoDBStream {
    *   * `OLD_IMAGE` - the entire item before it was modified is written to the DynamoDB Stream.
    *   * `NEW_AND_OLD_IMAGES` - both the entire item before it was modified and the entire item after it was modified is written to the DynamoDB Stream.
    *
-   * ```
+   * ```javascript
    * const awsCreds = await AwsCredentials('my-profile')
    * awsCreds.region = 'us-east-1'
    *
