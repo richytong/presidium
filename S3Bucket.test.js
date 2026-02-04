@@ -111,7 +111,7 @@ const test1 = new Test('S3Bucket', async function integration1() {
     await testBucket.deleteObjects([{ Key: 'b', VersionId: '0' }])
     b = await testBucket.getObject('b')
     assert.equal(b.Body.toString('utf8'), '{"id":"b"}')
-    await testBucket.deleteObjects(['b']),
+    await testBucket.deleteObjects(['b'])
     await assert.rejects(
       testBucket.getObject('b'),
       { name: 'NoSuchKey', message: 'The specified key does not exist.', code: 404 },
