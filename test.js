@@ -18,6 +18,8 @@ const test = Test.all([
   require('./StrictValidator.test'),
   require('./TranscribeStream.test'),
   require('./WebSocket.test'),
+  require('./WebSocketServer.test'),
+  require('./WebSocketSecureServer.test'),
 
   require('./internal/createUpdateServiceSpec.test'),
   require('./internal/StatusCodeMessage.test'),

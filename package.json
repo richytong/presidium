@@ -31,6 +31,8 @@
     "TranscribeStream.js",
     "userAgent.js",
     "WebSocket.js",
+    "WebSocketServer.js",
+    "WebSocketSecureServer.js",
     "XML.js"
   ],
   "keywords": [
