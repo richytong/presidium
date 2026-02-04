@@ -8,11 +8,22 @@ const resolvePath = require('./internal/resolvePath')
  * @docs
  * ```coffeescript [specscript]
  * NpmToken(options {
- *   recurse: boolean,
- * }) -> Promise<npmToken string>
+ *   recurse: boolean, # defaults to true
+ * }) -> npmToken Promise<string>
  * ```
  *
- * Finds the npm token from `~/.npmrc`
+ * Finds the [npm token](https://docs.npmjs.com/creating-and-viewing-access-tokens) from the `.npmrc` credentials file.
+ *
+ * Arguments:
+ *   * `options`
+ *     * `recurse` - whether to recursively look into parent directories until the `.npmrc` file is found. Defaults to `true`.
+ *
+ * Return:
+ *   * `npmToken` - a promise of the npm token.
+ *
+ * ```javascript
+ * const npmToken = await NpmToken()
+ * ```
  */
 
 const NpmToken = async function (options = {}) {
