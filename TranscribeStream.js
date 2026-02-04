@@ -256,6 +256,23 @@ class TranscribeStream extends EventEmitter {
    *
    * Event Data:
    *   * `error` - an instance of the JavaScript `Error` class.
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my_profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const myTranscribeStream = new TranscribeStream({
+   *   languageCode: 'en-US',
+   *   mediaEncoding: 'pcm',
+   *   sampleRate: 8000,
+   *   ...awsCreds,
+   * })
+   * await myTranscribeStream.ready
+   *
+   * myTranscribeStream.on('error', error => {
+   *   console.error(error)
+   * })
+   * ```
    */
 
   /**
@@ -270,6 +287,23 @@ class TranscribeStream extends EventEmitter {
    *
    * Event Data:
    *   * (none)
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my_profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const myTranscribeStream = new TranscribeStream({
+   *   languageCode: 'en-US',
+   *   mediaEncoding: 'pcm',
+   *   sampleRate: 8000,
+   *   ...awsCreds,
+   * })
+   * await myTranscribeStream.ready
+   *
+   * myTranscribeStream.on('close', () => {
+   *   console.log('myTranscribeStream closed.')
+   * })
+   * ```
    */
 
   /**
