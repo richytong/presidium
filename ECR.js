@@ -25,6 +25,16 @@ const Readable = require('./Readable')
  *     * `accessKeyId` - long term credential (ID) of an [IAM](https://aws.amazon.com/iam/) user.
  *     * `secretAccessKey` - long term credential (secret) of an [IAM](https://aws.amazon.com/iam/) user.
  *     * `region` - geographic location of data center cluster, e.g. `us-east-1` or `us-west-2`. [Full list of AWS regions](https://docs.aws.amazon.com/global-infrastructure/latest/regions/aws-regions.html#available-regions)
+ *
+ * * Return:
+ *   * `ecr` - an instance of the Presidium ECR client.
+ *
+ * ```javascript
+ * const awsCreds = AwsCredentials('my-profile')
+ * awsCreds.region = 'us-east-1'
+ *
+ * const ecr = new ECR({ ...awsCreds })
+ * ```
  */
 class ECR {
   constructor(options) {
@@ -103,37 +113,41 @@ class ECR {
    *
    * @docs
    * ```coffeescript [specscript]
-   * ecr.createRepository(repositoryName string, options {
-   *   registryId: string,
-   *   tags: Array<{
-   *     Key: string,
-   *     Value: string
-   *   }>,
-   *   imageTagMutability: 'MUTABLE'|'IMMUTABLE',
-   *   imageScanningConfiguration: {
-   *     scanOnPush: boolean
-   *   },
-   *   encryptionConfiguration: {
-   *     encryptionType: 'AES256'|'KMS',
-   *     kmsKey: string
-   *   }
-   * }) -> response Promise<{
-   *   repository: {
-   *     repositoryArn: string,
-   *     registryId: string,
-   *     repositoryName: string,
-   *     repositoryUri: string,
-   *     createdAt: Date,
-   *     imageTagMutability: 'MUTABLE'|'IMMUTABLE',
-   *     imageScanningConfiguration: {
-   *       scanOnPush: boolean
-   *     },
-   *     encryptionConfiguration: {
-   *       encryptionType: 'AES256'|'KMS',
-   *       kmsKey: string
-   *     }
-   *   }
+   * module AWSECRDocs 'https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_Types.html'
+   *
+   * createRepository(repositoryName string, options {
+   *   tags: Array<{ Key: string, Value: string }>,
+   *   imageTagMutability: 'MUTABLE'|'IMMUTABLE', # defaults to 'MUTABLE'
+   *   encryptionConfiguration: AWSECRDocs.EncryptionConfiguration,
+   * }) -> data Promise<{
+   *   repository: AWSECRDocs.Repository,
    * }>
+   * ```
+   *
+   * Creates an ECR repository.
+   *
+   * Arguments:
+   *   * `repositoryName` - the name of the ECR repository to create.
+   *   * `options`
+   *     * `tags` - user-defined metadata that will be applied to the ECR repository.
+   *     * `imageTagMutability` - the tag mutability setting for the ECR repository.
+   *     * `encryptionConfiguration` - [`AWSECRDocs.EncryptionConfiguration`](https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_EncryptionConfiguration.html)  - the encryption configuration for the ECR repository.
+   *
+   * Return:
+   *   * `data`
+   *     * `repository` - [`AWSECRDocs.Repository`](https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_Repository.html) - the ECR repository data.
+   *
+   * `imageTagMutability` values:
+   *   * `MUTABLE` - image tags may be overwritten.
+   *   * `IMMUTABLE` - image tags cannot be overwritten.
+   *
+   * ```javascript
+   * const awsCreds = AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const ecr = new ECR({ ...awsCreds })
+   *
+   * await ecr.createRepository('my-repository')
    * ```
    */
   async createRepository(repositoryName, options = {}) {
@@ -155,19 +169,33 @@ class ECR {
    *
    * @docs
    * ```coffeescript [specscript]
+   * module AWSECRDocs 'https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_Types.html'
+   *
    * deleteRepository(repositoryName string, options {
    *   force: boolean
-   * }) -> response Promise<{
-   *   registryId: string,
-   *   repository: {
-   *     repositoryArn: string,
-   *     registryId: string,
-   *     repositoryName: string,
-   *     repositoryUri: string,
-   *     createdAt: Date,
-   *     imageTagMutability: 'MUTABLE'|'IMMUTABLE',
-   *   }
+   * }) -> data Promise<{
+   *   repository: AWSECRDocs.Repository,
    * }>
+   * ```
+   *
+   * Deletes an ECR repository.
+   *
+   * Arguments:
+   *   * `repositoryName` - the name of the ECR repository to delete.
+   *   * `options`
+   *     * `force` - whether to force delete the contents of the ECR repository.
+   *
+   * Return:
+   *   * `data`
+   *     * `repository` - [`AWSECRDocs.Repository`](https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_Repository.html) - the deleted ECR repository data.
+   *
+   * ```javascript
+   * const awsCreds = AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const ecr = new ECR({ ...awsCreds })
+   *
+   * await ecr.deleteRepository('my-repository')
    * ```
    */
   async deleteRepository(repositoryName, options = {}) {
@@ -190,6 +218,23 @@ class ECR {
    * @docs
    * ```coffeescript [specscript]
    * ecr.getAuthorizationToken() -> authToken Promise<string>
+   * ```
+   *
+   * Gets an authorization token from Amazon ECR.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `authToken` - the ECR authorization token
+   *
+   * ```javascript
+   * const awsCreds = AwsCredentials('my-profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const ecr = new ECR({ ...awsCreds })
+   *
+   * const authToken = await ecr.getAuthorizationToken()
    * ```
    */
   async getAuthorizationToken() {

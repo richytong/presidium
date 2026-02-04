@@ -1424,7 +1424,7 @@ class Docker {
    *
    * Arguments:
    *   * `address` - address used for inter-manager communication that is also advertised to other nodes.
-   *   * `options`:
+   *   * `options`
    *     * `RemoteAddrs` - address or interface for data path traffic. Used to separate data traffic from management traffic.
    *     * `JoinToken` - worker or manager token for joining the swarm.
    *
