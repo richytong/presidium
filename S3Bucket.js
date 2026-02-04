@@ -85,8 +85,10 @@ class S3Bucket {
     this.region = options.region ?? ''
     this.apiVersion = '2012-08-10'
 
-    this.endpoint0 = `${this.name}.s3.amazonaws.com`
-    this.endpoint1 = `${this.name}.s3.${this.region}.amazonaws.com`
+    this.host0 = 's3.amazonaws.com'
+    this.host1 = `s3.${this.region}.amazonaws.com`
+    this.endpoint0 = `s3.amazonaws.com/${this.name}`
+    this.endpoint1 = `s3.${this.region}.amazonaws.com/${this.name}`
     this.protocol = 'https'
 
     this.http0 = new HTTP(`${this.protocol}://${this.endpoint0}`)
@@ -204,7 +206,7 @@ class S3Bucket {
     const urlData = parseURL(url)
 
     headers = {
-      'Host': this.endpoint0,
+      'Host': this.host0,
       'X-Amz-Content-SHA256': payloadHash,
       'X-Amz-Date': amzDate,
       'Date': new Date().toUTCString(),
@@ -221,7 +223,7 @@ class S3Bucket {
     }
 
     const authorizationHeaders = {
-      'Host': this.endpoint0,
+      'Host': this.host0,
       ...headers['Content-MD5'] ? {
         'Content-MD5': headers['Content-MD5']
       } : {},
@@ -235,7 +237,7 @@ class S3Bucket {
       method,
       endpoint: this.endpoint0,
       protocol: this.protocol,
-      canonicalUri: urlData.pathname,
+      canonicalUri: `/${this.name}${urlData.pathname}`,
       serviceName: 's3',
       payloadHash,
       expires: 300,
@@ -268,7 +270,7 @@ class S3Bucket {
     const urlData = parseURL(url)
 
     headers = {
-      'Host': this.endpoint1,
+      'Host': this.host1,
       'X-Amz-Content-SHA256': payloadHash,
       'X-Amz-Date': amzDate,
       'Date': new Date().toUTCString(),
@@ -285,7 +287,7 @@ class S3Bucket {
     }
 
     const authorizationHeaders = {
-      'Host': this.endpoint1,
+      'Host': this.host1,
       ...headers['Content-MD5'] ? {
         'Content-MD5': headers['Content-MD5']
       } : {},
@@ -299,7 +301,7 @@ class S3Bucket {
       method,
       endpoint: this.endpoint1,
       protocol: this.protocol,
-      canonicalUri: urlData.pathname,
+      canonicalUri: `/${this.name}${urlData.pathname}`,
       serviceName: 's3',
       payloadHash,
       expires: 300,

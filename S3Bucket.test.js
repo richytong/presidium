@@ -16,7 +16,7 @@ const test1 = new Test('S3Bucket', async function integration1() {
 
   // const n = Math.floor(100000 + Math.random() * 900000)
   const n = 1
-  const bucketName = `test-bucket-presidium-${n}`
+  const bucketName = `test.bucket-presidium-${n}`
 
   {
     const testBucket = new S3Bucket({
