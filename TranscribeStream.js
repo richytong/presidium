@@ -23,52 +23,45 @@ const MINIMUM_MESSAGE_LENGTH = PRELUDE_LENGTH + CHECKSUM_LENGTH * 2
  * @docs
  * ```coffeescript [specscript]
  * new TranscribeStream(options {
- *   accessKeyId: string,
- *   secretAccessKey: string,
- *   region: string,
- *   endpoint: string,
  *   languageCode: string,
  *   mediaEncoding: string,
  *   sampleRate: number,
- *   sessionId?: string,
- *   vocabularyName?: string,
+ *   sessionId: string,
+ *   vocabularyName: string,
+ *   accessKeyId: string,
+ *   secretAccessKey: string,
+ *   region: string,
  * }) -> transcribeStream TranscribeStream
- *
- * transcribeStream.on('transcription', transcriptionHandler (transcription {
- *   Alternatives: Array<{
- *     Items: Array<{
- *       Confidence?: number,
- *       Content: string,
- *       EndTime: number, # seconds
- *       StartTime: number, # seconds
- *       Type: 'pronunciation'|'punctuation',
- *       VocabularyFilterMatch: boolean,
- *     }>,
- *     Transcript: string,
- *   }>,
- *   EndTime: number, # seconds
- *   IsPartial: boolean,
- *   ResultId: string, # uuid
- *   StartTime: number, # seconds
- * })=>())
- *
- * # chunk must be properly encoded in the specified mediaEncoding
- * transcribeStream.sendAudioChunk(chunk Buffer) -> ()
  * ```
  *
- * Interface for [Amazon TranscribeStreaming](https://docs.aws.amazon.com/transcribe/latest/dg/streaming.html)
+ * Presidium TranscribeStream client for [AWS Transcribe streaming](https://docs.aws.amazon.com/transcribe/latest/dg/streaming.html).
  *
- * `languageCode` - `en-AU`, `en-GB`, `en-US`, `es-US`, `fr-CA`, `fr-FR`, `de-DE`, `ja-JP`, `ko-KR`, `pt-BR`, `zh-CN` or `it-IT`.
+ * Arguments:
+ *   * `options`
+ *     * `languageCode` - `en-AU`, `en-GB`, `en-US`, `es-US`, `fr-CA`, `fr-FR`, `de-DE`, `ja-JP`, `ko-KR`, `pt-BR`, `zh-CN` or `it-IT`.
+ *     *`mediaEncoding` - `pcm`, `ogg-opus`, or `flac`.
+ *     * `sampleRate` - The sample rate of the input audio in Hertz. We suggest that you use 8,000 Hz for low-quality audio and 16,000 Hz (or higher) for high-quality audio. The sample rate must match the sample rate in the audio file.
+ *     * `sessionId` - id for the transcription session. If you don't provide a session ID, Amazon Transcribe generates one for you and returns it in the response.
+ *     * `vocabularyName` - The name of the vocabulary to use when processing the transcription job, if any.
+ *     * `accessKeyId` - the AWS access key ID retrieved from the credentials file.
+ *     * `secretAccessKey` - the AWS secret access key retrieved from the credentials.
+ *     * `region` - the AWS region.
  *
- * `mediaEncoding` - `pcm`, `ogg-opus`, or `flac`.
+ * Return:
+ *   * `transcribeStream` - a TranscribeStream instance.
  *
- * `sampleRate` - The sample rate of the input audio in Hertz. We suggest that you use 8,000 Hz for low-quality audio and 16,000 Hz (or higher) for high-quality audio. The sample rate must match the sample rate in the audio file.
+ * ```javascript
+ * const awsCreds = await AwsCredentials('my_profile')
+ * awsCreds.region = 'us-east-1'
  *
- * `sessionId` - id for the transcription session. If you don't provide a session ID, Amazon Transcribe generates one for you and returns it in the response.
- *
- * `vocabularyName` - The name of the vocabulary to use when processing the transcription job, if any.
+ * const myTranscribeStream = new TranscribeStream({
+ *   languageCode: 'en-US',
+ *   mediaEncoding: 'pcm',
+ *   sampleRate: 8000,
+ *   ...awsCreds,
+ * })
+ * ```
  */
-
 class TranscribeStream extends EventEmitter {
   constructor(options) {
     super()
@@ -104,6 +97,30 @@ class TranscribeStream extends EventEmitter {
     })
 
     this.websocket = new WebSocket(url)
+
+    /**
+     * @name ready
+     *
+     * @docs
+     * ```coffeescript [specscript]
+     * ready -> promise Promise<>
+     * ```
+     *
+     * The ready promise for the TranscribeStream instance. Resolves when the underlying WebSocket connection to AWS Transcribe streaming is open.
+     *
+     * ```javascript
+     * const awsCreds = await AwsCredentials('default')
+     * awsCreds.region = 'us-east-1'
+     *
+     * const myTranscribeStream = new TranscribeStream({
+     *   languageCode: 'en-US',
+     *   mediaEncoding: 'pcm',
+     *   sampleRate: 8000,
+     *   ...awsCreds,
+     * })
+     * await myTranscribeStream.ready
+     * ```
+     */
     this.ready = new Promise(resolve => {
       this.websocket.on('open', resolve)
     })
@@ -124,18 +141,173 @@ class TranscribeStream extends EventEmitter {
     })
   }
 
+
+  /**
+   * @name Event: transcription
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * module AWSTranscribeStreamingDocs 'https://docs.aws.amazon.com/transcribe/latest/APIReference/API_Types.html'
+   *
+   * type TranscriptionResult {
+   *   Alternatives: Array<{
+   *     Items: Array<AWSTranscribeStreamingDocs.Item>,
+   *     Transcript: string,
+   *   }>,
+   *   EndTime: number, # seconds
+   *   IsPartial: boolean,
+   *   ResultId: string, # uuid
+   *   StartTime: number, # seconds
+   * }
+   *
+   * emit('transcription', transcriptionResult TranscriptionResult)
+   * ```
+   *
+   * The `transcription` event. Emitted when a transcription is received from AWS Transcribe streaming.
+   *
+   * Event Data:
+   *   * `transcription` - `TranscriptionResult` - data about the transcription.
+   *     * `Alternatives` - a list of possible alternative transcriptions for the input audio segment.
+   *       * `Items` - `Array<[AWSTranscribeStreamingDocs.Item](https://docs.aws.amazon.com/transcribe/latest/APIReference/API_streaming_Item.html)>` - array of words, phrases, or punctuation in the transcribed audio output, along with associated metadata such as confidence score, type, and start and end times.
+   *       * `Transcript` - the transcribed text.
+   *     * `EndTime` - the end time in seconds of the transcription.
+   *     * `IsPartial` - whether the transcription is a partial transcription.
+   *     * `ResultId` - a unique ID for the transcription result.
+   *     * `StartTime` - the start time in seconds of the transcription.
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my_profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const myTranscribeStream = new TranscribeStream({
+   *   languageCode: 'en-US',
+   *   mediaEncoding: 'pcm',
+   *   sampleRate: 8000,
+   *   ...awsCreds,
+   * })
+   * await testTranscribeStream.ready
+   *
+   * myTranscribeStream.on('transcription', transcription => {
+   *   console.log('Received transcription:', transcription.Alternatives[0].Transcript)
+   * })
+   * ```
+   */
+
+  /**
+   * @name Event: partialTranscription
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * module AWSTranscribeStreamingDocs 'https://docs.aws.amazon.com/transcribe/latest/APIReference/API_Types.html'
+   *
+   * type TranscriptionResult {
+   *   Alternatives: Array<{
+   *     Items: Array<AWSTranscribeStreamingDocs.Item>,
+   *     Transcript: string,
+   *   }>,
+   *   EndTime: number, # seconds
+   *   IsPartial: boolean,
+   *   ResultId: string, # uuid
+   *   StartTime: number, # seconds
+   * }
+   *
+   * emit('partialTranscription', partialTranscriptionResult TranscriptionResult)
+   * ```
+   *
+   * The `partialTranscription` event. Emitted when a partial transcription is received from AWS Transcribe streaming.
+   *
+   * Event Data:
+   *   * `transcription` - `TranscriptionResult` - data about the partial transcription.
+   *     * `Alternatives` - a list of possible alternative transcriptions for the input audio segment.
+   *       * `Items` - `Array<[AWSTranscribeStreamingDocs.Item](https://docs.aws.amazon.com/transcribe/latest/APIReference/API_streaming_Item.html)>` - array of words, phrases, or punctuation in the transcribed audio output, along with associated metadata such as confidence score, type, and start and end times.
+   *       * `Transcript` - the transcribed text.
+   *     * `EndTime` - the end time in seconds of the partial transcription.
+   *     * `IsPartial` - whether the transcription is a partial transcription.
+   *     * `ResultId` - a unique ID for the partial transcription result.
+   *     * `StartTime` - the start time in seconds of the partial transcription.
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my_profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const myTranscribeStream = new TranscribeStream({
+   *   languageCode: 'en-US',
+   *   mediaEncoding: 'pcm',
+   *   sampleRate: 8000,
+   *   ...awsCreds,
+   * })
+   * await testTranscribeStream.ready
+   *
+   * myTranscribeStream.on('partialTranscription', partialTranscription => {
+   *   console.log('Received partial transcription:', partialTranscription.Alternatives[0].Transcript)
+   * })
+   * ```
+   */
+
+  /**
+   * @name Event: error
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * emit('error', error Error)
+   * ```
+   *
+   * The `error` event. Emitted when an error occurs on a TranscribeStream instance.
+   *
+   * Event Data:
+   *   * `error` - an instance of the JavaScript `Error` class.
+   */
+
+  /**
+   * @name Event: close
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * emit('close')
+   * ```
+   *
+   * The `close` event. Emitted when a TranscribeStream instance is closed.
+   *
+   * Event Data:
+   *   * (none)
+   */
+
   /**
    * @name sendAudioChunk
    *
    * @docs
    * ```coffeescript [specscript]
-   * myTranscribeStream.sendAudioChunk(
-   *   chunk Buffer, // chunk is binary and assumed to be properly encoded in the specified mediaEncoding
-   * ) -> undefined
+   * sendAudioChunk(chunk Buffer) -> undefined
    * ```
    *
-   * https://docs.aws.amazon.com/transcribe/latest/dg/event-stream.html
-   * https://github.com/aws-samples/amazon-transcribe-comprehend-medical-twilio/blob/main/lib/transcribe-service.js
+   * Arguments:
+   *   * `chunk` - binary data representing a segment from the input audio. AWS Transcribe streaming assumes this is properly encoded in the specified [mediaEncoding](#TranscribeStream).
+   *
+   * Return:
+   *   * undefined
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my_profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const myTranscribeStream = new TranscribeStream({
+   *   languageCode: 'en-US',
+   *   mediaEncoding: 'pcm',
+   *   sampleRate: 8000,
+   *   ...awsCreds,
+   * })
+   * await myTranscribeStream.ready
+   *
+   * const event = { media: { payload: '...' } }
+   *
+   * const wav = new WaveFile()
+   * wav.fromScratch(1, 8000, '8', Buffer.from(event.media.payload, 'base64'))
+   * wav.fromMuLaw()
+   *
+   * const chunk = Buffer.from(wav.data.samples)
+   *
+   * myTranscribeStream.sendAudioChunk(chunk)
+   * ```
    */
   sendAudioChunk(chunk) {
     const headersBytes = marshalHeaders({
@@ -170,6 +342,37 @@ class TranscribeStream extends EventEmitter {
     this.websocket.send(bytes)
   }
 
+  /**
+   * @name close
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * close() -> undefined
+   * ```
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * undefined
+   *
+   * ```javascript
+   * const awsCreds = await AwsCredentials('my_profile')
+   * awsCreds.region = 'us-east-1'
+   *
+   * const myTranscribeStream = new TranscribeStream({
+   *   languageCode: 'en-US',
+   *   mediaEncoding: 'pcm',
+   *   sampleRate: 8000,
+   *   ...awsCreds,
+   * })
+   * await myTranscribeStream.ready
+   *
+   * // ...
+   *
+   * myTranscribeStream.close()
+   * ```
+   */
   close() {
     this.websocket.close()
     this.emit('close')
