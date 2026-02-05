@@ -17,5 +17,8 @@ module.exports = {
   TranscribeStream: require('./TranscribeStream.js'),
   userAgent: require('./userAgent.js'),
   WebSocket: require('./WebSocket.js'),
+  WebSocketServer: require('./WebSocketServer.js'),
+  WebSocketSecureServer: require('./WebSocketSecureServer.js'),
+  ServerWebSocket: require('./ServerWebSocket.js'),
   XML: require('./XML.js'),
 }
