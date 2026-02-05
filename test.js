@@ -27,6 +27,8 @@ const test = Test.all([
   require('./internal/handleDynamoDBStreamGetRecordsError.test'),
   require('./internal/StatusCodeMessage.test'),
   require('./internal/pathWalk.test'),
+
+  require('./global.test'),
 ])
 
 if (process.argv[1] == __filename) {
