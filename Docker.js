@@ -38,7 +38,7 @@ class Docker {
       maxSockets: Infinity,
     })
 
-    this.http = new HTTP('http://0.0.0.0/v1.52', { agent })
+    this.http = new HTTP('http://0.0.0.0/v1.48', { agent })
   }
 
   /**
