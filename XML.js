@@ -2,9 +2,7 @@
  * @name XML
  *
  * @docs
- * ```coffeescript [specscript]
- * XML object
- * ```
+ * Presidium XML class.
  */
 const XML = {}
 
@@ -252,6 +250,24 @@ function _convert(ast) {
  *
  * XML.parse(xml string) -> data NestedObject
  * XML.parse(xml string, options { ast: true }) -> ast RootAST
+ * ```
+ *
+ * Parses [XML](https://en.wikipedia.org/wiki/XML) into JSON data.
+ *
+ * Arguments:
+ *   * `xml` - an XML string.
+ *   * `options`
+ *     * `ast` - whether to return an AST (Abstract Syntax Tree) of the XML string.
+ *
+ * Return:
+ *   * `data` - the JSON data parsed from the `xml` string, or if `ast` is true, the AST (Abstract Syntax Tree) of the XML string.
+ *
+ * ```javascript
+ * const data = XML.parse(`
+ * <Example a="1">
+ *   <Attr>Content</Attr>
+ * </Example>
+ * `)
  * ```
  */
 XML.parse = function parse(xml, options = {}) {
