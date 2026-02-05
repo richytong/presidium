@@ -25,6 +25,7 @@ const test = new Test('global', async function integration() {
   assert.equal(typeof WebSocketSecureServer, 'function')
   assert.equal(typeof ServerWebSocket, 'function')
   assert.equal(typeof XML, 'object')
+  assert.equal(typeof userAgent, 'string')
 }).case()
 
 if (process.argv[1] == __filename) {

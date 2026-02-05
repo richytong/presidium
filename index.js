@@ -15,6 +15,7 @@ module.exports = {
   SecretsManager: require('./SecretsManager.js'),
   StrictValidator: require('./StrictValidator.js'),
   TranscribeStream: require('./TranscribeStream.js'),
+  userAgent: require('./userAgent.js'),
   WebSocket: require('./WebSocket.js'),
   WebSocketServer: require('./WebSocketServer.js'),
   WebSocketSecureServer: require('./WebSocketSecureServer.js'),
