@@ -7,6 +7,27 @@
 
 A library for creating web services.
 
+## Installation
+with [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm):
+```bash
+npm i presidium
+```
+
+require Presidium in [CommonJS](https://nodejs.org/docs/latest/api/modules.html#modules-commonjs-modules):
+```javascript
+// import Presidium globally
+require('presidium/global')
+
+// import Presidium
+const presidium = require('presidium')
+
+// import Presidium clients
+const DynamoDBTable = require('presidium/DynamoDBTable')
+const S3Bucket = require('presidium/S3Bucket')
+const WebSocket = require('presidium/WebSocket')
+const Readable = require('presidium/Readable')
+```
+
 ## Handle HTTP
 ```javascript
 const HTTP = require('presidium/HTTP')
