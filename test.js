@@ -20,6 +20,7 @@ const test = Test.all([
   require('./WebSocket.test'),
   require('./WebSocketServer.test'),
   require('./WebSocketSecureServer.test'),
+  require('./ServerWebSocket.test'),
 
   require('./internal/createUpdateServiceSpec.test'),
   require('./internal/StatusCodeMessage.test'),
