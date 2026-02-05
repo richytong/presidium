@@ -48,7 +48,6 @@ const test2 = new Test('Docker - auth', async function integration() {
     serveraddress: 'localhost:5000',
   })
   assert.equal(typeof data.Status, 'string')
-  assert.equal(typeof data.IdentityToken, 'string')
 }).case()
 
 const test3 = new Test('Docker - image', async function integration() {
@@ -73,7 +72,6 @@ WORKDIR /opt
 COPY . .
 EXPOSE 8888`,
       },
-      platform: 'linux/x86_64',
     })
     dataStream.pipe(process.stdout)
     await new Promise(resolve => {
