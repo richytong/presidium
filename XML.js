@@ -268,6 +268,8 @@ function _convert(ast) {
  *   <Attr>Content</Attr>
  * </Example>
  * `)
+ *
+ * console.log(data) // { Example: { Attr: 'Content', a: '1' } }
  * ```
  */
 XML.parse = function parse(xml, options = {}) {
