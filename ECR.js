@@ -217,7 +217,7 @@ class ECR {
    *
    * @docs
    * ```coffeescript [specscript]
-   * ecr.getAuthorizationToken() -> authToken Promise<string>
+   * getAuthorizationToken() -> authToken Promise<string>
    * ```
    *
    * Gets an authorization token from Amazon ECR.
