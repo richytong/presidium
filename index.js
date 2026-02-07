@@ -12,6 +12,7 @@ module.exports = {
   Password: require('./Password.js'),
   Readable: require('./Readable.js'),
   S3Bucket: require('./S3Bucket.js'),
+  Secrets: require('./Secrets.js'),
   SecretsManager: require('./SecretsManager.js'),
   StrictValidator: require('./StrictValidator.js'),
   TranscribeStream: require('./TranscribeStream.js'),
