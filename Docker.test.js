@@ -485,6 +485,49 @@ const test5 = new Test('Docker - swarm', async function integration() {
 
   }
 
+  { // create the same service
+    const p = docker.createService('service1', {
+      image: 'node:15-alpine',
+      labels: { foo: 'bar' },
+      replicas: 2,
+      cmd: ['node', '-e', 'http.createServer((request, response) => response.end(\'service1\')).listen(3000)'],
+      workdir: '/opt/test0',
+      env: { TEST: 'test' },
+      mounts: [{
+        source: 'other-volume',
+        target: '/opt/other-volume',
+        readonly: true,
+      }],
+      memory: 512e6, // bytes
+      cpus: 2,
+      gpus: 'all',
+      restart: 'on-failure:5',
+
+      healthCmd: ['wget', '--no-verbose', '--tries=1', '--spider', 'localhost:3000'],
+      healthInterval: 1e9,
+      healthTimeout: 30e9,
+      healthRetries: 10,
+      healthStartPeriod: 5e9,
+
+      publish: {
+        // 23: 22, // hostPort -> containerPort[/protocol]
+        8080: 3000,
+      },
+
+      logDriver: 'json-file',
+      logDriverOptions: {
+        'max-file': '10',
+        'max-size': '100m',
+      },
+      network: 'my-network',
+    })
+
+    await assert.rejects(p, error => {
+      return true
+    })
+
+  }
+
   { // create another service
     const data1 = await docker.createService('service2', {
       image: 'node:15-alpine',
