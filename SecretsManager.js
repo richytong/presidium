@@ -164,7 +164,7 @@ class SecretsManager {
 
     if (createSecretAwsError.name == 'ResourceExistsException') {
       // continue
-    } else if (retryableErrorNames.includes(error.name)) {
+    } else if (retryableErrorNames.includes(createSecretAwsError.name)) {
       await sleep(1000)
       return putSecret.call(this, name, secretString)
     } else {
