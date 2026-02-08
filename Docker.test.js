@@ -51,7 +51,7 @@ const test2 = new Test('Docker - auth', async function integration() {
 }).case()
 
 const test3 = new Test('Docker - image', async function integration() {
-  const docker = new Docker()
+  const docker = new Docker({ apiVersion: '1.44' })
 
   await docker.removeImage('presidium-test:test').catch(() => {})
   await docker.removeImage('localhost:5000/presidium-test:test').catch(() => {})
