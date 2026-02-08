@@ -1403,13 +1403,14 @@ class Docker {
    * ```
    */
   async initSwarm(address) {
+    const port = address.split(':')[1]
     const response = await this.http.post('/swarm/init', {
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         AdvertiseAddr: address,
-        ListenAddr: address,
+        ListenAddr: `0.0.0.0:${port}`,
       }),
     })
 
@@ -1451,12 +1452,13 @@ class Docker {
    * ```
    */
   async joinSwarm(address, options) {
+    const port = address.split(':')[1]
     const response = await this.http.post('/swarm/join', {
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        ListenAddr: address,
+        ListenAddr: `0.0.0.0:${port}`,
         AdvertiseAddr: address,
         RemoteAddrs: options.RemoteAddrs,
         JoinToken: options.JoinToken,
