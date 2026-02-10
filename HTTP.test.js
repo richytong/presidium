@@ -66,7 +66,7 @@ const test1 = new Test('HTTP GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and T
     assert.equal(httpParsedUrl.baseUrl.host, 'localhost:3000')
     assert.equal(httpParsedUrl.baseUrl.protocol, 'http:')
     assert.equal(typeof httpParsedUrl.requestHeaders['Authorization'], 'string')
-    assert.throws(() => new HTTP(null), TypeError('baseUrl invalid'))
+    // assert.throws(() => new HTTP(null), TypeError('baseUrl invalid'))
     const httpUrlToString = new HTTP({
       toString() {
         return 'http://localhost:3000/'
@@ -74,7 +74,7 @@ const test1 = new Test('HTTP GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and T
     })
     assert.equal(httpUrlToString.baseUrl.host, 'localhost:3000')
     assert.equal(httpUrlToString.baseUrl.protocol, 'http:')
-    assert.throws(() => new HTTP(Object.create(null)), TypeError('baseUrl invalid'))
+    // assert.throws(() => new HTTP(Object.create(null)), TypeError('baseUrl invalid'))
   }
 
   {
@@ -522,7 +522,7 @@ const test4 = new Test('HTTPS GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and 
     assert.equal(httpParsedUrl.baseUrl.host, 'localhost:3000')
     assert.equal(httpParsedUrl.baseUrl.protocol, 'http:')
     assert.equal(typeof httpParsedUrl.requestHeaders['Authorization'], 'string')
-    assert.throws(() => new HTTP(null), TypeError('baseUrl invalid'))
+    // assert.throws(() => new HTTP(null), TypeError('baseUrl invalid'))
     const httpUrlToString = new HTTP({
       toString() {
         return 'http://localhost:3000/'
@@ -530,7 +530,7 @@ const test4 = new Test('HTTPS GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and 
     })
     assert.equal(httpUrlToString.baseUrl.host, 'localhost:3000')
     assert.equal(httpUrlToString.baseUrl.protocol, 'http:')
-    assert.throws(() => new HTTP(Object.create(null)), TypeError('baseUrl invalid'))
+    // assert.throws(() => new HTTP(Object.create(null)), TypeError('baseUrl invalid'))
   }
 
   {
@@ -920,12 +920,367 @@ const test5 = new Test('HTTPS CONNECT', async function integration() {
   proxy.close()
 }).case()
 
+const test6 = new Test('HTTP GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and TRACE: lazy baseUrl', async function integration() {
+  const server = http.createServer(async (request, response) => {
+    if (request.url == '/invalid-json') {
+      response.write('{"greeting":"Hello Wor')
+      response.end()
+    } else if (request.url == '/echo') {
+      const buffer = await Readable.Buffer(request)
+      const requestBodyString = buffer.toString('utf8')
+      const requestBodyJSON = requestBodyString.length == 0 ? {} : JSON.parse(requestBodyString)
+      delete request.headers['content-length']
+      response.writeHead(200, {
+        'Content-Type': 'application/json',
+        ...request.headers,
+      })
+      response.end(JSON.stringify({ greeting: 'Hello World', ...requestBodyJSON }))
+    } else if (request.url == '/echo-binary') {
+      const buffer = await Readable.Buffer(request)
+      delete request.headers['content-length']
+      response.writeHead(200, {
+        ...request.headers,
+      })
+      response.end(buffer)
+    } else if (request.url == '/echo-text') {
+      const buffer = await Readable.Buffer(request)
+      const text = buffer.toString('utf8')
+      delete request.headers['content-length']
+      response.writeHead(200, {
+        ...request.headers,
+      })
+      response.end(text)
+    }
+    else {
+      response.writeHead(404, {
+        'Content-Type': 'text/plain',
+      })
+      response.end('Not Found')
+    }
+  })
+
+  server.listen(3000, () => {
+    console.log('server listening on port 3000')
+  })
+
+  const _http = new HTTP()
+
+  {
+    const response = await _http.get('http://localhost:3000/echo')
+    assert.equal(response.status, 200)
+    assert.strictEqual(response.ok, true)
+    const data = await response.json()
+    assert.equal(response.headers['content-type'], 'application/json')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World"}')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World"}')
+    assert.equal(await response.text(), '{"greeting":"Hello World"}')
+    assert.equal(await response.text(), '{"greeting":"Hello World"}')
+    assert.deepEqual(await response.json(), { greeting: 'Hello World' })
+    assert.deepEqual(await response.json(), { greeting: 'Hello World' })
+  }
+
+  {
+    const response = await _http.GET('http://localhost:3000/echo')
+    assert.equal(response.status, 200)
+    assert.strictEqual(response.ok, true)
+    const data = await response.json()
+    assert.equal(response.headers['content-type'], 'application/json')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World"}')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World"}')
+    assert.equal(await response.text(), '{"greeting":"Hello World"}')
+    assert.equal(await response.text(), '{"greeting":"Hello World"}')
+    assert.deepEqual(await response.json(), { greeting: 'Hello World' })
+    assert.deepEqual(await response.json(), { greeting: 'Hello World' })
+  }
+
+  {
+    const response = await _http.head('http://localhost:3000/echo')
+    assert.equal(response.status, 200)
+    assert.strictEqual(response.ok, true)
+    assert.equal(response.headers['content-type'], 'application/json')
+  }
+
+  {
+    const response = await _http.HEAD('http://localhost:3000/echo')
+    assert.equal(response.status, 200)
+    assert.strictEqual(response.ok, true)
+    assert.equal(response.headers['content-type'], 'application/json')
+  }
+
+  {
+    const response = await _http.get('http://localhost:3000/invalid-json')
+    await assert.rejects(
+      response.json(),
+      new SyntaxError('Unterminated string in JSON at position 22 (line 1 column 23)'),
+    )
+    await assert.rejects(
+      response.json(),
+      new SyntaxError('Unterminated string in JSON at position 22 (line 1 column 23)'),
+    )
+  }
+
+  {
+    const response = await _http.GET('http://localhost:3000/invalid-json')
+    await assert.rejects(
+      response.json(),
+      new SyntaxError('Unterminated string in JSON at position 22 (line 1 column 23)'),
+    )
+    await assert.rejects(
+      response.json(),
+      new SyntaxError('Unterminated string in JSON at position 22 (line 1 column 23)'),
+    )
+  }
+
+  {
+    const response = await _http.post('http://localhost:3000/echo', {
+      headers: { 'x-test-header': 'testvalue' },
+      body: JSON.stringify({ a: 1 }),
+    })
+    assert.equal(response.headers['x-test-header'], 'testvalue')
+    assert.equal(response.status, 200)
+    const data = await response.json()
+    assert.equal(response.headers['content-type'], 'application/json')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World","a":1}')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World","a":1}')
+    assert.equal(await response.text(), '{"greeting":"Hello World","a":1}')
+    assert.equal(await response.text(), '{"greeting":"Hello World","a":1}')
+    assert.deepEqual(await response.json(), { greeting: 'Hello World', a: 1 })
+    assert.deepEqual(await response.json(), { greeting: 'Hello World', a: 1 })
+  }
+
+  {
+    const response = await _http.POST('http://localhost:3000/echo', {
+      headers: { 'x-test-header': 'testvalue' },
+      body: JSON.stringify({ a: 1 }),
+    })
+    assert.equal(response.headers['x-test-header'], 'testvalue')
+    assert.equal(response.status, 200)
+    const data = await response.json()
+    assert.equal(response.headers['content-type'], 'application/json')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World","a":1}')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World","a":1}')
+    assert.equal(await response.text(), '{"greeting":"Hello World","a":1}')
+    assert.equal(await response.text(), '{"greeting":"Hello World","a":1}')
+    assert.deepEqual(await response.json(), { greeting: 'Hello World', a: 1 })
+    assert.deepEqual(await response.json(), { greeting: 'Hello World', a: 1 })
+  }
+
+  {
+    const response = await _http.post('http://localhost:3000/echo', {
+      headers: { 'x-test-header': 'testvalue' },
+      body: stream.Readable.from([JSON.stringify({ a: 1 })]),
+    })
+    assert.equal(response.headers['x-test-header'], 'testvalue')
+    assert.equal(response.status, 200)
+    const data = await response.json()
+    assert.equal(response.headers['content-type'], 'application/json')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World","a":1}')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World","a":1}')
+    assert.equal(await response.text(), '{"greeting":"Hello World","a":1}')
+    assert.equal(await response.text(), '{"greeting":"Hello World","a":1}')
+    assert.deepEqual(await response.json(), { greeting: 'Hello World', a: 1 })
+    assert.deepEqual(await response.json(), { greeting: 'Hello World', a: 1 })
+  }
+
+  {
+    const response = await _http.post('http://localhost:3000/echo-binary', {
+      headers: {
+        'x-test-header': 'testvalue',
+        'Content-Type': 'application/octet-stream',
+      },
+      body: Buffer.from('abc'),
+    })
+    assert.equal(response.headers['x-test-header'], 'testvalue')
+    assert.equal(response.status, 200)
+    const data = await response.buffer()
+    assert.equal(response.headers['content-type'], 'application/octet-stream')
+    assert.deepEqual(Buffer.from(await response.buffer()), Buffer.from('abc'))
+  }
+
+  {
+    const urlSearchParams = new URLSearchParams()
+    urlSearchParams.set('a', 1)
+    const response = await _http.post('http://localhost:3000/echo-text', {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'x-test-header': 'testvalue',
+      },
+      body: urlSearchParams,
+    })
+    assert.equal(response.headers['x-test-header'], 'testvalue')
+    assert.equal(response.status, 200)
+    const data = await response.text()
+    assert.equal(response.headers['content-type'], 'application/x-www-form-urlencoded')
+    assert.equal(await response.text(), 'a=1')
+  }
+
+  await assert.rejects(
+    _http.post('http://localhost:3000/echo-text', {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'x-test-header': 'testvalue',
+      },
+      body: Object.create(null),
+    }),
+    new TypeError('body must be one of Buffer, TypedArray, or string'),
+  )
+
+  {
+    const response = await _http.put('http://localhost:3000/echo', {
+      headers: { 'x-test-header': 'testvalue' },
+      body: JSON.stringify({ a: 1 }),
+    })
+    assert.equal(response.headers['x-test-header'], 'testvalue')
+    assert.equal(response.status, 200)
+    const data = await response.json()
+    assert.equal(response.headers['content-type'], 'application/json')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World","a":1}')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World","a":1}')
+    assert.equal(await response.text(), '{"greeting":"Hello World","a":1}')
+    assert.equal(await response.text(), '{"greeting":"Hello World","a":1}')
+    assert.deepEqual(await response.json(), { greeting: 'Hello World', a: 1 })
+    assert.deepEqual(await response.json(), { greeting: 'Hello World', a: 1 })
+  }
+
+  {
+    const response = await _http.PUT('http://localhost:3000/echo', {
+      headers: { 'x-test-header': 'testvalue' },
+      body: JSON.stringify({ a: 1 }),
+    })
+    assert.equal(response.headers['x-test-header'], 'testvalue')
+    assert.equal(response.status, 200)
+    const data = await response.json()
+    assert.equal(response.headers['content-type'], 'application/json')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World","a":1}')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World","a":1}')
+    assert.equal(await response.text(), '{"greeting":"Hello World","a":1}')
+    assert.equal(await response.text(), '{"greeting":"Hello World","a":1}')
+    assert.deepEqual(await response.json(), { greeting: 'Hello World', a: 1 })
+    assert.deepEqual(await response.json(), { greeting: 'Hello World', a: 1 })
+  }
+
+  {
+    const response = await _http.patch('http://localhost:3000/echo', {
+      headers: { 'x-test-header': 'testvalue' },
+      body: JSON.stringify({ a: 1 }),
+    })
+    assert.equal(response.headers['x-test-header'], 'testvalue')
+    assert.equal(response.status, 200)
+    const data = await response.json()
+    assert.equal(response.headers['content-type'], 'application/json')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World","a":1}')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World","a":1}')
+    assert.equal(await response.text(), '{"greeting":"Hello World","a":1}')
+    assert.equal(await response.text(), '{"greeting":"Hello World","a":1}')
+    assert.deepEqual(await response.json(), { greeting: 'Hello World', a: 1 })
+    assert.deepEqual(await response.json(), { greeting: 'Hello World', a: 1 })
+  }
+
+  {
+    const response = await _http.PATCH('http://localhost:3000/echo', {
+      headers: { 'x-test-header': 'testvalue' },
+      body: JSON.stringify({ a: 1 }),
+    })
+    assert.equal(response.headers['x-test-header'], 'testvalue')
+    assert.equal(response.status, 200)
+    const data = await response.json()
+    assert.equal(response.headers['content-type'], 'application/json')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World","a":1}')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World","a":1}')
+    assert.equal(await response.text(), '{"greeting":"Hello World","a":1}')
+    assert.equal(await response.text(), '{"greeting":"Hello World","a":1}')
+    assert.deepEqual(await response.json(), { greeting: 'Hello World', a: 1 })
+    assert.deepEqual(await response.json(), { greeting: 'Hello World', a: 1 })
+  }
+
+  {
+    const response = await _http.delete('http://localhost:3000/echo')
+    assert.equal(response.status, 200)
+    const data = await response.json()
+    assert.equal(response.headers['content-type'], 'application/json')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World"}')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World"}')
+    assert.equal(await response.text(), '{"greeting":"Hello World"}')
+    assert.equal(await response.text(), '{"greeting":"Hello World"}')
+    assert.deepEqual(await response.json(), { greeting: 'Hello World' })
+    assert.deepEqual(await response.json(), { greeting: 'Hello World' })
+  }
+
+  {
+    const response = await _http.DELETE('http://localhost:3000/echo')
+    assert.equal(response.status, 200)
+    const data = await response.json()
+    assert.equal(response.headers['content-type'], 'application/json')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World"}')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World"}')
+    assert.equal(await response.text(), '{"greeting":"Hello World"}')
+    assert.equal(await response.text(), '{"greeting":"Hello World"}')
+    assert.deepEqual(await response.json(), { greeting: 'Hello World' })
+    assert.deepEqual(await response.json(), { greeting: 'Hello World' })
+  }
+
+  {
+    const response = await _http.options('http://localhost:3000/echo')
+    assert.equal(response.status, 200)
+    const data = await response.json()
+    assert.equal(response.headers['content-type'], 'application/json')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World"}')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World"}')
+    assert.equal(await response.text(), '{"greeting":"Hello World"}')
+    assert.equal(await response.text(), '{"greeting":"Hello World"}')
+    assert.deepEqual(await response.json(), { greeting: 'Hello World' })
+    assert.deepEqual(await response.json(), { greeting: 'Hello World' })
+  }
+
+  {
+    const response = await _http.OPTIONS('http://localhost:3000/echo')
+    assert.equal(response.status, 200)
+    const data = await response.json()
+    assert.equal(response.headers['content-type'], 'application/json')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World"}')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World"}')
+    assert.equal(await response.text(), '{"greeting":"Hello World"}')
+    assert.equal(await response.text(), '{"greeting":"Hello World"}')
+    assert.deepEqual(await response.json(), { greeting: 'Hello World' })
+    assert.deepEqual(await response.json(), { greeting: 'Hello World' })
+  }
+
+  {
+    const response = await _http.trace('http://localhost:3000/echo')
+    assert.equal(response.status, 200)
+    const data = await response.json()
+    assert.equal(response.headers['content-type'], 'application/json')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World"}')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World"}')
+    assert.equal(await response.text(), '{"greeting":"Hello World"}')
+    assert.equal(await response.text(), '{"greeting":"Hello World"}')
+    assert.deepEqual(await response.json(), { greeting: 'Hello World' })
+    assert.deepEqual(await response.json(), { greeting: 'Hello World' })
+  }
+
+  {
+    const response = await _http.TRACE('http://localhost:3000/echo')
+    assert.equal(response.status, 200)
+    const data = await response.json()
+    assert.equal(response.headers['content-type'], 'application/json')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World"}')
+    assert.equal(Buffer.from(await response.buffer()).toString('utf8'), '{"greeting":"Hello World"}')
+    assert.equal(await response.text(), '{"greeting":"Hello World"}')
+    assert.equal(await response.text(), '{"greeting":"Hello World"}')
+    assert.deepEqual(await response.json(), { greeting: 'Hello World' })
+    assert.deepEqual(await response.json(), { greeting: 'Hello World' })
+  }
+
+  server.close()
+}).case()
+
 const test = Test.all([
   test5,
   test1,
   test2,
   test3,
   test4,
+  test6,
 ])
 
 if (process.argv[1] == __filename) {

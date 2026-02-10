@@ -2,6 +2,8 @@ const http = require('http')
 const https = require('https')
 const path = require('path')
 const stream = require('stream')
+const httpConfigure = require('./internal/httpConfigure')
+const parseUrl = require('./internal/parseUrl')
 
 /**
  * @name HTTP
@@ -52,35 +54,15 @@ const stream = require('stream')
  */
 class HTTP {
   constructor(baseUrl, requestOptions = {}) {
-    if (typeof baseUrl == 'string') {
-      this.baseUrl = new URL(baseUrl)
-    }
-    else if (baseUrl == null) {
-      throw new TypeError('baseUrl invalid')
-    }
-    else if (typeof baseUrl.toString == 'function') {
-      this.baseUrl = new URL(baseUrl)
-    }
-    else if (baseUrl.constructor == URL) {
-      this.baseUrl = baseUrl
+    if (
+      typeof baseUrl == 'string'
+      || typeof baseUrl?.toString == 'function'
+      || baseUrl?.constructor == URL
+    ) {
+      httpConfigure.call(this, baseUrl, requestOptions)
     } else {
-      throw new TypeError('baseUrl invalid')
-    }
-
-    this.client = this.baseUrl.protocol == 'https:' ? https : http
-    this.requestOptions = {
-      hostname: this.baseUrl.hostname,
-      protocol: this.baseUrl.protocol,
-      ...requestOptions,
-    }
-
-    this.requestHeaders = {}
-
-    if (this.baseUrl.username && this.baseUrl.password) {
-      const { username, password } = this.baseUrl
-      const credentials = `${username}:${password}`
-      const encodedCredentials = Buffer.from(credentials).toString('base64')
-      this.requestHeaders['Authorization'] = `Basic ${encodedCredentials}`
+      this.client = undefined
+      this.requestOptions = {}
     }
 
     this._sockets = new Set()
@@ -89,7 +71,8 @@ class HTTP {
   request(options) {
     const { body, ...requestOptions } = options
     return new Promise((resolve, reject) => {
-      const request = this.client.request(requestOptions, response => {
+      const client = requestOptions.protocol == 'https:' ? https : http
+      const request = client.request(requestOptions, response => {
         response.status = response.statusCode
         response.ok = response.statusCode >= 200 && response.statusCode <= 299
 
@@ -179,6 +162,81 @@ class HTTP {
   }
 
   /**
+   * @name _requestMethod
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * module http 'https://nodejs.org/docs/latest-v24.x/api/http.html'
+   *
+   * type RequestOptions = {
+   *   agent: http.Agent,
+   *   auth: string,
+   *   createConnection: function,
+   *   defaultPort: number,
+   *   family: number,
+   *   headers: object,
+   *   hints: number,
+   *   host: string,
+   *   hostname: string,
+   *   insecureHTTPParser: boolean,
+   *   joinDuplicateHeaders: boolean,
+   *   localAddress: string,
+   *   localPort: number,
+   *   lookup: function,
+   *   maxHeaderSize: number,
+   *   method: string,
+   *   path: string,
+   *   port: number,
+   *   protocol: string,
+   *   setDefaultHeaders: boolean,
+   *   setHost: boolean,
+   *   signal: AbortSignal,
+   *   socketPath: string,
+   *   timeout: number,
+   *   uniqueHeaders: Array<string>,
+   * }
+   *
+   * _requestMethod(
+   *   method string,
+   *   relativeUrl string,
+   *   options RequestOptions
+   * ) -> response http.ServerResponse
+   * ```
+   */
+  _requestMethod(method, relativeUrl, options = {}) {
+    if (relativeUrl.startsWith('http')) {
+      const url_ = new URL(relativeUrl)
+      const requestOptions = {
+        hostname: url_.hostname,
+        protocol: url_.protocol,
+        port: url_.port,
+        path: url_.pathname,
+        method,
+        headers: {
+          ...options.headers,
+        },
+        body: options.body,
+      }
+      return this.request(requestOptions)
+    }
+
+    const requestOptions = {
+      ...this.requestOptions,
+      hostname: this.baseUrl.hostname,
+      protocol: this.baseUrl.protocol,
+      port: this.baseUrl.port,
+      path: path.join(this.baseUrl.pathname, relativeUrl),
+      method,
+      headers: {
+        ...this.requestHeaders,
+        ...options.headers
+      },
+      body: options.body,
+    }
+    return this.request(requestOptions)
+  }
+
+  /**
    * @name get
    *
    * @docs
@@ -232,20 +290,7 @@ class HTTP {
    * ```
    */
   get(relativeUrl, options = {}) {
-    const requestOptions = {
-      ...this.requestOptions,
-      hostname: this.baseUrl.hostname,
-      protocol: this.baseUrl.protocol,
-      port: this.baseUrl.port,
-      path: path.join(this.baseUrl.pathname, relativeUrl),
-      method: 'GET',
-      headers: {
-        ...this.requestHeaders,
-        ...options.headers
-      },
-      body: options.body,
-    }
-    return this.request(requestOptions)
+    return this._requestMethod('GET', relativeUrl, options)
   }
 
   /**
@@ -301,8 +346,8 @@ class HTTP {
    * const response = await http.GET('/todos/1')
    * ```
    */
-  GET(...args) {
-    return this.get(...args)
+  GET(relativeUrl, options = {}) {
+    return this._requestMethod('GET', relativeUrl, options)
   }
 
   /**
@@ -359,20 +404,7 @@ class HTTP {
    * ```
    */
   head(relativeUrl, options = {}) {
-    const requestOptions = {
-      ...this.requestOptions,
-      hostname: this.baseUrl.hostname,
-      protocol: this.baseUrl.protocol,
-      port: this.baseUrl.port,
-      path: path.join(this.baseUrl.pathname, relativeUrl),
-      method: 'HEAD',
-      headers: {
-        ...this.requestHeaders,
-        ...options.headers
-      },
-      body: options.body,
-    }
-    return this.request(requestOptions)
+    return this._requestMethod('HEAD', relativeUrl, options)
   }
 
   /**
@@ -428,8 +460,8 @@ class HTTP {
    * const response = await http.HEAD('/todos/1')
    * ```
    */
-  HEAD(...args) {
-    return this.head(...args)
+  HEAD(relativeUrl, options = {}) {
+    return this._requestMethod('HEAD', relativeUrl, options)
   }
 
   /**
@@ -486,20 +518,7 @@ class HTTP {
    * ```
    */
   post(relativeUrl, options = {}) {
-    const requestOptions = {
-      ...this.requestOptions,
-      hostname: this.baseUrl.hostname,
-      protocol: this.baseUrl.protocol,
-      port: this.baseUrl.port,
-      path: path.join(this.baseUrl.pathname, relativeUrl),
-      method: 'POST',
-      headers: {
-        ...this.requestHeaders,
-        ...options.headers
-      },
-      body: options.body,
-    }
-    return this.request(requestOptions)
+    return this._requestMethod('POST', relativeUrl, options)
   }
 
   /**
@@ -555,8 +574,8 @@ class HTTP {
    * const response = await http.POST('/todos/1')
    * ```
    */
-  POST(...args) {
-    return this.post(...args)
+  POST(relativeUrl, options = {}) {
+    return this._requestMethod('POST', relativeUrl, options)
   }
 
   /**
@@ -612,20 +631,7 @@ class HTTP {
    * ```
    */
   put(relativeUrl, options = {}) {
-    const requestOptions = {
-      ...this.requestOptions,
-      hostname: this.baseUrl.hostname,
-      protocol: this.baseUrl.protocol,
-      port: this.baseUrl.port,
-      path: path.join(this.baseUrl.pathname, relativeUrl),
-      method: 'PUT',
-      headers: {
-        ...this.requestHeaders,
-        ...options.headers
-      },
-      body: options.body,
-    }
-    return this.request(requestOptions)
+    return this._requestMethod('PUT', relativeUrl, options)
   }
 
   /**
@@ -681,8 +687,8 @@ class HTTP {
    * const response = await http.PUT('/todos/1')
    * ```
    */
-  PUT(...args) {
-    return this.put(...args)
+  PUT(relativeUrl, options = {}) {
+    return this._requestMethod('PUT', relativeUrl, options)
   }
 
   /**
@@ -739,20 +745,7 @@ class HTTP {
    * ```
    */
   patch(relativeUrl, options = {}) {
-    const requestOptions = {
-      ...this.requestOptions,
-      hostname: this.baseUrl.hostname,
-      protocol: this.baseUrl.protocol,
-      port: this.baseUrl.port,
-      path: path.join(this.baseUrl.pathname, relativeUrl),
-      method: 'PATCH',
-      headers: {
-        ...this.requestHeaders,
-        ...options.headers
-      },
-      body: options.body,
-    }
-    return this.request(requestOptions)
+    return this._requestMethod('PATCH', relativeUrl, options)
   }
 
   /**
@@ -808,8 +801,8 @@ class HTTP {
    * const response = await http.PATCH('/todos/1')
    * ```
    */
-  PATCH(...args) {
-    return this.patch(...args)
+  PATCH(relativeUrl, options = {}) {
+    return this._requestMethod('PATCH', relativeUrl, options)
   }
 
   /**
@@ -866,20 +859,7 @@ class HTTP {
    * ```
    */
   delete(relativeUrl, options = {}) {
-    const requestOptions = {
-      ...this.requestOptions,
-      hostname: this.baseUrl.hostname,
-      protocol: this.baseUrl.protocol,
-      port: this.baseUrl.port,
-      path: path.join(this.baseUrl.pathname, relativeUrl),
-      method: 'DELETE',
-      headers: {
-        ...this.requestHeaders,
-        ...options.headers
-      },
-      body: options.body,
-    }
-    return this.request(requestOptions)
+    return this._requestMethod('DELETE', relativeUrl, options)
   }
 
   /**
@@ -935,8 +915,8 @@ class HTTP {
    * const response = await http.DELETE('/todos/1')
    * ```
    */
-  DELETE(...args) {
-    return this.delete(...args)
+  DELETE(relativeUrl, options = {}) {
+    return this._requestMethod('DELETE', relativeUrl, options)
   }
 
   /**
@@ -1117,20 +1097,7 @@ class HTTP {
    * ```
    */
   options(relativeUrl, options2 = {}) {
-    const requestOptions = {
-      ...this.requestOptions,
-      hostname: this.baseUrl.hostname,
-      protocol: this.baseUrl.protocol,
-      port: this.baseUrl.port,
-      path: path.join(this.baseUrl.pathname, relativeUrl),
-      method: 'OPTIONS',
-      headers: {
-        ...this.requestHeaders,
-        ...options2.headers
-      },
-      body: options2.body,
-    }
-    return this.request(requestOptions)
+    return this._requestMethod('OPTIONS', relativeUrl, options2)
   }
 
   /**
@@ -1186,8 +1153,8 @@ class HTTP {
    * const response = await http.OPTIONS('/todos/1')
    * ```
    */
-  OPTIONS(...args) {
-    return this.options(...args)
+  OPTIONS(relativeUrl, options = {}) {
+    return this._requestMethod('OPTIONS', relativeUrl, options)
   }
 
   /**
@@ -1244,20 +1211,7 @@ class HTTP {
    * ```
    */
   trace(relativeUrl, options = {}) {
-    const requestOptions = {
-      ...this.requestOptions,
-      hostname: this.baseUrl.hostname,
-      protocol: this.baseUrl.protocol,
-      port: this.baseUrl.port,
-      path: path.join(this.baseUrl.pathname, relativeUrl),
-      method: 'TRACE',
-      headers: {
-        ...this.requestHeaders,
-        ...options.headers
-      },
-      body: options.body,
-    }
-    return this.request(requestOptions)
+    return this._requestMethod('TRACE', relativeUrl, options)
   }
 
   /**
@@ -1313,8 +1267,8 @@ class HTTP {
    * const response = await http.TRACE('/todos/1')
    * ```
    */
-  TRACE(...args) {
-    return this.trace(...args)
+  TRACE(relativeUrl, options = {}) {
+    return this._requestMethod('TRACE', relativeUrl, options)
   }
 
   /**
