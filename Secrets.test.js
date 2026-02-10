@@ -17,4 +17,19 @@ MY_VARIABLE_C=abc3
     assert.equal(secrets.MY_VARIABLE_B, 'production/abc2')
     assert.equal(secrets.MY_VARIABLE_C, 'abc3')
   })
+
+  it('Optional filepath', async () => {
+    await fs.promises.writeFile(`${__dirname}/test/.secrets`, `
+MY_VARIABLE_A=test/production/abc1
+MY_VARIABLE_B=test/production/abc2
+MY_VARIABLE_C=test/abc3
+    `)
+
+    const secrets = await Secrets(`${__dirname}/test/.secrets`)
+
+    assert.equal(Object.keys(secrets).length, 3)
+    assert.equal(secrets.MY_VARIABLE_A, 'test/production/abc1')
+    assert.equal(secrets.MY_VARIABLE_B, 'test/production/abc2')
+    assert.equal(secrets.MY_VARIABLE_C, 'test/abc3')
+  })
 })
