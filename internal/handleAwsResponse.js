@@ -1,5 +1,7 @@
 const Readable = require('../Readable')
 const AwsError = require('./AwsError')
+const retryableErrorNames = require('./retryableErrorNames')
+const sleep = require('./sleep')
 
 /**
  * @name handleAwsResponse
