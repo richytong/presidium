@@ -3,7 +3,6 @@ const https = require('https')
 const path = require('path')
 const stream = require('stream')
 const httpConfigure = require('./internal/httpConfigure')
-const parseUrl = require('./internal/parseUrl')
 
 /**
  * @name HTTP
