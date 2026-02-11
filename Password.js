@@ -13,7 +13,7 @@ const Password = {}
  *
  * @docs
  * ```coffeescript [specscript]
- * Password.hash(plaintext string) -> hash string
+ * Password.hash(plaintext string) -> hash Promise<string>
  * ```
  *
  * Creates a hash of the plaintext password.
@@ -30,7 +30,7 @@ const Password = {}
  * const myPasswordHash = await Password.hash(myPassword)
  * ```
  */
-Password.hash = async function (plaintext) {
+Password.hash = async function hash(plaintext) {
   const salt = await bcrypt.genSalt(10)
   const hashed = await bcrypt.hash(plaintext, salt)
   return hashed
@@ -67,7 +67,7 @@ Password.hash = async function (plaintext) {
  * ```
  */
 
-Password.verify = async function (plaintext, hashed) {
+Password.verify = async function verify(plaintext, hashed) {
   const isValid = await bcrypt.compare(plaintext, hashed)
   if (!isValid) {
     throw new Error('Invalid password')
