@@ -52,6 +52,10 @@ const SymbolUpdateShards = Symbol('UpdateShards')
  *     * `autoReady` - whether to automatically create the DynamoDB Stream if it doesn't exist. Defaults to `true`.
  *     * `StreamViewType` - determines what information is written to the DynamoDB Stream.
  *     * `ShardIteratorType` - determines how the shard iterator is used to start reading stream records from a shard of the stream. A shard is a replica of a stream for enhanced throughput purposes.
+ *     * `GetRecordsLimit` - number of records to fetch per DynamoDB Streams GetRecords operation. Defaults to `1000`.
+ *     * `GetRecordsInterval` - number of milliseconds to wait between DynamoDB Streams GetRecords calls. Defaults to `1000`.
+ *     * `ShardUpdatePeriod` - number of milliseconds to wait between shard updates. Defaults to `15000`.
+ *     * `ListStreamsLimit` - number of streams to list per DynamoDB Streams ListStreams calls. Defaults to `100`.
  *     * `JSON` - replaces `NewImage` in DynamoDB JSON format with `NewImageJSON` in JSON format and `OldImage` in DynamoDB JSON format with `OldImageJSON` in JSON format for all stream records.
  *
  * `StreamViewType` values:
