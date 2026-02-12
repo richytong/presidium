@@ -24,6 +24,7 @@ const createExpressionAttributeValues =
 const createKeyConditionExpression =
   require('./internal/createKeyConditionExpression')
 const createFilterExpression = require('./internal/createFilterExpression')
+const AwsError = require('./internal/AwsError')
 
 /**
  * @name DynamoDBGlobalSecondaryIndex
