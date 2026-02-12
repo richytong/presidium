@@ -56,7 +56,7 @@ const SymbolUpdateShards = Symbol('UpdateShards')
  *     * `GetRecordsInterval` - number of milliseconds to wait between DynamoDB Streams GetRecords calls. Defaults to `1000`.
  *     * `ShardUpdatePeriod` - number of milliseconds to wait between shard updates. Defaults to `15000`.
  *     * `ListStreamsLimit` - number of streams to list per DynamoDB Streams ListStreams calls. Defaults to `100`.
- *     * `JSON` - replaces `NewImage` in DynamoDB JSON format with `NewImageJSON` in JSON format and `OldImage` in DynamoDB JSON format with `OldImageJSON` in JSON format for all stream records.
+ *     * `JSON` - replaces `NewImage` in DynamoDB JSON format with `NewImageJSON` in JSON format and `OldImage` in DynamoDB JSON format with `OldImageJSON` in JSON format for all stream records. Defaults to `false`.
  *
  * `StreamViewType` values:
  *   * `KEYS_ONLY` - only the key attributes of the modified item are written to the DynamoDB Stream.
