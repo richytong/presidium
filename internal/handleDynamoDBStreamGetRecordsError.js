@@ -8,7 +8,7 @@
  */
 function handleDynamoDBStreamGetRecordsError(error) {
   if (error.message.includes('Shard iterator has expired')) {
-    return []
+    return { Records: [] }
   }
   throw error
 }
