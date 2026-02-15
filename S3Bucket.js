@@ -870,6 +870,9 @@ class S3Bucket {
       headers['Content-Length'] = options.ContentLength
     }
 
+    if (body.readable) {
+      body = await Readable.Buffer(body)
+    }
     if (options.ContentMD5) {
       headers['Content-MD5'] = options.ContentMD5
     } else {

@@ -73,11 +73,18 @@ const test1 = new Test('S3Bucket', async function integration1() {
   {
     const response = await testBucket.putObject('binary', Buffer.from('binary'))
     assert.equal(typeof response.ETag, 'string')
+    const binary = await testBucket.getObject('binary')
+    assert.equal(binary.ContentType, 'application/octet-stream')
+    assert.deepEqual(binary.Body, Buffer.from('binary'))
   }
 
-  const binary = await testBucket.getObject('binary')
-  assert.equal(binary.ContentType, 'application/octet-stream')
-  assert.deepEqual(binary.Body, Buffer.from('binary'))
+  {
+    const response = await testBucket.putObject('ReadableStream', stream.Readable.from(['ReadableStream']))
+    assert.equal(typeof response.ETag, 'string')
+    const data = await testBucket.getObject('ReadableStream')
+    assert.equal(data.ContentType, 'application/octet-stream')
+    assert.deepEqual(data.Body, Buffer.from('ReadableStream'))
+  }
 
   const res = await testBucket.putObject('buffer', Buffer.from('buffer'))
   const buffer = await testBucket.getObject('buffer')
@@ -131,6 +138,7 @@ const test1 = new Test('S3Bucket', async function integration1() {
   {
     const response = await testBucket.deleteAllObjects({ BatchSize: 1 })
     assert.deepEqual(response.Deleted.map(pick(['Key'])), [
+      { Key: 'ReadableStream' },
       { Key: 'binary' },
       { Key: 'buffer' },
       { Key: 'buffer2' },

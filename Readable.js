@@ -35,8 +35,12 @@ const Readable = {}
 Readable.Buffer = function Readable(readable) {
   return new Promise((resolve, reject) => {
     const chunks = []
-    readable.on('data', chunk => {
-      chunks.push(chunk)
+    readable.on('data', (chunk, encoding) => {
+      if (typeof chunk == 'string') {
+        chunks.push(Buffer.from(chunk, encoding))
+      } else {
+        chunks.push(chunk)
+      }
     })
     readable.on('end', () => {
       resolve(Buffer.concat(chunks))

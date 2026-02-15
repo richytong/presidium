@@ -6,6 +6,7 @@ const Readable = require('./Readable')
 const test1 =
   new Test('Readable', Readable.Buffer)
     .case(stream.Readable.from([Buffer.from('abc')]), Buffer.from('abc'))
+    .case(stream.Readable.from(['abc']), Buffer.from('abc'))
 
 const test2 =
   new Test('Readable', Readable.Text)
