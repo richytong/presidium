@@ -62,30 +62,28 @@
  */
 const StrictValidator = function (parsers, options = {}) {
   const {
-    onMissing = function throwOnMissing(field) {
-      const error = new Error(`missing field ${field}`)
-      error.code = 400
-      throw error
-    },
+    onMissing
   } = options
 
   const requiredFields = Object.keys(parsers)
 
   return function strictValidator(object) {
-    for (const field of requiredFields) {
-      if (!(field in object)) {
+    const result = {}
+    for (const field in parsers) {
+      if (field in object) {
+        const parser = parsers[field]
+        const value = object[field]
+        result[field] = parser(value)
+
+      } else if (typeof onMissing == 'function') {
         onMissing(field)
+      } else {
+        const error = new Error(`Missing field ${field}`)
+        error.code = 400
+        throw error
       }
     }
 
-    const result = {}
-    for (const key in parsers) {
-      const parser = parsers[key],
-        value = object[key]
-      if (value != null) {
-        result[key] = parser(value)
-      }
-    }
     return result
   }
 }

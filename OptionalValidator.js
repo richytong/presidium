@@ -66,11 +66,11 @@ const OptionalValidator = function (parsers) {
 
   return function optionalValidator(object) {
     const result = {}
-    for (const key in parsers) {
-      const parser = parsers[key],
-        value = object[key]
-      if (value != null) {
-        result[key] = parser(value)
+    for (const field in parsers) {
+      if (field in object) {
+        const parser = parsers[field]
+        const value = object[field]
+        result[field] = parser(value)
       }
     }
     return result
