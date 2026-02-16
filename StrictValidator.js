@@ -14,7 +14,7 @@
  * ) -> strictValidator Validator
  * ```
  *
- * Creates a strict validator. A strict validator validates each field of a `data` object with the corresponding `parserValidator` function. A strict validator throws an error if any of the required fields specified by the `parserValidatorSchema` are missing.
+ * Creates a strict validator. A strict validator validates each field of a `data` object with the corresponding `parserValidator` function. A strict validator throws an error if any of the required fields specified by the `parserValidatorSchema` are missing (not in the data object).
  *
  * Arguments:
  *   * `parserValidatorSchema` - an object of parser validator functions.
