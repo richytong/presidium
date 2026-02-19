@@ -739,6 +739,8 @@ class GoogleChromeDevToolsRuntime {
 /**
  * @name GoogleChromeDevTools
  *
+ * @constructor
+ *
  * @docs
  * ```coffeescript [specscript]
  * new GoogleChromeDevTools(url string) -> googleChromeDevTools GoogleChromeDevTools
