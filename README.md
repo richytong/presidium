@@ -28,7 +28,7 @@ const WebSocket = require('presidium/WebSocket')
 const Readable = require('presidium/Readable')
 ```
 
-## Handle HTTP
+## [Handle HTTP](https://presidium.services/docs/HTTP)
 ```javascript
 const HTTP = require('presidium/HTTP')
 
@@ -47,7 +47,7 @@ http.get('/')
   .then(console.log) // { greeting: 'Hello World' }
 ```
 
-## Handle WebSocket
+## [Send messages with WebSocket](https://presidium.services/docs/WebSocket)
 ```javascript
 const WebSocket = require('presidium/WebSocket')
 
@@ -71,7 +71,7 @@ websocket.on('message', message => {
 })
 ```
 
-## CRUD and Query DynamoDB
+## [Create, read, update, delete, and query with AWS DynamoDB](https://presidium.services/docs/DynamoDBTable)
 ```javascript
 const DynamoDBTable = require('presidium/DynamoDBTable')
 const DynamoDBGlobalSecondaryIndex = require('presidium/DynamoDBGlobalSecondaryIndex')
@@ -175,7 +175,7 @@ await myTable.putItemJSON({ id: '3', name: 'Jane', age: 33, type: 'person' })
 }
 ```
 
-## Consume DynamoDB Streams
+## [Consume AWS DynamoDB Streams](https://presidium.services/docs/DynamoDBStream)
 ```javascript
 const DynamoDBTable = require('presidium/DynamoDBTable')
 const DynamoDBStream = require('presidium/DynamoDBStream')
@@ -219,7 +219,7 @@ for await (const record of myStreamJSON) {
 }
 ```
 
-## Upload to S3
+## [Download and upload with AWS S3](https://presidium.services/docs/S3Bucket)
 ```javascript
 const S3Bucket = require('presidium/S3Bucket')
 const AwsCredentials = require('presidium/AwsCredentials')
@@ -245,8 +245,7 @@ await myBucket.deleteAllObjects()
 await myBucket.delete()
 ```
 
-## Build and Push Docker Images
-> No more --build-arg for npm tokens!
+## [Build and push Docker images](https://presidium.services/docs/Docker)
 ```javascript
 const Docker = require('presidium/Docker')
 const NpmToken = require('presidium/NpmToken')
@@ -276,16 +275,18 @@ CMD ["npm", "start"]
 })
 
 buildStream.pipe(process.stdout)
-await new Promise(resolve => buildStream.on('end', resolve))
 
-const pushStream = await docker.pushImage({
-  image: myImage,
-  repository: 'my-registry.io',
+buildStream.on('end', () => {
+  const pushStream = await docker.pushImage({
+    image: myImage,
+    repository: 'my-registry.io',
+  })
+  pushStream.pipe(process.stdout)
 })
-pushStream.pipe(process.stdout)
+
 ```
 
-## Run Docker Containers
+## [Run Docker containers](https://presidium.services/docs/Docker)
 ```javascript
 const Docker = require('presidium/Docker')
 
@@ -301,7 +302,7 @@ const runStream = await docker.runContainer({
 runStream.pipe(process.stdout) // Example
 ```
 
-## Deploy Docker Swarm Services
+## [Deploy Docker Swarm services](https://presidium.services/docs/Docker)
 ```javascript
 const Docker = require('presidium/Docker')
 
@@ -318,6 +319,31 @@ await docker.createService({
   replicas: 5,
 })
 // new nginx service is deploying to the docker swarm
+```
+
+## [Automate tests with Google Chrome for Testing](https://presidium.services/docs/GoogleChromeDevTools)
+```javascript
+const GoogleChromeDevTools = require('presidium/GoogleChromeDevTools')
+
+const googleChromeDevTools = new GoogleChromeDevTools()
+await googleChromeDevTools.init() // downloads Google Chrome for Testing
+
+// get targets
+const targetsData = await googleChromeDevTools.Target.getTargets()
+const pageTarget = targetsData.result.targetInfos.find(info => info.type == 'page')
+
+// attach to target
+const attachToTargetData = await googleChromeDevTools.Target.attachToTarget({
+  targetId: this.pageTarget.targetId,
+  flatten: true,
+})
+const sessionId = attachToTargetData.result.sessionId
+
+// navigate to the home page
+const data = await googleChromeDevTools.Page.navigate({
+  sessionId: this.sessionId,
+  url: `http://localhost:3000/`,
+})
 ```
 
 # Support
