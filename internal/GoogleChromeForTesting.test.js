@@ -1,9 +1,9 @@
 const Test = require('thunk-test')
 const assert = require('assert')
-const Readable = require('presidium/Readable')
-const GoogleChromeForTesting = require('./GoogleChromeForTesting')
 const fs = require('fs')
 const { exec } = require('child_process')
+const Readable = require('../Readable')
+const GoogleChromeForTesting = require('./GoogleChromeForTesting')
 
 const test = new Test('GoogleChromeForTesting', async function integration() {
   await fs.promises.rm('google-chrome-for-testing', { recursive: true, force: true })
