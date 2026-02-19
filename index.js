@@ -1,5 +1,4 @@
 module.exports = {
-  Archive: require('./Archive.js'),
   AwsCredentials: require('./AwsCredentials.js'),
   Docker: require('./Docker.js'),
   DynamoDBGlobalSecondaryIndex: require('./DynamoDBGlobalSecondaryIndex.js'),

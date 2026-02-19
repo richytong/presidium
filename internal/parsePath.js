@@ -1,4 +1,4 @@
-const nodePath = require('path')
+const path = require('path')
 
 /**
  * @name parsePath
@@ -14,6 +14,6 @@ const nodePath = require('path')
  * }
  * ```
  */
-const parsePath = nodePath.parse
+const parsePath = path.parse
 
 module.exports = parsePath

@@ -1,7 +1,6 @@
 const Test = require('thunk-test')
 
 const test = Test.all([
-  require('./Archive.test'),
   require('./AwsCredentials.test'),
   require('./Docker.test'),
   require('./DynamoDBTable.test'),
@@ -22,6 +21,7 @@ const test = Test.all([
   require('./WebSocketSecureServer.test'),
   require('./ServerWebSocket.test'),
 
+  require('./internal/Archive.test'),
   require('./internal/createUpdateServiceSpec.test'),
   require('./internal/StatusCodeMessage.test'),
   require('./internal/handleDynamoDBStreamGetRecordsError.test'),

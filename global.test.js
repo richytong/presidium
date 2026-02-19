@@ -4,7 +4,6 @@ require('./global')
 
 const test = new Test('global', async function integration() {
   assert.equal(typeof WebSocket, 'function')
-  assert.equal(typeof Archive, 'function')
   assert.equal(typeof AwsCredentials, 'function')
   assert.equal(typeof Docker, 'function')
   assert.equal(typeof DynamoDBGlobalSecondaryIndex, 'function')

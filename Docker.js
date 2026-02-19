@@ -8,7 +8,7 @@ const zlib = require('zlib')
 const http = require('http')
 const Readable = require('./Readable')
 const HTTP = require('./HTTP')
-const Archive = require('./Archive')
+const Archive = require('./internal/Archive')
 const querystring = require('querystring')
 const split = require('./internal/split')
 const join = require('./internal/join')
@@ -394,9 +394,8 @@ class Docker {
    *   * [Dockerfile](https://docs.docker.com/engine/reference/builder/)
    */
   async buildImage(path, options = {}) {
-    const archive = new Archive(options.archive)
-
-    const pack = archive.tar(path, {
+    const pack = Archive.tar(path, {
+      base: options.archive,
       ignore: options.ignore ?? ['node_modules', '.git', '.nyc_output'],
     })
 
