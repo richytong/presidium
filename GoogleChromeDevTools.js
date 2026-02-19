@@ -828,7 +828,21 @@ class GoogleChromeDevTools extends EventEmitter {
    *
    * @docs
    * ```coffeescript [specscript]
-   * init() -> Promise<>
+   * init() -> promise Promise<>
+   * ```
+   *
+   * Initializes the `GoogleChromeDevTools` client.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Returns:
+   *   * `promise` - a promise that resolves when the initialization process is done.
+   *
+   * ```javascript
+   * const googleChromeDevTools = new GoogleChromeDevTools()
+   *
+   * await googleChromeDevTools.init()
    * ```
    */
   async init() {
