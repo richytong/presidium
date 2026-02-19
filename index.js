@@ -5,6 +5,7 @@ module.exports = {
   DynamoDBStream: require('./DynamoDBStream.js'),
   DynamoDBTable: require('./DynamoDBTable.js'),
   ECR: require('./ECR.js'),
+  GoogleChromeDevTools: require('./GoogleChromeDevTools.js'),
   HTTP: require('./HTTP.js'),
   NpmToken: require('./NpmToken.js'),
   OptionalValidator: require('./OptionalValidator.js'),
