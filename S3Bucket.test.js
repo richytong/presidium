@@ -163,6 +163,9 @@ const test1 = new Test('S3Bucket', async function integration1() {
     })
     assert.equal(data2.Contents.length, 1)
     assert.equal(data2.Contents[0].Key, encodeURIComponentRFC3986(specialKey).replace(/%2F/g, '/').replace(/%2A/g, '*').replace(/%20/g, '+'))
+
+    const data3 = await testBucket.getObject(specialKey)
+    assert.equal(data3.Body.toString('utf8'), 'test')
   }
 
   await testBucket.deleteAllObjects()
@@ -182,6 +185,9 @@ const test1 = new Test('S3Bucket', async function integration1() {
     })
     assert.equal(data2.Contents.length, 1)
     assert.equal(data2.Contents[0].Key, encodeURIComponentRFC3986(specialKey))
+
+    const data3 = await testBucket.getObject(specialKey)
+    assert.equal(data3.Body.toString('utf8'), 'test')
   }
 
   {
@@ -629,7 +635,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   {
     console.log('deleteObject with delete marker')
 
-    const key = 'test/getObject-delete-marker'
+    const key = 'test/getObject-delete-marker/:%"!#$&\'()*, ;=?@[]'
     const data1 = await testBucket3.putObject(key, 'test')
     assert.equal(typeof data1.VersionId, 'string')
     const VersionId = data1.VersionId
@@ -676,7 +682,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   {
     console.log('ACL option + VersionId in response')
 
-    const key = 'test/acl'
+    const key = 'test/acl/:%"!#$&\'()*, ;=?@[]'
     const data1 = await testBucket3.putObject(key, 'test', {
       ACL: 'aws-exec-read'
     })
@@ -1203,6 +1209,9 @@ const test3 = new Test('S3Bucket', async function integration3() {
     assert.equal(data2.Versions.length, 1)
     console.log('* should be encoded', data2.Versions[0].Key, encodeURIComponentRFC3986(specialKey).replace(/%2F/g, '/'))
     assert.equal(data2.Versions[0].Key, encodeURIComponentRFC3986(specialKey).replace(/%2F/g, '/').replace(/%2A/g, '*').replace(/%20/g, '+'))
+
+    const data3 = await testBucket3.getObject(specialKey)
+    assert.equal(data3.Body.toString('utf8'), 'test')
   }
 
   {

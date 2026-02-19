@@ -1309,11 +1309,12 @@ class S3Bucket {
       searchParams.set('versionId', options.VersionId)
     }
 
+    const encodedKey = encodeURIComponentRFC3986(key).replace(/%2F/g, '/')
     const response = await this._awsRequest1(
       'GET',
       searchParams.size > 0
-        ? `/${key}?${searchParams.toString()}`
-        : `/${key}`,
+        ? `/${encodedKey}?${searchParams.toString()}`
+        : `/${encodedKey}`,
       headers,
       ''
     )
@@ -1500,11 +1501,12 @@ class S3Bucket {
       searchParams.set('versionId', options.VersionId)
     }
 
+    const encodedKey = encodeURIComponentRFC3986(key).replace(/%2F/g, '/')
     const response = await this._awsRequest1(
       'GET',
       searchParams.size > 0
-        ? `/${key}?acl&${searchParams.toString()}`
-        : `/${key}?acl`,
+        ? `/${encodedKey}?acl&${searchParams.toString()}`
+        : `/${encodedKey}?acl`,
       headers,
       ''
     )
@@ -1750,11 +1752,12 @@ class S3Bucket {
       searchParams.set('versionId', options.VersionId)
     }
 
+    const encodedKey = encodeURIComponentRFC3986(key).replace(/%2F/g, '/')
     const response = await this._awsRequest1(
       'HEAD',
       searchParams.size > 0
-        ? `/${key}?${searchParams.toString()}`
-        : `/${key}`,
+        ? `/${encodedKey}?${searchParams.toString()}`
+        : `/${encodedKey}`,
       headers,
       ''
     )
@@ -1976,11 +1979,12 @@ class S3Bucket {
       searchParams.set('versionId', options.VersionId)
     }
 
+    const encodedKey = encodeURIComponentRFC3986(key).replace(/%2F/g, '/')
     const response = await this._awsRequest1(
       'DELETE',
       searchParams.size > 0
-        ? `/${key}?${searchParams.toString()}`
-        : `/${key}`,
+        ? `/${encodedKey}?${searchParams.toString()}`
+        : `/${encodedKey}`,
       headers,
       ''
     )
