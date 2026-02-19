@@ -7,6 +7,7 @@ const test = Test.all([
   require('./DynamoDBGlobalSecondaryIndex.test'),
   require('./DynamoDBStream.test'),
   require('./ECR.test'),
+  require('./GoogleChromeDevTools.test'),
   require('./HTTP.test'),
   require('./NpmToken.test'),
   require('./OptionalValidator.test'),
@@ -21,6 +22,7 @@ const test = Test.all([
   require('./WebSocketSecureServer.test'),
   require('./ServerWebSocket.test'),
 
+  require('./internal/GoogleChromeForTesting.test'),
   require('./internal/Archive.test'),
   require('./internal/createUpdateServiceSpec.test'),
   require('./internal/StatusCodeMessage.test'),
