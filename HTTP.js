@@ -70,8 +70,6 @@ class HTTP {
   request(options) {
     const { body, ...requestOptions } = options
 
-    requestOptions.path = encodeURI(requestOptions.path)
-
     return new Promise((resolve, reject) => {
       const client = requestOptions.protocol == 'https:' ? https : http
       const request = client.request(requestOptions, response => {

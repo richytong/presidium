@@ -114,7 +114,7 @@ const test1 = new Test('HTTP GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and T
   }
 
   {
-    const response = await _http.GET('/echo space')
+    const response = await _http.GET('/echo%20space')
     assert.equal(response.status, 200)
     assert.strictEqual(response.ok, true)
     const data = await response.text()
@@ -586,7 +586,7 @@ const test4 = new Test('HTTPS GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and 
   }
 
   {
-    const response = await _https.GET('/echo space')
+    const response = await _https.GET('/echo%20space')
     assert.equal(response.status, 200)
     assert.strictEqual(response.ok, true)
     const data = await response.text()
