@@ -29,11 +29,18 @@ const test = new Test('Archive', async function integration() {
     const base = {
       Dockerfile: 'FROM node:15-alpine'
     }
-    const ignore = ['fixtures']
+    const ignore = ['fixtures', 'tmp', 'google-chrome-for-testing']
     const pack = await Archive.tar(__dirname, { ignore, base })
     const extracted = await Archive.untar(pack)
     const dir = await fs.readdir(__dirname)
-      .then(filter(n => !ignore.includes(n)))
+      .then(filter(filepath => {
+        for (const part of ignore) {
+          if (filepath.includes(part)) {
+            return false
+          }
+        }
+        return true
+      }))
     const extractedKeys = [...extracted.keys()]
     assert.equal(extracted.size, dir.length + 1) // extra Dockerfile
     assert(extracted.has('Dockerfile'))

@@ -1,13 +1,7 @@
 require('rubico/global')
 const tarStream = require('tar-stream')
-const fs = require('fs/promises')
+const fs = require('fs')
 const walk = require('./walk')
-const pipe = require('rubico/pipe')
-const tap = require('rubico/tap')
-const get = require('rubico/get')
-const reduce = require('rubico/reduce')
-const thunkify = require('rubico/thunkify')
-const pick = require('rubico/pick')
 
 /**
  * @name Archive
@@ -54,10 +48,10 @@ Archive.tar = function tar(path, options) {
       pack.entry({
         name: filepath.replace(pathWithSlash, ''),
         ...pipe([
-          fs.stat,
+          fs.promises.stat,
           pick(['size', 'mode', 'mtime', 'uid', 'gid']),
         ])(filepath),
-      }, await fs.readFile(filepath))
+      }, await fs.promises.readFile(filepath))
       return pack
     }, pack),
 
