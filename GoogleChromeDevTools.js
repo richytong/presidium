@@ -788,7 +788,7 @@ class GoogleChromeDevToolsRuntime {
  *
  * The Chrome DevTools Protocol has various APIs to interact with the different parts of the browser. These parts are separated into different domains. The Presidium GoogleChromeDevTools client covers the `Target`, `Page`, `DOM`, `Input`, `Storage`, and `Runtime` domains. Pages, serviceworkers, and extensions are called "Targets" and can be fetched and tracked using the `Target` domain.
  *
- * Every Chrome DevTools Protocol client needs to first attach to the target using the `Target.attachToTarget` command. The command will establish a protocol session with the given target and return a `sessionId`. The returned `sessionId` should be included in every message to the DevTools server.
+ * Every Chrome DevTools Protocol client needs to first attach to the target using the `Target.attachToTarget` command. The command will establish a protocol session with the given target and return a `sessionId`. The returned `sessionId` should be set on the `GoogleChromeDevTools` client using [`setSessionId`](#setSessionId) or included in every message to the DevTools server.
  *
  * ```javascript
  * const googleChromeDevTools = new GoogleChromeDevTools()
