@@ -22,11 +22,13 @@ const test = Test.all([
   require('./WebSocketSecureServer.test'),
   require('./ServerWebSocket.test'),
 
-  require('./internal/GoogleChromeForTesting.test'),
   require('./internal/Archive.test'),
   require('./internal/createUpdateServiceSpec.test'),
-  require('./internal/StatusCodeMessage.test'),
+  require('./internal/encodeURIComponentRFC3986.test'),
+  require('./internal/GoogleChromeForTesting.test'),
+  require('./internal/handleAwsResponse.test'),
   require('./internal/handleDynamoDBStreamGetRecordsError.test'),
+  require('./internal/httpConfigure.test'),
   require('./internal/StatusCodeMessage.test'),
 
   require('./global.test'),
