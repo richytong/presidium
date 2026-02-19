@@ -310,6 +310,15 @@ describe('XML', () => {
     assert.deepEqual(data, { Test: { a: '1' } })
   })
 
+  it.only('Parses XML tags 15', async () => {
+    const xml = `
+<meta a="1">
+    `.trim()
+
+    const data = XML.parse(xml)
+    assert.deepEqual(data, { Test: { a: '1' } })
+  })
+
   it('Throws SyntaxError for malformed tag', async () => {
     assert.throws(
       () => XML.parse('asdf'),
