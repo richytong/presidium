@@ -1,4 +1,4 @@
-const bcrypt = require('bcrypt')
+const crypto = require('crypto')
 
 /**
  * @name Password
@@ -31,9 +31,15 @@ const Password = {}
  * ```
  */
 Password.hash = async function hash(plaintext) {
-  const salt = await bcrypt.genSalt(10)
-  const hashed = await bcrypt.hash(plaintext, salt)
-  return hashed
+  return new Promise((resolve, reject) => {
+    const salt = crypto.randomBytes(10).toString('hex')
+    crypto.scrypt(plaintext, salt, 64, (error, derivedKey) => {
+      if (error) {
+        reject(error)
+      }
+      resolve(`${salt}:${derivedKey.toString('hex')}`)
+    })
+  })
 }
 
 /**
@@ -68,11 +74,22 @@ Password.hash = async function hash(plaintext) {
  */
 
 Password.verify = async function verify(plaintext, hashed) {
-  const isValid = await bcrypt.compare(plaintext, hashed)
-  if (!isValid) {
-    throw new Error('Invalid password')
+  const [salt, derivedKey] = hashed.split(':')
+  const hashedPlaintext = await Password.hash(plaintext)
+
+  const hashed1 = await new Promise((resolve, reject) => {
+    crypto.scrypt(plaintext, salt, 64, (error, derivedKey1) => {
+      if (error) {
+        reject(error)
+      }
+      resolve(`${salt}:${derivedKey1.toString('hex')}`)
+    })
+  })
+
+  if (hashed == hashed1) {
+    return undefined
   }
-  return undefined
+  throw new Error('Invalid password')
 }
 
 module.exports = Password
