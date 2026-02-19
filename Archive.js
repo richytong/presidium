@@ -1,6 +1,7 @@
+require('rubico/global')
 const tar = require('tar-stream')
 const fs = require('fs/promises')
-const pathWalk = require('./internal/pathWalk')
+const walk = require('./internal/walk')
 const isArray = require('./internal/isArray')
 const parsePath = require('./internal/parsePath')
 const pipe = require('rubico/pipe')
@@ -50,7 +51,15 @@ class Archive {
     const pack = tar.pack()
 
     pipe(path, [
-      curry.arity(2, pathWalk, __, { ignore }),
+      walk,
+      filter(path => {
+        for (const part of ignore) {
+          if (path.includes(part)) {
+            return false
+          }
+        }
+        return true
+      }),
 
       reduce(async (pack, filepath) => {
         pack.entry({
