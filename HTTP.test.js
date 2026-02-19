@@ -42,6 +42,14 @@ const test1 = new Test('HTTP GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and T
         ...request.headers,
       })
       response.end(text)
+    } else if (request.url == '/echo%20space') {
+      const buffer = await Readable.Buffer(request)
+      const text = buffer.toString('utf8')
+      delete request.headers['content-length']
+      response.writeHead(200, {
+        ...request.headers,
+      })
+      response.end(' ')
     }
     else {
       response.writeHead(404, {
@@ -103,6 +111,14 @@ const test1 = new Test('HTTP GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and T
     assert.equal(await response.text(), '{"greeting":"Hello World"}')
     assert.deepEqual(await response.json(), { greeting: 'Hello World' })
     assert.deepEqual(await response.json(), { greeting: 'Hello World' })
+  }
+
+  {
+    const response = await _http.GET('/echo space')
+    assert.equal(response.status, 200)
+    assert.strictEqual(response.ok, true)
+    const data = await response.text()
+    assert.equal(data, ' ')
   }
 
   {
@@ -496,6 +512,14 @@ const test4 = new Test('HTTPS GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and 
         ...request.headers,
       })
       response.end(text)
+    } else if (request.url == '/echo%20space') {
+      const buffer = await Readable.Buffer(request)
+      const text = buffer.toString('utf8')
+      delete request.headers['content-length']
+      response.writeHead(200, {
+        ...request.headers,
+      })
+      response.end(' ')
     }
     else {
       response.writeHead(404, {
@@ -559,6 +583,14 @@ const test4 = new Test('HTTPS GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and 
     assert.equal(await response.text(), '{"greeting":"Hello World"}')
     assert.deepEqual(await response.json(), { greeting: 'Hello World' })
     assert.deepEqual(await response.json(), { greeting: 'Hello World' })
+  }
+
+  {
+    const response = await _https.GET('/echo space')
+    assert.equal(response.status, 200)
+    assert.strictEqual(response.ok, true)
+    const data = await response.text()
+    assert.equal(data, ' ')
   }
 
   {
