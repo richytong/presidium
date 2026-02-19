@@ -18,6 +18,7 @@
     "DynamoDBStream.js",
     "DynamoDBTable.js",
     "ECR.js",
+    "GoogleChromeDevTools.js",
     "HTTP.js",
     "index.js",
     "NpmToken.js",
