@@ -9,6 +9,7 @@ const CRC32 = require('./internal/CRC32')
 const crc32c = require('fast-crc32c')
 const convertUint32ToBase64 = require('./internal/convertUint32ToBase64')
 const { CrtCrc64Nvme } = require('@aws-sdk/crc64-nvme-crt')
+const encodeURIComponentRFC3986 = require('./internal/encodeURIComponentRFC3986')
 
 const test1 = new Test('S3Bucket', async function integration1() {
   const awsCreds = await AwsCredentials('presidium')
@@ -146,9 +147,9 @@ const test1 = new Test('S3Bucket', async function integration1() {
     ])
   }
 
-  { // listObjects EncodingType option
-    const specialKey = ':::'
-    await testBucket.putObject(encodeURIComponent(specialKey), 'test')
+  { // listObjects EncodingType option 0
+    const specialKey = ':::/:::'
+    await testBucket.putObject(specialKey, 'test')
     const data1 = await testBucket.listObjects()
     assert.equal(data1.Contents.length, 1)
     assert.equal(data1.Contents[0].Key, specialKey)
@@ -157,7 +158,24 @@ const test1 = new Test('S3Bucket', async function integration1() {
       EncodingType: 'url',
     })
     assert.equal(data2.Contents.length, 1)
-    assert.equal(data2.Contents[0].Key, encodeURIComponent(specialKey))
+    assert.equal(data2.Contents[0].Key, encodeURIComponentRFC3986(specialKey).replace(/%2F/g, '/'))
+  }
+
+  await testBucket.deleteAllObjects()
+
+  { // listObjects EncodingType option
+    const specialKey = encodeURIComponentRFC3986(':::/:::')
+    await testBucket.putObject(specialKey, 'test')
+    const data1 = await testBucket.listObjects()
+    assert.equal(data1.Contents.length, 1)
+    assert.equal(data1.Contents[0].Key, specialKey)
+    assert.equal(data1.Contents[0].Key, specialKey)
+
+    const data2 = await testBucket.listObjects({
+      EncodingType: 'url',
+    })
+    assert.equal(data2.Contents.length, 1)
+    assert.equal(data2.Contents[0].Key, encodeURIComponentRFC3986(specialKey))
   }
 
   { // FetchOwner option
@@ -1096,8 +1114,10 @@ const test3 = new Test('S3Bucket', async function integration3() {
   await testBucket3.deleteAllObjects()
 
   { // listObjectVersions EncodingType option
-    const specialKey = ':::'
-    await testBucket3.putObject(encodeURIComponent(specialKey), 'test')
+    const specialKey = ':::/:::%"!#$&\'()*,;=?@[]'
+    // const specialKey = ':::/:::%"!'
+    // const specialKey = ':::/:::'
+    await testBucket3.putObject(specialKey, 'test')
     const data1 = await testBucket3.listObjectVersions()
     assert.equal(data1.Versions.length, 1)
     assert.equal(data1.Versions[0].Key, specialKey)
@@ -1106,7 +1126,8 @@ const test3 = new Test('S3Bucket', async function integration3() {
       EncodingType: 'url',
     })
     assert.equal(data2.Versions.length, 1)
-    assert.equal(data2.Versions[0].Key, encodeURIComponent(specialKey))
+    console.log('* should be encoded', data2.Versions[0].Key, encodeURIComponentRFC3986(specialKey).replace(/%2F/g, '/'))
+    assert.equal(data2.Versions[0].Key, encodeURIComponentRFC3986(specialKey).replace(/%2F/g, '/').replace(/%2A/g, '*'))
   }
 
   { // delete

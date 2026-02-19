@@ -9,6 +9,8 @@ const AwsError = require('./internal/AwsError')
 const parseURL = require('./internal/parseURL')
 const createS3DeleteObjectError = require('./internal/createS3DeleteObjectError')
 const XML = require('./XML')
+const HTMLEntities = require('html-entities')
+const encodeURIComponentRFC3986 = require('./internal/encodeURIComponentRFC3986')
 
 /**
  * @name S3Bucket
@@ -327,10 +329,10 @@ class S3Bucket {
 
     if (response.ok) {
       const text = await Readable.Text(response)
-      const data = XML.parse(text)
+      const xmlData = XML.parse(HTMLEntities.decode(text))
       return {
-        LocationConstraint: typeof data.LocationConstraint == 'string'
-          ? data.LocationConstraint
+        LocationConstraint: typeof xmlData.LocationConstraint == 'string'
+          ? xmlData.LocationConstraint
           : null
       }
     }
@@ -979,7 +981,8 @@ class S3Bucket {
         options.ObjectLockLegalHoldStatus
     }
 
-    const response = await this._awsRequest1('PUT', `/${key}`, headers, body)
+    const encodedKey = encodeURIComponentRFC3986(key).replace(/%2F/g, '/')
+    const response = await this._awsRequest1('PUT', `/${encodedKey}`, headers, body)
 
     if (response.ok) {
       const data = {}
@@ -1510,7 +1513,7 @@ class S3Bucket {
       const data = {}
 
       const text = await Readable.Text(response)
-      const xmlData = XML.parse(text)
+      const xmlData = XML.parse(HTMLEntities.decode(text))
       let Grants = xmlData.AccessControlPolicy?.AccessControlList?.Grant
       if (!Array.isArray(Grants)) {
         Grants = [Grants]
@@ -2077,12 +2080,12 @@ class S3Bucket {
   ${
     keys.map(key => typeof key == 'string' ? `
    <Object>
-      <Key>${key}</Key>
+      <Key>${HTMLEntities.encode(key)}</Key>
    </Object>
     `.trim() : `
    <Object>
-      <Key>${key.Key}</Key>
-      <VersionId>${key.VersionId}</VersionId>
+      <Key>${HTMLEntities.encode(key.Key)}</Key>
+      <VersionId>${HTMLEntities.encode(key.VersionId)}</VersionId>
    </Object>
     `.trim()).join('\n')
   }
@@ -2095,7 +2098,7 @@ class S3Bucket {
 
     if (response.ok) {
       const text = await Readable.Text(response)
-      const xmlData = XML.parse(text)
+      const xmlData = XML.parse(HTMLEntities.decode(text))
 
       const data = {}
       data.Deleted = xmlData.DeleteResult.Deleted ?? []
@@ -2366,7 +2369,7 @@ class S3Bucket {
 
     if (response.ok) {
       const text = await Readable.Text(response)
-      const xmlData = XML.parse(text)
+      const xmlData = XML.parse(HTMLEntities.decode(text))
 
       const data = {}
 
@@ -2535,7 +2538,7 @@ class S3Bucket {
 
     if (response.ok) {
       const text = await Readable.Text(response)
-      const xmlData = XML.parse(text)
+      const xmlData = XML.parse(HTMLEntities.decode(text))
 
       const data = {}
 
