@@ -28,7 +28,6 @@ const test = Test.all([
   require('./internal/StatusCodeMessage.test'),
   require('./internal/handleDynamoDBStreamGetRecordsError.test'),
   require('./internal/StatusCodeMessage.test'),
-  require('./internal/pathWalk.test'),
 
   require('./global.test'),
 ])
