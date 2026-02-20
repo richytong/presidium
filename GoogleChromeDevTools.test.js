@@ -43,7 +43,15 @@ const test = new Test('GoogleChromeDevTools', async function integration() {
     const googleChromeDevTools = new GoogleChromeDevTools()
     await googleChromeDevTools.init()
 
+    let closeResolve
+    const closePromise = new Promise(_resolve => {
+      closeResolve = _resolve
+    })
+    googleChromeDevTools.on('close', () => {
+      closeResolve()
+    })
     googleChromeDevTools.close()
+    await closePromise
   }
 
   const googleChromeForTesting = new GoogleChromeForTesting({ headless: true })

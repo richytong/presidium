@@ -996,10 +996,34 @@ class GoogleChromeDevTools extends EventEmitter {
   close() {
     this.websocket.sendClose()
     this.websocket.on('close', () => {
+      this.googleChromeForTesting.cmd.on('close', () => {
+        this.emit('close')
+      })
       this.googleChromeForTesting.close()
-      this.emit('close')
     })
   }
+
+  /**
+   * @name Event: close
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * emit('close')
+   * ```
+   *
+   * The `close` event. Emitted when the websocket connection to the DevTools server is closed and the Google Chrome for Testing process is terminated.
+   *
+   * Event Data:
+   *   * (none)
+   *
+   * ```javascript
+   * googleChromeForTesting.on('close', () => {
+   *   console.log('WebSocket connection closed and Google Chrome for Testing process terminated.')
+   * })
+   * ```
+   */
+
 }
+
 
 module.exports = GoogleChromeDevTools
