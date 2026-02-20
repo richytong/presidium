@@ -18,9 +18,13 @@ async function getChromeVersions() {
   return data
 }
 
+function updateStdoutLineANSI(newLine) {
+  process.stdout.write('\r\u001b[K' + newLine);
+}
+
 function updateConsoleLog(message, platform) {
   if (platform.startsWith('win')) {
-    process.stdout.write('\r\n\x1b[2K' + message)
+    updateStdoutLineANSI(message)
   } else {
     process.stdout.write('\r\x1b[2K' + message)
   }
