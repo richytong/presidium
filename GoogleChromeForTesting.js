@@ -64,20 +64,21 @@ async function getChromeUrl() {
 async function installChrome() {
   const platform = getPlatform()
   const url = await getChromeUrl.call(this)
-  let filepath = `${this.chromeDir}/${url.replace('https://storage.googleapis.com/chrome-for-testing-public/', '')}`
 
-  console.log('installChrome filepath0', filepath, `${__dirname[0]}:`)
-  console.log('installChrome dirname0', `${__dirname[0]}:`, filepath.startsWith(`${__dirname[0]}:`))
-  if (platform.startsWith('win') && !filepath.startsWith(`${__dirname[0]}:`)) {
-    filepath = path.join(process.cwd(), filepath)
+  let filepath = `${this.chromeDir}/${url.replace('https://storage.googleapis.com/chrome-for-testing-public/', '')}`
+  if (platform.startsWith('win')) {
+    if (!filepath.startsWith(`${__dirname[0]}:`)) {
+      filepath = path.join(process.cwd(), filepath)
+    }
   } else if (!filepath.startsWith('/')) {
     filepath = path.join(process.cwd(), filepath)
   }
-  console.log('installChrome filepath1', filepath)
 
   let parentDir = `${filepath.split('/').slice(0, -1).join('/')}`
-  if (platform.startsWith('win') && !filepath.startsWith(`${__dirname[0]}:`)) {
-    parentDir = path.join(process.cwd(), parentDir)
+  if (platform.startsWith('win')) {
+    if (!filepath.startsWith(`${__dirname[0]}:`)) {
+      parentDir = path.join(process.cwd(), parentDir)
+    }
   } else if (!parentDir.startsWith('/')) {
     parentDir = path.join(process.cwd(), parentDir)
   }
