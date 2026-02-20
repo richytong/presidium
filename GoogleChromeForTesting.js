@@ -249,6 +249,7 @@ class GoogleChromeForTesting {
       `--user-data-dir=${this.userDataDir}`,
       ...this.headless ? ['--headless'] : [],
       ...this.useMockKeychain ? ['--use-mock-keychain'] : [],
+      '--no-sandbox',
     ])
     cmd.stdout.pipe(process.stdout)
     cmd.stderr.pipe(process.stderr)
