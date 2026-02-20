@@ -831,10 +831,21 @@ class GoogleChromeDevToolsRuntime {
  * })
  * ```
  *
- * Install dependencies for Amazon Linux 2023:
+ * Install headless dependencies for Amazon Linux 2023:
  * ```sh
  * sudo dnf install -y cairo pango nss nspr atk at-spi2-atk cups-libs libdrm libxkbcommon libXcomposite libXdamage libXfixes libXrandr mesa-libgbm alsa-lib
  * ```
+ *
+ * Install headless dependencies for Ubuntu:
+ * ```sh
+ * sudo apt-get update && sudo apt-get install -y libcairo2 libpango-1.0-0 libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libatspi2.0-0 libcups2 libdrm-dev libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm-dev libasound2-dev
+ *
+ * # disable AppArmor unprivileged security restriction
+ * echo "kernel.apparmor_restrict_unprivileged_userns=0" | sudo tee /etc/sysctl.d/60-apparmor-namespace.conf
+ * sudo sysctl -p /etc/sysctl.d/60-apparmor-namespace.conf
+ * ```
+ *
+ * apt-get install -y unzip xvfb libxi6 libgconf-2-4 jq libjq1 libonig5 libxkbcommon0 libxss1 libglib2.0-0 libnss3 libfontconfig1 libatk-bridge2.0-0 libatspi2.0-0 libgtk-3-0 libpango-1.0-0 libgdk-pixbuf2.0-0 libxcomposite1 libxcursor1 libxdamage1 libxtst6 libappindicator3-1 libasound2 libatk1.0-0 libc6 libcairo2 libcups2 libxfixes3 libdbus-1-3 libexpat1 libgcc1 libnspr4 libgbm1 libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxext6 libxrandr2 libxrender1 libappindicator1 lsb-release xdg-utils
  *
  * Supported platforms:
  *   * `mac-arm64`
