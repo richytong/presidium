@@ -12,7 +12,9 @@ const test = new Test('GoogleChromeDevTools', async function integration() {
     stdio: 'inherit',
   })
 
-  const googleChromeDevTools = new GoogleChromeDevTools()
+  const googleChromeDevTools = new GoogleChromeDevTools({
+    headless: true,
+  })
   await googleChromeDevTools.init()
 
   {

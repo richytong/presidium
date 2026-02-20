@@ -743,10 +743,21 @@ class GoogleChromeDevToolsRuntime {
  *
  * @docs
  * ```coffeescript [specscript]
- * new GoogleChromeDevTools(url string) -> googleChromeDevTools GoogleChromeDevTools
+ * new GoogleChromeDevTools(options {
+ *   chromeVersion: 'stable'|'beta'|'dev'|'canary'|string,
+ *   headless: boolean,
+ * }) -> googleChromeDevTools GoogleChromeDevTools
  * ```
  *
  * Presidium GoogleChromeDevTools client for test automation.
+ *
+ * Arguments:
+ *   * `options`
+ *     * `chromeVersion` - the version of Google Chrome for Testing to download.
+ *     * `headless` - whether to run Google Chrome for Testing in headless mode.
+ *
+ * Returns:
+ *   * `googleChromeDevTools` - an instance of the `GoogleChromeDevTools` client.
  *
  * ```javascript
  * const googleChromeDevTools = new GoogleChromeDevTools()
@@ -830,6 +841,7 @@ class GoogleChromeDevTools extends EventEmitter {
     super()
 
     this.chromeVersion = options.chromeVersion ?? 'stable'
+    this.headless = options.headless ?? false
   }
 
   /**
@@ -859,6 +871,7 @@ class GoogleChromeDevTools extends EventEmitter {
       chromeVersion: this.chromeVersion,
       userDataDir: `${__dirname}/tmp/chrome`,
       useMockKeychain: true,
+      headless: this.headless,
     })
     await googleChromeForTesting.init()
     this.googleChromeForTesting = googleChromeForTesting
