@@ -176,18 +176,25 @@ class GoogleChromeForTesting {
     cmd.stdout.pipe(process.stdout)
     cmd.stderr.pipe(process.stderr)
 
-    const devtoolsUrlPromiseWithResolvers = Promise.withResolvers()
+    let devtoolsUrlResolve
+    const devtoolsUrlPromise = new Promise(_resolve => {
+      devtoolsUrlResolve = _resolve
+    })
     cmd.stderr.on('data', chunk => {
       const line = chunk.toString('utf8').trim()
       if (line.includes('DevTools listening on')) {
         const devtoolsUrl = line.replace('DevTools listening on ', '')
-        devtoolsUrlPromiseWithResolvers.resolve(devtoolsUrl)
+        devtoolsUrlResolve(devtoolsUrl)
       }
     })
 
     const spawnPromiseWithResolvers = Promise.withResolvers()
+    let spawnResolve
+    const spawnPromise = new Promise(_resolve => {
+      spawnResolve = _resolve
+    })
     cmd.on('spawn', () => {
-      spawnPromiseWithResolvers.resolve()
+      spawnResolve()
     })
 
     cmd.on('error', error => {
@@ -205,8 +212,8 @@ class GoogleChromeForTesting {
 
     this.cmd = cmd
 
-    await spawnPromiseWithResolvers.promise
-    this.devtoolsUrl = await devtoolsUrlPromiseWithResolvers.promise
+    await spawnPromise
+    this.devtoolsUrl = await devtoolsUrlPromise
   }
 
   /**
