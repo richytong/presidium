@@ -85,6 +85,11 @@ async function installChrome() {
   }
   await fs.promises.mkdir(parentDir, { recursive: true })
 
+  console.log('installChrome', {
+    filepath,
+    parentDir,
+  })
+
   const http = new HTTP()
   const response = await http.GET(url)
   const contentLength = response.headers['content-length']
