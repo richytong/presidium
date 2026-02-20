@@ -830,6 +830,7 @@ class GoogleChromeDevToolsRuntime {
  *
  * Supported platforms:
  *   * `mac-arm64`
+ *   * `linux64`
  *
  * References:
  *   * [Getting Started with the Chrome Devtools Protocol](https://github.com/aslushnikov/getting-started-with-cdp/blob/master/README.md)
