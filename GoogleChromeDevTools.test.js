@@ -52,8 +52,6 @@ const test = new Test('GoogleChromeDevTools', async function integration() {
     })
     googleChromeDevTools.close()
     await closePromise
-
-    googleChromeDevTools.googleChromeForTesting.cmd.close()
   }
 
   const googleChromeForTesting = new GoogleChromeForTesting({ headless: true })
@@ -550,6 +548,7 @@ function addParagraph() {
     sessionId: this.sessionId,
   })
 
+  /*
   let closeResolve
   const closePromise = new Promise(_resolve => {
     closeResolve = _resolve
@@ -558,7 +557,6 @@ function addParagraph() {
   googleChromeDevTools.close()
   await closePromise
 
-  /*
   server.close()
 
   await exec('ps aux | grep "Google Chrome for Testing" | awk \'{print $2}\' | xargs kill', {
