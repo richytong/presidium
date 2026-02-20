@@ -96,9 +96,9 @@ async function installChrome() {
   response.on('data', chunk => {
     downloadedLength += chunk.length
     if (downloadedLength == contentLength) {
-      // updateConsoleLog(`Downloading ${url} (${downloadedLength} / ${contentLength} bytes)\n`)
+      updateConsoleLog(`Downloading ${url} (${downloadedLength} / ${contentLength} bytes)\n`)
     } else {
-      // updateConsoleLog(`Downloading ${url} (${downloadedLength} / ${contentLength} bytes)`)
+      updateConsoleLog(`Downloading ${url} (${downloadedLength} / ${contentLength} bytes)`)
     }
 
     fileStream.write(chunk)
@@ -113,7 +113,7 @@ async function installChrome() {
   })
   await promise
 
-  console.log('extract', filepath)
+  console.log('Extracting', filepath)
   try {
     await extract(filepath, { dir: parentDir })
   } catch {
