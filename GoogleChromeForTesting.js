@@ -19,13 +19,9 @@ async function getChromeVersions() {
 }
 
 function updateConsoleLog(message, platform) {
-  if (platform.startsWith('win')) {
-    process.stdout.write('\x1b[2K\r' + message);
-  } else {
-    readline.cursorTo(process.stdout, 0, undefined);
-    readline.clearLine(process.stdout, 0);
-    process.stdout.write(message);
-  }
+  readline.cursorTo(process.stdout, 0, undefined);
+  readline.clearLine(process.stdout, 0);
+  process.stdout.write(message);
 }
 
 function getPlatform() {
@@ -67,7 +63,6 @@ async function getChromeUrl() {
 
 async function installChrome() {
   const platform = getPlatform()
-  console.log('installChrome', platform)
   const url = await getChromeUrl.call(this)
   let filepath = `${this.chromeDir}/${url.replace('https://storage.googleapis.com/chrome-for-testing-public/', '')}`
   if (!filepath.startsWith('/')) {
@@ -91,9 +86,9 @@ async function installChrome() {
   response.on('data', chunk => {
     downloadedLength += chunk.length
     if (downloadedLength == contentLength) {
-      updateConsoleLog(`Downloading ${url} (${downloadedLength} / ${contentLength} bytes)\n`, platform)
+      updateConsoleLog(`Downloading ${url} (${downloadedLength} / ${contentLength} bytes)\n`)
     } else {
-      updateConsoleLog(`Downloading ${url} (${downloadedLength} / ${contentLength} bytes)`, platform)
+      updateConsoleLog(`Downloading ${url} (${downloadedLength} / ${contentLength} bytes)`)
     }
 
     fileStream.write(chunk)
@@ -108,6 +103,7 @@ async function installChrome() {
   })
   await promise
 
+  console.log('extract', filepath)
   try {
     await extract(filepath, { dir: parentDir })
   } catch {
