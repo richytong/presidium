@@ -64,7 +64,11 @@ async function getChromeUrl() {
 async function installChrome() {
   const platform = getPlatform()
   const delimiter = platform.startsWith('win') ? '\\' : '/'
-  const url = await getChromeUrl.call(this)
+
+  let url = await getChromeUrl.call(this)
+  if (platform.startsWith('win')) {
+    url = url.replace(/\//g, '\\')
+  }
 
   let filepath = `${this.chromeDir}${delimiter}${url.replace('https://storage.googleapis.com/chrome-for-testing-public/', '')}`
   console.log('installChrome filepath0', filepath)
