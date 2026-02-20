@@ -18,6 +18,7 @@ async function getChromeVersions() {
   return data
 }
 
+let lastLineLength = 0
 function updateConsoleLog(message, platform) {
   process.stdout.write('\r');
   const blank = ' '.repeat(lastLineLength);
