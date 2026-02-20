@@ -849,6 +849,7 @@ class GoogleChromeDevToolsRuntime {
  * Supported platforms:
  *   * `mac-arm64`
  *   * `linux64`
+ *   * `win64`
  *
  * ## Further Installation
  * Some further installation may be required for Linux platforms.
