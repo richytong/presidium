@@ -19,9 +19,11 @@ async function getChromeVersions() {
 }
 
 function updateConsoleLog(message, platform) {
-  fs.writeSync(1, `\r\x1b[2K${message}`);
-
-  // process.stdout.write('\r\x1b[2K' + message)
+  if (platform.startsWith('win')) {
+    process.stdout.write('\\r\\x1b[2K' + message)
+  } else {
+    process.stdout.write('\r\x1b[2K' + message)
+  }
 
   // readline.cursorTo(process.stdout, 0, undefined);
   // readline.clearLine(process.stdout, 0);
@@ -106,9 +108,9 @@ async function installChrome() {
   response.on('data', chunk => {
     downloadedLength += chunk.length
     if (downloadedLength == contentLength) {
-      updateConsoleLog(`Downloading ${url} (${downloadedLength} / ${contentLength} bytes)\n`)
+      updateConsoleLog(`Downloading ${url} (${downloadedLength} / ${contentLength} bytes)\n`, platform)
     } else {
-      updateConsoleLog(`Downloading ${url} (${downloadedLength} / ${contentLength} bytes)`)
+      updateConsoleLog(`Downloading ${url} (${downloadedLength} / ${contentLength} bytes)`, platform)
     }
 
     fileStream.write(chunk)
