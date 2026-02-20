@@ -745,7 +745,11 @@ class GoogleChromeDevToolsRuntime {
  * ```coffeescript [specscript]
  * new GoogleChromeDevTools(options {
  *   chromeVersion: 'stable'|'beta'|'dev'|'canary'|string,
+ *   chromeDir: string,
+ *   remoteDebuggingPort: number,
  *   headless: boolean,
+ *   userDataDir: string,
+ *   useMockKeychain: boolean,
  * }) -> googleChromeDevTools GoogleChromeDevTools
  * ```
  *
@@ -753,8 +757,12 @@ class GoogleChromeDevToolsRuntime {
  *
  * Arguments:
  *   * `options`
- *     * `chromeVersion` - the version of Google Chrome for Testing to download.
- *     * `headless` - whether to run Google Chrome for Testing in headless mode.
+ *     * `chromeVersion` - the version of Google Chrome for Testing to download. Defaults to `'stable'`.
+ *     * `chromeDir` - the directory that Google Chrome for Testing will install to. Defaults to ``google-chrome-for-testing'`.
+ *     * `remoteDebuggingPort` - the port that the Chrome DevTools Protocol server will listen on. Defaults to `9222`
+ *     * `headless` - whether to run Google Chrome for Testing in headless mode. Defaults to `true`.
+ *     * `userDataDir` - directory for storing user profile data such as history, bookmarks, cookies, and settings. Defaults to `tmp`.
+ *     * `useMockKeychain` - whether to use a mock keychain instead of the system's real security keychain. Defaults to `false`.
  *
  * Returns:
  *   * `googleChromeDevTools` - an instance of the `GoogleChromeDevTools` client.
@@ -842,7 +850,11 @@ class GoogleChromeDevTools extends EventEmitter {
     super()
 
     this.chromeVersion = options.chromeVersion ?? 'stable'
+    this.chromeDir = options.chromeDir ?? 'google-chrome-for-testing'
+    this.remoteDebuggingPort = options.remoteDebuggingPort ?? 9222
     this.headless = options.headless ?? false
+    this.userDataDir = options.userDataDir ?? 'tmp/chrome'
+    this.useMockKeychain = options.useMockKeychain ?? true
   }
 
   /**
@@ -870,9 +882,11 @@ class GoogleChromeDevTools extends EventEmitter {
   async init() {
     const googleChromeForTesting = new GoogleChromeForTesting({
       chromeVersion: this.chromeVersion,
-      userDataDir: `${__dirname}/tmp/chrome`,
-      useMockKeychain: true,
+      chromeDir: this.chromeDir,
+      remoteDebuggingPort: this.remoteDebuggingPort,
       headless: this.headless,
+      userDataDir: this.userDataDir,
+      useMockKeychain: this.useMockKeychain,
     })
     await googleChromeForTesting.init()
     this.googleChromeForTesting = googleChromeForTesting

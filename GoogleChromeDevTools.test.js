@@ -12,10 +12,43 @@ const test = new Test('GoogleChromeDevTools', async function integration() {
     stdio: 'inherit',
   })
 
+  {
+    const googleChromeDevTools = new GoogleChromeDevTools()
+    assert.equal(googleChromeDevTools.chromeVersion, 'stable')
+    assert.equal(googleChromeDevTools.chromeDir, 'google-chrome-for-testing')
+    assert.equal(googleChromeDevTools.remoteDebuggingPort, 9222)
+    assert.equal(googleChromeDevTools.headless, false)
+    assert.equal(googleChromeDevTools.userDataDir, 'tmp/chrome')
+  }
+
+  {
+    const googleChromeDevTools = new GoogleChromeDevTools({
+      chromeVersion: 'stable',
+      chromeDir: `${__dirname}/google-chrome-for-testing`,
+      remoteDebuggingPort: 9222,
+      headless: true,
+      userDataDir: `${__dirname}/tmp/chrome`,
+      useMockKeychain: true,
+    })
+    assert.equal(googleChromeDevTools.chromeVersion, 'stable')
+    assert.equal(googleChromeDevTools.chromeDir, `${__dirname}/google-chrome-for-testing`)
+    assert.equal(googleChromeDevTools.remoteDebuggingPort, 9222)
+    assert.equal(googleChromeDevTools.headless, true)
+    assert.equal(googleChromeDevTools.userDataDir, `${__dirname}/tmp/chrome`)
+    assert.equal(googleChromeDevTools.useMockKeychain, true)
+
+  }
+
   const googleChromeDevTools = new GoogleChromeDevTools({
     headless: true,
   })
   await googleChromeDevTools.init()
+
+  assert.equal(googleChromeDevTools.googleChromeForTesting.chromeVersion, 'stable')
+  assert.equal(googleChromeDevTools.googleChromeForTesting.chromeDir, 'google-chrome-for-testing')
+  assert.equal(googleChromeDevTools.googleChromeForTesting.remoteDebuggingPort, 9222)
+  assert.equal(googleChromeDevTools.googleChromeForTesting.headless, true)
+  assert.equal(googleChromeDevTools.googleChromeForTesting.userDataDir, 'tmp/chrome')
 
   {
     const data = await googleChromeDevTools.Target.getTargets()
