@@ -60,7 +60,6 @@
     "xml"
   ],
   "dependencies": {
-    "ansi-escapes": "^7.3.0",
     "extract-zip": "^2.0.1",
     "html-entities": "^2.6.0",
     "presidium-websocket": ">=2.0.1",
