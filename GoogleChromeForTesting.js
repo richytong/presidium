@@ -77,7 +77,6 @@ async function installChrome() {
   const url = await getChromeUrl.call(this)
 
   let filepath = `${this.chromeDir}${delimiter}${url.replace('https://storage.googleapis.com/chrome-for-testing-public/', '')}`
-  console.log('installChrome filepath0', filepath)
   if (platform.startsWith('win')) {
     filepath = filepath.replace(/\//g, '\\')
     if (!filepath.startsWith(`${__dirname[0]}:`)) {
@@ -86,10 +85,8 @@ async function installChrome() {
   } else if (!filepath.startsWith('/')) {
     filepath = path.join(process.cwd(), filepath)
   }
-  console.log('installChrome filepath1', filepath)
 
   let parentDir = `${filepath.split(delimiter).slice(0, -1).join(delimiter)}`
-  console.log('installChrome parentDir0', parentDir)
   if (platform.startsWith('win')) {
     if (!filepath.startsWith(`${__dirname[0]}:`)) {
       parentDir = path.join(process.cwd(), parentDir)
@@ -98,7 +95,6 @@ async function installChrome() {
     parentDir = path.join(process.cwd(), parentDir)
   }
   await fs.promises.mkdir(parentDir, { recursive: true })
-  console.log('installChrome parentDir1', parentDir)
 
   const http = new HTTP()
   const response = await http.GET(url)
