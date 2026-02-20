@@ -66,12 +66,13 @@ async function installChrome() {
   const url = await getChromeUrl.call(this)
   let filepath = `${this.chromeDir}/${url.replace('https://storage.googleapis.com/chrome-for-testing-public/', '')}`
 
-  console.log('installChrome', filepath)
+  console.log('installChrome filepath0', filepath)
   if (platform.startsWith('win') && !filepath.startsWith(`${__dirname[0]}:`)) {
     filepath = path.join(process.cwd(), filepath)
   } else if (!filepath.startsWith('/')) {
     filepath = path.join(process.cwd(), filepath)
   }
+  console.log('installChrome filepath1', filepath)
 
   let parentDir = `${filepath.split('/').slice(0, -1).join('/')}`
   if (platform.startsWith('win') && !filepath.startsWith(`${__dirname[0]}:`)) {
@@ -93,9 +94,9 @@ async function installChrome() {
   response.on('data', chunk => {
     downloadedLength += chunk.length
     if (downloadedLength == contentLength) {
-      updateConsoleLog(`Downloading ${url} (${downloadedLength} / ${contentLength} bytes)\n`)
+      // updateConsoleLog(`Downloading ${url} (${downloadedLength} / ${contentLength} bytes)\n`)
     } else {
-      updateConsoleLog(`Downloading ${url} (${downloadedLength} / ${contentLength} bytes)`)
+      // updateConsoleLog(`Downloading ${url} (${downloadedLength} / ${contentLength} bytes)`)
     }
 
     fileStream.write(chunk)
