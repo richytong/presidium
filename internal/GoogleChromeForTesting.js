@@ -23,7 +23,7 @@ function updateConsoleLog(message) {
   process.stdout.write(message);
 }
 
-async function getChromeUrl() {
+function getPlatform() {
   let platform = os.platform()
   if (platform == 'darwin') {
     platform = 'mac'
@@ -35,6 +35,12 @@ async function getChromeUrl() {
   } else {
     platform = `${platform}${arch.slice(1)}`
   }
+
+  return platform
+}
+
+async function getChromeUrl() {
+  const platform = getPlatform()
 
   let url
   if (['stable', 'beta', 'dev', 'canary'].includes(this.chromeVersion)) {
@@ -95,15 +101,18 @@ async function installChrome() {
 }
 
 async function getChromeFilepath() {
+  const platform = getPlatform()
   const url = await getChromeUrl.call(this)
   const filepath = `${this.chromeDir}/${url.replace('https://storage.googleapis.com/chrome-for-testing-public/', '')}`
   const parentDir = `${filepath.split('/').slice(0, -1).join('/')}`
 
-  const googleChromeForTestingFilepath = `${parentDir}`
   try {
     for await (const filepath of walk(parentDir)) {
       console.log(filepath)
-      if (filepath.endsWith('Google Chrome for Testing')) {
+      if (platform.startsWith('mac-') && filepath.endsWith('Google Chrome for Testing')) {
+        return filepath
+      }
+      if (platform.startsWith('linux-') && filepath.endsWith('chrome')) {
         return filepath
       }
     }
