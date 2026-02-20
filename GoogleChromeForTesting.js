@@ -19,18 +19,9 @@ async function getChromeVersions() {
 }
 
 function updateConsoleLog(message, platform) {
-  process.stdout.write('\u001B[\r\u001B[2K' + message)
-
-  /*
-  if (platform.startsWith('win')) {
-  } else {
-    process.stdout.write('\r\x1b[2K' + message)
-  }
-  */
-
-  // readline.cursorTo(process.stdout, 0, undefined);
-  // readline.clearLine(process.stdout, 0);
-  // process.stdout.write(message);
+  readline.cursorTo(process.stdout, 0, undefined);
+  readline.clearLine(process.stdout, 0);
+  process.stdout.write(message);
 }
 
 function getPlatform() {
