@@ -65,9 +65,11 @@ async function installChrome() {
   const platform = getPlatform()
   const url = await getChromeUrl.call(this)
   let filepath = `${this.chromeDir}/${url.replace('https://storage.googleapis.com/chrome-for-testing-public/', '')}`
+  console.log('filepath0', filepath)
   if (!filepath.startsWith('/')) {
     filepath = path.join(process.cwd(), filepath)
   }
+  console.log('filepath1', filepath)
   let parentDir = `${filepath.split('/').slice(0, -1).join('/')}`
   if (!parentDir.startsWith('/')) {
     parentDir = path.join(process.cwd(), parentDir)
@@ -77,8 +79,6 @@ async function installChrome() {
   const http = new HTTP()
   const response = await http.GET(url)
   const contentLength = response.headers['content-length']
-
-  console.log('mkdir', parentDir)
 
   await fs.promises.mkdir(parentDir, { recursive: true })
   const fileStream = fs.createWriteStream(filepath)
