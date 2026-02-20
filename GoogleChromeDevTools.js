@@ -853,12 +853,12 @@ class GoogleChromeDevToolsRuntime {
  * ## Further Installation
  * Some further installation may be required for Linux platforms.
  *
- * ### Install headless dependencies for Amazon Linux 2023
+ * ### Install headless dependencies for Amazon Linux 2023 / Red Hat
  * ```sh
  * sudo dnf install -y cairo pango nss nspr atk at-spi2-atk cups-libs libdrm libxkbcommon libXcomposite libXdamage libXfixes libXrandr mesa-libgbm alsa-lib
  * ```
  *
- * ### Install headless dependencies for Ubuntu
+ * ### Install headless dependencies for Ubuntu / Debian
  * ```sh
  * sudo apt-get update && sudo apt-get install -y libcairo2 libpango-1.0-0 libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libatspi2.0-0 libcups2 libdrm-dev libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm-dev libasound2-dev
  *
@@ -866,7 +866,6 @@ class GoogleChromeDevToolsRuntime {
  * echo "kernel.apparmor_restrict_unprivileged_userns=0" | sudo tee /etc/sysctl.d/60-apparmor-namespace.conf
  * sudo sysctl -p /etc/sysctl.d/60-apparmor-namespace.conf
  * ```
- *
  */
 class GoogleChromeDevTools extends EventEmitter {
   constructor(options = {}) {

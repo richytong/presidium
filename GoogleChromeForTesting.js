@@ -288,6 +288,18 @@ class GoogleChromeForTesting {
    * ```coffeescript [specscript]
    * close() -> undefined
    * ```
+   *
+   * Terminates the Google Chrome for Testing process.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `undefined`
+   *
+   * ```javascript
+   * googleChromeForTesting.close()
+   * ```
    */
   close() {
     this.cmd.kill('SIGKILL')
