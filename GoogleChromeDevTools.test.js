@@ -543,6 +543,7 @@ function addParagraph() {
     sessionId: this.sessionId,
   })
 
+  /*
   let closeResolve
   const closePromise = new Promise(_resolve => {
     closeResolve = _resolve
@@ -556,6 +557,7 @@ function addParagraph() {
   await exec('ps aux | grep "Google Chrome for Testing" | awk \'{print $2}\' | xargs kill', {
     stdio: 'inherit',
   })
+  */
 
 }).case()
 
