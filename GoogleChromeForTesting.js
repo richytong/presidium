@@ -10,6 +10,7 @@ const XML = require('./XML')
 const Readable = require('./Readable')
 const walk = require('./internal/walk')
 const sleep = require('./internal/sleep')
+const ansiEscapes = require('ansi-escapes')
 
 async function getChromeVersions() {
   const http = new HTTP()
@@ -19,7 +20,7 @@ async function getChromeVersions() {
 }
 
 function updateConsoleLog(message, platform) {
-  process.stdout.write('\u001B[\r\u001B[2K' + message)
+  process.stdout.write(ansiEscapes.cursorLeft + ansiEscapes.eraseLines(1) + message)
 
   /*
   if (platform.startsWith('win')) {
