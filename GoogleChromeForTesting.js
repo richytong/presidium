@@ -33,14 +33,13 @@ function getPlatform() {
 
   if (platform == 'mac') {
     platform = `${platform}-${arch}`
-  } else {
+  }
+  else if (platform == 'win32') {
+    platform = `win${arch.slice(1)}`
+  }
+  else {
     platform = `${platform}${arch.slice(1)}`
   }
-
-  console.log('getPlatform', platform, {
-    osPlatform: os.platform(),
-    osArch: os.arch(),
-  })
 
   return platform
 }
