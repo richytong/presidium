@@ -37,6 +37,11 @@ function getPlatform() {
     platform = `${platform}${arch.slice(1)}`
   }
 
+  console.log('getPlatform', platform, {
+    osPlatform: os.platform(),
+    osArch: os.arch(),
+  })
+
   return platform
 }
 
