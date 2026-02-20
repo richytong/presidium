@@ -75,12 +75,12 @@ const test = new Test('GoogleChromeForTesting', async function integration() {
       closeResolve()
     })
 
-    googleChromeForTesting.close()
+    // googleChromeForTesting.close()
 
-    await closePromise
+    // await closePromise
   }
 
-  await fs.promises.rm('google-chrome-for-testing', { recursive: true, force: true })
+  // await fs.promises.rm('google-chrome-for-testing', { recursive: true, force: true })
 
   console.log('Success')
 }).case()
