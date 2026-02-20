@@ -61,6 +61,11 @@ const test = new Test('GoogleChromeDevTools', async function integration() {
   await googleChromeDevTools.init()
   await googleChromeDevTools.init()
 
+  assert.equal(googleChromeDevTools.chromeVersion, 'stable')
+  assert.equal(googleChromeDevTools.chromeDir, 'google-chrome-for-testing')
+  assert.equal(googleChromeDevTools.remoteDebuggingPort, 9222)
+  assert.equal(googleChromeDevTools.headless, true)
+  assert.equal(googleChromeDevTools.userDataDir, 'tmp/chrome')
   assert.equal(googleChromeDevTools.googleChromeForTesting.chromeVersion, 'stable')
   assert.equal(googleChromeDevTools.googleChromeForTesting.chromeDir, 'google-chrome-for-testing')
   assert.equal(googleChromeDevTools.googleChromeForTesting.remoteDebuggingPort, 9222)
