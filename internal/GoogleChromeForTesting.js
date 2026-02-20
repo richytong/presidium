@@ -188,7 +188,6 @@ class GoogleChromeForTesting {
       }
     })
 
-    const spawnPromiseWithResolvers = Promise.withResolvers()
     let spawnResolve
     const spawnPromise = new Promise(_resolve => {
       spawnResolve = _resolve
