@@ -812,12 +812,18 @@ class GoogleChromeDevToolsRuntime {
  * })
  * ```
  *
+ * Install dependencies for Amazon Linux 2023:
+ * ```sh
+ * sudo dnf install -y cairo pango nss nspr atk at-spi2-atk cups-libs libdrm libxkbcommon libXcomposite libXdamage libXfixes libXrandr mesa-libgbm alsa-lib
+ * ```
+ *
  * Supported platforms:
  *   * `mac-arm64`
  *
  * References:
  *   * [Getting Started with the Chrome Devtools Protocol](https://github.com/aslushnikov/getting-started-with-cdp/blob/master/README.md)
  *   * [Chrome Devtools Protocol](https://chromedevtools.github.io/devtools-protocol/)
+ *
  */
 class GoogleChromeDevTools extends EventEmitter {
   constructor(options = {}) {
