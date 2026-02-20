@@ -123,7 +123,7 @@ async function installChrome() {
   try {
     await extract(filepath, { dir: parentDir })
   } catch {
-    await sleep(100)
+    await sleep(1000)
     await extract(filepath, { dir: parentDir })
   }
 }
