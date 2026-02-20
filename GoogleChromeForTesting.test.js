@@ -53,7 +53,17 @@ const test = new Test('GoogleChromeForTesting', async function integration() {
     assert.equal(typeof googleChromeForTesting.devtoolsUrl, 'string')
     assert(googleChromeForTesting.devtoolsUrl.startsWith('ws://'))
 
+    let closeResolve
+    const closePromise = new Promise(_resolve => {
+      closeResolve = _resolve
+    })
+    googleChromeForTesting.on('close', () => {
+      closeResolve()
+    })
+
     googleChromeForTesting.close()
+
+    await closePromise
   }
 
   {
@@ -71,16 +81,16 @@ const test = new Test('GoogleChromeForTesting', async function integration() {
     const closePromise = new Promise(_resolve => {
       closeResolve = _resolve
     })
-    googleChromeForTesting.cmd.on('close', () => {
+    googleChromeForTesting.on('close', () => {
       closeResolve()
     })
 
-    // googleChromeForTesting.close()
+    googleChromeForTesting.close()
 
-    // await closePromise
+    await closePromise
   }
 
-  // await fs.promises.rm('google-chrome-for-testing', { recursive: true, force: true })
+  await fs.promises.rm('google-chrome-for-testing', { recursive: true, force: true })
 
   console.log('Success')
 }).case()
