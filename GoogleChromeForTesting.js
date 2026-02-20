@@ -109,7 +109,6 @@ async function installChrome() {
   })
   await promise
 
-  console.log('extract', filepath)
   try {
     await extract(filepath, { dir: parentDir })
   } catch {
@@ -124,18 +123,15 @@ async function getChromeFilepath() {
   const filepath = `${this.chromeDir}/${url.replace('https://storage.googleapis.com/chrome-for-testing-public/', '')}`
   const parentDir = `${filepath.split('/').slice(0, -1).join('/')}`
 
-  console.log('getChromeFilepath', {
-    filepath,
-    parentDir,
-  })
-
   try {
     for await (const filepath of walk(parentDir)) {
-      console.log(filepath)
       if (platform.startsWith('mac') && filepath.endsWith('Google Chrome for Testing')) {
         return filepath
       }
       if (platform.startsWith('linux') && filepath.endsWith('chrome')) {
+        return filepath
+      }
+      if (platform.startsWith('win') && filepath.endsWith('chrome.exe')) {
         return filepath
       }
     }
