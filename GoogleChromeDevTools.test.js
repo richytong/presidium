@@ -53,8 +53,7 @@ const test = new Test('GoogleChromeDevTools', async function integration() {
     googleChromeDevTools.close()
     await closePromise
 
-    console.log(googleChromeDevTools)
-    googleChromeDevTools.googleChromeForTesting.close()
+    googleChromeDevTools.googleChromeForTesting.cmd.close()
   }
 
   const googleChromeForTesting = new GoogleChromeForTesting({ headless: true })
