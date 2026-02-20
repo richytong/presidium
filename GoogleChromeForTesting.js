@@ -78,6 +78,8 @@ async function installChrome() {
   const response = await http.GET(url)
   const contentLength = response.headers['content-length']
 
+  console.log('mkdir', parentDir)
+
   await fs.promises.mkdir(parentDir, { recursive: true })
   const fileStream = fs.createWriteStream(filepath)
   // response.pipe(fileStream)
