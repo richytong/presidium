@@ -109,6 +109,7 @@ async function installChrome() {
   })
   await promise
 
+  console.log('extract', filepath)
   try {
     await extract(filepath, { dir: parentDir })
   } catch {
