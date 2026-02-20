@@ -997,10 +997,12 @@ class GoogleChromeDevTools extends EventEmitter {
     this.websocket.sendClose()
     this.websocket.on('close', () => {
       this.emit('close')
+      /*
       this.googleChromeForTesting.cmd.on('close', () => {
         this.emit('close')
       })
       this.googleChromeForTesting.close()
+      */
     })
   }
 
