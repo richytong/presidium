@@ -1,5 +1,5 @@
 const EventEmitter = require('events')
-const GoogleChromeForTesting = require('./internal/GoogleChromeForTesting')
+const GoogleChromeForTesting = require('./GoogleChromeForTesting')
 const WebSocket = require('./WebSocket')
 
 let id = 0
@@ -743,6 +743,10 @@ class GoogleChromeDevToolsRuntime {
  *
  * @docs
  * ```coffeescript [specscript]
+ * new GoogleChromeDevTools(
+ *   googleChromeForTesting GoogleChromeForTesting
+ * ) -> googleChromeDevTools GoogleChromeDevTools
+ *
  * new GoogleChromeDevTools(options {
  *   chromeVersion: 'stable'|'beta'|'dev'|'canary'|string,
  *   chromeDir: string,
@@ -756,19 +760,23 @@ class GoogleChromeDevToolsRuntime {
  * Presidium GoogleChromeDevTools client for test automation.
  *
  * Arguments:
+ *   * `googleChromeForTesting` - an instance of a Presidium [GoogleChromeForTesting](/docs/GoogleChromeForTesting) client.
  *   * `options`
  *     * `chromeVersion` - the version of Google Chrome for Testing to download. Defaults to `'stable'`.
  *     * `chromeDir` - the directory that Google Chrome for Testing will install to. Defaults to ``google-chrome-for-testing'`.
  *     * `remoteDebuggingPort` - the port that the Chrome DevTools Protocol server will listen on. Defaults to `9222`
- *     * `headless` - whether to run Google Chrome for Testing in headless mode. Defaults to `true`.
- *     * `userDataDir` - directory for storing user profile data such as history, bookmarks, cookies, and settings. Defaults to `tmp`.
- *     * `useMockKeychain` - whether to use a mock keychain instead of the system's real security keychain. Defaults to `false`.
+ *     * `headless` - whether to run Google Chrome for Testing in headless mode. Defaults to `false`.
+ *     * `userDataDir` - directory for storing user profile data such as history, bookmarks, cookies, and settings. Defaults to `tmp/chrome`.
+ *     * `useMockKeychain` - whether to use a mock keychain instead of the system's real security keychain. Defaults to `true`.
  *
  * Returns:
- *   * `googleChromeDevTools` - an instance of the `GoogleChromeDevTools` client.
+ *   * `googleChromeDevTools` - an instance of the Presidium GoogleChromeDevTools client.
  *
  * ```javascript
- * const googleChromeDevTools = new GoogleChromeDevTools()
+ * const googleChromeForTesting = new GoogleChromeForTesting()
+ * await googleChromeForTesting.init()
+ *
+ * const googleChromeDevTools = new GoogleChromeDevTools(googleChromeForTesting)
  * await googleChromeDevTools.init()
  *
  * const target = await googleChromeDevTools.Target.getTargets()
@@ -810,7 +818,10 @@ class GoogleChromeDevToolsRuntime {
  * Every Chrome DevTools Protocol client needs to first attach to the target using the `Target.attachToTarget` command. The command will establish a protocol session with the given target and return a `sessionId`. The returned `sessionId` should be set on the `GoogleChromeDevTools` client using [`setSessionId`](#setSessionId) or included in every message to the DevTools server.
  *
  * ```javascript
- * const googleChromeDevTools = new GoogleChromeDevTools()
+ * const googleChromeForTesting = new GoogleChromeForTesting()
+ * await googleChromeForTesting.init()
+ *
+ * const googleChromeDevTools = new GoogleChromeDevTools(googleChromeForTesting)
  * await googleChromeDevTools.init()
  *
  * // get targets
@@ -831,12 +842,23 @@ class GoogleChromeDevToolsRuntime {
  * })
  * ```
  *
- * Install headless dependencies for Amazon Linux 2023:
+ * References:
+ *   * [Getting Started with the Chrome Devtools Protocol](https://github.com/aslushnikov/getting-started-with-cdp/blob/master/README.md)
+ *   * [Chrome Devtools Protocol](https://chromedevtools.github.io/devtools-protocol/)
+ *
+ * Supported platforms:
+ *   * `mac-arm64`
+ *   * `linux64`
+ *
+ * ## Further Installation
+ * Some further installation may be required for Linux platforms.
+ *
+ * ### Install headless dependencies for Amazon Linux 2023
  * ```sh
  * sudo dnf install -y cairo pango nss nspr atk at-spi2-atk cups-libs libdrm libxkbcommon libXcomposite libXdamage libXfixes libXrandr mesa-libgbm alsa-lib
  * ```
  *
- * Install headless dependencies for Ubuntu:
+ * ### Install headless dependencies for Ubuntu
  * ```sh
  * sudo apt-get update && sudo apt-get install -y libcairo2 libpango-1.0-0 libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libatspi2.0-0 libcups2 libdrm-dev libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm-dev libasound2-dev
  *
@@ -845,20 +867,14 @@ class GoogleChromeDevToolsRuntime {
  * sudo sysctl -p /etc/sysctl.d/60-apparmor-namespace.conf
  * ```
  *
- * apt-get install -y unzip xvfb libxi6 libgconf-2-4 jq libjq1 libonig5 libxkbcommon0 libxss1 libglib2.0-0 libnss3 libfontconfig1 libatk-bridge2.0-0 libatspi2.0-0 libgtk-3-0 libpango-1.0-0 libgdk-pixbuf2.0-0 libxcomposite1 libxcursor1 libxdamage1 libxtst6 libappindicator3-1 libasound2 libatk1.0-0 libc6 libcairo2 libcups2 libxfixes3 libdbus-1-3 libexpat1 libgcc1 libnspr4 libgbm1 libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxext6 libxrandr2 libxrender1 libappindicator1 lsb-release xdg-utils
- *
- * Supported platforms:
- *   * `mac-arm64`
- *   * `linux64`
- *
- * References:
- *   * [Getting Started with the Chrome Devtools Protocol](https://github.com/aslushnikov/getting-started-with-cdp/blob/master/README.md)
- *   * [Chrome Devtools Protocol](https://chromedevtools.github.io/devtools-protocol/)
- *
  */
 class GoogleChromeDevTools extends EventEmitter {
   constructor(options = {}) {
     super()
+
+    if (options.constructor == GoogleChromeForTesting) {
+      this.googleChromeForTesting = options
+    }
 
     this.chromeVersion = options.chromeVersion ?? 'stable'
     this.chromeDir = options.chromeDir ?? 'google-chrome-for-testing'
@@ -891,7 +907,7 @@ class GoogleChromeDevTools extends EventEmitter {
    * ```
    */
   async init() {
-    const googleChromeForTesting = new GoogleChromeForTesting({
+    this.googleChromeForTesting ??= new GoogleChromeForTesting({
       chromeVersion: this.chromeVersion,
       chromeDir: this.chromeDir,
       remoteDebuggingPort: this.remoteDebuggingPort,
@@ -899,10 +915,9 @@ class GoogleChromeDevTools extends EventEmitter {
       userDataDir: this.userDataDir,
       useMockKeychain: this.useMockKeychain,
     })
-    await googleChromeForTesting.init()
-    this.googleChromeForTesting = googleChromeForTesting
+    await this.googleChromeForTesting.init()
 
-    this.websocket = new WebSocket(googleChromeForTesting.devtoolsUrl, {
+    this.websocket = new WebSocket(this.googleChromeForTesting.devtoolsUrl, {
       offerPerMessageDeflate: false,
     })
     this.websocket.on('error', error => {
@@ -959,6 +974,31 @@ class GoogleChromeDevTools extends EventEmitter {
     this.Runtime.sessionId = sessionId
   }
 
+  /**
+   * @name close
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * close() -> undefined
+   * ```
+   *
+   * Closes the websocket connection to the DevTools server and terminates the Google Chrome for Testing process.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `undefined`
+   *
+   * ```javascript
+   * googleChromeDevTools.close()
+   * ```
+   */
+  close() {
+    this.websocket.sendClose()
+    this.websocket.close()
+    this.googleChromeForTesting.close()
+  }
 }
 
 module.exports = GoogleChromeDevTools

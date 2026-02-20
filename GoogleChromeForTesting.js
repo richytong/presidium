@@ -5,10 +5,11 @@ const path = require('path')
 const { spawn } = require('child_process')
 const readline = require('readline')
 const extract = require('extract-zip')
-const HTTP = require('../HTTP')
-const XML = require('../XML')
-const Readable = require('../Readable')
-const walk = require('./walk')
+const HTTP = require('./HTTP')
+const XML = require('./XML')
+const Readable = require('./Readable')
+const walk = require('./internal/walk')
+const sleep = require('./internal/sleep')
 
 async function getChromeVersions() {
   const http = new HTTP()
@@ -97,7 +98,12 @@ async function installChrome() {
   })
   await promise
 
-  await extract(filepath, { dir: parentDir })
+  try {
+    await extract(filepath, { dir: parentDir })
+  } catch {
+    await sleep(100)
+    await extract(filepath, { dir: parentDir })
+  }
 }
 
 async function getChromeFilepath() {
@@ -139,11 +145,51 @@ async function getChromeFilepath() {
  *   headless: boolean,
  *   userDataDir: string,
  *   useMockKeychain: boolean,
- * }) -> GoogleChromeForTesting
+ * }) -> googleChromeForTesting GoogleChromeForTesting
  * ```
  *
- * References:
+ * Presidium GoogleChromeForTesting client for test automation.
+ *
+ * Arguments:
+ *   * `options`
+ *     * `chromeVersion` - the version of Google Chrome for Testing to download. Defaults to `'stable'`.
+ *     * `chromeDir` - the directory that Google Chrome for Testing will install to. Defaults to ``google-chrome-for-testing'`.
+ *     * `remoteDebuggingPort` - the port that the Chrome DevTools Protocol server will listen on. Defaults to `9222`
+ *     * `headless` - whether to run Google Chrome for Testing in headless mode. Defaults to `false`.
+ *     * `userDataDir` - directory for storing user profile data such as history, bookmarks, cookies, and settings. Defaults to `tmp/chrome`.
+ *     * `useMockKeychain` - whether to use a mock keychain instead of the system's real security keychain. Defaults to `true`.
+ *
+ * Returns:
+ *   * `googleChromeForTesting` - an instance of the `GoogleChromeForTesting` client.
+ *
+ * ```javascript
+ * const googleChromeForTesting = new GoogleChromeForTesting({ chromeVersion: 'stable' })
+ * await googleChromeForTesting.init()
+ * ```
+ *
+ * Google Chrome for Testing versions:
  *   * [Chrome for Testing availability](https://googlechromelabs.github.io/chrome-for-testing/)
+ *
+ * Supported platforms:
+ *   * `mac-arm64`
+ *   * `linux64`
+ *
+ * ## Further Installation
+ * Some further installation may be required for Linux platforms.
+ *
+ * ### Install headless dependencies for Amazon Linux 2023 / Red Hat
+ * ```sh
+ * sudo dnf install -y cairo pango nss nspr atk at-spi2-atk cups-libs libdrm libxkbcommon libXcomposite libXdamage libXfixes libXrandr mesa-libgbm alsa-lib
+ * ```
+ *
+ * ### Install headless dependencies for Ubuntu / Debian
+ * ```sh
+ * sudo apt-get update && sudo apt-get install -y libcairo2 libpango-1.0-0 libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libatspi2.0-0 libcups2 libdrm-dev libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm-dev libasound2-dev
+ *
+ * # disable AppArmor unprivileged security restriction
+ * echo "kernel.apparmor_restrict_unprivileged_userns=0" | sudo tee /etc/sysctl.d/60-apparmor-namespace.conf
+ * sudo sysctl -p /etc/sysctl.d/60-apparmor-namespace.conf
+ * ```
  */
 class GoogleChromeForTesting {
   constructor(options = {}) {
@@ -163,8 +209,26 @@ class GoogleChromeForTesting {
    * ```coffeescript [specscript]
    * init() -> Promise<>
    * ```
+   *
+   * Initializes the `GoogleChromeForTesting` client.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Returns:
+   *   * `promise` - a promise that resolves when the initialization process is done.
+   *
+   * ```javascript
+   * const googleChromeForTesting = new GoogleChromeForTesting()
+   *
+   * await googleChromeForTesting.init()
+   * ```
    */
   async init() {
+    if (this.devtoolsUrl) {
+      return undefined
+    }
+
     const chromeFilepath = await getChromeFilepath.call(this)
 
     const cmd = spawn(chromeFilepath, [
@@ -213,6 +277,8 @@ class GoogleChromeForTesting {
 
     await spawnPromise
     this.devtoolsUrl = await devtoolsUrlPromise
+
+    return undefined
   }
 
   /**

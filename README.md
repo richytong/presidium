@@ -323,10 +323,14 @@ await docker.createService({
 
 ## [Automate tests with Google Chrome for Testing](https://presidium.services/docs/GoogleChromeDevTools)
 ```javascript
+const GoogleChromeForTesting = require('presidium/GoogleChromeForTesting')
 const GoogleChromeDevTools = require('presidium/GoogleChromeDevTools')
 
-const googleChromeDevTools = new GoogleChromeDevTools()
-await googleChromeDevTools.init() // downloads Google Chrome for Testing
+const googleChromeForTesting = new GoogleChromeForTesting()
+await googleChromeForTesting.init() // downloads Google Chrome for Testing
+
+const googleChromeDevTools = new GoogleChromeDevTools(googleChromeForTesting)
+await googleChromeDevTools.init() // connects to the DevTools server
 
 // get targets
 const targetsData = await googleChromeDevTools.Target.getTargets()

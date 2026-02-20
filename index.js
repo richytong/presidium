@@ -6,6 +6,7 @@ module.exports = {
   DynamoDBTable: require('./DynamoDBTable.js'),
   ECR: require('./ECR.js'),
   GoogleChromeDevTools: require('./GoogleChromeDevTools.js'),
+  GoogleChromeForTesting: require('./GoogleChromeForTesting.js'),
   HTTP: require('./HTTP.js'),
   NpmToken: require('./NpmToken.js'),
   OptionalValidator: require('./OptionalValidator.js'),

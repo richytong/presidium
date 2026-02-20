@@ -3,6 +3,7 @@ const assert = require('assert')
 const http = require('http')
 const { exec } = require('child_process')
 const sleep = require('./internal/sleep')
+const GoogleChromeForTesting = require('./GoogleChromeForTesting')
 const GoogleChromeDevTools = require('./GoogleChromeDevTools')
 
 const PORT = 7357
@@ -36,12 +37,20 @@ const test = new Test('GoogleChromeDevTools', async function integration() {
     assert.equal(googleChromeDevTools.headless, true)
     assert.equal(googleChromeDevTools.userDataDir, `${__dirname}/tmp/chrome`)
     assert.equal(googleChromeDevTools.useMockKeychain, true)
-
   }
 
-  const googleChromeDevTools = new GoogleChromeDevTools({
-    headless: true,
-  })
+  { // downloads Google Chrome for Testing if not provided
+    const googleChromeDevTools = new GoogleChromeDevTools()
+    await googleChromeDevTools.init()
+
+    googleChromeDevTools.close()
+  }
+
+  const googleChromeForTesting = new GoogleChromeForTesting({ headless: true })
+  await googleChromeForTesting.init()
+
+  const googleChromeDevTools = new GoogleChromeDevTools(googleChromeForTesting)
+  await googleChromeDevTools.init()
   await googleChromeDevTools.init()
 
   assert.equal(googleChromeDevTools.googleChromeForTesting.chromeVersion, 'stable')
@@ -527,9 +536,7 @@ function addParagraph() {
   })
 
   server.close()
-  googleChromeDevTools.websocket.sendClose()
-  googleChromeDevTools.websocket.close()
-  googleChromeDevTools.googleChromeForTesting.close()
+  googleChromeDevTools.close()
 
   await exec('ps aux | grep "Google Chrome for Testing" | awk \'{print $2}\' | xargs kill', {
     stdio: 'inherit',

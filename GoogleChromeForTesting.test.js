@@ -2,7 +2,7 @@ const Test = require('thunk-test')
 const assert = require('assert')
 const fs = require('fs')
 const { exec } = require('child_process')
-const Readable = require('../Readable')
+const Readable = require('./Readable')
 const GoogleChromeForTesting = require('./GoogleChromeForTesting')
 
 const test = new Test('GoogleChromeForTesting', async function integration() {
@@ -45,6 +45,9 @@ const test = new Test('GoogleChromeForTesting', async function integration() {
       userDataDir: `${__dirname}/tmp/chrome`,
       headless: true,
     })
+    assert.strictEqual(googleChromeForTesting.devtoolsUrl, undefined)
+    await googleChromeForTesting.init()
+    assert.equal(typeof googleChromeForTesting.devtoolsUrl, 'string')
     await googleChromeForTesting.init()
 
     assert.equal(typeof googleChromeForTesting.devtoolsUrl, 'string')
