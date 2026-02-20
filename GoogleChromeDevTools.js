@@ -920,7 +920,11 @@ class GoogleChromeDevTools extends EventEmitter {
       offerPerMessageDeflate: false,
     })
     this.websocket.on('error', error => {
-      throw error
+      if (this.closed && error.code == 'ECONNRESET') {
+        console.log('Reset after close:', error)
+      } else {
+        throw error
+      }
     })
 
     this.websocket.on('message', message => {
@@ -997,6 +1001,7 @@ class GoogleChromeDevTools extends EventEmitter {
     this.websocket.sendClose()
     this.websocket.on('close', () => {
       this.googleChromeForTesting.cmd.on('close', () => {
+        this.closed = true
         this.emit('close')
       })
       this.googleChromeForTesting.close()
