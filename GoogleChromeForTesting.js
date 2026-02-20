@@ -116,6 +116,11 @@ async function getChromeFilepath() {
   const filepath = `${this.chromeDir}/${url.replace('https://storage.googleapis.com/chrome-for-testing-public/', '')}`
   const parentDir = `${filepath.split('/').slice(0, -1).join('/')}`
 
+  console.log('getChromeFilepath', {
+    filepath,
+    parentDir,
+  })
+
   try {
     for await (const filepath of walk(parentDir)) {
       console.log(filepath)
