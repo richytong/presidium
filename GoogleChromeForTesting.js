@@ -19,8 +19,7 @@ async function getChromeVersions() {
 }
 
 function updateConsoleLog(message, platform) {
-  process.stdout.write('\r');
-  process.stdout.write(message.padEnd(80, ' '));
+  process.stdout.write('\r\x1b[2K\r' + message);
 
   // process.stdout.write('\r\x1b[2K' + message)
 
