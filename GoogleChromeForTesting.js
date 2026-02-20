@@ -122,7 +122,8 @@ async function installChrome() {
   console.log('Extracting', filepath)
   try {
     await extract(filepath, { dir: parentDir })
-  } catch {
+  } catch (error) {
+    console.log('Catch', error)
     await sleep(1000)
     await extract(filepath, { dir: parentDir })
   }
