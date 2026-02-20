@@ -20,7 +20,7 @@ async function getChromeVersions() {
 
 function updateConsoleLog(message, platform) {
   if (platform.startsWith('win')) {
-    process.stdout.write('\\r\\x1b[2K' + message)
+    process.stdout.write('\r\n\x1b[2K' + message)
   } else {
     process.stdout.write('\r\x1b[2K' + message)
   }
