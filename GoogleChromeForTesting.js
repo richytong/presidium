@@ -65,11 +65,13 @@ async function installChrome() {
   const platform = getPlatform()
   const url = await getChromeUrl.call(this)
   let filepath = `${this.chromeDir}/${url.replace('https://storage.googleapis.com/chrome-for-testing-public/', '')}`
-  console.log('filepath0', filepath)
-  if (!filepath.startsWith('/')) {
+
+  if (platform.startsWith('win')) {
+    // windows provides absolute path
+  } else if (!filepath.startsWith('/')) {
     filepath = path.join(process.cwd(), filepath)
   }
-  console.log('filepath1', filepath)
+
   let parentDir = `${filepath.split('/').slice(0, -1).join('/')}`
   if (!parentDir.startsWith('/')) {
     parentDir = path.join(process.cwd(), parentDir)
