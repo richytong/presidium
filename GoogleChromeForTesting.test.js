@@ -57,7 +57,7 @@ const test = new Test('GoogleChromeForTesting', async function integration() {
     const closePromise = new Promise(_resolve => {
       closeResolve = _resolve
     })
-    googleChromeForTesting.on('close', () => {
+    googleChromeForTesting.cmd.on('close', () => {
       closeResolve()
     })
 
@@ -81,7 +81,7 @@ const test = new Test('GoogleChromeForTesting', async function integration() {
     const closePromise = new Promise(_resolve => {
       closeResolve = _resolve
     })
-    googleChromeForTesting.on('close', () => {
+    googleChromeForTesting.cmd.on('close', () => {
       closeResolve()
     })
 
