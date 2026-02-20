@@ -111,10 +111,10 @@ async function getChromeFilepath() {
   try {
     for await (const filepath of walk(parentDir)) {
       console.log(filepath)
-      if (platform.startsWith('mac-') && filepath.endsWith('Google Chrome for Testing')) {
+      if (platform.startsWith('mac') && filepath.endsWith('Google Chrome for Testing')) {
         return filepath
       }
-      if (platform.startsWith('linux-') && filepath.endsWith('chrome')) {
+      if (platform.startsWith('linux') && filepath.endsWith('chrome')) {
         return filepath
       }
     }
