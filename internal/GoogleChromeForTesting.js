@@ -151,8 +151,8 @@ class GoogleChromeForTesting {
     this.chromeDir = options.chromeDir ?? 'google-chrome-for-testing'
     this.remoteDebuggingPort = options.remoteDebuggingPort ?? 9222
     this.headless = options.headless ?? false
-    this.userDataDir = options.userDataDir ?? './tmp/chrome'
-    this.useMockKeychain = options.useMockKeychain ?? false
+    this.userDataDir = options.userDataDir ?? 'tmp/chrome'
+    this.useMockKeychain = options.useMockKeychain ?? true
     this.devtoolsUrl = undefined
   }
 

@@ -13,10 +13,7 @@ const test = new Test('GoogleChromeForTesting', async function integration() {
   })
 
   {
-    const googleChromeForTesting = new GoogleChromeForTesting({
-      userDataDir: `${__dirname}/tmp/chrome`,
-      useMockKeychain: true,
-    })
+    const googleChromeForTesting = new GoogleChromeForTesting()
     await googleChromeForTesting.init()
 
     assert.equal(typeof googleChromeForTesting.devtoolsUrl, 'string')
@@ -27,6 +24,10 @@ const test = new Test('GoogleChromeForTesting', async function integration() {
 
   {
     const googleChromeForTesting = new GoogleChromeForTesting({
+      chromeVersion: 'stable',
+      chromeDir: `${__dirname}/google-chrome-for-testing`,
+      remoteDebuggingPort: 9222,
+      headless: true,
       userDataDir: `${__dirname}/tmp/chrome`,
       useMockKeychain: true,
     })
