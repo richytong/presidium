@@ -75,9 +75,7 @@ async function installChrome() {
     filepath = path.join(process.cwd(), filepath)
   }
 
-  console.log('filepath1', filepath)
   let parentDir = `${filepath.split(delimiter).slice(0, -1).join(delimiter)}`
-  console.log('parentDir0', parentDir)
   if (platform.startsWith('win')) {
     if (!filepath.startsWith(`${__dirname[0]}:`)) {
       parentDir = path.join(process.cwd(), parentDir)
@@ -85,7 +83,6 @@ async function installChrome() {
   } else if (!parentDir.startsWith('/')) {
     parentDir = path.join(process.cwd(), parentDir)
   }
-  console.log('parentDir1', parentDir)
   await fs.promises.mkdir(parentDir, { recursive: true })
 
   const http = new HTTP()
