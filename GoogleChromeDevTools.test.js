@@ -40,7 +40,7 @@ const test = new Test('GoogleChromeDevTools', async function integration() {
   }
 
   { // downloads Google Chrome for Testing if not provided
-    const googleChromeDevTools = new GoogleChromeDevTools({ headless: false })
+    const googleChromeDevTools = new GoogleChromeDevTools({ headless: true })
     await googleChromeDevTools.init()
 
     let closeResolve
