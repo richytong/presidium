@@ -536,7 +536,14 @@ function addParagraph() {
   })
 
   server.close()
+
+  let closeResolve
+  const closePromise = new Promise(_resolve => {
+    closeResolve = _resolve
+  })
+  googleChromeDevTools.on('close', closeResolve)
   googleChromeDevTools.close()
+  await closePromise
 
   await exec('ps aux | grep "Google Chrome for Testing" | awk \'{print $2}\' | xargs kill', {
     stdio: 'inherit',
