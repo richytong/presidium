@@ -206,10 +206,6 @@ async function getChromeFilepath() {
  * ### Install headless dependencies for Ubuntu / Debian
  * ```sh
  * sudo apt-get update && sudo apt-get install -y libcairo2 libpango-1.0-0 libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libatspi2.0-0 libcups2 libdrm-dev libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm-dev libasound2-dev
- *
- * # disable AppArmor unprivileged security restriction
- * echo "kernel.apparmor_restrict_unprivileged_userns=0" | sudo tee /etc/sysctl.d/60-apparmor-namespace.conf
- * sudo sysctl -p /etc/sysctl.d/60-apparmor-namespace.conf
  * ```
  */
 class GoogleChromeForTesting {
