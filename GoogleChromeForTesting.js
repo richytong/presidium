@@ -66,6 +66,7 @@ async function installChrome() {
   const url = await getChromeUrl.call(this)
   let filepath = `${this.chromeDir}/${url.replace('https://storage.googleapis.com/chrome-for-testing-public/', '')}`
 
+  console.log('installChrome', filepath)
   if (platform.startsWith('win') && !filepath.startsWith(`${__dirname[0]}:`)) {
     filepath = path.join(process.cwd(), filepath)
   } else if (!filepath.startsWith('/')) {
