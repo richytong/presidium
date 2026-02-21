@@ -33,7 +33,7 @@ const test = new Test('ECR', async function integration() {
   const authorizationToken = await ecr.getAuthorizationToken()
   assert.equal(typeof authorizationToken, 'string')
 
-  const docker = new Docker()
+  const docker = new Docker({ apiVersion: '1.44' })
 
   { // pull node-15:alpine
     const dataStream = await docker.pullImage('node:15-alpine')
