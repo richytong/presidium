@@ -576,7 +576,7 @@ const test5 = new Test('Docker - swarm', async function integration() {
 
   { // listTasks
     const data = await docker.listTasks()
-    assert(data.length > 0)
+    assert.equal(data.length, 4, data) // 2 for service1, 1 for service2 (global), 1 for service2 (update)
     for (const item of data) {
       assert.equal(typeof item.ID, 'string')
       assert.equal(typeof item.Version, 'object')
