@@ -583,7 +583,7 @@ const test5 = new Test('Docker - swarm', async function integration() {
   }
 
   { // listTasks
-    const data = await docker.listTasks()
+    let data = await docker.listTasks()
     while (data.length < 4) {
       await sleep(1000)
       data = await docker.listTasks()
