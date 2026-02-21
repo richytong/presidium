@@ -966,17 +966,17 @@ const test3 = new Test('S3Bucket', async function integration3() {
       SSEKMSEncryptionContext: Buffer.from(JSON.stringify(encryptionContext), 'utf8').toString('base64'),
     })
     assert.equal(data1.ServerSideEncryption, 'aws:kms')
-    assert.equal(data1.SSEKMSKeyId, 'arn:aws:kms:us-east-1:095798571722:key/c0bb3d73-0b3f-47c3-8eb6-8567b6d22265')
+    assert.equal(data1.SSEKMSKeyId, 'arn:aws:kms:us-east-1:141814482060:key/59120224-a7f5-432c-91c7-1da73d9ec0bf')
     const encryptionContext1 = JSON.parse(Buffer.from(data1.SSEKMSEncryptionContext, 'base64').toString('utf8'))
     assert.equal(encryptionContext1.a, '1')
 
     const data2 = await testBucket3.getObject(key)
     assert.equal(data2.ServerSideEncryption, 'aws:kms')
-    assert.equal(data2.SSEKMSKeyId, 'arn:aws:kms:us-east-1:095798571722:key/c0bb3d73-0b3f-47c3-8eb6-8567b6d22265')
+    assert.equal(data2.SSEKMSKeyId, 'arn:aws:kms:us-east-1:141814482060:key/59120224-a7f5-432c-91c7-1da73d9ec0bf')
 
     const data3 = await testBucket3.headObject(key)
     assert.equal(data3.ServerSideEncryption, 'aws:kms')
-    assert.equal(data3.SSEKMSKeyId, 'arn:aws:kms:us-east-1:095798571722:key/c0bb3d73-0b3f-47c3-8eb6-8567b6d22265')
+    assert.equal(data3.SSEKMSKeyId, 'arn:aws:kms:us-east-1:141814482060:key/59120224-a7f5-432c-91c7-1da73d9ec0bf')
   }
 
   {
@@ -990,17 +990,17 @@ const test3 = new Test('S3Bucket', async function integration3() {
       BucketKeyEnabled: true,
     })
     assert.equal(data1.ServerSideEncryption, 'aws:kms')
-    assert.equal(data1.SSEKMSKeyId, 'arn:aws:kms:us-east-1:095798571722:key/c0bb3d73-0b3f-47c3-8eb6-8567b6d22265')
+    assert.equal(data1.SSEKMSKeyId, 'arn:aws:kms:us-east-1:141814482060:key/59120224-a7f5-432c-91c7-1da73d9ec0bf')
     assert.strictEqual(data1.BucketKeyEnabled, true)
 
     const data2 = await testBucket3.getObject(key)
     assert.equal(data2.ServerSideEncryption, 'aws:kms')
-    assert.equal(data2.SSEKMSKeyId, 'arn:aws:kms:us-east-1:095798571722:key/c0bb3d73-0b3f-47c3-8eb6-8567b6d22265')
+    assert.equal(data2.SSEKMSKeyId, 'arn:aws:kms:us-east-1:141814482060:key/59120224-a7f5-432c-91c7-1da73d9ec0bf')
     assert.strictEqual(data2.BucketKeyEnabled, true)
 
     const data3 = await testBucket3.headObject(key)
     assert.equal(data3.ServerSideEncryption, 'aws:kms')
-    assert.equal(data3.SSEKMSKeyId, 'arn:aws:kms:us-east-1:095798571722:key/c0bb3d73-0b3f-47c3-8eb6-8567b6d22265')
+    assert.equal(data3.SSEKMSKeyId, 'arn:aws:kms:us-east-1:141814482060:key/59120224-a7f5-432c-91c7-1da73d9ec0bf')
     assert.strictEqual(data3.BucketKeyEnabled, true)
   }
 
