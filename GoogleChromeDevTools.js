@@ -178,171 +178,6 @@ class GoogleChromeDevToolsPage {
   }
 }
 
-/**
- * @name Event: DOM.attributeModified
- *
- * @docs
- * ```coffeescript [specscript]
- * emit('DOM.attributeModified', data {
- *   nodeId: string,
- *   name: string,
- *   value: string,
- * })
- * ```
- *
- * The `DOM.attributeModified` event. Emitted when an attribute of an element is modified.
- *
- * Event Data:
- *   `data`
- *     * `nodeId` - the ID of the element or node.
- *     * `name` - the name of the modified attribute.
- *     * `value` - the value of the modified attribute.
- *
- * ```javascript
- * googleChromeDevTools.on('DOM.attributeModified', data => {
- *   console.log('attribute modified:', data)
- * })
- * ```
- */
-
-/**
- * @name Event: DOM.attributeRemoved
- *
- * @docs
- * ```coffeescript [specscript]
- * emit('DOM.attributeRemoved', data {
- *   nodeId: string,
- *   name: string,
- * })
- * ```
- *
- * The `DOM.attributeRemoved` event. Emitted when an attribute of an element is removed.
- *
- * Event Data:
- *   * `data`
- *     * `nodeId` - the ID of the element or node.
- *     * `name` - the name of the removed attribute.
- *
- * ```javascript
- * googleChromeDevTools.on('DOM.attributeModified', data => {
- *   console.log('attribute removed:', data)
- * })
- * ```
- */
-
-/**
- * @name Event: DOM.characterDataModified
- *
- * ```coffeescript [specscript]
- * emit('DOM.characterDataModified', data {
- *   nodeId: string,
- *   childNodeCount: number,
- * })
- * ```
- *
- * The `DOM.characterDataModified` event. Emitted when a text node is modified.
- *
- * Event Data:
- *   * `data`
- *     * `nodeId` - the ID of the element or node.
- *     * `characterData` - the new text value.
- *
- * ```javascript
- * googleChromeDevTools.on('DOM.characterDataModified', data => {
- *   console.log('text modified:', data)
- * })
- * ```
- */
-
-/**
- * @name Event: DOM.childNodeCountUpdated
- *
- * ```coffeescript [specscript]
- * emit('DOM.childNodeCountUpdated', data {
- *   nodeId: string,
- *   childNodeCount: number,
- * })
- * ```
- *
- * The `DOM.childNodeCountUpdated` event. Emitted when the child node count of a node is updated.
- *
- * Event Data:
- *   * `data`
- *     * `nodeId` - the ID of the element or node.
- *     * `childNodeCount` - the updated count of child nodes.
- *
- * ```javascript
- * googleChromeDevTools.on('DOM.childNodeCountUpdated', data => {
- *   console.log('child node count updated:', data)
- * })
- * ```
- */
-
-/**
- * @name Event: DOM.childNodeInserted
- *
- * ```javascript
- * module CDPDOM 'https://chromedevtools.github.io/devtools-protocol/tot/DOM/'
- *
- * emit('DOM.childNodeInserted', data {
- *   parentNodeId: string,
- *   previousNodeId: string,
- *   node: CDPDOM.Node,
- * })
- * ```
- *
- * The `DOM.childNodeInserted` event. Emitted when a node is inserted into the DOM as a child of another node.
- *
- * Event Data:
- *   * `data`
- *     * `parentNodeId` - the id of the parent node.
- *     * `previousNodeId` - the id of the node immediately preceding the inserted node.
- *     * `node` - [`CDPDOM.Node`](https://chromedevtools.github.io/devtools-protocol/tot/DOM/#type-Node) - data about the inserted node.
- */
-
-/**
- * @name Event: DOM.childNodeRemoved
- *
- * ```javascript
- * emit('DOM.childNodeRemoved', data {
- *   parentNodeId: string,
- *   nodeId: string,
- * })
- * ```
- *
- * The `DOM.childNodeRemoved` event. Emitted when a node is removed from the DOM as a child of another node.
- *
- * Event Data:
- *   * `data`
- *     * `parentNodeId` - the id of the parent node.
- *     * `nodeId` - the id of the removed node.
- *
- * ```javascript
- * googleChromeDevTools.on('DOM.childNodeRemoved', data => {
- *   console.log('child node removed:', data.nodeId)
- * })
- * ```
- */
-
-/**
- * @name Event: DOM.documentUpdated
- *
- * ```coffeescript [specscript]
- * emit('DOM.documentUpdated')
- * ```
- *
- * The `DOM.documentUpdated` event. Emitted when the `Document` object has been totally updated and node IDs are no longer valid.
- *
- * Event Data:
- *   * (none)
- *
- * ```javascript
- * googleChromeDevTools.on('DOM.documentUpdated', () => {
- *   console.log('Document updated')
- * })
- * ```
- */
-
 class GoogleChromeDevToolsDOM {
   constructor(websocket) {
     this.websocket = websocket
@@ -630,7 +465,178 @@ class GoogleChromeDevToolsDOM {
     return _Method.call(this, 'DOM.focus', options)
   }
 
+  /**
+   * @name Event: DOM.attributeModified
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * emit('DOM.attributeModified', data {
+   *   nodeId: string,
+   *   name: string,
+   *   value: string,
+   * })
+   * ```
+   *
+   * The `DOM.attributeModified` event. Emitted when an attribute of an element is modified.
+   *
+   * Event Data:
+   *   `data`
+   *     * `nodeId` - the ID of the element or node.
+   *     * `name` - the name of the modified attribute.
+   *     * `value` - the value of the modified attribute.
+   *
+   * ```javascript
+   * googleChromeDevTools.on('DOM.attributeModified', data => {
+   *   console.log('attribute modified:', data)
+   * })
+   * ```
+   */
+
+  /**
+   * @name Event: DOM.attributeRemoved
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * emit('DOM.attributeRemoved', data {
+   *   nodeId: string,
+   *   name: string,
+   * })
+   * ```
+   *
+   * The `DOM.attributeRemoved` event. Emitted when an attribute of an element is removed.
+   *
+   * Event Data:
+   *   * `data`
+   *     * `nodeId` - the ID of the element or node.
+   *     * `name` - the name of the removed attribute.
+   *
+   * ```javascript
+   * googleChromeDevTools.on('DOM.attributeModified', data => {
+   *   console.log('attribute removed:', data)
+   * })
+   * ```
+   */
+
+  /**
+   * @name Event: DOM.characterDataModified
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * emit('DOM.characterDataModified', data {
+   *   nodeId: string,
+   *   childNodeCount: number,
+   * })
+   * ```
+   *
+   * The `DOM.characterDataModified` event. Emitted when a text node is modified.
+   *
+   * Event Data:
+   *   * `data`
+   *     * `nodeId` - the ID of the element or node.
+   *     * `characterData` - the new text value.
+   *
+   * ```javascript
+   * googleChromeDevTools.on('DOM.characterDataModified', data => {
+   *   console.log('text modified:', data)
+   * })
+   * ```
+   */
+
+  /**
+   * @name Event: DOM.childNodeCountUpdated
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * emit('DOM.childNodeCountUpdated', data {
+   *   nodeId: string,
+   *   childNodeCount: number,
+   * })
+   * ```
+   *
+   * The `DOM.childNodeCountUpdated` event. Emitted when the child node count of a node is updated.
+   *
+   * Event Data:
+   *   * `data`
+   *     * `nodeId` - the ID of the element or node.
+   *     * `childNodeCount` - the updated count of child nodes.
+   *
+   * ```javascript
+   * googleChromeDevTools.on('DOM.childNodeCountUpdated', data => {
+   *   console.log('child node count updated:', data)
+   * })
+   * ```
+   */
+
+  /**
+   * @name Event: DOM.childNodeInserted
+   *
+   * @docs
+   * ```javascript
+   * module CDPDOM 'https://chromedevtools.github.io/devtools-protocol/tot/DOM/'
+   *
+   * emit('DOM.childNodeInserted', data {
+   *   parentNodeId: string,
+   *   previousNodeId: string,
+   *   node: CDPDOM.Node,
+   * })
+   * ```
+   *
+   * The `DOM.childNodeInserted` event. Emitted when a node is inserted into the DOM as a child of another node.
+   *
+   * Event Data:
+   *   * `data`
+   *     * `parentNodeId` - the id of the parent node.
+   *     * `previousNodeId` - the id of the node immediately preceding the inserted node.
+   *     * `node` - [`CDPDOM.Node`](https://chromedevtools.github.io/devtools-protocol/tot/DOM/#type-Node) - data about the inserted node.
+   */
+
+  /**
+   * @name Event: DOM.childNodeRemoved
+   *
+   * @docs
+   * ```javascript
+   * emit('DOM.childNodeRemoved', data {
+   *   parentNodeId: string,
+   *   nodeId: string,
+   * })
+   * ```
+   *
+   * The `DOM.childNodeRemoved` event. Emitted when a node is removed from the DOM as a child of another node.
+   *
+   * Event Data:
+   *   * `data`
+   *     * `parentNodeId` - the id of the parent node.
+   *     * `nodeId` - the id of the removed node.
+   *
+   * ```javascript
+   * googleChromeDevTools.on('DOM.childNodeRemoved', data => {
+   *   console.log('child node removed:', data.nodeId)
+   * })
+   * ```
+   */
+
+  /**
+   * @name Event: DOM.documentUpdated
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * emit('DOM.documentUpdated')
+   * ```
+   *
+   * The `DOM.documentUpdated` event. Emitted when the `Document` object has been totally updated and node IDs are no longer valid.
+   *
+   * Event Data:
+   *   * (none)
+   *
+   * ```javascript
+   * googleChromeDevTools.on('DOM.documentUpdated', () => {
+   *   console.log('Document updated')
+   * })
+   * ```
+   */
+
 }
+
 
 class GoogleChromeDevToolsInput {
   constructor(websocket) {
