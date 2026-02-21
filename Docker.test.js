@@ -151,7 +151,7 @@ const test4 = new Test('Docker - container', async function integration() {
     const containerId = data.Id
 
     const inspectData = await docker.inspectContainer(containerId)
-    assert.notEqual(inspectData.HostConfig.NanoCpus, 2e9)
+    assert.notEqual(inspectData.HostConfig.NanoCpus, 1e9)
     assert.notEqual(inspectData.HostConfig.Memory, 512e6)
 
     const attachDataStream = await docker.attachContainer(containerId)
@@ -193,7 +193,7 @@ const test4 = new Test('Docker - container', async function integration() {
     const containerId = data.Id
 
     const inspectData = await docker.inspectContainer(containerId)
-    assert.notEqual(inspectData.HostConfig.NanoCpus, 2e9)
+    assert.notEqual(inspectData.HostConfig.NanoCpus, 1e9)
     assert.notEqual(inspectData.HostConfig.Memory, 512e6)
 
     const attachDataStream = await docker.attachContainer(containerId)
@@ -237,7 +237,7 @@ const test4 = new Test('Docker - container', async function integration() {
         readonly: true,
       }],
       memory: 512e6, // bytes
-      cpus: 2,
+      cpus: 1,
       restart: 'on-failure:5',
 
       healthCmd: ['echo', 'ok'],
@@ -259,7 +259,7 @@ const test4 = new Test('Docker - container', async function integration() {
     const containerId = data.Id
 
     const inspectData = await docker.inspectContainer(containerId)
-    assert.equal(inspectData.HostConfig.NanoCpus, 2e9)
+    assert.equal(inspectData.HostConfig.NanoCpus, 1e9)
     assert.equal(inspectData.HostConfig.Memory, 512e6)
 
     const attachDataStream = await docker.attachContainer(containerId)
@@ -452,7 +452,7 @@ const test5 = new Test('Docker - swarm', async function integration() {
         readonly: true,
       }],
       memory: 512e6, // bytes
-      cpus: 2,
+      cpus: 1,
       gpus: 'all',
       restart: 'on-failure:5',
 
@@ -478,7 +478,7 @@ const test5 = new Test('Docker - swarm', async function integration() {
 
     const data2 = await docker.inspectService(serviceId)
     assert.equal(data2.Spec.Labels.foo, 'bar')
-    assert.equal(data2.Spec.TaskTemplate.Resources.Reservations.NanoCPUs, 2000000000)
+    assert.equal(data2.Spec.TaskTemplate.Resources.Reservations.NanoCPUs, 1000000000)
     assert.equal(data2.Spec.TaskTemplate.Resources.Reservations.MemoryBytes, 512000000)
 
     this.serviceId1 = serviceId
@@ -499,7 +499,7 @@ const test5 = new Test('Docker - swarm', async function integration() {
         readonly: true,
       }],
       memory: 512e6, // bytes
-      cpus: 2,
+      cpus: 1,
       gpus: 'all',
       restart: 'on-failure:5',
 
@@ -557,12 +557,12 @@ const test5 = new Test('Docker - swarm', async function integration() {
     const data1 = await docker.updateService('service2', {
       image: 'node:17-alpine',
       memory: 512e6, // bytes
-      cpus: 2,
+      cpus: 1,
     })
     assert.equal(data1.Warnings, null)
 
     const data2 = await docker.inspectService(this.serviceId2)
-    assert.equal(data2.Spec.TaskTemplate.Resources.Reservations.NanoCPUs, 2000000000)
+    assert.equal(data2.Spec.TaskTemplate.Resources.Reservations.NanoCPUs, 1000000000)
     assert.equal(data2.Spec.TaskTemplate.Resources.Reservations.MemoryBytes, 512000000)
   }
 
