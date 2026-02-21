@@ -7,6 +7,10 @@ const sleep = require('./internal/sleep')
 const Readable = require('./Readable')
 
 const test1 = Test('Docker - prune', async function integration() {
+  await docker.deleteNetwork('my-network')
+  await docker.deleteNetwork('my-other-network')
+  await docker.leaveSwarm({ force: true })
+
   const docker = new Docker({ apiVersion: '1.44' })
 
   await docker.pruneContainers()
@@ -454,7 +458,7 @@ const test5 = new Test('Docker - swarm', async function integration() {
       }],
       memory: 256e6, // bytes
       cpus: 0.1,
-      // gpus: 'all',
+      gpus: 'all',
       restart: 'on-failure:5',
 
       healthCmd: ['wget', '--no-verbose', '--tries=1', '--spider', 'localhost:3000'],
@@ -501,7 +505,7 @@ const test5 = new Test('Docker - swarm', async function integration() {
       }],
       memory: 256e6, // bytes
       cpus: 0.1,
-      // gpus: 'all',
+      gpus: 'all',
       restart: 'on-failure:5',
 
       healthCmd: ['wget', '--no-verbose', '--tries=1', '--spider', 'localhost:3000'],
