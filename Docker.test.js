@@ -153,7 +153,7 @@ const test4 = new Test('Docker - container', async function integration() {
 
     const inspectData = await docker.inspectContainer(containerId)
     assert.notEqual(inspectData.HostConfig.NanoCpus, 1e9)
-    assert.notEqual(inspectData.HostConfig.Memory, 512e6)
+    assert.notEqual(inspectData.HostConfig.Memory, 256e6)
 
     const attachDataStream = await docker.attachContainer(containerId)
     const emptyAttachDataStream = await docker.attachContainer(containerId, {
@@ -195,7 +195,7 @@ const test4 = new Test('Docker - container', async function integration() {
 
     const inspectData = await docker.inspectContainer(containerId)
     assert.notEqual(inspectData.HostConfig.NanoCpus, 1e9)
-    assert.notEqual(inspectData.HostConfig.Memory, 512e6)
+    assert.notEqual(inspectData.HostConfig.Memory, 256e6)
 
     const attachDataStream = await docker.attachContainer(containerId)
     const emptyAttachDataStream = await docker.attachContainer(containerId, {
@@ -237,7 +237,7 @@ const test4 = new Test('Docker - container', async function integration() {
         target: '/opt/other-volume',
         readonly: true,
       }],
-      memory: 512e6, // bytes
+      memory: 256e6, // bytes
       cpus: 1,
       restart: 'on-failure:5',
 
@@ -261,7 +261,7 @@ const test4 = new Test('Docker - container', async function integration() {
 
     const inspectData = await docker.inspectContainer(containerId)
     assert.equal(inspectData.HostConfig.NanoCpus, 1e9)
-    assert.equal(inspectData.HostConfig.Memory, 512e6)
+    assert.equal(inspectData.HostConfig.Memory, 256e6)
 
     const attachDataStream = await docker.attachContainer(containerId)
     const startMessage = await docker.startContainer(containerId)
@@ -342,7 +342,7 @@ const test4 = new Test('Docker - container', async function integration() {
     assert.deepEqual(data.Config.Volumes, { '/opt/my-volume': {} })
     assert.equal(data.Config.WorkingDir, '/opt/test0')
     assert.deepEqual(data.Config.ExposedPorts, { '22/tcp': {}, '8888/tcp': {}, '8889/udp': {} })
-    assert.equal(data.HostConfig.Memory, 512e6)
+    assert.equal(data.HostConfig.Memory, 256e6)
     assert.deepEqual(data.HostConfig.PortBindings, {
       '22/tcp': [{ HostIp: '', HostPort: '23' }],
       '8000/tcp': [{ HostIp: '', HostPort: '8888' }]
@@ -452,7 +452,7 @@ const test5 = new Test('Docker - swarm', async function integration() {
         target: '/opt/other-volume',
         readonly: true,
       }],
-      memory: 512e6, // bytes
+      memory: 256e6, // bytes
       cpus: 1,
       gpus: 'all',
       restart: 'on-failure:5',
@@ -480,7 +480,7 @@ const test5 = new Test('Docker - swarm', async function integration() {
     const data2 = await docker.inspectService(serviceId)
     assert.equal(data2.Spec.Labels.foo, 'bar')
     assert.equal(data2.Spec.TaskTemplate.Resources.Reservations.NanoCPUs, 1000000000)
-    assert.equal(data2.Spec.TaskTemplate.Resources.Reservations.MemoryBytes, 512000000)
+    assert.equal(data2.Spec.TaskTemplate.Resources.Reservations.MemoryBytes, 256000000)
 
     this.serviceId1 = serviceId
 
@@ -499,7 +499,7 @@ const test5 = new Test('Docker - swarm', async function integration() {
         target: '/opt/other-volume',
         readonly: true,
       }],
-      memory: 512e6, // bytes
+      memory: 256e6, // bytes
       cpus: 1,
       gpus: 'all',
       restart: 'on-failure:5',
@@ -559,14 +559,14 @@ const test5 = new Test('Docker - swarm', async function integration() {
   { // updateService
     const data1 = await docker.updateService('service2', {
       image: 'node:17-alpine',
-      memory: 512e6, // bytes
+      memory: 256e6, // bytes
       cpus: 1,
     })
     assert.equal(data1.Warnings, null)
 
     const data2 = await docker.inspectService(this.serviceId2)
     assert.equal(data2.Spec.TaskTemplate.Resources.Reservations.NanoCPUs, 1000000000)
-    assert.equal(data2.Spec.TaskTemplate.Resources.Reservations.MemoryBytes, 512000000)
+    assert.equal(data2.Spec.TaskTemplate.Resources.Reservations.MemoryBytes, 256000000)
   }
 
   { // listServices
