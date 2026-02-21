@@ -51,7 +51,6 @@ WORKDIR /opt
 COPY . .
 EXPOSE 8888`,
       },
-      platform: 'linux/x86_64',
     })
     dataStream.pipe(process.stdout)
     await new Promise(resolve => {
