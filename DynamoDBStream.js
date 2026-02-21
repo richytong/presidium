@@ -467,15 +467,18 @@ class DynamoDBStream {
     let exists = false
     while (!exists) {
       await sleep(100)
-      const streamData = await this.describe().catch(error => {
+
+      try {
+        const streamData = await this.describe()
+        if (streamData.TableStatus == 'ACTIVE') {
+          exists = true
+        }
+      } catch (error) {
         if (error.message == `DynamoDB Stream for ${this.table} not found.`) {
-          // return
+          // continue
         } else {
           throw error
         }
-      })
-      if (streamData.TableStatus == 'ACTIVE') {
-        exists = true
       }
     }
   }
