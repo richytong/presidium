@@ -8,7 +8,7 @@
 A library for creating web services.
 
 ## Installation
-Install Presidium with [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm):
+with [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm):
 ```bash
 npm i presidium
 ```
