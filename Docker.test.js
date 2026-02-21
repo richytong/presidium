@@ -570,9 +570,10 @@ const test5 = new Test('Docker - swarm', async function integration() {
   }
 
   { // listServices
-    const data = await docker.listServices()
+    let data = await docker.listServices()
     while (data.length < 2) {
       await sleep(1000)
+      data = await docker.listServices()
     }
     assert.equal(data.length, 2)
     const serviceIds = data.map(get('ID'))
@@ -584,6 +585,7 @@ const test5 = new Test('Docker - swarm', async function integration() {
     const data = await docker.listTasks()
     while (data.length < 4) {
       await sleep(1000)
+      data = await docker.listTasks()
     }
     assert.equal(data.length, 4, data) // 2 for service1, 1 for service2 (global), 1 for service2 (update)
     for (const item of data) {
