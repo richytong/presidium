@@ -7,12 +7,9 @@ const sleep = require('./internal/sleep')
 const Readable = require('./Readable')
 
 const test1 = Test('Docker - prune', async function integration() {
-  await docker.deleteNetwork('my-network')
-  await docker.deleteNetwork('my-other-network')
-  await docker.leaveSwarm({ force: true })
-
   const docker = new Docker({ apiVersion: '1.44' })
 
+  await docker.leaveSwarm({ force: true }).catch(() => {})
   await docker.pruneContainers()
   await docker.pruneVolumes()
   await docker.pruneImages()
