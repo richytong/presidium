@@ -131,6 +131,11 @@ async function getChromeFilepath() {
   const parentDir = `${filepath.split('/').slice(0, -1).join('/')}`
 
   try {
+    const dirents = await fs.promises.readdir(parentDir)
+    if (dirents.length <= 1) {
+      await installChrome.call(this)
+    }
+
     for await (const filepath of walk(parentDir)) {
       if (platform.startsWith('mac') && filepath.endsWith('Google Chrome for Testing')) {
         return filepath

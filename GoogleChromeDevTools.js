@@ -180,6 +180,15 @@ class GoogleChromeDevToolsPage {
 
 /**
  * @name Event: DOM.attributeModified
+ *
+ * @docs
+ * ```coffeescript [specscript]
+ * emit('DOM.attributeModified', eventData {
+ *   nodeId: string,
+ *   name: string,
+ *   value: string,
+ * })
+ * ```
  */
 
 /**
