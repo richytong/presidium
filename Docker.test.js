@@ -6,7 +6,7 @@ const resolvePath = require('./internal/resolvePath')
 const Readable = require('./Readable')
 
 const test1 = Test('Docker - prune', async function integration() {
-  const docker = new Docker()
+  const docker = new Docker({ apiVersion: '1.44' })
 
   await docker.pruneContainers()
   await docker.pruneVolumes()
@@ -39,7 +39,7 @@ const test1 = Test('Docker - prune', async function integration() {
 }).case()
 
 const test2 = new Test('Docker - auth', async function integration() {
-  const docker = new Docker()
+  const docker = new Docker({ apiVersion: '1.44' })
 
   const data = await docker.auth({
     username: 'admin',
@@ -137,7 +137,7 @@ EXPOSE 8888`,
 }).case()
 
 const test4 = new Test('Docker - container', async function integration() {
-  const docker = new Docker()
+  const docker = new Docker({ apiVersion: '1.44' })
 
   {
     const data = await docker.createContainer({
@@ -383,7 +383,7 @@ const test4 = new Test('Docker - container', async function integration() {
 }).case()
 
 const test5 = new Test('Docker - swarm', async function integration() {
-  const docker = new Docker()
+  const docker = new Docker({ apiVersion: '1.44' })
 
   await docker.leaveSwarm({ force: true }).catch(() => {})
 
