@@ -454,7 +454,7 @@ const test5 = new Test('Docker - swarm', async function integration() {
       }],
       memory: 256e6, // bytes
       cpus: 0.1,
-      gpus: 'all',
+      // gpus: 'all',
       restart: 'on-failure:5',
 
       healthCmd: ['wget', '--no-verbose', '--tries=1', '--spider', 'localhost:3000'],
@@ -501,7 +501,7 @@ const test5 = new Test('Docker - swarm', async function integration() {
       }],
       memory: 256e6, // bytes
       cpus: 0.1,
-      gpus: 'all',
+      // gpus: 'all',
       restart: 'on-failure:5',
 
       healthCmd: ['wget', '--no-verbose', '--tries=1', '--spider', 'localhost:3000'],
