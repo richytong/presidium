@@ -3,6 +3,7 @@ const assert = require('assert')
 const Test = require('thunk-test')
 const Docker = require('./Docker')
 const resolvePath = require('./internal/resolvePath')
+const sleep = require('./internal/sleep')
 const Readable = require('./Readable')
 
 const test1 = Test('Docker - prune', async function integration() {
