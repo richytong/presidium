@@ -553,6 +553,8 @@ const test5 = new Test('Docker - swarm', async function integration() {
     this.serviceId2 = serviceId
   }
 
+  await sleep(1000)
+
   { // updateService
     const data1 = await docker.updateService('service2', {
       image: 'node:17-alpine',
@@ -568,6 +570,9 @@ const test5 = new Test('Docker - swarm', async function integration() {
 
   { // listServices
     const data = await docker.listServices()
+    while (data.length < 2) {
+      await sleep(1000)
+    }
     assert.equal(data.length, 2)
     const serviceIds = data.map(get('ID'))
     assert(serviceIds.includes(this.serviceId1))
@@ -576,6 +581,9 @@ const test5 = new Test('Docker - swarm', async function integration() {
 
   { // listTasks
     const data = await docker.listTasks()
+    while (data.length < 4) {
+      await sleep(1000)
+    }
     assert.equal(data.length, 4, data) // 2 for service1, 1 for service2 (global), 1 for service2 (update)
     for (const item of data) {
       assert.equal(typeof item.ID, 'string')
