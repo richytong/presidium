@@ -31,7 +31,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Install system dependencies
-      run: sudo apt-get update && sudo apt-get install -y libcairo2 libpango-1.0-0 libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libatspi2.0-0 libcups2 libdrm-dev libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm-dev libasound2-dev
+      run: sudo dnf install -y cairo pango nss nspr atk at-spi2-atk cups-libs libdrm libxkbcommon libXcomposite libXdamage libXfixes libXrandr mesa-libgbm alsa-lib
 
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v1
