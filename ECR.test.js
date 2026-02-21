@@ -7,7 +7,7 @@ const Docker = require('./Docker')
 const test = new Test('ECR', async function integration() {
   const awsCreds = await AwsCredentials('presidium')
   awsCreds.region = 'us-east-1'
-  const awsAccountId = '095798571722'
+  const awsAccountId = '141814482060'
 
   const ecr = new ECR({ ...awsCreds })
 
@@ -56,6 +56,13 @@ EXPOSE 8888`,
     await new Promise(resolve => {
       dataStream.on('end', resolve)
     })
+
+    dataStream.on('data', chunk => {
+      const line = chunk.toString('utf8')
+      if (line.startsWith('{"error')) {
+        throw new Error(line)
+      }
+    })
   }
 
   {
@@ -75,6 +82,13 @@ EXPOSE 8888`,
     dataStream.pipe(process.stdout)
     await new Promise(resolve => {
       dataStream.on('end', resolve)
+    })
+
+    dataStream.on('data', chunk => {
+      const line = chunk.toString('utf8')
+      if (line.startsWith('{"error')) {
+        throw new Error(line)
+      }
     })
   }
 
