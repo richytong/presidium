@@ -34,7 +34,7 @@ async function sendRequestJSON(payload) {
   const data = await promise
   this.websocket.removeListener('message', handler)
 
-  return data.result
+  return data
 }
 
 /**
@@ -66,7 +66,7 @@ async function _Method(method, { sessionId, ...params }) {
     throw error
   }
 
-  return data
+  return data.result
 }
 
 class GoogleChromeDevToolsTarget {

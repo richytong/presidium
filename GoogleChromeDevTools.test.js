@@ -251,6 +251,7 @@ function addParagraph() {
         depth: 10,
       }),
       error => {
+        assert.equal(error.message, 'Could not find node with given id')
         return true
       }
     )
