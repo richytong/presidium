@@ -267,8 +267,12 @@ class GoogleChromeForTesting {
     const devtoolsUrlPromise = new Promise(_resolve => {
       devtoolsUrlResolve = _resolve
     })
-    cmd.stderr.on('data', chunk => {
-      const line = chunk.toString('utf8').trim()
+
+    const rl = readline.createInterface({
+      input: cmd.stderr,
+    })
+
+    rl.on('line', line => {
       if (line.includes('DevTools listening on')) {
         const devtoolsUrl = line.replace('DevTools listening on ', '')
         devtoolsUrlResolve(devtoolsUrl)
