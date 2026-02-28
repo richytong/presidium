@@ -371,6 +371,7 @@ class GoogleChromeDevToolsDOM {
    * DOM.describeNode(options {
    *   sessionId: string,
    *   nodeId: string,
+   *   depth: number,
    * }) -> data Promise<{
    *   node: CDPDOM.Node,
    * }>
@@ -382,6 +383,7 @@ class GoogleChromeDevToolsDOM {
    *   * `options`
    *     * `sessionId` - the session ID.
    *     * `nodeId` - the ID of the node to describe.
+   *     * `depth` - the maximum depth of the subtree. Defaults to `1`. Use `-1` for the entire subtree.
    *
    * Return:
    *   * `data`
