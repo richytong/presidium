@@ -12,7 +12,7 @@ function getId() {
  *
  * @docs
  * ```coffeescript [specscript]
- * sendRequestJSON(payload string) -> data Promise<Object>
+ * sendRequestJSON(payload object) -> data Promise<Object>
  * ```
  */
 async function sendRequestJSON(payload) {
@@ -23,13 +23,13 @@ async function sendRequestJSON(payload) {
 
   const handler = function (message) {
     const data = JSON.parse(message.toString('utf8'))
-    if (data.id == id) {
+    if (data.id == payload.id) {
       resolve(data)
     }
   }
 
   this.websocket.on('message', handler)
-  this.websocket.send(payload)
+  this.websocket.send(JSON.stringify(payload))
 
   const data = await promise
   this.websocket.removeListener('message', handler)
@@ -51,12 +51,12 @@ async function sendRequestJSON(payload) {
 async function _Method(method, { sessionId, ...params }) {
   const id = getId()
 
-  const payload = JSON.stringify({
+  const payload = {
     sessionId: sessionId ?? this.sessionId,
     id,
     method,
     params,
-  })
+  }
 
   const data = await sendRequestJSON.call(this, payload)
 
@@ -1054,6 +1054,7 @@ class GoogleChromeDevTools extends EventEmitter {
     })
     await this.googleChromeForTesting.init()
 
+    console.log('initializing websocket with devtoolsUrl:', this.googleChromeForTesting.devtoolsUrl)
     this.websocket = new WebSocket(this.googleChromeForTesting.devtoolsUrl, {
       offerPerMessageDeflate: false,
     })
