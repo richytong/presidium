@@ -566,6 +566,29 @@ function addParagraph() {
     sessionId: this.sessionId,
   })
 
+  {
+    console.log('Handle alert')
+
+    await googleChromeDevTools.Page.enable()
+
+    const dialogOpeningPromise = new Promise(resolve => {
+      googleChromeDevTools.once('Page.javascriptDialogOpening', function handler(data) {
+        resolve()
+      })
+    })
+
+    const promise = googleChromeDevTools.Runtime.evaluate({
+      sessionId: this.sessionId,
+      expression: 'alert(\'test\')',
+    })
+
+    await dialogOpeningPromise
+
+    await googleChromeDevTools.Page.handleJavaScriptDialog({ accept: true })
+
+    await promise
+  }
+
   let closeResolve
   const closePromise = new Promise(_resolve => {
     closeResolve = _resolve

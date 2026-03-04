@@ -142,6 +142,33 @@ class GoogleChromeDevToolsPage {
   }
 
   /**
+   * @name Page.enable
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * Page.enable(options {
+   *   sessionId: string,
+   * }) -> data Promise<{}>
+   * ```
+   *
+   * Enables Page events for the current target.
+   *
+   * Arguments:
+   *   * `options`
+   *     * `sessionId` - the session ID.
+   *
+   * Return:
+   *   * `data` - promise of an empty object.
+   *
+   * ```javascript
+   * await googleChromeDevTools.Page.enable()
+   * ```
+   */
+  enable(options = {}) {
+    return _Method.call(this, 'Page.enable', options)
+  }
+
+  /**
    * @name Page.navigate
    *
    * @docs
@@ -176,6 +203,98 @@ class GoogleChromeDevToolsPage {
   navigate(options = {}) {
     return _Method.call(this, 'Page.navigate', options)
   }
+
+  /**
+   * @name Page.handleJavaScriptDialog
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * Page.handleJavaScriptDialog(options {
+   *   sessionId: string,
+   *   accept: boolean,
+   *   promptText: string,
+   * }) -> data Promise<{}>
+   * ```
+   *
+   * Handles (accepts or dismisses) a JavaScript initiated dialog (alert, confirm, prompt, or onbeforeunload).
+   *
+   * Arguments:
+   *   * `options`
+   *     * `sessionId` - the session ID.
+   *     * `accept` - whether to accept or dismiss the dialog.
+   *     * `promptText` - the text to enter into the dialog prompt before accepting.
+   *
+   * Return:
+   *   * `data` - promise of an empty object.
+   *
+   * ```javascript
+   * await googleChromeDevTools.Page.handleJavaScriptDialog({
+   *   url: 'http://localhost:3000/',
+   * })
+   * ```
+   */
+  handleJavaScriptDialog(options = {}) {
+    return _Method.call(this, 'Page.handleJavaScriptDialog', options)
+  }
+
+  /**
+   * @name Event: Page.javascriptDialogOpening
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * emit('Page.javascriptDialogOpening', data {
+   *   url: string,
+   *   frameId: string,
+   *   message: string,
+   *   type: 'alert'|'confirm'|'prompt'|'beforeunload',
+   *   hasBrowserHandler: boolean,
+   * })
+   * ```
+   *
+   * The `DOM.attributeModified` event. Emitted when an attribute of an element is modified.
+   *
+   * Event Data:
+   *   `data`
+   *     * `url` - the frame URL.
+   *     * `frameId` - the frame ID.
+   *     * `message` - message displayed by the dialog.
+   *     * `type` - the dialog type.
+   *     * `hasBrowserHandler` - whether the browser is capable of acting on the given dialog.
+   *
+   * ```javascript
+   * googleChromeDevTools.on('Page.javascriptDialogOpening', data => {
+   *   console.log('dialog opening', data)
+   * })
+   * ```
+   */
+
+  /**
+   * @name Event: Page.javascriptDialogClosed
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * emit('Page.javascriptDialogClosed', data {
+   *   frameId: string,
+   *   result: boolean,
+   *   userInput: string,
+   * })
+   * ```
+   *
+   * The `DOM.attributeModified` event. Emitted when an attribute of an element is modified.
+   *
+   * Event Data:
+   *   `data`
+   *     * `frameId` - the frame ID.
+   *     * `result` - whether the dialog was confirmed.
+   *     * `userInput` - the user input if the dialog was a prompt.
+   *
+   * ```javascript
+   * googleChromeDevTools.on('Page.javascriptDialogClosed', data => {
+   *   console.log('dialog closed', data)
+   * })
+   * ```
+   */
+
 }
 
 class GoogleChromeDevToolsDOM {
