@@ -292,6 +292,10 @@ class GoogleChromeForTesting {
       process.exit(1)
     })
 
+    cmd.on('exit', code => {
+      console.log(`${chromeFilepath} exited with code ${code}`)
+    })
+
     process.on('SIGTERM', () => {
       cmd.kill()
     })
