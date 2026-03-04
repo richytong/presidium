@@ -1173,7 +1173,7 @@ class GoogleChromeDevTools extends EventEmitter {
     })
     await this.googleChromeForTesting.init()
 
-    console.log('initializing websocket with devtoolsUrl:', this.googleChromeForTesting.devtoolsUrl)
+    console.log('Initializing websocket with devtoolsUrl:', this.googleChromeForTesting.devtoolsUrl)
     this.websocket = new WebSocket(this.googleChromeForTesting.devtoolsUrl, {
       offerPerMessageDeflate: false,
     })
@@ -1188,7 +1188,6 @@ class GoogleChromeDevTools extends EventEmitter {
     this.websocket.on('message', message => {
       const data = JSON.parse(message.toString('utf8'))
       if (data.method) {
-        console.log('Event:', data.method, JSON.stringify(data.params))
         this.emit(data.method, data.params)
       }
     })
