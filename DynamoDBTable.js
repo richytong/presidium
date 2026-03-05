@@ -531,6 +531,7 @@ class DynamoDBTable {
    *   ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
    *   ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *   ReturnValues: 'NONE'|'ALL_OLD',
+   *   ConditionExpression: string,
    * }) -> data Promise<{
    *   Attributes: DynamoDBJSONObject,
    *   ConsumedCapacity: {
@@ -548,6 +549,7 @@ class DynamoDBTable {
    *     * `ReturnConsumedCapacity` - determines the level of detail about provisioned or on-demand throughput consumption that is returned in the response.
    *     * `ReturnItemCollectionMetrics` - determines whether item collection metrics will be returned in the response.
    *     * `ReturnValues` - includes the item attributes in DynamoDB JSON format in the response. The values returned are strongly consistent. There is no additional cost or read capacity units consumed when with requesting a return value aside from the incurred network overhead.
+   *     * `ConditionExpression` - a condition that must be satisfied in order for a conditional update to succeed.
    *
    * Return:
    *   * `data`
@@ -587,7 +589,58 @@ class DynamoDBTable {
    * })
    * ```
    *
+   * ### ConditionExpression Syntax
+   * ```sh [DynamoDB_ConditionExpression_Syntax]
+   * <attribute_name> = :<variable_name>
+   * <attribute_name> <> :<variable_name>
+   * <attribute_name> < :<variable_name>
+   * <attribute_name> <= :<variable_name>
+   * <attribute_name> > :<variable_name>
+   * <attribute_name> >= :<variable_name>
+   *
+   * <attribute_name> BETWEEN :<variable_name1> AND :<variable_name2>
+   *
+   * <attribute_name> IN (:<variable_name1>[, :<variable_name2>[, ...]])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name>])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name1>]) = :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <> :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) < :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <= :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) > :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) >= :<variable_name2>
+   *
+   * <expression> AND <expression>
+   *
+   * NOT <expression>
+   *
+   * (<expression>)
+   * ```
+   *
+   * `ConditionExpression` Functions:
+   *   * `attribute_exists(<attribute_name>)` - test if `<attribute_name>` exists.
+   *   * `attribute_not_exists(<attribute_name>)` - test if `<attribute_name>` does not exist.
+   *   * `attribute_type(<attribute_name>, <attribute_type>)` - test if the DynamoDB attribute type of the DynamoDB attribute value of `<attribute_name>` equals `attribute_type`.
+   *   * `contains(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `begins_with(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `size(<attribute_name>)` - returns for evaluation a number that represents the size of the attribute value of `<attribute_name>`
+   *
+   * `ConditionExpression` Logical Operators:
+   *   * `=` - equals.
+   *   * `<>` - does not equal.
+   *   * `<` - less than.
+   *   * `>` - greater than.
+   *   * `<=` - less than or equal to .
+   *   * `>=` - greater than or equal to.
+   *   * `BETWEEN` - between.
+   *   * `IN` - in.
+   *   * `AND` - and.
+   *   * `OR` - or.
+   *   * `NOT` - not.
+   *
    * References:
+   *  * [Condition Expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html)
    *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async putItem(Item, options = {}) {
@@ -616,6 +669,7 @@ class DynamoDBTable {
    *   ReturnConsumedCapacity: 'INDEXES'|'TOTAL'|'NONE',
    *   ReturnItemCollectionMetrics: 'SIZE'|'NONE',
    *   ReturnValues: 'NONE'|'ALL_OLD',
+   *   ConditionExpression: string,
    * }) -> data Promise<{
    *   AttributesJSON: JSONObject,
    *   ConsumedCapacity: {
@@ -633,6 +687,7 @@ class DynamoDBTable {
    *     * `ReturnConsumedCapacity` - determines the level of detail about provisioned or on-demand throughput consumption that is returned in the response.
    *     * `ReturnItemCollectionMetrics` - determines whether item collection metrics will be returned in the response.
    *     * `ReturnValues` - includes the item attributes in DynamoDB JSON format in the response. The values returned are strongly consistent. There is no additional cost or read capacity units consumed when with requesting a return value aside from the incurred network overhead.
+   *     * `ConditionExpression` - a condition that must be satisfied in order for a conditional update to succeed.
    *
    * Return:
    *   * `data`
@@ -672,7 +727,58 @@ class DynamoDBTable {
    * })
    * ```
    *
+   * ### ConditionExpression Syntax
+   * ```sh [DynamoDB_ConditionExpression_Syntax]
+   * <attribute_name> = :<variable_name>
+   * <attribute_name> <> :<variable_name>
+   * <attribute_name> < :<variable_name>
+   * <attribute_name> <= :<variable_name>
+   * <attribute_name> > :<variable_name>
+   * <attribute_name> >= :<variable_name>
+   *
+   * <attribute_name> BETWEEN :<variable_name1> AND :<variable_name2>
+   *
+   * <attribute_name> IN (:<variable_name1>[, :<variable_name2>[, ...]])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name>])
+   *
+   * <function_name>(<attribute_name>[, :<variable_name1>]) = :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <> :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) < :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) <= :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) > :<variable_name2>
+   * <function_name>(<attribute_name>[, :<variable_name1>]) >= :<variable_name2>
+   *
+   * <expression> AND <expression>
+   *
+   * NOT <expression>
+   *
+   * (<expression>)
+   * ```
+   *
+   * `ConditionExpression` Functions:
+   *   * `attribute_exists(<attribute_name>)` - test if `<attribute_name>` exists.
+   *   * `attribute_not_exists(<attribute_name>)` - test if `<attribute_name>` does not exist.
+   *   * `attribute_type(<attribute_name>, <attribute_type>)` - test if the DynamoDB attribute type of the DynamoDB attribute value of `<attribute_name>` equals `attribute_type`.
+   *   * `contains(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `begins_with(<attribute_name>, :<variable_name>)` - test if the DynamoDB attribute value of `<attribute_name>` equals the attribute value provided in `Updates` corresponding to `<variable_name>`.
+   *   * `size(<attribute_name>)` - returns for evaluation a number that represents the size of the attribute value of `<attribute_name>`
+   *
+   * `ConditionExpression` Logical Operators:
+   *   * `=` - equals.
+   *   * `<>` - does not equal.
+   *   * `<` - less than.
+   *   * `>` - greater than.
+   *   * `<=` - less than or equal to .
+   *   * `>=` - greater than or equal to.
+   *   * `BETWEEN` - between.
+   *   * `IN` - in.
+   *   * `AND` - and.
+   *   * `OR` - or.
+   *   * `NOT` - not.
+   *
    * References:
+   *  * [Condition Expressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html)
    *  * [AWS DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
    */
   async putItemJSON(item, options = {}) {

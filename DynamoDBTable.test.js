@@ -50,6 +50,27 @@ const test1 = new Test('DynamoDBTable', async function integration1() {
 
   await testTable.putItem({ id: { S: '1' }, name: { S: 'john' } })
   await testTable.putItemJSON({ id: '2', name: 'henry' })
+
+  await assert.rejects(
+    testTable.putItemJSON({ id: '2', name: 'henry' }, {
+      ConditionExpression: 'attribute_not_exists(id)',
+    }),
+    {
+      name: 'ConditionalCheckFailedException',
+      message: 'The conditional request failed',
+    }
+  )
+
+  await assert.rejects(
+    testTable.putItem({ id: { S: '2' }, name: { S: 'henry' } }, {
+      ConditionExpression: 'attribute_not_exists(id)',
+    }),
+    {
+      name: 'ConditionalCheckFailedException',
+      message: 'The conditional request failed',
+    }
+  )
+
   assert.deepEqual(
     await testTable.putItemJSON({ id: '3', name: 'jude' }, {
       ReturnValues: 'ALL_OLD',
