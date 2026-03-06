@@ -474,8 +474,8 @@ const test2 = new Test('S3Bucket', async function integration2() {
     })
     const data2 = await testBucket2.getObject(key)
     assert.equal(data2.ObjectLockMode, ObjectLockMode)
-    assert.equal(data2.ObjectLockRetainUntilDate, ObjectLockRetainUntilDate)
-    assert.equal(data2.ObjectLockLegalHoldStatus, ObjectLockLegalHoldStatus)
+    assert.equal(data2.ObjectLockRetainUntilDate.getTime(), ObjectLockRetainUntilDate.getTime())
+    assert.equal(data2.ObjectLockLegalHoldStatus.getTime(), ObjectLockLegalHoldStatus.getTime())
   }
 
   {
