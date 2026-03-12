@@ -849,6 +849,10 @@ class S3Bucket {
    *
    */
   async putObject(key, body, options = {}) {
+    if (key.startsWith('/')) {
+      throw new Error(`Invalid key ${key}`)
+    }
+
     const headers = {}
 
     if (options.ACL) {

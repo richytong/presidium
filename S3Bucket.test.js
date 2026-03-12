@@ -3,6 +3,7 @@ const assert = require('assert')
 const stream = require('stream')
 const Test = require('thunk-test')
 const crypto = require('crypto')
+const fs = require('fs')
 const S3Bucket = require('./S3Bucket')
 const AwsCredentials = require('./AwsCredentials')
 const CRC32 = require('./internal/CRC32')
@@ -70,6 +71,14 @@ const test1 = new Test('S3Bucket', async function integration1() {
   assert(s3Objects.Contents[0].Key == 'a')
   assert(s3Objects.Contents[1].Key == 'b')
   assert(s3Objects.Contents[2].Key == 'c')
+
+  {
+    const testFileA = await fs.promises.readFile(`${__dirname}/test/test/a.txt`).then(buffer => buffer.toString('utf8'))
+    await assert.rejects(
+      testBucket.putObject('/test/a.txt', testFileA),
+      new Error('Invalid key /test/a.txt'),
+    )
+  }
 
   {
     const response = await testBucket.putObject('binary', Buffer.from('binary'))
@@ -145,7 +154,7 @@ const test1 = new Test('S3Bucket', async function integration1() {
       { Key: 'binary' },
       { Key: 'buffer' },
       { Key: 'buffer2' },
-      { Key: 'c' }
+      { Key: 'c' },
     ])
   }
 
