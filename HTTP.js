@@ -134,9 +134,11 @@ class HTTP {
         resolve(response)
       })
 
+      /* TODO remove this an closeConnections from codebase (breaking)
       request.on('socket', socket => {
         this._sockets.add(socket)
       })
+      */
 
       request.on('error', reject)
       if (
