@@ -4,6 +4,7 @@ const Test = require('thunk-test')
 const AwsCredentials = require('./AwsCredentials')
 const DynamoDBTable = require('./DynamoDBTable')
 const DynamoDBStream = require('./DynamoDBStream')
+const sleep = require('./internal/sleep')
 
 const test1 = new Test('DynamoDBStream', async function integration() {
   const awsCreds = await AwsCredentials('presidium')
@@ -234,7 +235,7 @@ const test1 = new Test('DynamoDBStream', async function integration() {
     id: '3',
     status: 'waitlist',
     createTime: 1002,
-    name: 'john',
+    name: 'jake',
   })
   await table.putItemJSON({
     id: '4',
@@ -476,7 +477,42 @@ const test1 = new Test('DynamoDBStream', async function integration() {
     myStream.close()
   }
 
+  { // concurrent init
+    console.log('Testing 5 concurrent stream inits...')
+    const targetNumStreams = 5
+    const streams = []
+    const promises = []
+    while (streams.length < targetNumStreams) {
+      const stream = new DynamoDBStream({
+        table: tableName,
+        ...awsCreds,
+        GetStreamsInterval: 1000,
+        GetShardsInterval: 1000,
+        GetRecordsInterval: 1000,
+        ListStreamsLimit: 1,
+        ShardIteratorType: 'TRIM_HORIZON',
+        Debug: true,
+        ShardUpdatePeriod: 5000,
+      })
+
+      promises.push(stream.ready.then(async () => {
+        for await (const item of stream) {
+          // consume item
+        }
+      }))
+
+      streams.push(stream)
+    }
+    await Promise.race([
+      sleep(10000),
+      Promise.all(promises),
+    ])
+
+    streams.forEach(stream => stream.close())
+  }
+
   await table.delete()
+
 }).case()
 
 const test = Test.all([

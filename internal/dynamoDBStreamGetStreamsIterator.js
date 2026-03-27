@@ -1,5 +1,6 @@
 const RetryAwsErrors = require('./RetryAwsErrors')
 const dynamoDBStreamListStreams = require('./dynamoDBStreamListStreams')
+const sleep = require('./sleep')
 
 /**
  * @name dynamoDBStreamGetStreamsIterator
@@ -20,7 +21,10 @@ async function* dynamoDBStreamGetStreamsIterator() {
   })
 
   yield* streams.Streams
+
   while (!this.closed && streams.LastEvaluatedStreamArn != null) {
+    await sleep(this.GetStreamsInterval)
+
     streams = await dynamoDBStreamListStreamsRetries({
       Limit: this.ListStreamsLimit,
       TableName: this.table,

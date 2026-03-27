@@ -1,6 +1,7 @@
 require('rubico/global')
 const RetryAwsErrors = require('./RetryAwsErrors')
 const dynamoDBStreamDescribeStream = require('./dynamoDBStreamDescribeStream')
+const sleep = require('./sleep')
 
 /**
  * @name dynamoDBStreamGetShardsIterator

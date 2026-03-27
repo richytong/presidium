@@ -15,6 +15,7 @@ const dynamoDBStreamGetShardsIterator =
   require('./internal/dynamoDBStreamGetShardsIterator')
 const dynamoDBStreamGetRecordsIterator =
   require('./internal/dynamoDBStreamGetRecordsIterator')
+const AwsError = require('./internal/AwsError')
 
 const SymbolUpdateShards = Symbol('UpdateShards')
 
@@ -100,6 +101,7 @@ class DynamoDBStream {
     this.StreamViewType = options.StreamViewType ?? 'NEW_AND_OLD_IMAGES'
     this.ShardIteratorType = options.ShardIteratorType ?? 'LATEST'
     this.GetRecordsLimit = options.GetRecordsLimit ?? 1000
+    this.GetStreamsInterval = options.GetStreamsInterval ?? 1000
     this.GetShardsInterval = options.GetShardsInterval ?? 1000
     this.GetRecordsInterval = options.GetRecordsInterval ?? 1000
     this.ShardUpdatePeriod = options.ShardUpdatePeriod ?? 15000
