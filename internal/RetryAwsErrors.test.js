@@ -1,4 +1,4 @@
-const Test = require('./thunk-test')
+const Test = require('thunk-test')
 const RetryAwsErrors = require('./RetryAwsErrors')
 
 // TODO
