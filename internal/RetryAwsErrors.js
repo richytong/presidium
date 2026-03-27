@@ -11,7 +11,7 @@ const sleep = require('./sleep')
 
 const RetryAwsErrors = function (func, context, name) {
   return function retriesAwsErrors(...args) {
-    return func.apply(context, args).catch(error => {
+    return func.apply(context, args).catch(async error => {
       if (error.retryable) {
         console.error(error)
         await sleep(1000)
