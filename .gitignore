@@ -2,3 +2,5 @@ node_modules
 .nyc_output
 google-chrome-for-testing
 tmp
+DiskHashTable_test_data
+DiskLinkedHashTable_test_data
