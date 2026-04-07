@@ -25,8 +25,8 @@ const REMOVED = 2
 class DiskLinkedHashTable {
   constructor(options) {
     this.initialLength = options.initialLength ?? 1024
-    this.length = null
-    this.count = null
+    this._length = null
+    this._count = null
     this.storageFilepath = options.storageFilepath
     this.headerFilepath = options.headerFilepath
     this.storageFd = null
@@ -73,10 +73,10 @@ class DiskLinkedHashTable {
     }
 
     const length = headerReadBuffer.readUInt32BE(0)
-    this.length = length
+    this._length = length
 
     const count = headerReadBuffer.readUInt32BE(4)
-    this.count = count
+    this._count = count
   }
 
   // clear() -> Promise<>
@@ -104,10 +104,10 @@ class DiskLinkedHashTable {
     const headerReadBuffer = await this._initializeHeader()
 
     const length = headerReadBuffer.readUInt32BE(0)
-    this.length = length
+    this._length = length
 
     const count = headerReadBuffer.readUInt32BE(4)
-    this.count = count
+    this._count = count
   }
 
   // destroy() -> Promise<>
@@ -129,7 +129,7 @@ class DiskLinkedHashTable {
     let hashCode = 0
     const prime = 31
     for (let i = 0; i < key.length; i++) {
-      hashCode = (prime * hashCode + key.charCodeAt(i)) % this.length
+      hashCode = (prime * hashCode + key.charCodeAt(i)) % this._length
     }
     return hashCode
   }
@@ -518,7 +518,7 @@ class DiskLinkedHashTable {
       if (key == currentKey) {
         break
       }
-      index = (index + stepSize) % this.length
+      index = (index + stepSize) % this._length
       if (index == startIndex) {
         throw new Error('Hash table is full')
       }
@@ -527,6 +527,7 @@ class DiskLinkedHashTable {
 
     if (currentKey == null) {
       await this._insert(key, value, sortValue, index)
+      await this._incrementCount()
     } else {
       await this._update(key, value, sortValue, index)
     }
@@ -544,7 +545,7 @@ class DiskLinkedHashTable {
         break
       }
 
-      index = (index + stepSize) % this.length
+      index = (index + stepSize) % this._length
       if (index == startIndex) {
         return undefined // entire table searched
       }
@@ -599,7 +600,7 @@ class DiskLinkedHashTable {
    * delete(key string) -> didDelete Promise<boolean>
    * ```
    *
-   * Deletes a key and corresponding value from the disk hash table.
+   * Deletes a key and corresponding value from the disk linked hash table.
    *
    * Arguments:
    *   * `key` - `string` - the key to delete.
@@ -622,7 +623,7 @@ class DiskLinkedHashTable {
         break
       }
 
-      index = (index + stepSize) % this.length
+      index = (index + stepSize) % this._length
       if (index == startIndex) {
         return false // entire table searched
       }
@@ -657,10 +658,65 @@ class DiskLinkedHashTable {
 
     if (item.statusMarker === OCCUPIED) {
       await this._setStatusMarker(index, REMOVED)
+      await this._decrementCount()
       return true
     }
 
     return false
+  }
+
+  // _incrementCount() -> Promise<>
+  async _incrementCount() {
+    this._count += 1
+
+    const position = 4
+    const buffer = Buffer.alloc(4)
+    buffer.writeInt32BE(this._count, 0)
+
+    await this.headerFd.write(buffer, {
+      offset: 0,
+      position,
+      length: 4,
+    })
+  }
+
+  // _decrementCount() -> Promise<>
+  async _decrementCount() {
+    this._count -= 1
+
+    const position = 4
+    const buffer = Buffer.alloc(4)
+    buffer.writeInt32BE(this._count, 0)
+
+    await this.headerFd.write(buffer, {
+      offset: 0,
+      position,
+      length: 4,
+    })
+  }
+
+  /**
+   * @name count
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * count() -> number
+   * ```
+   *
+   * Returns the number of items (key-value pairs) in the disk linked hash table.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `number` - the number of items in the disk hash table.
+   *
+   * ```javascript
+   * const count = ht.count()
+   * ```
+   */
+  count() {
+    return this._count
   }
 
 }
