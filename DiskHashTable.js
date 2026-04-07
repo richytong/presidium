@@ -342,7 +342,6 @@ class DiskHashTable {
     const stepSize = this._hash2(key)
 
     let currentKey = await this._getKey(index)
-    console.log('delete', { key, currentKey, index })
     while (currentKey) {
       if (key == currentKey) {
         break
