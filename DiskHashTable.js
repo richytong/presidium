@@ -44,12 +44,29 @@ const REMOVED = 2
  */
 class DiskHashTable {
   constructor(options) {
-    this.length = options.initialLength ?? 1024
+    this.initialLength = options.initialLength ?? 1024
+    this.length = null
+    this.count = null
     this.storageFilepath = options.storageFilepath
     this.headerFilepath = options.headerFilepath
     this.resizeRatio = options.resizeRatio ?? 0
     this.storageFd = null
     this.headerFd = null
+  }
+
+  // _initializeHeader() -> headerReadBuffer Promise<Buffer>
+  async _initializeHeader() {
+    const headerReadBuffer = Buffer.alloc(8)
+    headerReadBuffer.writeUInt32BE(this.initialLength, 0)
+    headerReadBuffer.writeUInt32BE(0, 4)
+
+    await this.headerFd.write(headerReadBuffer, {
+      offset: 0,
+      position: 0,
+      length: headerReadBuffer.length,
+    })
+
+    return headerReadBuffer
   }
 
   /**
@@ -87,6 +104,17 @@ class DiskHashTable {
 
     this.storageFd = await fs.promises.open(this.storageFilepath, 'r+')
     this.headerFd = await fs.promises.open(this.headerFilepath, 'r+')
+
+    let headerReadBuffer = await this._readHeader()
+    if (headerReadBuffer.every(byte => byte === 0)) {
+      headerReadBuffer = await this._initializeHeader()
+    }
+
+    const length = headerReadBuffer.readUInt32BE(0)
+    this.length = length
+
+    const count = headerReadBuffer.readUInt32BE(4)
+    this.count = count
   }
 
   /**
@@ -110,6 +138,8 @@ class DiskHashTable {
    * ```
    */
   async clear() {
+    this.close()
+
     await fs.promises.rm(this.storageFilepath).catch(() => {})
     await fs.promises.rm(this.headerFilepath).catch(() => {})
 
@@ -124,6 +154,17 @@ class DiskHashTable {
         fs.closeSync(fs.openSync(filepath, 'a'))
       }
     }
+
+    this.storageFd = await fs.promises.open(this.storageFilepath, 'r+')
+    this.headerFd = await fs.promises.open(this.headerFilepath, 'r+')
+
+    const headerReadBuffer = await this._initializeHeader()
+
+    const length = headerReadBuffer.readUInt32BE(0)
+    this.length = length
+
+    const count = headerReadBuffer.readUInt32BE(4)
+    this.count = count
   }
 
   /**
@@ -174,6 +215,8 @@ class DiskHashTable {
   close() {
     this.storageFd.close()
     this.headerFd.close()
+    this.storageFd = null
+    this.headerFd = null
   }
 
   // _hash1(key string) -> number
@@ -194,6 +237,24 @@ class DiskHashTable {
     }
     const prime = 7 
     return prime - (Math.abs(hash) % prime)
+  }
+
+  // header file
+  // 32 bits / 4 bytes table length
+  // 32 bits / 4 bytes item count
+
+  // _readHeader() -> headerReadBuffer Promise<Buffer>
+  async _readHeader() {
+    const headerReadBuffer = Buffer.alloc(8)
+
+    await this.headerFd.read({
+      buffer: headerReadBuffer,
+      offset: 0,
+      position: 0,
+      length: 8,
+    })
+
+    return headerReadBuffer
   }
 
   // _read(index number) -> readBuffer Promise<Buffer>

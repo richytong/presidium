@@ -34,8 +34,8 @@ const test1 = new Test('DiskHashTable', async function integration1() {
     headerFilepath: `${__dirname}/DiskHashTable_test_data/1_header`,
     initialLength: 1,
   })
+  await ht1.destroy()
   await ht1.init()
-  await ht1.clear()
 
   await ht1.set('maroon', '#800000')
   assert.strictEqual(await ht1.get('x'), undefined)
@@ -90,20 +90,54 @@ const test1_2 = new Test('DiskHashTable', async function integration1_2() {
   await ht3.destroy()
   await ht3.init()
 
-  await ht3.set('maroon', '#800000', 1)
+  await ht3.set('maroon', '#800000')
   assert.equal(await ht3.get('maroon'), '#800000')
   const collisionKey = 'maroon3'
-  await ht3.set(collisionKey, '#800000(1)', 1)
+  await ht3.set(collisionKey, '#800000(1)')
   assert.equal(await ht3.get('maroon'), '#800000')
   assert.equal(await ht3.get(collisionKey), '#800000(1)')
 
   ht3.close()
 }).case()
 
+const test1_3 = new Test('DiskHashTable', async function integration1_3() {
+  const ht1024 = new DiskHashTable({
+    storageFilepath: `${__dirname}/DiskHashTable_test_data/1024`,
+    headerFilepath: `${__dirname}/DiskHashTable_test_data/1024_header`,
+    initialLength: 1024,
+  })
+  await ht1024.destroy()
+  await ht1024.init()
+
+  await ht1024.set('maroon', '#800000')
+  await ht1024.set('yellow', '#FFFF00')
+  await ht1024.set('black', '#000000')
+
+  assert.equal(await ht1024.get('black'), '#000000')
+  assert.equal(await ht1024.get('yellow'), '#FFFF00')
+  assert.equal(await ht1024.get('black'), '#000000')
+
+  await ht1024.close()
+  await ht1024.init()
+
+  assert.equal(await ht1024.get('black'), '#000000')
+  assert.equal(await ht1024.get('yellow'), '#FFFF00')
+  assert.equal(await ht1024.get('black'), '#000000')
+
+  await ht1024.clear()
+
+  assert.strictEqual(await ht1024.get('black'), undefined)
+  assert.strictEqual(await ht1024.get('yellow'), undefined)
+  assert.strictEqual(await ht1024.get('black'), undefined)
+
+  ht1024.close()
+}).case()
+
 const test = Test.all([
   test1,
   test1_1,
   test1_2,
+  test1_3,
 ])
 
 if (process.argv[1] == __filename) {
