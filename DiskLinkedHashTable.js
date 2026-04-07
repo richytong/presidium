@@ -5,7 +5,9 @@ const DATA_SLICE_SIZE = 512 * 1024
 const ENCODING = 'utf8'
 
 const EMPTY = 0
+
 const OCCUPIED = 1
+
 const REMOVED = 2
 
 /**
@@ -161,11 +163,27 @@ class DiskLinkedHashTable {
     return keyBuffer.toString(ENCODING)
   }
 
+  // _setStatusMarker(index number, marker number) -> Promise<>
+  async _setStatusMarker(index, marker) {
+    const position = index * DATA_SLICE_SIZE
+    const buffer = Buffer.alloc(1)
+    buffer.writeUInt8(marker, 0)
+
+    await this.storageFd.write(buffer, {
+      offset: 0,
+      position,
+      length: buffer.length,
+    })
+  }
+
   // _parseItem(readBuffer Buffer, index number) -> { index: number, readBuffer: Buffer, sortValue: string|number, value: string }
   _parseItem(readBuffer, index) {
     const item = {}
     item.index = index
     item.readBuffer = readBuffer
+
+    const statusMarker = readBuffer.readUInt8(0)
+    item.statusMarker = statusMarker
 
     const forwardIndex = readBuffer.readInt32BE(13)
     const reverseIndex = readBuffer.readInt32BE(17)
@@ -331,13 +349,15 @@ class DiskLinkedHashTable {
         if (item.forwardIndex > -1) { // there is an item behind item to update
           await this._updateReverseIndex(item.forwardIndex, -1)
           await this._writeFirstIndex(item.forwardIndex)
-        } else { // there is no item behind item to update
+        } else { // item to update is first and last in the list
+          await this._writeFirstIndex(-1)
+          await this._writeLastIndex(-1)
         }
       } else if (item.forwardIndex == -1) { // item to update is last in the list
         if (item.reverseIndex > -1) { // there is an item ahead of item to update
           await this._updateForwardIndex(item.reverseIndex, -1)
           await this._writeLastIndex(item.forwardIndex)
-        } else { // there is no item ahead of item to update
+        } else { // item to update is first and last in the list
         }
       } else { // item to update is in the middle of the list
         await this._updateReverseIndex(item.forwardIndex, item.reverseIndex)
@@ -357,10 +377,10 @@ class DiskLinkedHashTable {
         break
       }
 
-      if (previousForwardItem == null) { // item to insert is first in the list
+      if (previousForwardItem == null) { // item to update is first in the list
         reverseIndex = -1
         await this._writeFirstIndex(index)
-        if (forwardStartItem == null) { // item to insert is also last in the list
+        if (forwardStartItem == null) { // item to update is also last in the list
           forwardIndex = -1
           await this._writeLastIndex(index)
         } else {
@@ -479,16 +499,18 @@ class DiskLinkedHashTable {
     const readBuffer = await this._read(index)
 
     const statusMarker = readBuffer.readUInt8(0)
-    // TODO handle status marker
+    if (statusMarker === OCCUPIED) {
+      const keyByteLength = readBuffer.readUInt32BE(1)
+      const sortValueByteLength = readBuffer.readUInt32BE(5)
+      const valueByteLength = readBuffer.readUInt32BE(9)
+      const valueBuffer = readBuffer.subarray(
+        21 + keyByteLength + sortValueByteLength,
+        21 + keyByteLength + sortValueByteLength + valueByteLength
+      )
+      return valueBuffer.toString(ENCODING)
+    }
 
-    const keyByteLength = readBuffer.readUInt32BE(1)
-    const sortValueByteLength = readBuffer.readUInt32BE(5)
-    const valueByteLength = readBuffer.readUInt32BE(9)
-    const valueBuffer = readBuffer.subarray(
-      21 + keyByteLength + sortValueByteLength,
-      21 + keyByteLength + sortValueByteLength + valueByteLength
-    )
-    return valueBuffer.toString(ENCODING)
+    return undefined
   }
 
   // forwardIterator() -> values AsyncGenerator<string>
@@ -528,6 +550,7 @@ class DiskLinkedHashTable {
    * ```javascript
    * const didDelete = await ht.delete('my-key')
    * ```
+   */
   async delete(key) {
     let index = this._hash1(key)
     const startIndex = index
@@ -551,17 +574,34 @@ class DiskLinkedHashTable {
       return false
     }
 
-    const readBuffer = await this._read(index)
-    const statusMarker = readBuffer.readUInt8(0)
+    const item = await this._getItem(index)
 
-    if (statusMarker === OCCUPIED) {
+    if (item.reverseIndex == -1) { // item to delete is first in the list
+      if (item.forwardIndex > -1) { // there is an item behind item to delete
+        await this._updateReverseIndex(item.forwardIndex, -1)
+        await this._writeFirstIndex(item.forwardIndex)
+      } else { // item to remove is first and last in the list
+        await this._writeFirstIndex(-1)
+        await this._writeLastIndex(-1)
+      }
+    } else if (item.forwardIndex == -1) { // item to delete is last in the list
+      if (item.reverseIndex > -1) { // there is an item ahead of item to delete
+        await this._updateForwardIndex(item.reverseIndex, -1)
+        await this._writeLastIndex(item.forwardIndex)
+      } else { // item is first and last in the list (handled above)
+      }
+    } else { // item to delete is in the middle of the list
+      await this._updateReverseIndex(item.forwardIndex, item.reverseIndex)
+      await this._updateForwardIndex(item.reverseIndex, item.forwardIndex)
+    }
+
+    if (item.statusMarker === OCCUPIED) {
       await this._setStatusMarker(index, REMOVED)
       return true
     }
 
     return false
   }
-   */
 
 }
 
