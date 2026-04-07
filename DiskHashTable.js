@@ -17,7 +17,9 @@ const REMOVED = 2
  * ```coffeescript [specscript]
  * new DiskHashTable(options {
  *   initialLength: number,
- *   filepath: string,
+ *   storageFilepath: string,
+ *   headerFilepath: string,
+ *   resizeRatio: number,
  * }) -> ht DiskHashTable
  * ```
  *
@@ -26,7 +28,9 @@ const REMOVED = 2
  * Arguments:
  *   * `options`
  *     * `initialLength` - `number` - the initial length of the disk hash table. Defaults to 1024.
- *     * `filepath` - `string` - the path to the file used to store the disk hash table data.
+ *     * `storageFilepath` - `string` - the path to the file used to store the disk hash table data.
+ *     * `headerFilepath` - `string` - the path to the file used to store header information about the disk hash table.
+ *     * `resizeRatio` - `number` - the ratio of number of items to table length at which to resize the table. Minimum value 0 (no resize), maximum value 1. Defaults to 0.
  *
  * Return:
  *   * `ht` - [`DiskHashTable`](/docs/DiskHashTable) - a `DiskHashTable` instance.
@@ -41,8 +45,11 @@ const REMOVED = 2
 class DiskHashTable {
   constructor(options) {
     this.length = options.initialLength ?? 1024
-    this.filepath = options.filepath
-    this.fd = null
+    this.storageFilepath = options.storageFilepath
+    this.headerFilepath = options.headerFilepath
+    this.resizeRatio = options.resizeRatio ?? 0
+    this.storageFd = null
+    this.headerFd = null
   }
 
   /**
@@ -66,17 +73,20 @@ class DiskHashTable {
    * ```
    */
   async init() {
-    const dir = this.filepath.split('/').slice(0, -1).join('/')
-    await fs.promises.mkdir(dir, { recursive: true })
+    for (const filepath of [this.storageFilepath, this.headerFilepath]) {
+      const dir = filepath.split('/').slice(0, -1).join('/')
+      await fs.promises.mkdir(dir, { recursive: true })
 
-    const now = new Date()
-    try {
-      fs.utimesSync(this.filepath, now, now)
-    } catch (error) {
-      fs.closeSync(fs.openSync(this.filepath, 'a'))
+      const now = new Date()
+      try {
+        fs.utimesSync(filepath, now, now)
+      } catch (error) {
+        fs.closeSync(fs.openSync(filepath, 'a'))
+      }
     }
 
-    this.fd = await fs.promises.open(this.filepath, 'r+')
+    this.storageFd = await fs.promises.open(this.storageFilepath, 'r+')
+    this.headerFd = await fs.promises.open(this.headerFilepath, 'r+')
   }
 
   /**
@@ -100,7 +110,45 @@ class DiskHashTable {
    * ```
    */
   async clear() {
-    await fs.promises.rm(this.filepath).catch(() => {})
+    await fs.promises.rm(this.storageFilepath).catch(() => {})
+    await fs.promises.rm(this.headerFilepath).catch(() => {})
+
+    for (const filepath of [this.storageFilepath, this.headerFilepath]) {
+      const dir = filepath.split('/').slice(0, -1).join('/')
+      await fs.promises.mkdir(dir, { recursive: true })
+
+      const now = new Date()
+      try {
+        fs.utimesSync(filepath, now, now)
+      } catch (error) {
+        fs.closeSync(fs.openSync(filepath, 'a'))
+      }
+    }
+  }
+
+  /**
+   * @name destroy
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * destroy() -> Promise<>
+   * ```
+   *
+   * Removes all system resources used by the disk hash table.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * Empty promise.
+   *
+   * ```javascript
+   * await ht.destroy()
+   * ```
+   */
+  async destroy() {
+    await fs.promises.rm(this.storageFilepath).catch(() => {})
+    await fs.promises.rm(this.headerFilepath).catch(() => {})
   }
 
   /**
@@ -111,7 +159,7 @@ class DiskHashTable {
    * close() -> undefined
    * ```
    *
-   * Closes the underlying file handle used by the disk hash table.
+   * Closes the underlying file handles used by the disk hash table.
    *
    * Arguments:
    *   * (none)
@@ -124,7 +172,8 @@ class DiskHashTable {
    * ```
    */
   close() {
-    this.fd.close()
+    this.storageFd.close()
+    this.headerFd.close()
   }
 
   // _hash1(key string) -> number
@@ -152,7 +201,7 @@ class DiskHashTable {
     const position = index * DATA_SLICE_SIZE
     const readBuffer = Buffer.alloc(DATA_SLICE_SIZE)
 
-    await this.fd.read({
+    await this.storageFd.read({
       buffer: readBuffer,
       offset: 0,
       position,
@@ -185,7 +234,7 @@ class DiskHashTable {
     const buffer = Buffer.alloc(1)
     buffer.writeUInt8(marker, 0)
 
-    await this.fd.write(buffer, {
+    await this.storageFd.write(buffer, {
       offset: 0,
       position,
       length: buffer.length,
@@ -250,7 +299,7 @@ class DiskHashTable {
     buffer.write(key, 9, keyByteLength, ENCODING)
     buffer.write(value, keyByteLength + 9, valueByteLength, ENCODING)
 
-    await this.fd.write(buffer, {
+    await this.storageFd.write(buffer, {
       offset: 0,
       position,
       length: buffer.length,
