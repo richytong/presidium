@@ -6,7 +6,7 @@ const test1 = new Test('DiskLinkedHashTable', async function integration1() {
   const ht1024 = new DiskLinkedHashTable({
     storageFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024`,
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024_header`,
-    length: 1024,
+    initialLength: 1024,
   })
   await ht1024.clear()
   await ht1024.init()
@@ -62,11 +62,10 @@ const test1 = new Test('DiskLinkedHashTable', async function integration1() {
   const ht1 = new DiskLinkedHashTable({
     storageFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1`,
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1_header`,
-    length: 1,
+    initialLength: 1,
   })
   await ht1.init()
 
-  await ht1.set('maroon', '#800000', 1)
   assert.strictEqual(await ht1.get('x'), undefined)
 
   await assert.rejects(
@@ -87,7 +86,7 @@ const test1_1 = new Test('DiskLinkedHashTable', async function integration1_1() 
   const ht2 = new DiskLinkedHashTable({
     storageFilepath: `${__dirname}/DiskLinkedHashTable_test_data/2`,
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/2_header`,
-    length: 2,
+    initialLength: 2,
   })
   await ht2.clear()
   await ht2.init()
@@ -106,7 +105,7 @@ const test1_2 = new Test('DiskLinkedHashTable', async function integration1_2() 
   const ht3 = new DiskLinkedHashTable({
     storageFilepath: `${__dirname}/DiskLinkedHashTable_test_data/3`,
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/3_header`,
-    length: 3,
+    initialLength: 3,
   })
   await ht3.clear()
   await ht3.init()
@@ -125,7 +124,7 @@ const test1_3 = new Test('DiskLinkedHashTable', async function integration1_3() 
   const ht1024 = new DiskLinkedHashTable({
     storageFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024`,
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024_header`,
-    length: 1024,
+    initialLength: 1024,
   })
   await ht1024.clear()
   await ht1024.init()
@@ -167,7 +166,7 @@ const test2 = new Test('DiskLinkedHashTable', async function integration2() {
   const ht1024 = new DiskLinkedHashTable({
     storageFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024`,
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024_header`,
-    length: 1024,
+    initialLength: 1024,
   })
   await ht1024.clear()
   await ht1024.init()
@@ -205,7 +204,7 @@ const test3 = new Test('DiskLinkedHashTable', async function integration3() {
   const ht1024 = new DiskLinkedHashTable({
     storageFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024`,
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024_header`,
-    length: 1024,
+    initialLength: 1024,
   })
   await ht1024.clear()
   await ht1024.init()
@@ -243,7 +242,7 @@ const test4 = new Test('DiskLinkedHashTable', async function integration4() {
   const ht1024 = new DiskLinkedHashTable({
     storageFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024`,
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024_header`,
-    length: 1024,
+    initialLength: 1024,
   })
   await ht1024.clear()
   await ht1024.init()
@@ -284,7 +283,7 @@ const test5 = new Test('DiskLinkedHashTable', async function integration5() {
   const ht1024 = new DiskLinkedHashTable({
     storageFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024`,
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024_header`,
-    length: 1024,
+    initialLength: 1024,
   })
   await ht1024.clear()
   await ht1024.init()
@@ -354,9 +353,302 @@ const test5 = new Test('DiskLinkedHashTable', async function integration5() {
   ht1024.close()
 }).case()
 
-// TODO handle same and different sort value for same key
-// await ht1024.set('maroon', '#800___', 1)
-// assert.equal(await ht1024.get('maroon'), '#800___')
+const test6 = new Test('DiskLinkedHashTable', async function integration6() {
+  const ht1024 = new DiskLinkedHashTable({
+    storageFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024`,
+    headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024_header`,
+    initialLength: 1024,
+  })
+  await ht1024.clear()
+  await ht1024.init()
+
+  await ht1024.set('maroon', '#800000', 1)
+  await ht1024.set('yellow', '#FFFF00', 2)
+  await ht1024.set('black', '#000', 4)
+
+  await ht1024.close()
+  await ht1024.init()
+
+  {
+    const forwardValues = []
+    for await (const value of ht1024.forwardIterator()) {
+      forwardValues.push(value)
+    }
+    assert.equal(forwardValues.length, 3)
+    assert.equal(forwardValues[0], '#800000')
+    assert.equal(forwardValues[1], '#FFFF00')
+    assert.equal(forwardValues[2], '#000')
+  }
+
+  {
+    const reverseValues = []
+    for await (const value of ht1024.reverseIterator()) {
+      reverseValues.push(value)
+    }
+    assert.equal(reverseValues.length, 3)
+    assert.equal(reverseValues[0], '#000')
+    assert.equal(reverseValues[1], '#FFFF00')
+    assert.equal(reverseValues[2], '#800000')
+  }
+
+  await ht1024.set('maroon', '#800000', 1)
+  await ht1024.set('yellow', '#FFFF00', 2)
+
+  assert.equal(await ht1024.get('maroon'), '#800000')
+  assert.equal(await ht1024.get('yellow'), '#FFFF00')
+
+  await ht1024.set('black', '#000', 4)
+
+  {
+    const forwardValues = []
+    for await (const value of ht1024.forwardIterator()) {
+      forwardValues.push(value)
+    }
+    assert.equal(forwardValues.length, 3)
+    assert.equal(forwardValues[0], '#800000')
+    assert.equal(forwardValues[1], '#FFFF00')
+    assert.equal(forwardValues[2], '#000')
+  }
+
+  {
+    const reverseValues = []
+    for await (const value of ht1024.reverseIterator()) {
+      reverseValues.push(value)
+    }
+    assert.equal(reverseValues.length, 3)
+    assert.equal(reverseValues[0], '#000')
+    assert.equal(reverseValues[1], '#FFFF00')
+    assert.equal(reverseValues[2], '#800000')
+  }
+
+  ht1024.close()
+}).case()
+
+const test7 = new Test('DiskLinkedHashTable', async function integration7() {
+  const ht1024 = new DiskLinkedHashTable({
+    storageFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024`,
+    headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024_header`,
+    initialLength: 1024,
+  })
+  await ht1024.clear()
+  await ht1024.init()
+
+  await ht1024.set('maroon', '#800000', 1)
+  await ht1024.set('yellow', '#FFFF00', 2)
+  await ht1024.set('black', '#000', 4)
+
+  {
+    const forwardValues = []
+    for await (const value of ht1024.forwardIterator()) {
+      forwardValues.push(value)
+    }
+    assert.equal(forwardValues.length, 3)
+    assert.equal(forwardValues[0], '#800000')
+    assert.equal(forwardValues[1], '#FFFF00')
+    assert.equal(forwardValues[2], '#000')
+  }
+
+  await ht1024.set('maroon', '#800000', 5)
+
+  {
+    const forwardValues = []
+    for await (const value of ht1024.forwardIterator()) {
+      forwardValues.push(value)
+    }
+    assert.equal(forwardValues.length, 3)
+    assert.equal(forwardValues[0], '#FFFF00')
+    assert.equal(forwardValues[1], '#000')
+    assert.equal(forwardValues[2], '#800000')
+  }
+
+  await ht1024.set('yellow', '#FFFF00', 6)
+
+  {
+    const forwardValues = []
+    for await (const value of ht1024.forwardIterator()) {
+      forwardValues.push(value)
+    }
+    assert.equal(forwardValues.length, 3)
+    assert.equal(forwardValues[0], '#000')
+    assert.equal(forwardValues[1], '#800000')
+    assert.equal(forwardValues[2], '#FFFF00')
+  }
+
+  await ht1024.set('black', '#000000', 7)
+
+  {
+    const forwardValues = []
+    for await (const value of ht1024.forwardIterator()) {
+      forwardValues.push(value)
+    }
+    assert.equal(forwardValues.length, 3)
+    assert.equal(forwardValues[0], '#800000')
+    assert.equal(forwardValues[1], '#FFFF00')
+    assert.equal(forwardValues[2], '#000000')
+  }
+
+  ht1024.close()
+}).case()
+
+const test8 = new Test('DiskLinkedHashTable', async function integration8() {
+  const ht1024 = new DiskLinkedHashTable({
+    storageFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024`,
+    headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024_header`,
+    initialLength: 1024,
+  })
+  await ht1024.clear()
+  await ht1024.init()
+
+  await ht1024.set('maroon', '#800000', 1)
+  await ht1024.set('yellow', '#FFFF00', 2)
+  await ht1024.set('black', '#000', 4)
+
+  {
+    const forwardValues = []
+    for await (const value of ht1024.forwardIterator()) {
+      forwardValues.push(value)
+    }
+    assert.equal(forwardValues.length, 3)
+    assert.equal(forwardValues[0], '#800000')
+    assert.equal(forwardValues[1], '#FFFF00')
+    assert.equal(forwardValues[2], '#000')
+  }
+
+  await ht1024.set('black', '#000000', 0)
+
+  {
+    const forwardValues = []
+    for await (const value of ht1024.forwardIterator()) {
+      forwardValues.push(value)
+    }
+    assert.equal(forwardValues.length, 3)
+    assert.equal(forwardValues[0], '#000000')
+    assert.equal(forwardValues[1], '#800000')
+    assert.equal(forwardValues[2], '#FFFF00')
+  }
+
+  await ht1024.set('yellow', '#FFFF00', -1)
+
+  {
+    const forwardValues = []
+    for await (const value of ht1024.forwardIterator()) {
+      forwardValues.push(value)
+    }
+    assert.equal(forwardValues.length, 3)
+    assert.equal(forwardValues[0], '#FFFF00')
+    assert.equal(forwardValues[1], '#000000')
+    assert.equal(forwardValues[2], '#800000')
+  }
+
+  await ht1024.set('maroon', '#800000', -2)
+
+  {
+    const forwardValues = []
+    for await (const value of ht1024.forwardIterator()) {
+      forwardValues.push(value)
+    }
+    assert.equal(forwardValues.length, 3)
+    assert.equal(forwardValues[0], '#800000')
+    assert.equal(forwardValues[1], '#FFFF00')
+    assert.equal(forwardValues[2], '#000000')
+  }
+
+  ht1024.close()
+}).case()
+
+const test9 = new Test('DiskLinkedHashTable', async function integration9() {
+  const ht1024 = new DiskLinkedHashTable({
+    storageFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024`,
+    headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024_header`,
+    initialLength: 1024,
+  })
+  await ht1024.clear()
+  await ht1024.init()
+
+  await ht1024.set('maroon', '#800000', 1)
+  await ht1024.set('yellow', '#FFFF00', 50)
+  await ht1024.set('black', '#000', 100)
+
+  {
+    const forwardValues = []
+    for await (const value of ht1024.forwardIterator()) {
+      forwardValues.push(value)
+    }
+    assert.equal(forwardValues.length, 3)
+    assert.equal(forwardValues[0], '#800000')
+    assert.equal(forwardValues[1], '#FFFF00')
+    assert.equal(forwardValues[2], '#000')
+  }
+
+  await ht1024.set('black', '#000000', 24)
+
+  {
+    const forwardValues = []
+    for await (const value of ht1024.forwardIterator()) {
+      forwardValues.push(value)
+    }
+    assert.equal(forwardValues.length, 3)
+    assert.equal(forwardValues[0], '#800000')
+    assert.equal(forwardValues[1], '#000000')
+    assert.equal(forwardValues[2], '#FFFF00')
+  }
+
+  await ht1024.set('maroon', '#800000', 26)
+
+  {
+    const forwardValues = []
+    for await (const value of ht1024.forwardIterator()) {
+      forwardValues.push(value)
+    }
+    assert.equal(forwardValues.length, 3)
+    assert.equal(forwardValues[0], '#000000')
+    assert.equal(forwardValues[1], '#800000')
+    assert.equal(forwardValues[2], '#FFFF00')
+  }
+
+  await ht1024.set('yellow', '#FFFF00', 25)
+
+  {
+    const forwardValues = []
+    for await (const value of ht1024.forwardIterator()) {
+      forwardValues.push(value)
+    }
+    assert.equal(forwardValues.length, 3)
+    assert.equal(forwardValues[0], '#000000')
+    assert.equal(forwardValues[1], '#FFFF00')
+    assert.equal(forwardValues[2], '#800000')
+  }
+
+  ht1024.close()
+}).case()
+
+const test10 = new Test('DiskLinkedHashTable', async function integration10() {
+  const ht1024 = new DiskLinkedHashTable({
+    storageFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024`,
+    headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024_header`,
+    initialLength: 1024,
+  })
+  await ht1024.clear()
+  await ht1024.init()
+
+  await ht1024.set('maroon', '#800000', 1)
+  await ht1024.set('maroon', '#800000', 3)
+  await ht1024.set('yellow', '#FFFF00', 1)
+  await ht1024.set('black', '#000000', 0)
+
+  {
+    const forwardValues = []
+    for await (const value of ht1024.forwardIterator()) {
+      forwardValues.push(value)
+    }
+    assert.equal(forwardValues.length, 3)
+    assert.equal(forwardValues[0], '#000000')
+    assert.equal(forwardValues[1], '#FFFF00')
+    assert.equal(forwardValues[2], '#800000')
+  }
+
+  ht1024.close()
+}).case()
 
 const test = Test.all([
   test1,
@@ -367,6 +659,11 @@ const test = Test.all([
   test3,
   test4,
   test5,
+  test6,
+  test7,
+  test8,
+  test9,
+  test10,
 ])
 
 if (process.argv[1] == __filename) {

@@ -14,7 +14,7 @@ const REMOVED = 2
  * @docs
  * ```coffeescript [specscript]
  * new DiskLinkedHashTable(options {
- *   length: number,
+ *   initialLength: number,
  *   storageFilepath: string,
  *   headerFilepath: string,
  * }) -> DiskLinkedHashTable
@@ -22,7 +22,7 @@ const REMOVED = 2
  */
 class DiskLinkedHashTable {
   constructor(options) {
-    this.length = options.length
+    this.length = options.initialLength ?? 1024
     this.storageFilepath = options.storageFilepath
     this.headerFilepath = options.headerFilepath
     this.storageFd = null
@@ -249,42 +249,8 @@ class DiskLinkedHashTable {
     })
   }
 
-  /**
-   * @name set
-   *
-   * @docs
-   * ```coffeescript [specscript]
-   * set(
-   *   key string,
-   *   value string,
-   *   sortValue string|number
-   * ) -> Promise<>
-   * ```
-   */
-  async set(key, value, sortValue) {
-    let index = this._hash1(key)
-
-    const startIndex = index
-    const stepSize = this._hash2(key)
-
-    let currentKey = await this._getKey(index)
-    while (currentKey) {
-      if (key == currentKey) {
-        break
-      }
-
-      index = (index + stepSize) % this.length
-      if (index == startIndex) {
-        throw new Error('Hash table is full')
-      }
-
-      currentKey = await this._getKey(index)
-    }
-
-    // find place to insert item in linked list
-    // find previous and next nodes
-
-    // let forwardIndex = -1 // forwardIndex for the item to insert
+  // _insert(key string, value string, sortValue number|string, index number) -> Promise<>
+  async _insert(key, value, sortValue, index) {
     const forwardStartItem = await this._getForwardStartItem()
     let previousForwardItem = null
     let currentForwardItem = forwardStartItem
@@ -351,7 +317,139 @@ class DiskLinkedHashTable {
       position,
       length: buffer.length,
     })
+  }
 
+  // _update(key string, value string, sortValue number|string, index number) -> Promise<>
+  async _update(key, value, sortValue, index) {
+    const item = await this._getItem(index)
+
+    let forwardIndex = item.forwardIndex
+    let reverseIndex = item.reverseIndex
+
+    if (sortValue != item.sortValue) {
+      if (item.reverseIndex == -1) { // item to update is first in the list
+        if (item.forwardIndex > -1) { // there is an item behind item to update
+          await this._updateReverseIndex(item.forwardIndex, -1)
+          await this._writeFirstIndex(item.forwardIndex)
+        } else { // there is no item behind item to update
+        }
+      } else if (item.forwardIndex == -1) { // item to update is last in the list
+        if (item.reverseIndex > -1) { // there is an item ahead of item to update
+          await this._updateForwardIndex(item.reverseIndex, -1)
+          await this._writeLastIndex(item.forwardIndex)
+        } else { // there is no item ahead of item to update
+        }
+      } else { // item to update is in the middle of the list
+        await this._updateReverseIndex(item.forwardIndex, item.reverseIndex)
+        await this._updateForwardIndex(item.reverseIndex, item.forwardIndex)
+      }
+
+      const forwardStartItem = await this._getForwardStartItem()
+      let previousForwardItem = null
+      let currentForwardItem = forwardStartItem
+      while (currentForwardItem) {
+        const left = typeof sortValue == 'string' ? currentForwardItem.sortValue : Number(currentForwardItem.sortValue)
+        if (sortValue > left) {
+          previousForwardItem = currentForwardItem
+          currentForwardItem = await this._getItem(previousForwardItem.forwardIndex)
+          continue
+        }
+        break
+      }
+
+      if (previousForwardItem == null) { // item to insert is first in the list
+        reverseIndex = -1
+        await this._writeFirstIndex(index)
+        if (forwardStartItem == null) { // item to insert is also last in the list
+          forwardIndex = -1
+          await this._writeLastIndex(index)
+        } else {
+          forwardIndex = forwardStartItem.index
+          await this._updateReverseIndex(forwardStartItem.index, index)
+        }
+      } else if (previousForwardItem.forwardIndex == -1) { // item to insert is the last in the list
+        forwardIndex = -1
+        await this._writeLastIndex(index)
+        await this._updateForwardIndex(previousForwardItem.index, index)
+        reverseIndex = previousForwardItem.index
+      } else { // item to insert is ahead of previousForwardItem and there was an item ahead of previousForwardItem
+        await this._updateForwardIndex(previousForwardItem.index, index)
+        await this._updateReverseIndex(currentForwardItem.index, index)
+        forwardIndex = previousForwardItem.forwardIndex
+        reverseIndex = previousForwardItem.index
+      }
+
+    }
+
+    const position = index * DATA_SLICE_SIZE
+    const buffer = Buffer.alloc(DATA_SLICE_SIZE)
+    const sortValueString = typeof sortValue == 'string' ? sortValue : sortValue.toString()
+
+    // 8 bits / 1 byte for status marker: 0 empty / 1 occupied / 2 deleted
+    // 32 bits / 4 bytes for key size
+    // 32 bits / 4 bytes for sort value size
+    // 32 bits / 4 bytes for value size
+    // 32 bits / 4 bytes for forward index
+    // 32 bits / 4 bytes for reverse index
+    // chunk for key
+    // chunk for sort value
+    // remainder for value
+    const statusMarker = 1
+    const keyByteLength = Buffer.byteLength(key, ENCODING)
+    const sortValueByteLength = Buffer.byteLength(sortValueString, ENCODING)
+    const valueByteLength = Buffer.byteLength(value, ENCODING)
+    buffer.writeUInt8(statusMarker, 0)
+    buffer.writeUint32BE(keyByteLength, 1)
+    buffer.writeUint32BE(sortValueByteLength, 5)
+    buffer.writeUint32BE(valueByteLength, 9)
+    buffer.writeInt32BE(forwardIndex, 13)
+    buffer.writeInt32BE(reverseIndex, 17)
+    buffer.write(key, 21, keyByteLength, ENCODING)
+    buffer.write(sortValueString, 21 + keyByteLength, sortValueByteLength, ENCODING)
+    buffer.write(value, 21 + keyByteLength + sortValueByteLength, valueByteLength, ENCODING)
+
+    await this.storageFd.write(buffer, {
+      offset: 0,
+      position,
+      length: buffer.length,
+    })
+  }
+
+  /**
+   * @name set
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * set(
+   *   key string,
+   *   value string,
+   *   sortValue string|number
+   * ) -> Promise<>
+   * ```
+   */
+  async set(key, value, sortValue) {
+    let index = this._hash1(key)
+
+    const startIndex = index
+    const stepSize = this._hash2(key)
+
+    let currentKey = await this._getKey(index)
+    while (currentKey) {
+      if (key == currentKey) {
+        break
+      }
+      index = (index + stepSize) % this.length
+      if (index == startIndex) {
+        throw new Error('Hash table is full')
+      }
+      currentKey = await this._getKey(index)
+    }
+
+    if (currentKey == null) {
+      await this._insert(key, value, sortValue, index)
+    } else {
+      await this._update(key, value, sortValue, index)
+    }
   }
 
   // get(key string) -> value Promise<string>
@@ -411,14 +509,59 @@ class DiskLinkedHashTable {
     }
   }
 
-  /*
-  async remove(key) {
+  /**
+   * @name delete
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * delete(key string) -> didDelete Promise<boolean>
+   * ```
+   *
+   * Deletes a key and corresponding value from the disk hash table.
+   *
+   * Arguments:
+   *   * `key` - `string` - the key to delete.
+   *
+   * Return:
+   *   * `didDelete` - `boolean` - a promise of whether the key and corresponding value was deleted.
+   *
+   * ```javascript
+   * const didDelete = await ht.delete('my-key')
+   * ```
+  async delete(key) {
     let index = this._hash1(key)
-    if (this.keyMap[index]) {
-      this.keyMap[index] = this.keyMap[index].filter(pair => pair[0] !== key)
+    const startIndex = index
+    const stepSize = this._hash2(key)
+
+    let currentKey = await this._getKey(index)
+    while (currentKey) {
+      if (key == currentKey) {
+        break
+      }
+
+      index = (index + stepSize) % this.length
+      if (index == startIndex) {
+        return false // entire table searched
+      }
+
+      currentKey = await this._getKey(index)
     }
+
+    if (currentKey == null) {
+      return false
+    }
+
+    const readBuffer = await this._read(index)
+    const statusMarker = readBuffer.readUInt8(0)
+
+    if (statusMarker === OCCUPIED) {
+      await this._setStatusMarker(index, REMOVED)
+      return true
+    }
+
+    return false
   }
-  */
+   */
 
 }
 
