@@ -1029,7 +1029,7 @@ class GoogleChromeDevToolsRuntime {
  *     * `userDataDir` - directory for storing user profile data such as history, bookmarks, cookies, and settings. Defaults to `tmp/chrome`.
  *     * `useMockKeychain` - whether to use a mock keychain instead of the system's real security keychain. Defaults to `true`.
  *
- * Returns:
+ * Return:
  *   * `googleChromeDevTools` - an instance of the Presidium GoogleChromeDevTools client.
  *
  * ```javascript
@@ -1153,7 +1153,7 @@ class GoogleChromeDevTools extends EventEmitter {
    * Arguments:
    *   * (none)
    *
-   * Returns:
+   * Return:
    *   * `promise` - a promise that resolves when the initialization process is done.
    *
    * ```javascript
