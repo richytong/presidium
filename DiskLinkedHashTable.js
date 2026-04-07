@@ -229,7 +229,7 @@ class DiskLinkedHashTable {
     const buffer = Buffer.alloc(4)
     buffer.writeInt32BE(forwardIndex, 0)
 
-    const { bytesWritten } = await this.storageFd.write(buffer, {
+    await this.storageFd.write(buffer, {
       offset: 0,
       position,
       length: buffer.length,
