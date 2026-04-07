@@ -8,7 +8,7 @@ const test1 = new Test('DiskLinkedHashTable', async function integration1() {
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024_header`,
     initialLength: 1024,
   })
-  await ht1024.clear()
+  await ht1024.destroy()
   await ht1024.init()
 
   {
@@ -63,6 +63,44 @@ const test1 = new Test('DiskLinkedHashTable', async function integration1() {
   await ht1024.delete('maroon').then(didDelete => assert(didDelete))
   assert.strictEqual(await ht1024.get('maroon'), undefined)
 
+  {
+    const forwardValues = []
+    for await (const value of ht1024.forwardIterator()) {
+      forwardValues.push(value)
+    }
+    assert.equal(forwardValues.length, 2)
+    assert.equal(forwardValues[0], '#FFFF00')
+    assert.equal(forwardValues[1], '#000')
+  }
+
+  {
+    const reverseValues = []
+    for await (const value of ht1024.reverseIterator()) {
+      reverseValues.push(value)
+    }
+    assert.equal(reverseValues.length, 2)
+    assert.equal(reverseValues[0], '#000')
+    assert.equal(reverseValues[1], '#FFFF00')
+  }
+
+  await ht1024.clear()
+
+  {
+    const forwardValues = []
+    for await (const value of ht1024.forwardIterator()) {
+      forwardValues.push(value)
+    }
+    assert.equal(forwardValues.length, 0)
+  }
+
+  {
+    const reverseValues = []
+    for await (const value of ht1024.reverseIterator()) {
+      reverseValues.push(value)
+    }
+    assert.equal(reverseValues.length, 0)
+  }
+
   const ht1 = new DiskLinkedHashTable({
     storageFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1`,
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1_header`,
@@ -92,7 +130,7 @@ const test1_1 = new Test('DiskLinkedHashTable', async function integration1_1() 
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/2_header`,
     initialLength: 2,
   })
-  await ht2.clear()
+  await ht2.destroy()
   await ht2.init()
 
   await ht2.set('maroon', '#800000', 1)
@@ -117,7 +155,7 @@ const test1_2 = new Test('DiskLinkedHashTable', async function integration1_2() 
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/3_header`,
     initialLength: 3,
   })
-  await ht3.clear()
+  await ht3.destroy()
   await ht3.init()
 
   await ht3.set('maroon', '#800000', 1)
@@ -136,7 +174,7 @@ const test1_3 = new Test('DiskLinkedHashTable', async function integration1_3() 
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024_header`,
     initialLength: 1024,
   })
-  await ht1024.clear()
+  await ht1024.destroy()
   await ht1024.init()
 
   await ht1024.set('maroon', '#800000', 'a')
@@ -185,6 +223,39 @@ const test1_3 = new Test('DiskLinkedHashTable', async function integration1_3() 
   ht1024.close()
 }).case()
 
+const test1_4 = new Test('DiskHashTable', async function integration1_4() {
+  const ht1024 = new DiskLinkedHashTable({
+    storageFilepath: `${__dirname}/DiskHashTable_test_data/1024`,
+    headerFilepath: `${__dirname}/DiskHashTable_test_data/1024_header`,
+    initialLength: 1024,
+  })
+  await ht1024.destroy()
+  await ht1024.init()
+
+  await ht1024.set('maroon', '#800000', 1)
+  await ht1024.set('yellow', '#FFFF00', 2)
+  await ht1024.set('black', '#000000', 3)
+
+  assert.equal(await ht1024.get('black'), '#000000')
+  assert.equal(await ht1024.get('yellow'), '#FFFF00')
+  assert.equal(await ht1024.get('black'), '#000000')
+
+  await ht1024.close()
+  await ht1024.init()
+
+  assert.equal(await ht1024.get('black'), '#000000')
+  assert.equal(await ht1024.get('yellow'), '#FFFF00')
+  assert.equal(await ht1024.get('black'), '#000000')
+
+  await ht1024.clear()
+
+  assert.strictEqual(await ht1024.get('black'), undefined)
+  assert.strictEqual(await ht1024.get('yellow'), undefined)
+  assert.strictEqual(await ht1024.get('black'), undefined)
+
+  ht1024.close()
+}).case()
+
 const test2 = new Test('DiskLinkedHashTable', async function integration2() {
   const ht1024 = new DiskLinkedHashTable({
     storageFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024`,
@@ -229,7 +300,7 @@ const test3 = new Test('DiskLinkedHashTable', async function integration3() {
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024_header`,
     initialLength: 1024,
   })
-  await ht1024.clear()
+  await ht1024.destroy()
   await ht1024.init()
 
   await ht1024.set('yellow', '#FFFF00', 2)
@@ -267,7 +338,7 @@ const test4 = new Test('DiskLinkedHashTable', async function integration4() {
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024_header`,
     initialLength: 1024,
   })
-  await ht1024.clear()
+  await ht1024.destroy()
   await ht1024.init()
 
   await ht1024.set('maroon', '#800000', 1)
@@ -308,7 +379,7 @@ const test5 = new Test('DiskLinkedHashTable', async function integration5() {
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024_header`,
     initialLength: 1024,
   })
-  await ht1024.clear()
+  await ht1024.destroy()
   await ht1024.init()
 
   await ht1024.set('maroon', '#800000', 1)
@@ -382,7 +453,7 @@ const test6 = new Test('DiskLinkedHashTable', async function integration6() {
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024_header`,
     initialLength: 1024,
   })
-  await ht1024.clear()
+  await ht1024.destroy()
   await ht1024.init()
 
   await ht1024.set('maroon', '#800000', 1)
@@ -453,7 +524,7 @@ const test7 = new Test('DiskLinkedHashTable', async function integration7() {
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024_header`,
     initialLength: 1024,
   })
-  await ht1024.clear()
+  await ht1024.destroy()
   await ht1024.init()
 
   await ht1024.set('maroon', '#800000', 1)
@@ -519,7 +590,7 @@ const test8 = new Test('DiskLinkedHashTable', async function integration8() {
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024_header`,
     initialLength: 1024,
   })
-  await ht1024.clear()
+  await ht1024.destroy()
   await ht1024.init()
 
   await ht1024.set('maroon', '#800000', 1)
@@ -585,7 +656,7 @@ const test9 = new Test('DiskLinkedHashTable', async function integration9() {
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024_header`,
     initialLength: 1024,
   })
-  await ht1024.clear()
+  await ht1024.destroy()
   await ht1024.init()
 
   await ht1024.set('maroon', '#800000', 1)
@@ -664,7 +735,7 @@ const test10 = new Test('DiskLinkedHashTable', async function integration10() {
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024_header`,
     initialLength: 1024,
   })
-  await ht1024.clear()
+  await ht1024.destroy()
   await ht1024.init()
 
   await ht1024.set('maroon', '#800000', 1)
@@ -692,7 +763,7 @@ const test11 = new Test('DiskLinkedHashTable', async function integration11() {
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024_header`,
     initialLength: 1024,
   })
-  await ht1024.clear()
+  await ht1024.destroy()
   await ht1024.init()
 
   await ht1024.set('maroon', '#800000', 1)
@@ -752,7 +823,7 @@ const test12 = new Test('DiskLinkedHashTable', async function integration12() {
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024_header`,
     initialLength: 1024,
   })
-  await ht1024.clear()
+  await ht1024.destroy()
   await ht1024.init()
 
   await ht1024.set('maroon', '#800000', 1)
@@ -812,7 +883,7 @@ const test13 = new Test('DiskLinkedHashTable', async function integration13() {
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024_header`,
     initialLength: 1024,
   })
-  await ht1024.clear()
+  await ht1024.destroy()
   await ht1024.init()
 
   await ht1024.set('maroon', '#800000', 1)
@@ -850,6 +921,7 @@ const test = Test.all([
   test1_1,
   test1_2,
   test1_3,
+  test1_4,
   test2,
   test3,
   test4,

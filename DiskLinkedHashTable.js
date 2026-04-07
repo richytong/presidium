@@ -24,11 +24,30 @@ const REMOVED = 2
  */
 class DiskLinkedHashTable {
   constructor(options) {
-    this.length = options.initialLength ?? 1024
+    this.initialLength = options.initialLength ?? 1024
+    this.length = null
+    this.count = null
     this.storageFilepath = options.storageFilepath
     this.headerFilepath = options.headerFilepath
     this.storageFd = null
     this.headerFd = null
+  }
+
+  // _initializeHeader() -> headerReadBuffer Promise<Buffer>
+  async _initializeHeader() {
+    const headerReadBuffer = Buffer.alloc(16)
+    headerReadBuffer.writeUInt32BE(this.initialLength, 0)
+    headerReadBuffer.writeUInt32BE(0, 4)
+    headerReadBuffer.writeInt32BE(-1, 8)
+    headerReadBuffer.writeInt32BE(-1, 12)
+
+    await this.headerFd.write(headerReadBuffer, {
+      offset: 0,
+      position: 0,
+      length: headerReadBuffer.length,
+    })
+
+    return headerReadBuffer
   }
 
   // init() -> Promise<>
@@ -47,10 +66,23 @@ class DiskLinkedHashTable {
 
     this.storageFd = await fs.promises.open(this.storageFilepath, 'r+')
     this.headerFd = await fs.promises.open(this.headerFilepath, 'r+')
+
+    let headerReadBuffer = await this._readHeader()
+    if (headerReadBuffer.every(byte => byte === 0)) {
+      headerReadBuffer = await this._initializeHeader()
+    }
+
+    const length = headerReadBuffer.readUInt32BE(0)
+    this.length = length
+
+    const count = headerReadBuffer.readUInt32BE(4)
+    this.count = count
   }
 
   // clear() -> Promise<>
   async clear() {
+    this.close()
+
     await fs.promises.rm(this.storageFilepath).catch(() => {})
     await fs.promises.rm(this.headerFilepath).catch(() => {})
 
@@ -65,6 +97,17 @@ class DiskLinkedHashTable {
         fs.closeSync(fs.openSync(filepath, 'a'))
       }
     }
+
+    this.storageFd = await fs.promises.open(this.storageFilepath, 'r+')
+    this.headerFd = await fs.promises.open(this.headerFilepath, 'r+')
+
+    const headerReadBuffer = await this._initializeHeader()
+
+    const length = headerReadBuffer.readUInt32BE(0)
+    this.length = length
+
+    const count = headerReadBuffer.readUInt32BE(4)
+    this.count = count
   }
 
   // destroy() -> Promise<>
@@ -77,6 +120,8 @@ class DiskLinkedHashTable {
   close() {
     this.storageFd.close()
     this.headerFd.close()
+    this.storageFd = null
+    this.headerFd = null
   }
 
   // _hash1(key string) -> number
@@ -100,23 +145,20 @@ class DiskLinkedHashTable {
   }
 
   // header file
-  // first 32 bits / 4 bytes item count
-  // second 32 bits / 4 bytes first item index
-  // third 32 bits / 4 bytes last item index
+  // 32 bits / 4 bytes table length
+  // 32 bits / 4 bytes item count
+  // 32 bits / 4 bytes first item index
+  // 32 bits / 4 bytes last item index
 
   // _readHeader() -> headerReadBuffer Promise<Buffer>
   async _readHeader() {
-    const headerReadBuffer = Buffer.alloc(12)
-
-    headerReadBuffer.writeInt32BE(0, 0)
-    headerReadBuffer.writeInt32BE(-1, 4)
-    headerReadBuffer.writeInt32BE(-1, 8)
+    const headerReadBuffer = Buffer.alloc(16)
 
     await this.headerFd.read({
       buffer: headerReadBuffer,
       offset: 0,
       position: 0,
-      length: 12,
+      length: 16,
     })
 
     return headerReadBuffer
@@ -139,7 +181,7 @@ class DiskLinkedHashTable {
 
   // _writeFirstIndex(index number) -> Promise<>
   async _writeFirstIndex(index) {
-    const position = 4
+    const position = 8
     const buffer = Buffer.alloc(4)
     buffer.writeInt32BE(index, 0)
 
@@ -152,7 +194,7 @@ class DiskLinkedHashTable {
 
   // _writeLastIndex(index number) -> Promise<>
   async _writeLastIndex(index) {
-    const position = 8
+    const position = 12
     const buffer = Buffer.alloc(4)
     buffer.writeInt32BE(index, 0)
 
@@ -231,7 +273,7 @@ class DiskLinkedHashTable {
   // _getForwardStartItem() -> item { index: number, readBuffer: Buffer, sortValue: string|number, value: string }
   async _getForwardStartItem() {
     const headerReadBuffer = await this._readHeader()
-    const index = headerReadBuffer.readInt32BE(4)
+    const index = headerReadBuffer.readInt32BE(8)
     if (index == -1) {
       return undefined
     }
@@ -242,7 +284,7 @@ class DiskLinkedHashTable {
   // _getReverseStartItem() -> item { index: number, readBuffer: Buffer, sortValue: string|number, value: string }
   async _getReverseStartItem() {
     const headerReadBuffer = await this._readHeader()
-    const index = headerReadBuffer.readInt32BE(8)
+    const index = headerReadBuffer.readInt32BE(12)
     if (index == -1) {
       return undefined
     }
