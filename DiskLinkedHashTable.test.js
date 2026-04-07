@@ -191,7 +191,7 @@ const test2 = new Test('DiskLinkedHashTable', async function integration2() {
     headerFilepath: `${__dirname}/DiskLinkedHashTable_test_data/1024_header`,
     initialLength: 1024,
   })
-  await ht1024.clear()
+  await ht1024.destroy()
   await ht1024.init()
 
   await ht1024.set('black', '#000', 4)

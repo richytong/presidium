@@ -53,6 +53,24 @@ class DiskLinkedHashTable {
   async clear() {
     await fs.promises.rm(this.storageFilepath).catch(() => {})
     await fs.promises.rm(this.headerFilepath).catch(() => {})
+
+    for (const filepath of [this.storageFilepath, this.headerFilepath]) {
+      const dir = filepath.split('/').slice(0, -1).join('/')
+      await fs.promises.mkdir(dir, { recursive: true })
+
+      const now = new Date()
+      try {
+        fs.utimesSync(filepath, now, now)
+      } catch (error) {
+        fs.closeSync(fs.openSync(filepath, 'a'))
+      }
+    }
+  }
+
+  // destroy() -> Promise<>
+  async destroy() {
+    await fs.promises.rm(this.storageFilepath).catch(() => {})
+    await fs.promises.rm(this.headerFilepath).catch(() => {})
   }
 
   // close() -> ()
