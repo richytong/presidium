@@ -45,8 +45,8 @@ const REMOVED = 2
 class DiskHashTable {
   constructor(options) {
     this.initialLength = options.initialLength ?? 1024
-    this.length = null
-    this.count = null
+    this._length = null
+    this._count = null
     this.storageFilepath = options.storageFilepath
     this.headerFilepath = options.headerFilepath
     this.resizeRatio = options.resizeRatio ?? 0
@@ -111,10 +111,10 @@ class DiskHashTable {
     }
 
     const length = headerReadBuffer.readUInt32BE(0)
-    this.length = length
+    this._length = length
 
     const count = headerReadBuffer.readUInt32BE(4)
-    this.count = count
+    this._count = count
   }
 
   /**
@@ -161,10 +161,10 @@ class DiskHashTable {
     const headerReadBuffer = await this._initializeHeader()
 
     const length = headerReadBuffer.readUInt32BE(0)
-    this.length = length
+    this._length = length
 
     const count = headerReadBuffer.readUInt32BE(4)
-    this.count = count
+    this._count = count
   }
 
   /**
@@ -224,7 +224,7 @@ class DiskHashTable {
     let hashCode = 0
     const prime = 31
     for (let i = 0; i < key.length; i++) {
-      hashCode = (prime * hashCode + key.charCodeAt(i)) % this.length
+      hashCode = (prime * hashCode + key.charCodeAt(i)) % this._length
     }
     return hashCode
   }
@@ -335,12 +335,16 @@ class DiskHashTable {
         break
       }
 
-      index = (index + stepSize) % this.length
+      index = (index + stepSize) % this._length
       if (index == startIndex) {
         throw new Error('Disk hash table is full')
       }
 
       currentKey = await this._getKey(index)
+    }
+
+    if (currentKey == null) { // insert
+      await this._incrementCount()
     }
 
     const position = index * DATA_SLICE_SIZE
@@ -398,7 +402,7 @@ class DiskHashTable {
         break
       }
 
-      index = (index + stepSize) % this.length
+      index = (index + stepSize) % this._length
       if (index == startIndex) {
         return undefined // entire table searched
       }
@@ -457,7 +461,7 @@ class DiskHashTable {
         break
       }
 
-      index = (index + stepSize) % this.length
+      index = (index + stepSize) % this._length
       if (index == startIndex) {
         return false // entire table searched
       }
@@ -474,10 +478,61 @@ class DiskHashTable {
 
     if (statusMarker === OCCUPIED) {
       await this._setStatusMarker(index, REMOVED)
+      await this._decrementCount()
       return true
     }
 
     return false
+  }
+
+  // _incrementCount() -> Promise<>
+  async _incrementCount() {
+    this._count += 1
+
+    const position = 4
+    const buffer = Buffer.alloc(4)
+    buffer.writeInt32BE(this._count, 0)
+
+    await this.headerFd.write(buffer, {
+      offset: 0,
+      position,
+      length: 4,
+    })
+  }
+
+  // _decrementCount() -> Promise<>
+  async _decrementCount() {
+    this._count -= 1
+
+    const position = 4
+    const buffer = Buffer.alloc(4)
+    buffer.writeInt32BE(this._count, 0)
+
+    await this.headerFd.write(buffer, {
+      offset: 0,
+      position,
+      length: 4,
+    })
+  }
+
+  /**
+   * @name count
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * count() -> number
+   * ```
+   *
+   * Returns the number of items (key-value pairs) in the disk hash table.
+   *
+   * Arguments:
+   *   * (none)
+   *
+   * Return:
+   *   * `number` - the number of items in the disk hash table.
+   */
+  count() {
+    return this._count
   }
 
 }

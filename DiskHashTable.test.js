@@ -11,6 +11,8 @@ const test1 = new Test('DiskHashTable', async function integration1() {
   await ht1024.destroy()
   await ht1024.init()
 
+  assert.strictEqual(ht1024.count(), 0)
+
   assert.strictEqual(await ht1024.get('notfound'), undefined)
 
   await ht1024.set('maroon', '#800000')
@@ -19,15 +21,27 @@ const test1 = new Test('DiskHashTable', async function integration1() {
   assert.equal(await ht1024.get('maroon'), '#800000')
   assert.equal(await ht1024.get('yellow'), '#FFFF00')
 
+  assert.equal(ht1024.count(), 2)
+
   await ht1024.set('maroon', '#800___')
+
+  assert.equal(ht1024.count(), 2)
+
   assert.equal(await ht1024.get('maroon'), '#800___')
   await ht1024.delete('maroon').then(didDelete => assert(didDelete))
+
+  assert.equal(ht1024.count(), 1)
+
   assert.strictEqual(await ht1024.get('maroon'), undefined)
   await ht1024.set('maroon', '#800000')
   assert.equal(await ht1024.get('maroon'), '#800000')
 
+  assert.equal(ht1024.count(), 1)
+
   assert.strictEqual(await ht1024.get('notfound'), undefined)
   await ht1024.delete('notfound').then(didDelete => assert(!didDelete))
+
+  assert.equal(ht1024.count(), 1)
 
   const ht1 = new DiskHashTable({
     storageFilepath: `${__dirname}/DiskHashTable_test_data/1`,
@@ -109,6 +123,8 @@ const test1_3 = new Test('DiskHashTable', async function integration1_3() {
   await ht1024.destroy()
   await ht1024.init()
 
+  assert.strictEqual(ht1024.count(), 0)
+
   await ht1024.set('maroon', '#800000')
   await ht1024.set('yellow', '#FFFF00')
   await ht1024.set('black', '#000000')
@@ -117,6 +133,8 @@ const test1_3 = new Test('DiskHashTable', async function integration1_3() {
   assert.equal(await ht1024.get('yellow'), '#FFFF00')
   assert.equal(await ht1024.get('black'), '#000000')
 
+  assert.strictEqual(ht1024.count(), 3)
+
   await ht1024.close()
   await ht1024.init()
 
@@ -124,11 +142,15 @@ const test1_3 = new Test('DiskHashTable', async function integration1_3() {
   assert.equal(await ht1024.get('yellow'), '#FFFF00')
   assert.equal(await ht1024.get('black'), '#000000')
 
+  assert.strictEqual(ht1024.count(), 3)
+
   await ht1024.clear()
 
   assert.strictEqual(await ht1024.get('black'), undefined)
   assert.strictEqual(await ht1024.get('yellow'), undefined)
   assert.strictEqual(await ht1024.get('black'), undefined)
+
+  assert.strictEqual(ht1024.count(), 0)
 
   ht1024.close()
 }).case()
