@@ -4,6 +4,10 @@ const DATA_SLICE_SIZE = 512 * 1024
 
 const ENCODING = 'utf8'
 
+const EMPTY = 0
+const OCCUPIED = 1
+const REMOVED = 2
+
 /**
  * @name DiskHashTable
  *
@@ -37,16 +41,23 @@ class DiskHashTable {
     this.fd = await fs.promises.open(this.filepath, 'r+')
   }
 
+  // clear() -> Promise<>
+  async clear() {
+    await fs.promises.rm(this.filepath).catch(() => {})
+  }
+
+  close() {
+    this.fd.close()
+  }
+
   // _hash1(key string) -> number
   _hash1(key) {
-    let total = 0
-    const WEIRD_PRIME = 31
-    for (let i = 0; i < Math.min(key.length, 100); i++) {
-      let char = key[i]
-      let value = char.charCodeAt(0) - 96
-      total = (total * WEIRD_PRIME + value) % this.length
+    let hashCode = 0
+    const prime = 31
+    for (let i = 0; i < key.length; i++) {
+      hashCode = (prime * hashCode + key.charCodeAt(i)) % this.length
     }
-    return total
+    return hashCode
   }
 
   // _hash2(key string) -> number
@@ -61,23 +72,28 @@ class DiskHashTable {
 
   // _getKey(index number) -> key Promise<string>
   async _getKey(index) {
+    if (index == -1) {
+      throw new Error('Negative index')
+    }
+
     const position = index * DATA_SLICE_SIZE
 
     const readBuffer = Buffer.alloc(DATA_SLICE_SIZE)
 
-    const { bytesRead } = await this.fd.read({
+    await this.fd.read({
       buffer: readBuffer,
       offset: 0,
       position,
       length: DATA_SLICE_SIZE,
     })
 
-    if (bytesRead == 0) {
+    const statusMarker = readBuffer.readUInt8(0)
+    if (statusMarker === EMPTY) {
       return undefined
     }
 
-    const keyByteLength = readBuffer.readUInt32BE(0)
-    const keyBuffer = readBuffer.subarray(8, keyByteLength + 8)
+    const keyByteLength = readBuffer.readUInt32BE(1)
+    const keyBuffer = readBuffer.subarray(9, keyByteLength + 9)
     return keyBuffer.toString(ENCODING)
   }
 
@@ -105,16 +121,19 @@ class DiskHashTable {
     const position = index * DATA_SLICE_SIZE
     const buffer = Buffer.alloc(DATA_SLICE_SIZE)
 
-    // first 32 bits / 4 bytes for key size
-    // second 32 bits / 4 bytes for value size
-    // next chunk key
-    // remainder for json data
+    // 8 bits / 1 byte for status marker: 0 empty / 1 occupied / 2 deleted
+    // 32 bits / 4 bytes for key size
+    // 32 bits / 4 bytes for value size
+    // chunk for key
+    // remainder for value
+    const statusMarker = 1
     const keyByteLength = Buffer.byteLength(key, ENCODING)
     const valueByteLength = Buffer.byteLength(value, ENCODING)
-    buffer.writeUint32BE(keyByteLength, 0)
-    buffer.writeUint32BE(valueByteLength, 4)
-    buffer.write(key, 8, keyByteLength, ENCODING)
-    buffer.write(value, keyByteLength + 8, valueByteLength, ENCODING)
+    buffer.writeUInt8(statusMarker, 0)
+    buffer.writeUint32BE(keyByteLength, 1)
+    buffer.writeUint32BE(valueByteLength, 5)
+    buffer.write(key, 9, keyByteLength, ENCODING)
+    buffer.write(value, keyByteLength + 9, valueByteLength, ENCODING)
 
     await this.fd.write(buffer, {
       offset: 0,
@@ -126,26 +145,48 @@ class DiskHashTable {
   // get(key string) -> value Promise<string>
   async get(key) {
     let index = this._hash1(key)
+    const startIndex = index
+    const stepSize = this._hash2(key)
+
+    let currentKey = await this._getKey(index)
+    while (currentKey) {
+      if (key == currentKey) {
+        break
+      }
+
+      index = (index + stepSize) % this.length
+      if (index == startIndex) {
+        return undefined // entire table searched
+      }
+
+      currentKey = await this._getKey(index)
+    }
+
+    if (currentKey == null) {
+      return undefined
+    }
 
     const position = index * DATA_SLICE_SIZE
 
     const readBuffer = Buffer.alloc(DATA_SLICE_SIZE)
 
-    const { bytesRead } = await this.fd.read({
+    await this.fd.read({
       buffer: readBuffer,
       offset: 0,
       position,
       length: DATA_SLICE_SIZE,
     })
 
-    if (bytesRead == 0) {
-      return undefined
-    }
+    const statusMarker = readBuffer.readUInt8(0)
+    // TODO handle status marker
 
-    const keyByteLength = readBuffer.readUInt32BE(0)
-    const valueByteLength = readBuffer.readUInt32BE(4)
-    const keyBuffer = readBuffer.subarray(8, keyByteLength + 8)
-    const valueBuffer = readBuffer.subarray(keyByteLength + 8, valueByteLength + keyByteLength + 8)
+    const keyByteLength = readBuffer.readUInt32BE(1)
+    const valueByteLength = readBuffer.readUInt32BE(5)
+    const keyBuffer = readBuffer.subarray(9, keyByteLength + 9)
+    const valueBuffer = readBuffer.subarray(
+      9 + keyByteLength,
+      9 + keyByteLength + valueByteLength
+    )
     return valueBuffer.toString(ENCODING)
   }
 
