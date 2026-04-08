@@ -49,9 +49,9 @@ class DiskHashTable {
     this._count = null
     this.storageFilepath = options.storageFilepath
     this.headerFilepath = options.headerFilepath
-    this.resizeRatio = options.resizeRatio ?? 0
     this.storageFd = null
     this.headerFd = null
+    this.resizeRatio = options.resizeRatio ?? 0
   }
 
   // _initializeHeader() -> headerReadBuffer Promise<Buffer>
@@ -302,6 +302,10 @@ class DiskHashTable {
     })
   }
 
+  // _resize() -> Promise<>
+  async _resize() {
+  }
+
   /**
    * @name set
    *
@@ -324,6 +328,10 @@ class DiskHashTable {
    * ```
    */
   async set(key, value) {
+    if (this.resizeRatio > 0 && (this._count / this._length) > this.resizeRatio) {
+      this._resize()
+    }
+
     let index = this._hash1(key)
 
     const startIndex = index

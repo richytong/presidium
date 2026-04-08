@@ -31,6 +31,7 @@ class DiskLinkedHashTable {
     this.headerFilepath = options.headerFilepath
     this.storageFd = null
     this.headerFd = null
+    this.resizeRatio = options.resizeRatio ?? 0
   }
 
   // _initializeHeader() -> headerReadBuffer Promise<Buffer>
