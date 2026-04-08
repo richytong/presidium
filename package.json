@@ -13,6 +13,8 @@
   "files": [
     "internal",
     "AwsCredentials.js",
+    "DiskHashTable.js",
+    "DiskSortedHashTable.js",
     "Docker.js",
     "DynamoDBGlobalSecondaryIndex.js",
     "DynamoDBStream.js",
@@ -62,7 +64,8 @@
   "dependencies": {
     "extract-zip": "^2.0.1",
     "html-entities": "^2.6.0",
-    "presidium-websocket": ">=2.0.1",
+    "presidium-db": ">=3.0.0",
+    "presidium-websocket": ">=3.2.1",
     "rubico": "^2.7.7",
     "tar-stream": "^3.1.7"
   },

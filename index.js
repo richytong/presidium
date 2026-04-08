@@ -1,5 +1,7 @@
 module.exports = {
   AwsCredentials: require('./AwsCredentials.js'),
+  DiskHashTable: require('./DiskHashTable.js'),
+  DiskSortedHashTable: require('./DiskSortedHashTable.js'),
   Docker: require('./Docker.js'),
   DynamoDBGlobalSecondaryIndex: require('./DynamoDBGlobalSecondaryIndex.js'),
   DynamoDBStream: require('./DynamoDBStream.js'),

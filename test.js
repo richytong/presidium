@@ -32,6 +32,7 @@ const test = Test.all([
   require('./internal/httpConfigure.test'),
   require('./internal/StatusCodeMessage.test'),
 
+  require('./index.test'),
   require('./global.test'),
 ])
 
