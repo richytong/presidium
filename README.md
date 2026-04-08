@@ -353,5 +353,8 @@ const data = await googleChromeDevTools.Page.navigate({
 })
 ```
 
+## License
+Presidium is distributed under the [CFOSS License](https://cloutsworld.com/en-us/legal/license/cfoss).
+
 # Support
  * minimum Node.js version: 16
