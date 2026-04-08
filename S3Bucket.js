@@ -173,6 +173,7 @@ class S3Bucket {
         await this.create()
         await this.putPublicAccessBlock()
         await this.putRequestPayment()
+        await this._putBucketEncryption()
         if (this.VersioningStatus == 'Enabled') {
           await this.putVersioning()
         }
@@ -313,6 +314,43 @@ class S3Bucket {
 
     return this.http1[method](url, { headers, body })
   }
+
+  // _putBucketEncryption() -> Promise<>
+  async _putBucketEncryption() {
+    const body = `
+<ServerSideEncryptionConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+    <Rule>
+        <ApplyServerSideEncryptionByDefault>
+            <SSEAlgorithm>AES256</SSEAlgorithm>
+        </ApplyServerSideEncryptionByDefault>
+        <BlockedEncryptionTypes>
+            <EncryptionType>NONE</EncryptionType>
+        </BlockedEncryptionTypes>
+        <BucketKeyEnabled>true</BucketKeyEnabled>
+    </Rule>
+</ServerSideEncryptionConfiguration>
+    `.trim()
+
+    const response = await this._awsRequest0('PUT', '/?encryption', {}, body)
+
+    if (response.ok) {
+      await Readable.Text(response)
+      return {}
+    }
+    throw new AwsError(await Readable.Text(response), response.status)
+  }
+
+  /*
+  // _getBucketEncryption() -> data object
+  async _getBucketEncryption() {
+    const response = await this._awsRequest0('GET', '/?encryption', {}, '')
+    if (response.ok) {
+      const text = await Readable.Text(response)
+      return text
+    }
+    throw new AwsError(await Readable.Text(response), response.status)
+  }
+  */
 
   /**
    * @name getLocation

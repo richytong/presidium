@@ -136,7 +136,7 @@ const test1 = new Test('S3Bucket', async function integration1() {
   }
 
   {
-    console.log('listObjects Prefix and Delimiter options')
+    // console.log('listObjects Prefix and Delimiter options')
 
     const response = await testBucket.listObjects({
       Prefix: 'c',
@@ -159,7 +159,7 @@ const test1 = new Test('S3Bucket', async function integration1() {
   }
 
   {
-    console.log('listObjects EncodingType option 0')
+    // console.log('listObjects EncodingType option 0')
 
     const specialKey = ':::/:::%"!#$&\'()*, ;=?@[]'
     await testBucket.putObject(specialKey, 'test')
@@ -180,7 +180,7 @@ const test1 = new Test('S3Bucket', async function integration1() {
   await testBucket.deleteAllObjects()
 
   {
-    console.log('listObjects EncodingType option')
+    // console.log('listObjects EncodingType option')
 
     const specialKey = encodeURIComponentRFC3986(':::/:::%"!#$&\'()*, ;=?@[]')
     await testBucket.putObject(specialKey, 'test')
@@ -200,7 +200,7 @@ const test1 = new Test('S3Bucket', async function integration1() {
   }
 
   {
-    console.log('FetchOwner option')
+    // console.log('FetchOwner option')
 
     const data1 = await testBucket.listObjects({
       FetchOwner: true,
@@ -212,7 +212,7 @@ const test1 = new Test('S3Bucket', async function integration1() {
   await testBucket.deleteAllObjects()
 
   {
-    console.log('MaxKeys, StartAfter options')
+    // console.log('MaxKeys, StartAfter options')
 
     await testBucket.putObject('max-keys-1', 'test')
     await testBucket.putObject('max-keys-2', 'test')
@@ -264,7 +264,7 @@ const test2 = new Test('S3Bucket', async function integration2() {
   awsCreds.region = 'us-east-1'
 
   {
-    console.log('default retention period 1 year (ObjectLockDefaultRetentionYears=1)')
+    // console.log('default retention period 1 year (ObjectLockDefaultRetentionYears=1)')
 
     const bucketName02 = `test-bucket-presidium-${Date.now()}-02`
     const testBucket02 = new S3Bucket({
@@ -296,7 +296,7 @@ const test2 = new Test('S3Bucket', async function integration2() {
     )
 
   
-    console.log('simple delete creates DeleteMarker')
+    // console.log('simple delete creates DeleteMarker')
     const data2 = await testBucket02.deleteObject('test/retention-period-1-year')
     assert(data2.DeleteMarker)
 
@@ -326,7 +326,7 @@ const test2 = new Test('S3Bucket', async function integration2() {
   )
 
   {
-    console.log('default retention period must be a positive integer value (error when ObjectLockDefaultRetentionYears 0 or ObjectLockDefaultRetentionDays 0)')
+    // console.log('default retention period must be a positive integer value (error when ObjectLockDefaultRetentionYears 0 or ObjectLockDefaultRetentionDays 0)')
 
     const bucketName03 = `test-bucket-presidium-${Date.now()}-03`
     const testBucket03 = new S3Bucket({
@@ -357,7 +357,7 @@ const test2 = new Test('S3Bucket', async function integration2() {
   }
 
   {
-    console.log('default retention period 1 day')
+    // console.log('default retention period 1 day')
 
     const bucketName04 = `test-bucket-presidium-${Date.now()}-04`
     const testBucket04 = new S3Bucket({
@@ -389,7 +389,7 @@ const test2 = new Test('S3Bucket', async function integration2() {
     )
 
   
-    console.log('simple delete creates DeleteMarker')
+    // console.log('simple delete creates DeleteMarker')
     const data2 = await testBucket04.deleteObject('test/retention-period-1-year')
     assert(data2.DeleteMarker)
 
@@ -400,7 +400,7 @@ const test2 = new Test('S3Bucket', async function integration2() {
 
 
   {
-    console.log('ObjectLock enabled with no default retention period: new objects will not be locked by default, allowing immediate deletion or overwriting')
+    // console.log('ObjectLock enabled with no default retention period: new objects will not be locked by default, allowing immediate deletion or overwriting')
 
     const testBucket2 = new S3Bucket({
       name: bucketName,
@@ -443,7 +443,7 @@ const test2 = new Test('S3Bucket', async function integration2() {
   }
 
   {
-    console.log('delete object version succeeds')
+    // console.log('delete object version succeeds')
 
     const key = 'test/bucket-2-simple-delete-no-default-retention'
     const data1 = await testBucket2.putObject(key, 'test')
@@ -464,13 +464,13 @@ const test2 = new Test('S3Bucket', async function integration2() {
     )
 
   
-    console.log('simple delete creates a delete marker (no delete marker)')
+    // console.log('simple delete creates a delete marker (no delete marker)')
     const data2 = await testBucket2.deleteObject(key)
     assert(data2.DeleteMarker) // delete marker was created and is now the current version
   }
 
   {
-    console.log('ObjectLockMode, ObjectLockRetainUntilDate, ObjectLockLegalHoldStatus')
+    // console.log('ObjectLockMode, ObjectLockRetainUntilDate, ObjectLockLegalHoldStatus')
 
     const key = 'test/ObjectLockMode-ObjectLockRetainUntilDate-ObjectLockLegalHoldStatus-options'
     const ObjectLockMode = 'COMPLIANCE'
@@ -488,7 +488,7 @@ const test2 = new Test('S3Bucket', async function integration2() {
   }
 
   {
-    console.log('deleteAllObjects error')
+    // console.log('deleteAllObjects error')
 
     await assert.rejects(
       testBucket2.deleteAllObjects(),
@@ -574,7 +574,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   }
 
   {
-    console.log('putPolicy, getPolicy')
+    // console.log('putPolicy, getPolicy')
 
     const policy = {
       "Version": "2008-10-17",
@@ -603,7 +603,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   }
 
   {
-    console.log('Stream option')
+    // console.log('Stream option')
 
     const key = 'test/Stream'
     await testBucket3.putObject(key, 'test')
@@ -614,7 +614,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   }
 
   {
-    console.log('getObject, deleteObject VersionId')
+    // console.log('getObject, deleteObject VersionId')
 
     const key = 'test/getObject-VersionId'
     const data1 = await testBucket3.putObject(key, 'test')
@@ -642,7 +642,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   }
 
   {
-    console.log('deleteObject with delete marker')
+    // console.log('deleteObject with delete marker')
 
     const key = 'test/getObject-delete-marker/:%"!#$&\'()*, ;=?@[]'
     const data1 = await testBucket3.putObject(key, 'test')
@@ -689,7 +689,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   }
 
   {
-    console.log('ACL option + VersionId in response')
+    // console.log('ACL option + VersionId in response')
 
     const key = 'test/acl/:%"!#$&\'()*, ;=?@[]'
     const data1 = await testBucket3.putObject(key, 'test', {
@@ -726,7 +726,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   }
 
   {
-    console.log('ACL option 2')
+    // console.log('ACL option 2')
 
     const key = 'test/acl2'
     const data1 = await testBucket3.putObject(key, 'test', {
@@ -744,7 +744,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   }
 
   {
-    console.log('CacheControl, ContentDisposition, ContentEncoding, ContentLanguage, ContentLength, ContentMD5, ContentType, Expires options')
+    // console.log('CacheControl, ContentDisposition, ContentEncoding, ContentLanguage, ContentLength, ContentMD5, ContentType, Expires options')
 
     const date = new Date()
     const key = 'test/cache-control'
@@ -777,7 +777,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
     assert.equal(data3.Expires, date)
 
   
-    console.log('ResponseCacheControl, ResponseContentDisposition, ResponseContentEncoding, ResponseContentLanguage, ResponseContentType, ResponseExpires')
+    // console.log('ResponseCacheControl, ResponseContentDisposition, ResponseContentEncoding, ResponseContentLanguage, ResponseContentType, ResponseExpires')
 
     const data4 = await testBucket3.getObject(key, {
       ResponseCacheControl: 'cache',
@@ -813,7 +813,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   }
 
   {
-    console.log('ChecksumAlgorithm, ChecksumCRC32 options')
+    // console.log('ChecksumAlgorithm, ChecksumCRC32 options')
 
     const key = 'test/checksum-crc32'
     const body = 'test-checksum-crc32'
@@ -841,7 +841,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   }
 
   {
-    console.log('ChecksumAlgorithm, ChecksumCRC32C options')
+    // console.log('ChecksumAlgorithm, ChecksumCRC32C options')
 
     const key = 'test/checksum-crc32c'
     const body = 'test-checksum-crc32c'
@@ -868,7 +868,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   }
 
   {
-    console.log('ChecksumAlgorithm, ChecksumCRC64NVME options')
+    // console.log('ChecksumAlgorithm, ChecksumCRC64NVME options')
 
     const key = 'test/checksum-crc64nvme'
     const body = 'test-checksum-crc64nvme'
@@ -897,7 +897,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   }
 
   {
-    console.log('ChecksumAlgorithm, ChecksumSHA1 options')
+    // console.log('ChecksumAlgorithm, ChecksumSHA1 options')
 
     const key = 'test/checksum-sha1'
     const body = 'test-checksum-sha1'
@@ -923,7 +923,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   }
 
   {
-    console.log('ChecksumAlgorithm, ChecksumSHA256 options')
+    // console.log('ChecksumAlgorithm, ChecksumSHA256 options')
 
     const key = 'test/checksum-sha256'
     const body = 'test-checksum-sha256'
@@ -949,7 +949,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   }
 
   {
-    console.log('IfNoneMatch option')
+    // console.log('IfNoneMatch option')
 
     const key = 'test/if-match-option'
     const data1 = await testBucket3.putObject(key, 'test', {
@@ -965,7 +965,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   }
 
   {
-    console.log('ServerSideEncryption, SSEKMSKeyId, SSEKMSEncryptionContext options')
+    // console.log('ServerSideEncryption, SSEKMSKeyId, SSEKMSEncryptionContext options')
 
     const key = 'test/ServerSideEncryption-SSEKMSKeyId-SSEKMSEncryptionContext-option'
     const encryptionContext = { a: '1' }
@@ -989,7 +989,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   }
 
   {
-    console.log('ServerSideEncryption, SSEKMSKeyId, BucketKeyEnabled options')
+    // console.log('ServerSideEncryption, SSEKMSKeyId, BucketKeyEnabled options')
 
     const key = 'test/ServerSideEncryption-SSEKMSKeyId-BucketKeyEnabled-option'
     const encryptionContext = { a: '1' }
@@ -1014,7 +1014,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   }
 
   {
-    console.log('StorageClass option')
+    // console.log('StorageClass option')
 
     const key = 'test/StorageClass-option'
     await testBucket3.putObject(key, 'test', {
@@ -1029,7 +1029,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   }
 
   {
-    console.log('WebsiteRedirectLocation option')
+    // console.log('WebsiteRedirectLocation option')
 
     const key = 'test/WebsiteRedirectLocation-option'
     const data1 = await testBucket3.putObject(key, 'test', {
@@ -1044,7 +1044,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   }
 
   {
-    console.log('SSECustomerAlgorithm, SSECustomerKey options')
+    // console.log('SSECustomerAlgorithm, SSECustomerKey options')
 
     const key = 'test/SSECustomerAlgorithm-SSECustomerKey-option'
     const SSECustomerKey = '8spSZEuMkTTwG5Taq1lObxkaJiSOxHmkkPK9Q+WzN5k='
@@ -1075,7 +1075,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   }
 
   {
-    console.log('Tagging option')
+    // console.log('Tagging option')
 
     const key = 'test/Tagging-option'
     const Tagging = 'a=1&b=test'
@@ -1093,7 +1093,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   }
 
   {
-    console.log('Range option')
+    // console.log('Range option')
 
     const key = 'test/Range'
     await testBucket3.putObject(key, 'test')
@@ -1111,7 +1111,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   }
 
   {
-    console.log('GrantFullControl, GrantRead, GrantReadACP, GrantWriteACP optionss')
+    // console.log('GrantFullControl, GrantRead, GrantReadACP, GrantWriteACP optionss')
 
     const key = 'test/grant-read-write-full-control-option'
     await testBucket3.putObject(key, 'test', {
@@ -1126,14 +1126,14 @@ const test3 = new Test('S3Bucket', async function integration3() {
   }
 
   {
-    console.log('deleteAllObjects')
+    // console.log('deleteAllObjects')
 
     const data1 = await testBucket3.deleteAllObjects()
     assert(data1.Deleted.length > 0)
   }
 
   {
-    console.log('listObjectVersions Prefix and Delimiter options')
+    // console.log('listObjectVersions Prefix and Delimiter options')
 
     await testBucket3.putObject('c/b', 'test1')
     await testBucket3.putObject('c/b', 'test2')
@@ -1170,7 +1170,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   await testBucket3.deleteAllObjects()
 
   {
-    console.log('listObjectVersions KeyMarker, VersionIdMarker, MaxKeys options')
+    // console.log('listObjectVersions KeyMarker, VersionIdMarker, MaxKeys options')
 
     await testBucket3.putObject('c', 'test1')
     await testBucket3.putObject('c', 'test2')
@@ -1202,7 +1202,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   await testBucket3.deleteAllObjects()
 
   {
-    console.log('listObjectVersions EncodingType option')
+    // console.log('listObjectVersions EncodingType option')
 
     const specialKey = ':::/:::%"!#$&\'()*, ;=?@[]'
     // const specialKey = ':::/:::%"!'
@@ -1224,7 +1224,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
   }
 
   {
-    console.log('delete')
+    // console.log('delete')
 
     await testBucket3.deleteAllObjects()
     await testBucket3.delete()
