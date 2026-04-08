@@ -1,3 +1,10 @@
+/**
+ * Presidium
+ * https://presidium.services/
+ * (c) Richard Tong
+ * Presidium may be freely distributed under the CFOSS license.
+ */
+
 require('rubico/global')
 const crypto = require('crypto')
 const HTTP = require('./HTTP')

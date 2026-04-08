@@ -1,4 +1,11 @@
 /**
+ * Presidium
+ * https://presidium.services/
+ * (c) Richard Tong
+ * Presidium may be freely distributed under the CFOSS license.
+ */
+
+/**
  * @name XML
  *
  * @docs

@@ -1,3 +1,10 @@
+/**
+ * Presidium
+ * https://presidium.services/
+ * (c) Richard Tong
+ * Presidium may be freely distributed under the CFOSS license.
+ */
+
 const https = require('https')
 const os = require('os')
 const fs = require('fs')

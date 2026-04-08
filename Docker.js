@@ -1,3 +1,10 @@
+/**
+ * Presidium
+ * https://presidium.services/
+ * (c) Richard Tong
+ * Presidium may be freely distributed under the CFOSS license.
+ */
+
 require('rubico/global')
 const isString = require('rubico/x/isString')
 const identity = require('rubico/x/identity')

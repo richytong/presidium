@@ -1,3 +1,10 @@
+/**
+ * Presidium
+ * https://presidium.services/
+ * (c) Richard Tong
+ * Presidium may be freely distributed under the CFOSS license.
+ */
+
 const EventEmitter = require('events')
 const GoogleChromeForTesting = require('./GoogleChromeForTesting')
 const WebSocket = require('./WebSocket')
