@@ -1,6 +1,7 @@
 # Presidium
 ![presidium](https://rubico.land/assets/presidium-logo-3-w200.jpg)
 
+Source code: [GitHub](https://github.com/richytong/presidium) |
 License: [CFOSS](https://cloutsworld.com/en-us/legal/license/cfoss)
 
 ![Node.js CI](https://github.com/richytong/presidium/workflows/Node.js%20CI/badge.svg)
