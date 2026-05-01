@@ -358,8 +358,8 @@ const data = await googleChromeDevTools.Page.navigate({
 const DiskHashTable = require('presidium-db/DiskHashTable')
 
 const ht = new DiskHashTable({
-  storageFilepath: '/path/to/storage-file',
-  headerFilepath: '/path/to/header-file',
+  storageFilepath: '/path/to/ht-storage-file',
+  headerFilepath: '/path/to/ht-header-file',
   initialLength: 1024,
 })
 await ht.init()
@@ -377,8 +377,8 @@ await ht.delete('my-key')
 const DiskSortedHashTable = require('presidium-db/DiskSortedHashTable')
 
 const sortedHt = new DiskSortedHashTable({
-  storageFilepath: '/path/to/storage-file',
-  headerFilepath: '/path/to/header-file',
+  storageFilepath: '/path/to/sortedHt-storage-file',
+  headerFilepath: '/path/to/sortedHt-header-file',
   initialLength: 1024,
 })
 await sortedHt.init()
