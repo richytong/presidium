@@ -4,7 +4,9 @@
 Source code: [GitHub](https://github.com/richytong/presidium) |
 License: [CFOSS](https://cloutsworld.com/en-us/legal/license/cfoss)
 
-![Node.js CI](https://github.com/richytong/presidium/workflows/Node.js%20CI/badge.svg)
+![Presidium CI](https://github.com/richytong/presidium/workflows/Node.js%20CI/badge.svg)
+![Presidium WebSocket CI](https://github.com/richytong/presidium-websocket/workflows/Node.js%20CI/badge.svg)
+![Presidium DB CI](https://github.com/richytong/presidium-db/workflows/Node.js%20CI/badge.svg)
 [![codecov](https://codecov.io/gh/richytong/presidium/branch/master/graph/badge.svg)](https://codecov.io/gh/richytong/presidium)
 [![npm version](https://img.shields.io/npm/v/presidium.svg?style=flat)](https://www.npmjs.com/package/presidium)
 
