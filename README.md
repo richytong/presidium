@@ -10,19 +10,13 @@ License: [CFOSS](https://cloutsworld.com/en-us/legal/license/cfoss)
 [![codecov](https://codecov.io/gh/richytong/presidium/branch/master/graph/badge.svg)](https://codecov.io/gh/richytong/presidium)
 [![npm version](https://img.shields.io/npm/v/presidium.svg?style=flat)](https://www.npmjs.com/package/presidium)
 
-#### Presidium WebSocket
-
-Source code: [GitHub](https://github.com/richytong/presidium-websocket) |
-License: [CFOSS](https://cloutsworld.com/en-us/legal/license/cfoss)
+### [Presidium WebSocket](https://github.com/richytong/presidium-websocket)
 
 ![Node.js CI](https://github.com/richytong/presidium-websocket/workflows/Node.js%20CI/badge.svg)
 [![codecov](https://codecov.io/gh/richytong/presidium-websocket/branch/master/graph/badge.svg)](https://codecov.io/gh/richytong/presidium-websocket)
 [![npm version](https://img.shields.io/npm/v/presidium-websocket.svg?style=flat)](https://www.npmjs.com/package/presidium-websocket)
 
-#### Presidium DB
-
-Source code: [GitHub](https://github.com/richytong/presidium-db) |
-License: [CFOSS](https://cloutsworld.com/en-us/legal/license/cfoss)
+#### [Presidium DB](https://github.com/richytong/presidium-db)
 
 ![Node.js CI](https://github.com/richytong/presidium-db/workflows/Node.js%20CI/badge.svg)
 [![codecov](https://codecov.io/gh/richytong/presidium-db/branch/master/graph/badge.svg)](https://codecov.io/gh/richytong/presidium-db)
