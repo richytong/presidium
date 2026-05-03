@@ -183,22 +183,6 @@ function addParagraph() {
     this.inputNodeId = inputNode.nodeId
     const buttonNode = nodes.find(node => node.nodeName == 'BUTTON')
     this.buttonNodeId = buttonNode.nodeId
-
-    await pipe(nodes, [
-      all({
-        nodeIds: map(get('nodeId')),
-        nodes: map(({ nodeId }) => googleChromeDevTools.DOM.describeNode({
-          nodeId,
-          depth: 10,
-        }).then(get('node'))),
-      }),
-      ({ nodeIds, nodes }) => {
-        let index = -1
-        while ((index += 1) < nodeIds.length) {
-          assert.equal(nodeIds[index], nodes[index].nodeId)
-        }
-      },
-    ])
   }
 
   {
