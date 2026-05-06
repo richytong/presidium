@@ -375,6 +375,8 @@ const test1 = new Test('DynamoDBStream', async function integration() {
     const insertItems = streamItems.filter(item => item.eventName == 'INSERT')
     const modifyItems = streamItems.filter(item => item.eventName == 'MODIFY')
 
+    console.log(insertItems)
+    console.log(modifyItems)
     assert.equal(insertItems[0].dynamodb.NewImageJSON.id, '1')
     assert.equal(insertItems[1].dynamodb.NewImageJSON.id, '2')
     assert.equal(insertItems[2].dynamodb.NewImageJSON.id, '3')
