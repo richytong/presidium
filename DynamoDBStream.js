@@ -16,6 +16,7 @@ const AwsAuthorization = require('./internal/AwsAuthorization')
 const AmzDate = require('./internal/AmzDate')
 const Readable = require('./Readable')
 const sleep = require('./internal/sleep')
+const retryHTTPRequest = require('./internal/retryHTTPRequest')
 const dynamoDBStreamGetStreamsIterator =
   require('./internal/dynamoDBStreamGetStreamsIterator')
 const dynamoDBStreamGetShardsIterator =
@@ -238,7 +239,7 @@ class DynamoDBStream {
       }
     })
 
-    return this.http[method](url, { headers, body: payload })
+    return retryHTTPRequest(this.http, method, url, { headers, body: payload })
   }
 
   /**
@@ -296,7 +297,7 @@ class DynamoDBStream {
       }
     })
 
-    return this.streamsHttp[method](url, { headers, body: payload })
+    return retryHTTPRequest(this.streamsHttp, method, url, { headers, body: payload })
   }
 
   /**

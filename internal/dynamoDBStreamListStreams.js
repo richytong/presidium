@@ -1,5 +1,6 @@
 const Readable = require('../Readable')
 const AwsError = require('./AwsError')
+const sleep = require('./sleep')
 
 /**
  * @name dynamoDBStreamListStreams

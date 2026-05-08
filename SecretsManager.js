@@ -15,6 +15,7 @@ const userAgent = require('./userAgent')
 const Readable = require('./Readable')
 const handleAwsResponse = require('./internal/handleAwsResponse')
 const retryableErrorNames = require('./internal/retryableErrorNames')
+const retryHTTPRequest = require('./internal/retryHTTPRequest')
 
 /**
  * @name SecretsManager
@@ -114,7 +115,7 @@ class SecretsManager {
       }
     })
 
-    return this.http[method](url, { headers, body: payload })
+    return retryHTTPRequest(this.http, method, url, { headers, body: payload })
   }
 
   /**

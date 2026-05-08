@@ -25,6 +25,7 @@ const AwsError = require('./internal/AwsError')
 const hashJSON = require('./internal/hashJSON')
 const sleep = require('./internal/sleep')
 const join = require('./internal/join')
+const retryHTTPRequest = require('./internal/retryHTTPRequest')
 const createExpressionAttributeNames =
   require('./internal/createExpressionAttributeNames')
 const createExpressionAttributeValues =
@@ -216,7 +217,7 @@ class DynamoDBTable {
       }
     })
 
-    return this.http[method](url, { headers, body: payload })
+    return retryHTTPRequest(this.http, method, url, { headers, body: payload })
   }
 
   /**

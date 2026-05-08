@@ -31,6 +31,7 @@ const test = Test.all([
   require('./internal/handleDynamoDBStreamGetRecordsError.test'),
   require('./internal/httpConfigure.test'),
   require('./internal/StatusCodeMessage.test'),
+  require('./internal/retryHTTPRequest.test'),
 
   require('./index.test'),
   require('./global.test'),

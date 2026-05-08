@@ -14,6 +14,7 @@ const AwsAuthorization = require('./internal/AwsAuthorization')
 const AmzDate = require('./internal/AmzDate')
 const AwsError = require('./internal/AwsError')
 const parseURL = require('./internal/parseURL')
+const retryHTTPRequest = require('./internal/retryHTTPRequest')
 const createS3DeleteObjectError = require('./internal/createS3DeleteObjectError')
 const XML = require('./XML')
 const HTMLEntities = require('html-entities')
@@ -255,7 +256,7 @@ class S3Bucket {
       headers: authorizationHeaders,
     })
 
-    return this.http0[method](url, { headers, body })
+    return retryHTTPRequest(this.http0, method, url, { headers, body })
   }
 
   /**
@@ -319,7 +320,7 @@ class S3Bucket {
       headers: authorizationHeaders,
     })
 
-    return this.http1[method](url, { headers, body })
+    return retryHTTPRequest(this.http1, method, url, { headers, body })
   }
 
   // _putBucketEncryption() -> Promise<>

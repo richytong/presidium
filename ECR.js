@@ -13,6 +13,7 @@ const AwsAuthorization = require('./internal/AwsAuthorization')
 const AwsError = require('./internal/AwsError')
 const userAgent = require('./userAgent')
 const Readable = require('./Readable')
+const retryHTTPRequest = require('./internal/retryHTTPRequest')
 
 /**
  * @name ECR
@@ -112,7 +113,7 @@ class ECR {
       }
     })
 
-    return this.http[method](url, { headers, body: payload })
+    return retryHTTPRequest(this.http, method, url, { headers, body: payload })
   }
 
   /**
