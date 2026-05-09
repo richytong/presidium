@@ -16,6 +16,7 @@ const Readable = require('./Readable')
 const handleAwsResponse = require('./internal/handleAwsResponse')
 const retryableErrorNames = require('./internal/retryableErrorNames')
 const retryHTTPRequest = require('./internal/retryHTTPRequest')
+const sleep = require('./internal/sleep')
 
 /**
  * @name SecretsManager
@@ -49,9 +50,9 @@ const retryHTTPRequest = require('./internal/retryHTTPRequest')
  */
 class SecretsManager {
   constructor(options) {
-    this.accessKeyId = options.accessKeyId ?? ''
-    this.secretAccessKey = options.secretAccessKey ?? ''
-    this.region = options.region ?? ''
+    this.accessKeyId = options.accessKeyId
+    this.secretAccessKey = options.secretAccessKey
+    this.region = options.region
     this.apiVersion = '2017-10-17'
 
     this.endpoint = `secretsmanager.${this.region}.amazonaws.com`
@@ -118,6 +119,53 @@ class SecretsManager {
     return retryHTTPRequest(this.http, method, url, { headers, body: payload })
   }
 
+  // _createSecret(name string, secretString string) -> Promise<{
+  //   ARN: string,
+  //   Name: string,
+  //   VersionId: string,
+  // }>
+  async _createSecret(name, secretString) {
+    const payload = JSON.stringify({
+      ClientRequestToken: crypto.randomUUID(),
+      Name: name,
+      SecretString: secretString,
+    })
+
+    const response = await this._awsRequest('POST', '/', 'CreateSecret', payload)
+
+    if (response.ok) {
+      const data = await Readable.JSON(response)
+      return data
+    }
+
+    throw new AwsError(await Readable.Text(response), response.status)
+  }
+
+  // _createSecret(name string, secretString string) -> Promise<{
+  //   ARN: string,
+  //   Name: string,
+  //   VersionId: string,
+  // }>
+  async _updateSecret(name, secretString) {
+    const secret = await this.getSecret(name)
+
+    const payload = JSON.stringify({
+      ClientRequestToken: crypto.randomUUID(),
+      SecretId: secret.ARN,
+      SecretString: secretString,
+    })
+    const updateSecretResponse =
+      await this._awsRequest('POST', '/', 'UpdateSecret', payload)
+
+    return handleAwsResponse.call(
+      this,
+      updateSecretResponse,
+      this.putSecret,
+      name,
+      secretString
+    )
+  }
+
   /**
    * @name putSecret
    *
@@ -152,50 +200,19 @@ class SecretsManager {
    * ```
    */
   async putSecret(name, secretString) {
-    const createSecretPayload = JSON.stringify({
-      ClientRequestToken: crypto.randomUUID(),
-      Name: name,
-      SecretString: secretString,
-    })
-    const createSecretResponse =
-      await this._awsRequest('POST', '/', 'CreateSecret', createSecretPayload)
-
-    if (createSecretResponse.ok) {
-      const data = await Readable.JSON(createSecretResponse)
+    try {
+      const data = await this._createSecret(name, secretString)
       return data
+    } catch (error) {
+      if (error.name == 'ResourceExistsException') {
+        return this._updateSecret(name, secretString)
+      } else if (retryableErrorNames.includes(error.name)) {
+        await sleep(1000)
+        return this.putSecret.call(this, name, secretString)
+      } else {
+        throw error
+      }
     }
-
-    const createSecretAwsError = new AwsError(
-      await Readable.Text(createSecretResponse),
-      createSecretResponse.status
-    )
-
-    if (createSecretAwsError.name == 'ResourceExistsException') {
-      // continue
-    } else if (retryableErrorNames.includes(createSecretAwsError.name)) {
-      await sleep(1000)
-      return putSecret.call(this, name, secretString)
-    } else {
-      throw createSecretAwsError
-    }
-
-    const secret = await this.getSecret(name)
-
-    const updateSecretPayload = JSON.stringify({
-      ClientRequestToken: crypto.randomUUID(),
-      SecretId: secret.ARN,
-      SecretString: secretString,
-    })
-    const updateSecretResponse =
-      await this._awsRequest('POST', '/', 'UpdateSecret', updateSecretPayload)
-
-    return handleAwsResponse.call(
-      this,
-      updateSecretResponse,
-      this.putSecret,
-      name,
-      secretString
-    )
   }
 
   /**

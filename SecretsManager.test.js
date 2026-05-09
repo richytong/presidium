@@ -57,6 +57,35 @@ const test = new Test('SecretsManager', async function integration() {
     throw new Error('Reran test too soon, please try in a few seconds')
   }
 
+  const _createSecret = secretsManager._createSecret
+
+  let callCount = 0
+  secretsManager._createSecret = async (...args) => {
+    if (callCount === 0) {
+      callCount += 1
+      const error = new Error('test')
+      error.name = 'ConnectionError'
+      throw error
+    }
+    return _createSecret.apply(secretsManager, args)
+  }
+
+  {
+    const name = `test-secret-${Math.trunc(Math.random() * 1e6)}`
+    const secretString = 'helloworld3'
+    const data = await secretsManager.putSecret(name, secretString)
+    assert.equal(data.Name, name)
+  }
+
+  secretsManager._createSecret = async (...args) => {
+    throw new Error('test')
+  }
+
+  await assert.rejects(
+    secretsManager.putSecret('test', 'test'),
+    new Error('test')
+  )
+
 }).case()
 
 if (process.argv[1] == __filename) {
