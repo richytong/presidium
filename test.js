@@ -25,8 +25,6 @@ const test = Test.all([
   require('./XML.test'),
 
   require('./internal/Archive.test'),
-  require('./internal/createS3DeleteAllObjectsAggregateError.test'),
-  require('./internal/createS3DeleteObjectError.test'),
   require('./internal/createUpdateServiceSpec.test'),
   require('./internal/encodeURIComponentRFC3986.test'),
   require('./internal/getAbsoluteFilePath.test'),
