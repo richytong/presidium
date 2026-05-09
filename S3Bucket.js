@@ -16,6 +16,7 @@ const AwsError = require('./internal/AwsError')
 const parseURL = require('./internal/parseURL')
 const retryHTTPRequest = require('./internal/retryHTTPRequest')
 const createS3DeleteObjectError = require('./internal/createS3DeleteObjectError')
+const createS3DeleteAllObjectsAggregateError = require('./internal/createS3DeleteAllObjectsAggregateError')
 const XML = require('./XML')
 const HTMLEntities = require('html-entities')
 const encodeURIComponentRFC3986 = require('./internal/encodeURIComponentRFC3986')
@@ -2243,15 +2244,9 @@ class S3Bucket {
       }
 
       if (response1.Errors.length > 0) {
-        const errors = response1.Errors.map(({ Key, VersionId, Code, Message }) => {
-          if (VersionId) {
-            return new Error(`${Key} (VersionId ${VersionId}): ${Code}: ${Message}`)
-          }
-          return new Error(`${Key}: ${Code}: ${Message}`)
-        })
+        const errors = response1.Errors.map(createS3DeleteObjectError)
         throw new AggregateError(errors)
       }
-
     }
 
     let versions = await this.listObjectVersions({ MaxKeys: BatchSize }).then(get('Versions'))
@@ -2272,7 +2267,6 @@ class S3Bucket {
         const errors = response1.Errors.map(createS3DeleteObjectError)
         throw new AggregateError(errors)
       }
-
     }
 
     let deleteMarkers = await this.listObjectVersions({ MaxKeys: BatchSize }).then(get('DeleteMarkers'))
@@ -2293,7 +2287,6 @@ class S3Bucket {
         const errors = response1.Errors.map(createS3DeleteObjectError)
         throw new AggregateError(errors)
       }
-
     }
 
     return response

@@ -7,6 +7,7 @@ const fs = require('fs')
 const S3Bucket = require('./S3Bucket')
 const AwsCredentials = require('./AwsCredentials')
 const CRC32 = require('./internal/CRC32')
+const AwsError = require('./internal/AwsError')
 const crc32c = require('fast-crc32c')
 const convertUint32ToBase64 = require('./internal/convertUint32ToBase64')
 const { CrtCrc64Nvme } = require('@aws-sdk/crc64-nvme-crt')
@@ -175,6 +176,38 @@ const test1 = new Test('S3Bucket', async function integration1() {
 
     const data3 = await testBucket.getObject(specialKey)
     assert.equal(data3.Body.toString('utf8'), 'test')
+  }
+
+  await testBucket.deleteAllObjects()
+
+  {
+    // console.log('listObjects Prefix and Delimiter options')
+
+    await testBucket.putObject('c/b', 'test1')
+    await testBucket.putObject('c/c', 'test1')
+
+    const data1 = await testBucket.listObjects({
+      Prefix: 'c',
+      Delimiter: '/',
+    })
+    assert.equal(data1.CommonPrefixes.length, 1)
+    assert.equal(data1.CommonPrefixes[0].Prefix, 'c/')
+    assert.equal(data1.Contents.length, 0)
+
+    const data3 = await testBucket.listObjects({
+      Prefix: 'c',
+      Delimiter: '/',
+    })
+    assert.equal(data3.CommonPrefixes.length, 1)
+    assert.equal(data3.CommonPrefixes[0].Prefix, 'c/')
+    assert.equal(data3.Contents.length, 0)
+
+    const data2 = await testBucket.listObjects({
+      Prefix: 'c/',
+      Delimiter: '/',
+    })
+    assert.strictEqual(data2.CommonPrefixes, undefined)
+    assert.equal(data2.Contents.length, 2)
   }
 
   await testBucket.deleteAllObjects()
@@ -685,6 +718,8 @@ const test3 = new Test('S3Bucket', async function integration3() {
     assert.equal(data6.VersionId, data2.VersionId)
     const data7 = await testBucket3.headObject(key)
     assert.equal(data7.VersionId, data2.VersionId)
+    const data8 = await testBucket3.headObject(key, { VersionId: data1.VersionId })
+    assert.equal(data8.VersionId, data1.VersionId)
 
   }
 
@@ -1233,10 +1268,308 @@ const test3 = new Test('S3Bucket', async function integration3() {
   testBucket3.closeConnections()
 }).case()
 
+const test4 = new Test('S3Bucket', async function integration4() {
+  const awsCreds = await AwsCredentials('presidium')
+  awsCreds.region = 'us-east-1'
+
+  const n = 1
+  const bucketName = `test.bucket-presidium-${n}`
+
+  const testBucket = new S3Bucket({
+    name: bucketName,
+    autoReady: false,
+    ...awsCreds
+  })
+
+  testBucket.getLocation = () => {
+    throw new Error('test')
+  }
+
+  await assert.rejects(
+    testBucket._readyPromise(),
+    new Error('test')
+  )
+}).case()
+
+const test5 = new Test('S3Bucket', async function integration5() {
+  const awsCreds = await AwsCredentials('presidium')
+  awsCreds.region = 'us-east-1'
+
+  const n = 1
+  const bucketName = `test.bucket-presidium-${n}`
+
+  const testBucket = new S3Bucket({
+    name: bucketName,
+    autoReady: false,
+    ...awsCreds
+  })
+
+  let requestHeaders = {}
+  let responseHeaders = {}
+  let responseOk = false
+  let responseBody = 'test'
+
+  testBucket._awsRequest0 = (method, url, _headers, body) => {
+    requestHeaders = _headers
+    const response = stream.Readable.from([responseBody])
+    response.headers = responseHeaders
+    response.ok = responseOk
+    return response
+  }
+
+  testBucket._awsRequest1 = (method, url, _headers, body) => {
+    requestHeaders = _headers
+    const response = stream.Readable.from([responseBody])
+    response.headers = responseHeaders
+    response.ok = responseOk
+    return response
+  }
+
+  await assert.rejects(
+    testBucket._putBucketEncryption(),
+    new AwsError('test')
+  )
+
+  testBucket.GrantFullControl = true
+
+  await assert.rejects(
+    testBucket.create(),
+    new AwsError('test')
+  )
+
+  assert('X-Amz-Grant-Full-Control' in requestHeaders)
+  requestHeaders = {}
+
+  await assert.rejects(
+    testBucket.putPublicAccessBlock(),
+    new AwsError('test')
+  )
+
+  await assert.rejects(
+    testBucket.putRequestPayment(),
+    new AwsError('test')
+  )
+
+  await assert.rejects(
+    testBucket.putVersioning(),
+    new AwsError('test')
+  )
+
+  await assert.rejects(
+    testBucket.putPolicy({ policy: '' }),
+    new AwsError('test')
+  )
+
+  await assert.rejects(
+    testBucket.getPolicy(),
+    new AwsError('test')
+  )
+
+  await assert.rejects(
+    testBucket.getObjectACL('test', {}),
+    new AwsError('test')
+  )
+
+  await assert.rejects(
+    testBucket.listObjectVersions(),
+    new AwsError('test')
+  )
+
+  await assert.rejects(
+    testBucket.getObject('test', {
+      IfMatch: 'test-if-match',
+      IfModifiedSince: '2026-05-09T18:39:29.671Z',
+      IfNoneMatch: 'test-if-none-match',
+      IfUnmodifiedSince: '2026-05-10T18:39:29.671Z',
+    }),
+    new AwsError('test')
+  )
+
+  assert.equal(requestHeaders['If-Match'], 'test-if-match')
+  assert.equal(requestHeaders['If-Modified-Since'], '2026-05-09T18:39:29.671Z')
+  assert.equal(requestHeaders['If-None-Match'], 'test-if-none-match')
+  assert.equal(requestHeaders['If-Unmodified-Since'], '2026-05-10T18:39:29.671Z')
+
+  requestHeaders = {}
+
+  await assert.rejects(
+    testBucket.headObject('test', {
+      IfMatch: 'test-if-match',
+      IfModifiedSince: '2026-05-09T18:39:29.671Z',
+      IfNoneMatch: 'test-if-none-match',
+      IfUnmodifiedSince: '2026-05-10T18:39:29.671Z',
+    }),
+    new AwsError('test')
+  )
+
+  assert.equal(requestHeaders['If-Match'], 'test-if-match')
+  assert.equal(requestHeaders['If-Modified-Since'], '2026-05-09T18:39:29.671Z')
+  assert.equal(requestHeaders['If-None-Match'], 'test-if-none-match')
+  assert.equal(requestHeaders['If-Unmodified-Since'], '2026-05-10T18:39:29.671Z')
+
+  requestHeaders = {}
+
+  responseHeaders = {
+    'x-amz-delete-marker': 'true'
+  }
+
+  await assert.rejects(
+    testBucket.getObject('test'),
+    error => {
+      assert.equal(error.name, 'AwsError')
+      assert.equal(error.message, 'test')
+      assert(error.DeleteMarker)
+      return true
+    }
+  )
+
+  await assert.rejects(
+    testBucket.headObject('test'),
+    error => {
+      assert.equal(error.name, 'AwsError')
+      assert.equal(error.message, 'test')
+      assert(error.DeleteMarker)
+      return true
+    }
+  )
+
+  responseOk = true
+  responseHeaders = {
+    'x-amz-expiration': 'test-amz-expiration',
+    'x-amz-restore': 'test-amz-restore',
+    'x-amz-missing-meta': 'test-amz-missing-meta',
+  }
+
+  {
+    const data = await testBucket.getObject('test')
+    assert.equal(data.Expiration, 'test-amz-expiration')
+    assert.equal(data.Restore, 'test-amz-restore')
+    assert.equal(data.MissingMeta, 'test-amz-missing-meta')
+  }
+
+  responseHeaders = {
+    'x-amz-expiration': 'test-amz-expiration',
+    'x-amz-restore': 'test-amz-restore',
+    'x-amz-archive-status': 'test-amz-archive-status',
+    'x-amz-missing-meta': 'test-amz-missing-meta',
+    'x-amz-object-lock-mode': 'test-amz-object-lock-mode',
+    'x-amz-object-lock-retain-until-date': 'test-amz-object-lock-retain-until-date',
+    'x-amz-object-lock-legal-hold': 'test-amz-object-lock-legal-hold',
+  }
+
+  {
+    const data = await testBucket.headObject('test')
+    assert.equal(data.Expiration, 'test-amz-expiration')
+    assert.equal(data.Restore, 'test-amz-restore')
+    assert.equal(data.MissingMeta, 'test-amz-missing-meta')
+    assert.equal(data.ObjectLockMode, 'test-amz-object-lock-mode')
+    assert.equal(data.ObjectLockRetainUntilDate, 'test-amz-object-lock-retain-until-date')
+    assert.equal(data.ObjectLockLegalHoldStatus, 'test-amz-object-lock-legal-hold')
+  }
+
+  responseOk = true
+  responseHeaders = {}
+
+  responseBody = `
+<?xml version="1.0" encoding="UTF-8"?>
+<AccessControlPolicy xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <Owner><ID>test</ID></Owner>
+  <AccessControlList>
+    <Grant>
+      <Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>test</ID></Grantee><Permission>FULL_CONTROL</Permission>
+    </Grant>
+  </AccessControlList>
+</AccessControlPolicy>
+  `
+
+  {
+    const data = await testBucket.getObjectACL('test')
+    assert(Array.isArray(data.Grants))
+  }
+
+  responseOk = false
+  responseBody = 'test'
+
+  await assert.rejects(
+    testBucket.deleteObjects(['test'], {}),
+    new AwsError('test')
+  )
+
+  const deleteObjects = testBucket.deleteObjects
+  const listObjects = testBucket.listObjects
+  const listObjectVersions = testBucket.listObjectVersions
+
+  testBucket.deleteObjects = async () => ({
+    Errors: [
+      { Code: 'AccessDenied', Message: 'Access Denied', Key: 'test1' },
+      { Code: 'AccessDenied', Message: 'Access Denied', Key: 'test2' },
+    ],
+  })
+
+  testBucket.listObjects = async () => {
+    return { Contents: [{}] }
+  }
+
+  function createError(name, message, data) {
+    const error = new Error(message)
+    error.name = name
+    for (const key in data) {
+      error[key] = data[key]
+    }
+    return error
+  }
+
+  await assert.rejects(
+    testBucket.deleteAllObjects(),
+    new AggregateError([
+      createError('AccessDenied', 'Access Denied', { Key: 'test1' }),
+      createError('AccessDenied', 'Access Denied', { Key: 'test2' }),
+    ])
+  )
+
+  testBucket.listObjects = async () => {
+    return { Contents: [] }
+  }
+  testBucket.listObjectVersions = async () => {
+    return { Versions: [{}] }
+  }
+
+  await assert.rejects(
+    testBucket.deleteAllObjects(),
+    new AggregateError([
+      createError('AccessDenied', 'Access Denied', { Key: 'test1' }),
+      createError('AccessDenied', 'Access Denied', { Key: 'test2' }),
+    ])
+  )
+
+  testBucket.listObjects = async () => {
+    return { Contents: [] }
+  }
+  let listObjectVersionsCallCount = 0
+  testBucket.listObjectVersions = async () => {
+    if (listObjectVersionsCallCount === 0) {
+      listObjectVersionsCallCount += 1
+      return { Versions: [] }
+    }
+    return { DeleteMarkers: [{}] }
+  }
+
+  await assert.rejects(
+    testBucket.deleteAllObjects(),
+    new AggregateError([
+      createError('AccessDenied', 'Access Denied', { Key: 'test1' }),
+      createError('AccessDenied', 'Access Denied', { Key: 'test2' }),
+    ])
+  )
+
+}).case()
+
 const test = Test.all([
   test1,
   test2,
   test3,
+  test4,
+  test5,
 ])
 
 if (process.argv[1] == __filename) {
