@@ -30,9 +30,8 @@ async function* dynamoDBStreamGetShardsIterator(options) {
     Limit: 100,
   }).then(get('StreamDescription'))
 
-  if (streamData.Shards.length > 0) {
-    yield* streamData.Shards.map(assign({ StreamArn: options.StreamArn }))
-  }
+  yield* streamData.Shards.map(assign({ StreamArn: options.StreamArn }))
+
   while (!this.closed && streamData.LastEvaluatedShardId != null) {
     await sleep(this.GetShardsInterval)
 
@@ -42,9 +41,7 @@ async function* dynamoDBStreamGetShardsIterator(options) {
       ExclusiveStartShardId: streamData.LastEvaluatedShardId,
     }).then(get('StreamDescription'))
 
-    if (streamData.Shards.length > 0) {
-      yield* streamData.Shards.map(assign({ StreamArn: options.StreamArn }))
-    }
+    yield* streamData.Shards.map(assign({ StreamArn: options.StreamArn }))
   }
 }
 

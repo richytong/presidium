@@ -20,7 +20,8 @@ const getFirstKey = require('./getFirstKey')
  * ```
  */
 function DynamoDBAttributeValueJSON(AttributeValue) {
-  switch (getFirstKey(AttributeValue)) {
+  const firstKey = getFirstKey(AttributeValue)
+  switch (firstKey) {
     case 'S':
       return String(AttributeValue.S)
     case 'N':
@@ -34,7 +35,7 @@ function DynamoDBAttributeValueJSON(AttributeValue) {
     case 'M':
       return map(AttributeValue.M, DynamoDBAttributeValueJSON)
     default:
-      throw new TypeError(`Invalid AttributeValue ${AttributeValue}`)
+      throw new TypeError(`Invalid AttributeValue ${firstKey}`)
   }
 }
 

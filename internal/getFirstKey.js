@@ -1,6 +1,6 @@
 // { [key string]: any } => key
 const getFirstKey = object => {
-  let key = null
+  let key
   for (const firstKey in object) {
     key = firstKey
     break

@@ -9,7 +9,7 @@ const sleep = require('./sleep')
  * ```
  */
 
-const RetryAwsErrors = function (func, context, name) {
+const RetryAwsErrors = function (func, context) {
   return function retriesAwsErrors(...args) {
     return func.apply(context, args).catch(async error => {
       if (
