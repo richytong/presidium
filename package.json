@@ -1,7 +1,7 @@
 {
   "name": "presidium",
   "version": "4.0.7",
-  "description": "A library for creating web services",
+  "description": "The Presidium library.",
   "author": "Richard Tong",
   "license": "CFOSS",
   "main": "index.js",

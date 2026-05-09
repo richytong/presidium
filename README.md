@@ -1,7 +1,7 @@
 # Presidium
 ![presidium](https://rubico.land/assets/presidium-logo-3-w200.jpg)
 
-A library for creating web services.
+The Presidium library.
 
 Source code: [GitHub](https://github.com/richytong/presidium) |
 License: [CFOSS](https://cloutsworld.com/en-us/legal/license/cfoss)
