@@ -1,14 +1,16 @@
 const Test = require('thunk-test')
 const assert = require('assert')
 const fs = require('fs')
-const { exec } = require('child_process')
+const { exec, spawn } = require('child_process')
 const Readable = require('./Readable')
+const sleep = require('./internal/sleep')
 const GoogleChromeForTesting = require('./GoogleChromeForTesting')
 
-const test = new Test('GoogleChromeForTesting', async function integration() {
+const test1 = new Test('GoogleChromeForTesting', async function integration1() {
+
   await fs.promises.rm('google-chrome-for-testing', { recursive: true, force: true })
 
-  const cmd = await exec('ps aux | grep "Google Chrome for Testing" | awk \'{print $2}\' | xargs kill', {
+  await exec('ps aux | grep "Google Chrome for Testing" | awk \'{print $2}\' | xargs kill', {
     stdio: 'inherit',
   })
 
@@ -45,10 +47,18 @@ const test = new Test('GoogleChromeForTesting', async function integration() {
       userDataDir: `${__dirname}/tmp/chrome`,
       headless: true,
     })
+
     assert.strictEqual(googleChromeForTesting.devtoolsUrl, undefined)
     await googleChromeForTesting.init()
     assert.equal(typeof googleChromeForTesting.devtoolsUrl, 'string')
     await googleChromeForTesting.init()
+
+    const p = new Promise(resolve => {
+      googleChromeForTesting.on('error', resolve)
+    })
+    googleChromeForTesting.cmd.emit('error', new Error('test'))
+    const caughtError = await p
+    assert.equal(caughtError.message, 'test')
 
     assert.equal(typeof googleChromeForTesting.devtoolsUrl, 'string')
     assert(googleChromeForTesting.devtoolsUrl.startsWith('ws://'))
@@ -67,6 +77,20 @@ const test = new Test('GoogleChromeForTesting', async function integration() {
   }
 
   {
+    const cmd = spawn('node', ['testRunGoogleChromeForTesting.js'], { stdio: 'inherit' })
+
+    const p = new Promise(resolve => {
+      cmd.on('exit', resolve)
+    })
+
+    await sleep(5000).then(() => {
+      cmd.kill('SIGTERM')
+    })
+
+    await p
+  }
+
+  {
     const googleChromeForTesting = new GoogleChromeForTesting({
       chromeDir: `${__dirname}/google-chrome-for-testing`,
       userDataDir: `${__dirname}/tmp/chrome`,
@@ -76,6 +100,14 @@ const test = new Test('GoogleChromeForTesting', async function integration() {
 
     assert.equal(typeof googleChromeForTesting.devtoolsUrl, 'string')
     assert(googleChromeForTesting.devtoolsUrl.startsWith('ws://'))
+
+    await fs.promises.rm(googleChromeForTesting.cmd.spawnargs[0])
+    googleChromeForTesting.devtoolsUrl = undefined
+
+    await assert.rejects(
+      googleChromeForTesting.init(),
+      new Error('chrome binary or executable not found.')
+    )
 
     let closeResolve
     const closePromise = new Promise(_resolve => {
@@ -94,6 +126,52 @@ const test = new Test('GoogleChromeForTesting', async function integration() {
 
   console.log('Success')
 }).case()
+
+const test2 = new Test('GoogleChromeForTesting', async function integration2() {
+
+  await fs.promises.rm('google-chrome-for-testing', { recursive: true, force: true })
+
+  await exec('ps aux | grep "Google Chrome for Testing" | awk \'{print $2}\' | xargs kill', {
+    stdio: 'inherit',
+  })
+
+  {
+    const cmd = spawn('node', ['testRunGoogleChromeForTesting.js'], { stdio: 'inherit' })
+
+    const p = new Promise(resolve => {
+      cmd.on('exit', resolve)
+    })
+
+    await sleep(5000).then(() => {
+      cmd.kill()
+    })
+
+    await p
+  }
+
+  {
+    const cmd = spawn('node', ['testRunGoogleChromeForTesting.js'], { stdio: 'pipe' })
+
+    const p = new Promise(resolve => {
+      cmd.on('exit', resolve)
+    })
+
+    await sleep(5000).then(() => {
+      cmd.kill()
+    })
+
+    await p
+  }
+
+  await fs.promises.rm('google-chrome-for-testing', { recursive: true, force: true })
+
+  console.log('Success')
+}).case()
+
+const test = Test.all([
+  test1,
+  test2,
+])
 
 if (process.argv[1] == __filename) {
   test()

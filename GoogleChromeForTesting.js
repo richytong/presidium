@@ -6,6 +6,7 @@
  */
 
 const https = require('https')
+const EventEmitter = require('events')
 const os = require('os')
 const fs = require('fs')
 const path = require('path')
@@ -15,15 +16,12 @@ const extract = require('extract-zip')
 const HTTP = require('./HTTP')
 const XML = require('./XML')
 const Readable = require('./Readable')
+const getPlatform = require('./internal/getPlatform')
 const walk = require('./internal/walk')
 const sleep = require('./internal/sleep')
-
-async function getChromeVersions() {
-  const http = new HTTP()
-  const response = await http.GET('https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json')
-  const data = await Readable.JSON(response)
-  return data
-}
+const getChromeUrl = require('./internal/getChromeUrl')
+const getAbsoluteFilePath = require('./internal/getAbsoluteFilePath')
+const getChromeBinaryOrExecutableFilePath = require('./internal/getChromeBinaryOrExecutableFilePath')
 
 function updateConsoleLog(message, platform) {
   readline.cursorTo(process.stdout, 0, undefined);
@@ -31,66 +29,16 @@ function updateConsoleLog(message, platform) {
   process.stdout.write(message);
 }
 
-function getPlatform() {
-  let platform = os.platform()
-  if (platform == 'darwin') {
-    platform = 'mac'
-  }
-  const arch = os.arch()
-
-  if (platform == 'mac') {
-    platform = `${platform}-${arch}`
-  }
-  else if (platform == 'win32') {
-    platform = `win${arch.slice(1)}`
-  }
-  else {
-    platform = `${platform}${arch.slice(1)}`
-  }
-
-  return platform
-}
-
-async function getChromeUrl() {
-  const platform = getPlatform()
-
-  let url
-  if (['stable', 'beta', 'dev', 'canary'].includes(this.chromeVersion)) {
-    const chromeVersions = await getChromeVersions()
-    const channel = `${this.chromeVersion[0].toUpperCase()}${this.chromeVersion.slice(1)}`
-    const chromeVersionNumber = chromeVersions.channels[channel].version
-    url = `https://storage.googleapis.com/chrome-for-testing-public/${chromeVersionNumber}/${platform}/chrome-${platform}.zip`
-  } else {
-    const chromeVersionNumber = this.chromeVersion
-    url = `https://storage.googleapis.com/chrome-for-testing-public/${chromeVersionNumber}/${platform}/chrome-${platform}.zip`
-  }
-
-  return url
-}
-
 async function installChrome() {
   const platform = getPlatform()
+  const url = await getChromeUrl.call(this, platform)
+
+  let filepath = `${this.chromeDir}/${url.replace('https://storage.googleapis.com/chrome-for-testing-public/', '')}`
+  filepath = getAbsoluteFilePath(filepath, platform)
+
   const delimiter = platform.startsWith('win') ? '\\' : '/'
-  const url = await getChromeUrl.call(this)
+  const parentDir = `${filepath.split(delimiter).slice(0, -1).join(delimiter)}`
 
-  let filepath = `${this.chromeDir}${delimiter}${url.replace('https://storage.googleapis.com/chrome-for-testing-public/', '')}`
-  if (platform.startsWith('win')) {
-    filepath = filepath.replace(/\//g, '\\')
-    if (!filepath.startsWith(`${__dirname[0]}:`)) {
-      filepath = path.join(process.cwd(), filepath)
-    }
-  } else if (!filepath.startsWith('/')) {
-    filepath = path.join(process.cwd(), filepath)
-  }
-
-  let parentDir = `${filepath.split(delimiter).slice(0, -1).join(delimiter)}`
-  if (platform.startsWith('win')) {
-    if (!filepath.startsWith(`${__dirname[0]}:`)) {
-      parentDir = path.join(process.cwd(), parentDir)
-    }
-  } else if (!parentDir.startsWith('/')) {
-    parentDir = path.join(process.cwd(), parentDir)
-  }
   await fs.promises.mkdir(parentDir, { recursive: true })
 
   const http = new HTTP()
@@ -113,27 +61,26 @@ async function installChrome() {
     fileStream.write(chunk)
   })
 
+  response.on('end', () => {
+    fileStream.end()
+  })
+
   let resolve
   const promise = new Promise(_resolve => {
     resolve = _resolve
   })
-  response.on('end', () => {
+  fileStream.on('finish', () => {
     resolve()
   })
   await promise
 
   console.log('Extracting', filepath)
-  try {
-    await extract(filepath, { dir: parentDir })
-  } catch (_error) {
-    await sleep(1000)
-    await extract(filepath, { dir: parentDir })
-  }
+  await extract(filepath, { dir: parentDir })
 }
 
 async function getChromeFilepath() {
   const platform = getPlatform()
-  const url = await getChromeUrl.call(this)
+  const url = await getChromeUrl.call(this, platform)
   const filepath = `${this.chromeDir}/${url.replace('https://storage.googleapis.com/chrome-for-testing-public/', '')}`
   const parentDir = `${filepath.split('/').slice(0, -1).join('/')}`
 
@@ -144,16 +91,13 @@ async function getChromeFilepath() {
     }
 
     for await (const filepath of walk(parentDir)) {
-      if (platform.startsWith('mac') && filepath.endsWith('Google Chrome for Testing')) {
-        return filepath
-      }
-      if (platform.startsWith('linux') && filepath.endsWith('chrome')) {
-        return filepath
-      }
-      if (platform.startsWith('win') && filepath.endsWith('chrome.exe')) {
-        return filepath
+      const chromeBinaryOrExecutableFilePath =
+        getChromeBinaryOrExecutableFilePath(filepath, platform)
+      if (chromeBinaryOrExecutableFilePath) {
+        return chromeBinaryOrExecutableFilePath
       }
     }
+    throw new Error('chrome binary or executable not found.')
   } catch (error) {
     if (error.code == 'ENOENT') {
       await installChrome.call(this)
@@ -162,8 +106,6 @@ async function getChromeFilepath() {
     }
     throw error
   }
-
-  throw new Error('unable to find Google Chrome for Testing executable.')
 }
 
 /**
@@ -220,8 +162,9 @@ async function getChromeFilepath() {
  * sudo apt-get update && sudo apt-get install -y libcairo2 libpango-1.0-0 libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libatspi2.0-0 libcups2 libdrm-dev libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm-dev libasound2-dev
  * ```
  */
-class GoogleChromeForTesting {
+class GoogleChromeForTesting extends EventEmitter {
   constructor(options = {}) {
+    super()
     this.chromeVersion = options.chromeVersion ?? 'stable'
     this.chromeDir = options.chromeDir ?? 'google-chrome-for-testing'
     this.remoteDebuggingPort = options.remoteDebuggingPort ?? 9222
@@ -295,8 +238,7 @@ class GoogleChromeForTesting {
     })
 
     cmd.on('error', error => {
-      console.error(error)
-      process.exit(1)
+      this.emit('error', error)
     })
 
     cmd.on('exit', code => {
