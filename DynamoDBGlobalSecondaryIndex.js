@@ -98,9 +98,9 @@ class DynamoDBGlobalSecondaryIndex {
     this.key = options.key
     this.name = DynamoDBIndexname(this.key)
 
-    this.accessKeyId = options.accessKeyId ?? ''
-    this.secretAccessKey = options.secretAccessKey ?? ''
-    this.region = options.region ?? ''
+    this.accessKeyId = options.accessKeyId
+    this.secretAccessKey = options.secretAccessKey
+    this.region = options.region
     this.apiVersion = '2012-08-10'
 
     this.endpoint = `dynamodb.${this.region}.amazonaws.com`

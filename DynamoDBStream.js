@@ -116,9 +116,9 @@ class DynamoDBStream {
     this.ListStreamsLimit = options.ListStreamsLimit ?? 100
     this.JSON = options.JSON ?? false
 
-    this.accessKeyId = options.accessKeyId ?? ''
-    this.secretAccessKey = options.secretAccessKey ?? ''
-    this.region = options.region ?? ''
+    this.accessKeyId = options.accessKeyId
+    this.secretAccessKey = options.secretAccessKey
+    this.region = options.region
     this.apiVersion = '2012-08-10'
 
     this.endpoint = `dynamodb.${this.region}.amazonaws.com`

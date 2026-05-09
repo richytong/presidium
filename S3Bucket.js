@@ -90,9 +90,9 @@ class S3Bucket {
   constructor(options) {
     this.name = options.name
 
-    this.accessKeyId = options.accessKeyId ?? ''
-    this.secretAccessKey = options.secretAccessKey ?? ''
-    this.region = options.region ?? ''
+    this.accessKeyId = options.accessKeyId
+    this.secretAccessKey = options.secretAccessKey
+    this.region = options.region
     this.apiVersion = '2012-08-10'
 
     this.host0 = 's3.amazonaws.com'

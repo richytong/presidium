@@ -46,9 +46,9 @@ const retryHTTPRequest = require('./internal/retryHTTPRequest')
  */
 class ECR {
   constructor(options) {
-    this.accessKeyId = options.accessKeyId ?? ''
-    this.secretAccessKey = options.secretAccessKey ?? ''
-    this.region = options.region ?? ''
+    this.accessKeyId = options.accessKeyId
+    this.secretAccessKey = options.secretAccessKey
+    this.region = options.region
     this.apiVersion = '2015-09-21'
 
     this.endpoint = `ecr.${this.region}.amazonaws.com`
