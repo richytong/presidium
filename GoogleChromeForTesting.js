@@ -23,12 +23,6 @@ const getChromeUrl = require('./internal/getChromeUrl')
 const getAbsoluteFilePath = require('./internal/getAbsoluteFilePath')
 const getChromeBinaryOrExecutableFilePath = require('./internal/getChromeBinaryOrExecutableFilePath')
 
-function updateConsoleLog(message, platform) {
-  readline.cursorTo(process.stdout, 0, undefined);
-  readline.clearLine(process.stdout, 0);
-  process.stdout.write(message);
-}
-
 async function installChrome() {
   const platform = getPlatform()
   const url = await getChromeUrl.call(this, platform)
@@ -53,9 +47,9 @@ async function installChrome() {
   response.on('data', chunk => {
     downloadedLength += chunk.length
     if (downloadedLength == contentLength) {
-      updateConsoleLog(`Downloading ${url} (${downloadedLength} / ${contentLength} bytes)\n`, platform)
+      console.log(`Downloading ${url} (${downloadedLength} / ${contentLength} bytes)\n`, platform)
     } else {
-      updateConsoleLog(`Downloading ${url} (${downloadedLength} / ${contentLength} bytes)`, platform)
+      console.log(`Downloading ${url} (${downloadedLength} / ${contentLength} bytes)`, platform)
     }
 
     fileStream.write(chunk)
