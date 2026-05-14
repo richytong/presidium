@@ -411,7 +411,7 @@ class Docker {
   async buildImage(path, options = {}) {
     path = path.endsWith('/') ? path : `${path}/`
 
-    const archiveDir = `/tmp/presidium/Docker-buildImage/${uniqid()}`
+    const archiveDir = `tmp/presidium/Docker-buildImage/${uniqid()}`
 
     await fs.promises.mkdir(archiveDir, { recursive: true })
 
