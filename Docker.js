@@ -11,11 +11,13 @@ const identity = require('rubico/x/identity')
 const size = require('rubico/x/size')
 const defaultsDeep = require('rubico/x/defaultsDeep')
 const Transducer = require('rubico/Transducer')
-const zlib = require('zlib')
 const http = require('http')
+const fs = require('fs')
+const zlib = require('zlib')
+const uniqid = require('uniqid')
+const { spawn } = require('child_process')
 const Readable = require('./Readable')
 const HTTP = require('./HTTP')
-const Archive = require('./internal/Archive')
 const querystring = require('querystring')
 const split = require('./internal/split')
 const join = require('./internal/join')
@@ -43,6 +45,12 @@ const handleDockerHTTPResponse = require('./internal/handleDockerHTTPResponse')
  * Arguments:
  *   * `options`
  *     * `apiVersion` - the version of the Docker API. Defaults to `'1.48'`.
+ *
+ * Supported platforms:
+ *   * `linux64`
+ *
+ * System dependencies:
+ *   * `tar`
  */
 class Docker {
   constructor(options = {}) {
@@ -341,7 +349,7 @@ class Docker {
    *   * `path` - parent directory of the build context.
    *   * `options`
    *     * `image` - the name and optional tag of the image. If no tag is present, `'LATEST'` is assumed as the value for the tag.
-   *     * `ignore` - filepaths or filenames to ignore when bundling files and directories for the build context.
+   *     * `ignore` - patterns to ignore when bundling files and directories for the build context.
    *     * `archive` - an object of filenames and file contents that will be present in the build context.
    *     * `archiveDockerfile` - the filepath including filename of the Dockerfile, e.g. `'Dockerfiles/Dockerfile2'`. Defaults to `'Dockerfile'`.
    *     * `platform` - target platform for the build, e.g. `'linux/arm64'`.
@@ -401,12 +409,58 @@ class Docker {
    *   * [Dockerfile](https://docs.docker.com/engine/reference/builder/)
    */
   async buildImage(path, options = {}) {
-    const pack = Archive.tar(path, {
-      base: options.archive,
-      ignore: options.ignore ?? ['node_modules', '.git', '.nyc_output'],
+    path = path.endsWith('/') ? path : `${path}/`
+
+    const archiveDir = `/tmp/presidium/Docker-buildImage/${uniqid()}`
+
+    await fs.promises.mkdir(archiveDir, { recursive: true })
+
+    const archiveFilename = `${archiveDir}/archive.tar`
+
+    const cmdArgs = [
+      '-cf',
+      archiveFilename,
+      '-C',
+      path,
+    ]
+
+    if (options.ignore) {
+      for (const pattern of options.ignore) {
+        cmdArgs.push(`--exclude=${pattern}`)
+      }
+    }
+
+    cmdArgs.push('.')
+
+    const cmd = spawn('tar', cmdArgs, { stdio: 'inherit' })
+
+    await new Promise(resolve => {
+      cmd.on('close', resolve)
     })
 
-    const compressed = pack.pipe(zlib.createGzip())
+    if (options.archive) {
+      for (const filename in options.archive) {
+        await fs.promises.writeFile(
+          `${archiveDir}/${filename}`, options.archive[filename]
+        )
+
+        const cmdArgs = [
+          '-rf',
+          archiveFilename,
+          `--directory=${archiveDir}`,
+        ]
+
+        cmdArgs.push(filename)
+
+        const cmd = spawn('tar', cmdArgs, { stdio: 'inherit' })
+
+        await new Promise(resolve => {
+          cmd.on('close', resolve)
+        })
+      }
+    }
+
+    const archive = fs.createReadStream(archiveFilename).pipe(zlib.createGzip())
 
     const response = await this.http.post(`/build?${querystring.stringify({
       dockerfile: options.archiveDockerfile ?? 'Dockerfile',
@@ -414,11 +468,13 @@ class Docker {
       forcerm: true,
       platform: options.platform ?? '',
     })}`, {
-      body: compressed,
+      body: archive,
       headers: {
         'Content-Type': 'application/x-tar',
       },
     })
+
+    await fs.promises.rm(archiveDir, { recursive: true })
 
     const dataStream = await handleDockerHTTPResponse(response, { stream: true })
     return dataStream

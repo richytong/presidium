@@ -24,7 +24,6 @@ const test = Test.all([
   require('./ServerWebSocket.test'),
   require('./XML.test'),
 
-  require('./internal/Archive.test'),
   require('./internal/createUpdateServiceSpec.test'),
   require('./internal/createFilterExpression.test'),
   require('./internal/createKeyConditionExpression.test'),

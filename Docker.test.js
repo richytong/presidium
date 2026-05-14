@@ -74,12 +74,34 @@ WORKDIR /opt
 COPY . .
 EXPOSE 8888`,
       },
+      ignore: ['.git', '.github', '.nyc_output', 'node_modules', 'tmp'],
     })
     dataStream.pipe(process.stdout)
     await new Promise(resolve => {
       dataStream.on('end', resolve)
     })
   }
+
+  {
+    const runStream = await docker.runContainer({
+      image: 'presidium-test:test',
+      env: { FOO: 'Example' },
+      cmd: ['find', '/opt'],
+      rm: true,
+    })
+
+    let output = ''
+    runStream.on('data', chunk => {
+      output += chunk.toString('utf8')
+    })
+    await new Promise(resolve => {
+      runStream.on('end', resolve)
+    })
+
+    assert(output.includes('/opt/Docker.js'))
+    assert(output.includes('/opt/Docker.test.js'))
+  }
+
 
   {
     const data = await docker.listImages()
