@@ -29,7 +29,7 @@ const Archive = {}
  *     * `ignore` - filepaths, filenames, or patterns to ignore.
  */
 Archive.tar = function tar(path, options) {
-  const pathWithSlash = path.endsWith('/') ? path : `${path}/`
+  path = path.endsWith('/') ? path : `${path}/`
   const ignore = get(options, 'ignore')
   const pack = tarStream.pack()
 
@@ -45,13 +45,21 @@ Archive.tar = function tar(path, options) {
     }),
 
     reduce(async (pack, filepath) => {
-      pack.entry({
-        name: filepath.replace(pathWithSlash, ''),
-        ...pipe([
-          fs.promises.stat,
-          pick(['size', 'mode', 'mtime', 'uid', 'gid']),
-        ])(filepath),
-      }, await fs.promises.readFile(filepath))
+      const stats = await pipe(filepath, [
+        fs.promises.stat,
+        pick(['size', 'mode', 'mtime', 'uid', 'gid']),
+      ])
+
+      const entry = pack.entry({ ...stats, name: filepath.replace(path, '') })
+
+      const fileStream = fs.createReadStream(filepath)
+
+      fileStream.pipe(entry)
+
+      await new Promise(resolve => {
+        fileStream.on('end', resolve)
+      })
+
       return pack
     }, pack),
 
