@@ -424,6 +424,7 @@ class Docker {
       path,
     ]
 
+    cmdArgs.push(`--exclude=${archiveDir}`)
     if (options.ignore) {
       for (const pattern of options.ignore) {
         cmdArgs.push(`--exclude=${pattern}`)
@@ -474,9 +475,12 @@ class Docker {
       },
     })
 
-    await fs.promises.rm(archiveDir, { recursive: true })
-
     const dataStream = await handleDockerHTTPResponse(response, { stream: true })
+
+    dataStream.on('end', async () => {
+      await fs.promises.rm(archiveDir, { recursive: true })
+    })
+
     return dataStream
   }
 
