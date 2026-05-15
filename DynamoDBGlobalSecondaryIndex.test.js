@@ -79,15 +79,15 @@ const test = new Test('DynamoDBGlobalSecondaryIndex', async function integration
   await testTable.putItemJSON({ id: '4', type: 'page_view', time: 4, a: 4 })
   await testTable.putItemJSON({ id: '5', type: 'page_view', time: 5, a: 5 })
 
-  let maximumTimeToWaitForEventualConsistency = 60000
+  let time = 60000
   while (true) {
     const data = await testTable.scan()
     if (data.Items.length == 6) {
       break
     }
     await sleep(100)
-    maximumTimeToWaitForEventualConsistency -= 100
-    if (maximumTimeToWaitForEventualConsistency <= 0) {
+    time -= 100
+    if (time <= 0) {
       throw new Error('Unexpected count of table items.')
     }
   }
