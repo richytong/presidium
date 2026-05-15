@@ -51,7 +51,7 @@ const handleDockerHTTPResponse = require('./internal/handleDockerHTTPResponse')
  *   * `docker`
  *   * `tar`
  *
- * Note: the Presidium Docker client connects to the Docker socket `/var/run/docker.sock`. For security purposes, please avoid exposing any code using the Presidium Docker client to the internet, see [How would an attacker gain access to the host machine from within a Docker container?](https://duckduckgo.com/?q=how+would+an+attacker+gain+access+to+the+host+machine+from+within+a+docker+container&ia=web).
+ * Note: the Presidium Docker client connects to the Docker socket `/var/run/docker.sock`. For security purposes, please avoid exposing any code using the Presidium Docker client to the internet, see [How would an attacker gain access to the host machine from within a Docker container?](https://www.google.com/search?hl=en&q=how+would+an+attacker+gain+access+to+the+host+machine+from+within+a+docker+container&ia=web).
  */
 class Docker {
   constructor(options = {}) {
