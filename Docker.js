@@ -417,12 +417,7 @@ class Docker {
 
     const archiveFilename = `${archiveDir}/archive.tar`
 
-    const cmdArgs = [
-      '-cf',
-      archiveFilename,
-      '-C',
-      path,
-    ]
+    const cmdArgs = []
 
     cmdArgs.push(`--exclude=${archiveDir}`)
     if (options.ignore) {
@@ -431,7 +426,7 @@ class Docker {
       }
     }
 
-    cmdArgs.push('.')
+    cmdArgs.push('-cf', archiveFilename, '-C', path, '.')
 
     const cmd = spawn('tar', cmdArgs, { stdio: 'inherit' })
 
