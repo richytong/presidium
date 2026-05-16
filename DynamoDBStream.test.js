@@ -86,6 +86,7 @@ const test1 = new Test('DynamoDBStream', async function integration() {
 
     const streamItems = []
     for await (const streamItem of myStream) {
+      console.log('stream items:', streamItems.length)
       streamItems.push(streamItem)
       if (streamItems.length == 15) {
         break
@@ -168,6 +169,7 @@ const test1 = new Test('DynamoDBStream', async function integration() {
 
     const streamItems = []
     for await (const streamItem of myStream) {
+      console.log('stream items:', streamItems.length)
       streamItems.push(streamItem)
       if (streamItems.length == 15) {
         break
@@ -246,6 +248,7 @@ const test1 = new Test('DynamoDBStream', async function integration() {
 
     const streamItems = []
     for await (const streamItem of myStream) {
+      console.log('stream items:', streamItems.length)
       streamItems.push(streamItem)
       if (streamItems.length == 15) {
         break
@@ -324,6 +327,7 @@ const test1 = new Test('DynamoDBStream', async function integration() {
 
     const streamItems = []
     for await (const streamItem of myStream) {
+      console.log('stream items:', streamItems.length)
       streamItems.push(streamItem)
       if (streamItems.length == 15) {
         break
