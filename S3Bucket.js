@@ -212,8 +212,9 @@ class S3Bucket {
    */
   _awsRequest0(method, url, headers, body) {
     const amzDate = AmzDate()
-    const payloadHash =
-      crypto.createHash('sha256').update(body, 'utf8').digest('hex')
+    const payloadHash = headers.ChecksumSHA256
+      ? Buffer.from(headers.ChecksumSHA256, 'base64').toString('hex')
+      : crypto.createHash('sha256').update(body, 'utf8').digest('hex')
     const urlData = parseURL(url)
 
     headers = {
@@ -276,8 +277,9 @@ class S3Bucket {
    */
   _awsRequest1(method, url, headers, body) {
     const amzDate = AmzDate()
-    const payloadHash =
-      crypto.createHash('sha256').update(body, 'utf8').digest('hex')
+    const payloadHash = headers.ChecksumSHA256
+      ? Buffer.from(headers.ChecksumSHA256, 'base64').toString('hex')
+      : crypto.createHash('sha256').update(body, 'utf8').digest('hex')
     const urlData = parseURL(url)
 
     headers = {
