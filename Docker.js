@@ -45,7 +45,7 @@ const handleDockerHTTPResponse = require('./internal/handleDockerHTTPResponse')
  *     * `apiVersion` - the version of the Docker API. Defaults to `'1.48'`.
  *
  * Supported platforms:
- *   * MacOS (64-bit)
+ *   * macOS (64-bit)
  *   * Linux (64-bit)
  *
  * System dependencies:
