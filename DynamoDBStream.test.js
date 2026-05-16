@@ -371,7 +371,7 @@ const test1 = new Test('DynamoDBStream', async function integration() {
 
     assert.equal(streamItems.length, 10)
 
-    console.log('streamItems', streamItems, streamItems.length)
+    console.log('streamItems', streamItems.map(item => item.dynamodb.NewImageJSON), streamItems.length)
 
     const insertItems = streamItems.filter(item => item.eventName == 'INSERT')
     const modifyItems = streamItems.filter(item => item.eventName == 'MODIFY')
@@ -383,8 +383,11 @@ const test1 = new Test('DynamoDBStream', async function integration() {
       a.dynamodb.NewImageJSON.createTime - b.dynamodb.NewImageJSON.createTime
     ))
 
-    console.log('insertItems', insertItems, insertItems.length)
-    console.log('modifyItems', modifyItems, modifyItems.length)
+    console.log('insertItems', insertItems.map(item => item.dynamodb.NewImageJSON), insertItems.length)
+    console.log('modifyItems', modifyItems.map(item => item.dynamodb.NewImageJSON), modifyItems.length)
+
+    assert.equal(insertItems.length, 5)
+    assert.equal(modifyItems.length, 5)
 
     assert.equal(insertItems[0].dynamodb.NewImageJSON.id, '1')
     assert.equal(insertItems[1].dynamodb.NewImageJSON.id, '2')
