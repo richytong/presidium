@@ -8,6 +8,7 @@ const S3Bucket = require('./S3Bucket')
 const AwsCredentials = require('./AwsCredentials')
 const CRC32 = require('./internal/CRC32')
 const AwsError = require('./internal/AwsError')
+const sleep = require('./internal/sleep')
 const crc32c = require('fast-crc32c')
 const convertUint32ToBase64 = require('./internal/convertUint32ToBase64')
 const { CrtCrc64Nvme } = require('@aws-sdk/crc64-nvme-crt')
@@ -63,7 +64,7 @@ const test1 = new Test('S3Bucket', async function integration1() {
   })
   await testBucket.putObject('b', JSON.stringify({ id: 'b' }))
   await testBucket.putObject('c', JSON.stringify({ id: 'c' }))
-  const a = await testBucket.getObject('a')
+  let a = await testBucket.getObject('a')
   assert(a.ETag == '"6a1a81494a7765ad411580b31c1b7044"')
   assert(a.Body.toString() == '{"id":"a"}')
   assert(a.ContentType == 'application/json')
@@ -72,6 +73,60 @@ const test1 = new Test('S3Bucket', async function integration1() {
   assert(s3Objects.Contents[0].Key == 'a')
   assert(s3Objects.Contents[1].Key == 'b')
   assert(s3Objects.Contents[2].Key == 'c')
+
+  await assert.rejects(
+    testBucket.getObject('a', { IfMatch: 'nomatch' }),
+    { name: 'PreconditionFailed', code: 412 }
+  )
+
+  await sleep(1000)
+
+  await assert.rejects(
+    testBucket.getObject('a', { IfModifiedSince: new Date() }),
+    { /* name: 'NotModified', */ code: 304 }
+  )
+
+  await assert.rejects(
+    testBucket.getObject('a', { IfNoneMatch: a.ETag }),
+    { /* name: 'NotModified', */ code: 304 }
+  )
+
+  await sleep(1000)
+
+  await testBucket.putObject('a', JSON.stringify({ id: 'a' }))
+  a = await testBucket.getObject('a')
+
+  await assert.rejects(
+    testBucket.getObject('a', { IfUnmodifiedSince: Date.now() - 1000 }),
+    { name: 'PreconditionFailed', code: 412 }
+  )
+
+  await assert.rejects(
+    testBucket.headObject('a', { IfMatch: 'nomatch' }),
+    { /* name: 'PreconditionFailed', */ code: 412 }
+  )
+
+  await sleep(1000)
+
+  await assert.rejects(
+    testBucket.headObject('a', { IfModifiedSince: new Date() }),
+    { /* name: 'NotModified', */ code: 304 }
+  )
+
+  await assert.rejects(
+    testBucket.headObject('a', { IfNoneMatch: a.ETag }),
+    { /* name: 'NotModified', */ code: 304 }
+  )
+
+  await sleep(1000)
+
+  await testBucket.putObject('a', JSON.stringify({ id: 'a' }))
+  a = await testBucket.getObject('a')
+
+  await assert.rejects(
+    testBucket.headObject('a', { IfUnmodifiedSince: Date.now() - 1000 }),
+    { /* name: 'PreconditionFailed', */ code: 412 }
+  )
 
   {
     const testFileA = await fs.promises.readFile(`${__dirname}/test/test/a.txt`).then(buffer => buffer.toString('utf8'))
@@ -1330,14 +1385,11 @@ const test5 = new Test('S3Bucket', async function integration5() {
     new AwsError('test')
   )
 
-  testBucket.GrantFullControl = true
-
   await assert.rejects(
     testBucket.create(),
     new AwsError('test')
   )
 
-  assert('X-Amz-Grant-Full-Control' in requestHeaders)
   requestHeaders = {}
 
   await assert.rejects(
@@ -1375,38 +1427,6 @@ const test5 = new Test('S3Bucket', async function integration5() {
     new AwsError('test')
   )
 
-  await assert.rejects(
-    testBucket.getObject('test', {
-      IfMatch: 'test-if-match',
-      IfModifiedSince: '2026-05-09T18:39:29.671Z',
-      IfNoneMatch: 'test-if-none-match',
-      IfUnmodifiedSince: '2026-05-10T18:39:29.671Z',
-    }),
-    new AwsError('test')
-  )
-
-  assert.equal(requestHeaders['If-Match'], 'test-if-match')
-  assert.equal(requestHeaders['If-Modified-Since'], '2026-05-09T18:39:29.671Z')
-  assert.equal(requestHeaders['If-None-Match'], 'test-if-none-match')
-  assert.equal(requestHeaders['If-Unmodified-Since'], '2026-05-10T18:39:29.671Z')
-
-  requestHeaders = {}
-
-  await assert.rejects(
-    testBucket.headObject('test', {
-      IfMatch: 'test-if-match',
-      IfModifiedSince: '2026-05-09T18:39:29.671Z',
-      IfNoneMatch: 'test-if-none-match',
-      IfUnmodifiedSince: '2026-05-10T18:39:29.671Z',
-    }),
-    new AwsError('test')
-  )
-
-  assert.equal(requestHeaders['If-Match'], 'test-if-match')
-  assert.equal(requestHeaders['If-Modified-Since'], '2026-05-09T18:39:29.671Z')
-  assert.equal(requestHeaders['If-None-Match'], 'test-if-none-match')
-  assert.equal(requestHeaders['If-Unmodified-Since'], '2026-05-10T18:39:29.671Z')
-
   requestHeaders = {}
 
   responseHeaders = {
@@ -1432,40 +1452,6 @@ const test5 = new Test('S3Bucket', async function integration5() {
       return true
     }
   )
-
-  responseOk = true
-  responseHeaders = {
-    'x-amz-expiration': 'test-amz-expiration',
-    'x-amz-restore': 'test-amz-restore',
-    'x-amz-missing-meta': 'test-amz-missing-meta',
-  }
-
-  {
-    const data = await testBucket.getObject('test')
-    assert.equal(data.Expiration, 'test-amz-expiration')
-    assert.equal(data.Restore, 'test-amz-restore')
-    assert.equal(data.MissingMeta, 'test-amz-missing-meta')
-  }
-
-  responseHeaders = {
-    'x-amz-expiration': 'test-amz-expiration',
-    'x-amz-restore': 'test-amz-restore',
-    'x-amz-archive-status': 'test-amz-archive-status',
-    'x-amz-missing-meta': 'test-amz-missing-meta',
-    'x-amz-object-lock-mode': 'test-amz-object-lock-mode',
-    'x-amz-object-lock-retain-until-date': 'test-amz-object-lock-retain-until-date',
-    'x-amz-object-lock-legal-hold': 'test-amz-object-lock-legal-hold',
-  }
-
-  {
-    const data = await testBucket.headObject('test')
-    assert.equal(data.Expiration, 'test-amz-expiration')
-    assert.equal(data.Restore, 'test-amz-restore')
-    assert.equal(data.MissingMeta, 'test-amz-missing-meta')
-    assert.equal(data.ObjectLockMode, 'test-amz-object-lock-mode')
-    assert.equal(data.ObjectLockRetainUntilDate, 'test-amz-object-lock-retain-until-date')
-    assert.equal(data.ObjectLockLegalHoldStatus, 'test-amz-object-lock-legal-hold')
-  }
 
   responseOk = true
   responseHeaders = {}

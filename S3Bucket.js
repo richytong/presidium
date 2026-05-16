@@ -426,9 +426,6 @@ class S3Bucket {
     if (this.ObjectOwnership) {
       headers['X-Amz-Object-Ownership'] = this.ObjectOwnership
     }
-    if (this.GrantFullControl) {
-      headers['X-Amz-Grant-Full-Control'] = this.GrantFullControl
-    }
 
     const body = this.region == 'us-east-1' ? '' : `
 <CreateBucketConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"> 
@@ -1283,14 +1280,14 @@ class S3Bucket {
       headers['If-Match'] = options.IfMatch
     }
     if (options.IfModifiedSince) {
-      headers['If-Modified-Since'] = options.IfModifiedSince
+      headers['If-Modified-Since'] = new Date(options.IfModifiedSince).toUTCString()
     }
 
     if (options.IfNoneMatch) {
       headers['If-None-Match'] = options.IfNoneMatch
     }
     if (options.IfUnmodifiedSince) {
-      headers['If-Unmodified-Since'] = options.IfUnmodifiedSince
+      headers['If-Unmodified-Since'] = new Date(options.IfUnmodifiedSince).toUTCString()
     }
 
     if (options.Range) {
@@ -1726,14 +1723,14 @@ class S3Bucket {
       headers['If-Match'] = options.IfMatch
     }
     if (options.IfModifiedSince) {
-      headers['If-Modified-Since'] = options.IfModifiedSince
+      headers['If-Modified-Since'] = new Date(options.IfModifiedSince).toUTCString()
     }
 
     if (options.IfNoneMatch) {
       headers['If-None-Match'] = options.IfNoneMatch
     }
     if (options.IfUnmodifiedSince) {
-      headers['If-Unmodified-Since'] = options.IfUnmodifiedSince
+      headers['If-Unmodified-Since'] = new Date(options.IfUnmodifiedSince).toUTCString()
     }
 
     if (options.Range) {
