@@ -1043,14 +1043,6 @@ class S3Bucket {
         data.ETag = response.headers['etag']
       }
 
-      /* TODO
-      // https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html;
-      // Sample Response for general purpose buckets: Expiration rule created using lifecycle configuration
-      if (response.headers['x-amz-expiration']) {
-        data.Expiration = response.headers['x-amz-expiration']
-      }
-      */
-
       if (response.headers['x-amz-checksum-crc32']) {
         data.ChecksumCRC32 = response.headers['x-amz-checksum-crc32']
       }
@@ -1135,7 +1127,6 @@ class S3Bucket {
    *     SSECustomerAlgorithm: string,
    *     SSECustomerKey: Buffer|TypedArray|Blob|string,
    *     SSECustomerKeyMD5: string,
-   *     PartNumber: number,
    *     ChecksumMode: 'ENABLED',
    *   },
    * ) -> data Promise<{
@@ -1203,7 +1194,6 @@ class S3Bucket {
    *     * `SSECustomerAlgorithm` - the server-side encryption algorithm used for object encryption. For more information, see [Using server-side encryption with Amazon S3 managed keys (SSE-S3)](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingServerSideEncryption.html) from the _Amazon S3 User Guide_.
    *     * `SSECustomerKey` - the customer-provided encryption key used for object encryption. For more information, see [Using server-side encryption with Amazon S3 managed keys (SSE-S3)](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingServerSideEncryption.html) from the _Amazon S3 User Guide_.
    *     * `SSECustomerKeyMD5` - the 128-bit MD5 digest of the encryption key according to [RFC 1321](https://www.ietf.org/rfc/rfc1321.txt). Amazon S3 uses this header to check for message integrity. For more information, see [Using server-side encryption with Amazon S3 managed keys (SSE-S3)](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingServerSideEncryption.html) from the _Amazon S3 User Guide_.
-   *     * `PartNumber` - (TODO) part number of the object being read. For more information, see [Uploading and copying objects using multipart upload in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html) from the _Amazon S3 User Guide_.
    *     * `ChecksumMode` - required to retrieve the [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object.
    *
    * Return:
@@ -1239,8 +1229,6 @@ class S3Bucket {
    *     * `SSEKMSKeyId` - the [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) Key ID, Key ARN, or Key Alias used for object encryption.
    *     * `BucketKeyEnabled` - indicates that Amazon S3 used the Amazon S3 Bucket key for object encryption with [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) keys (SSE-KMS).
    *     * `StorageClass` - the [storage class](https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html) associated with the object. Defaults to `STANDARD`.
-   *     * `ReplicationStatus` - (TODO) the progress of replicating objects between buckets. For more information, see [Replicating objects within and across Regions](https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication.html).
-   *     * `PartsCount` - (TODO) the parts count of the object. This value is only returned if the `PartNumber` option was specified and the object was uploaded as a multipart upload. For more information, see [Uploading and copying objects using multipart upload in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html) from the _Amazon S3 User Guide_.
    *     * `TagCount` - the number of tags on the object.
    *     * `ObjectLockMode` - the object lock mode. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
    *     * `ObjectLockRetainUntilDate` - the date/time when the object's Object Lock expires. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
@@ -1319,12 +1307,6 @@ class S3Bucket {
     }
 
     const searchParams = new URLSearchParams()
-
-    /* TODO
-    if (options.PartNumber) {
-      searchParams.set('partNumber', options.PartNumber)
-    }
-    */
 
     if (options.ResponseCacheControl) {
       searchParams.set('response-cache-control', options.ResponseCacheControl)
@@ -1481,18 +1463,6 @@ class S3Bucket {
         data.StorageClass = response.headers['x-amz-storage-class']
       }
 
-      /* TODO
-      if (response.headers['x-amz-replication-status']) {
-        data.ReplicationStatus = response.headers['x-amz-replication-status']
-      }
-      */
-
-      /* TODO
-      if (response.headers['x-amz-mp-parts-count']) {
-        data.PartsCount = response.headers['x-amz-mp-parts-count']
-      }
-      */
-
       if (response.headers['x-amz-tagging-count']) {
         data.TagCount = response.headers['x-amz-tagging-count']
       }
@@ -1600,7 +1570,6 @@ class S3Bucket {
    *     SSECustomerAlgorithm: string,
    *     SSECustomerKey: Buffer|TypedArray|Blob|string,
    *     SSECustomerKeyMD5: string,
-   *     PartNumber: number,
    *     ChecksumMode: 'ENABLED',
    *   },
    * ) -> data Promise<{
@@ -1665,7 +1634,6 @@ class S3Bucket {
    *     * `SSECustomerAlgorithm` - the server-side encryption algorithm used for object encryption. For more information, see [Using server-side encryption with Amazon S3 managed keys (SSE-S3)](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingServerSideEncryption.html) from the _Amazon S3 User Guide_.
    *     * `SSECustomerKey` - the customer-provided encryption key used for object encryption. For more information, see [Using server-side encryption with Amazon S3 managed keys (SSE-S3)](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingServerSideEncryption.html) from the _Amazon S3 User Guide_.
    *     * `SSECustomerKeyMD5` - the 128-bit MD5 digest of the encryption key according to [RFC 1321](https://www.ietf.org/rfc/rfc1321.txt). Amazon S3 uses this header to check for message integrity. For more information, see [Using server-side encryption with Amazon S3 managed keys (SSE-S3)](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingServerSideEncryption.html) from the _Amazon S3 User Guide_.
-   *     * `PartNumber` - (TODO) part number of the object being read. For more information, see [Uploading and copying objects using multipart upload in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html) from the _Amazon S3 User Guide_.
    *     * `ChecksumMode` - required to retrieve the [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object.
    *
    * Return:
@@ -1701,8 +1669,6 @@ class S3Bucket {
    *     * `SSEKMSKeyId` - the [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) Key ID, Key ARN, or Key Alias used for object encryption.
    *     * `BucketKeyEnabled` - indicates that Amazon S3 used the Amazon S3 Bucket key for object encryption with [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) keys (SSE-KMS).
    *     * `StorageClass` - the [storage class](https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html) associated with the object. Defaults to `STANDARD`.
-   *     * `ReplicationStatus` - (TODO) the progress of replicating objects between buckets. For more information, see [Replicating objects within and across Regions](https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication.html).
-   *     * `PartsCount` - (TODO) the parts count of the object. This value is only returned if the `PartNumber` option was specified and the object was uploaded as a multipart upload. For more information, see [Uploading and copying objects using multipart upload in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html) from the _Amazon S3 User Guide_.
    *     * `ObjectLockMode` - the object lock mode. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
    *     * `ObjectLockRetainUntilDate` - the date/time when the object's Object Lock expires. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
    *     * `ObjectLockLegalHoldStatus` - indicates the status of the legal hold applied to the object. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
@@ -1762,12 +1728,6 @@ class S3Bucket {
     }
 
     const searchParams = new URLSearchParams()
-
-    /* TODO
-    if (options.PartNumber) {
-      searchParams.set('partNumber', options.PartNumber)
-    }
-    */
 
     if (options.ResponseCacheControl) {
       searchParams.set('response-cache-control', options.ResponseCacheControl)
@@ -1928,18 +1888,6 @@ class S3Bucket {
         data.StorageClass = response.headers['x-amz-storage-class']
       }
 
-      /* TODO
-      if (response.headers['x-amz-replication-status']) {
-        data.ReplicationStatus = response.headers['x-amz-replication-status']
-      }
-      */
-
-      /* TODO
-      if (response.headers['x-amz-mp-parts-count']) {
-        data.PartsCount = response.headers['x-amz-mp-parts-count']
-      }
-      */
-
       if (response.headers['x-amz-tagging-count']) {
         data.TagCount = response.headers['x-amz-tagging-count']
       }
@@ -2012,18 +1960,6 @@ class S3Bucket {
    */
   async deleteObject(key, options = {}) {
     const headers = {}
-
-    /* TODO
-    if (options.MFA) {
-      headers['X-Amz-MFA'] = options.MFA
-    }
-    */
-
-    /* TODO
-    if (options.BypassGovernanceRetention) {
-      headers['X-Amz-Bypass-Governance-Retention'] = options.BypassGovernanceRetention
-    }
-    */
 
     const searchParams = new URLSearchParams()
 
@@ -2117,18 +2053,6 @@ class S3Bucket {
    */
   async deleteObjects(keys, options = {}) {
     const headers = {}
-
-    /* TODO
-    if (options.MFA) {
-      headers['X-Amz-MFA'] = options.MFA
-    }
-    */
-
-    /* TODO
-    if (options.BypassGovernanceRetention) {
-      headers['X-Amz-Bypass-Governance-Retention'] = options.BypassGovernanceRetention
-    }
-    */
 
     const body = `
 <?xml version="1.0" encoding="UTF-8"?>
