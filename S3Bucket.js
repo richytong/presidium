@@ -859,7 +859,7 @@ class S3Bucket {
    *     * `ObjectLockMode` - the object lock mode. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
    *     * `ObjectLockRetainUntilDate` - the date/time when the object's Object Lock expires. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
    *     * `ObjectLockLegalHoldStatus` - if `true`, a legal hold will be applied to the object. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
-   *     * `ReadStream` - `boolean` - whether to read the body as a readable stream into a buffer before uploading into the bucket. If `false`, the `ContentLength`, `ContentMD5`, `ChecksumSHA256` options are required along with this option. Defaults to `true`.
+   *     * `ReadStream` - `boolean` - whether to read the body as a readable stream into a buffer before uploading into the bucket. If `false`, the `ContentLength`, `ContentMD5`, and `ChecksumSHA256` options are required along with this option. Defaults to `true`.
    *
    * Return:
    *   * `data`
