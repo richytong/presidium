@@ -45,7 +45,7 @@ const encodeURIComponentRFC3986 = require('./internal/encodeURIComponentRFC3986'
  * }) -> s3bucket S3Bucket
  * ```
  *
- * Presidium S3Bucket client for [AWS S3](https://aws.amazon.com/s3/). Creates a new S3 Bucket under `name` if a bucket does not already exist. Access to the newly creaed S3 Bucket is private.
+ * Presidium S3Bucket client for [AWS S3](https://aws.amazon.com/s3/). Creates a new S3 Bucket under `name` if a bucket does not already exist. Access to the newly created S3 Bucket is private.
  *
  * S3Bucket instances have a `ready` promise that resolves when the S3 Bucket is active.
  *
