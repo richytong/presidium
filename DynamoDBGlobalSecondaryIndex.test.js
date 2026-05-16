@@ -92,6 +92,8 @@ const test = new Test('DynamoDBGlobalSecondaryIndex', async function integration
     }
   }
 
+  await sleep(1000)
+
   await testIndex.query(
     'type = :type AND time > :time',
     { type: { S: 'page_view' }, time: { N: 0 } },
