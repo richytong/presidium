@@ -61,7 +61,7 @@ const test1 = new Test('DynamoDBStream', async function integration() {
       id: '4',
       status: 'approved',
       createTime: 1003,
-      name: 'sally',
+      name: 'james',
     })
     await table.putItemJSON({
       id: '5',
@@ -218,37 +218,6 @@ const test1 = new Test('DynamoDBStream', async function integration() {
       assert.equal(message, 'created-stream')
     })
   }
-
-  await table.putItemJSON({
-    id: '1',
-    status: 'waitlist',
-    createTime: 1000,
-    name: 'leo',
-  })
-  await table.putItemJSON({
-    id: '2',
-    status: 'waitlist',
-    createTime: 1001,
-    name: 'geo',
-  })
-  await table.putItemJSON({
-    id: '3',
-    status: 'waitlist',
-    createTime: 1002,
-    name: 'jake',
-  })
-  await table.putItemJSON({
-    id: '4',
-    status: 'approved',
-    createTime: 1003,
-    name: 'sally',
-  })
-  await table.putItemJSON({
-    id: '5',
-    status: 'approved',
-    createTime: 1004,
-    name: 'sally',
-  })
 
   await table.updateItemJSON({ id: '1' }, { a: 1 })
   await table.updateItemJSON({ id: '2' }, { a: 2 })
