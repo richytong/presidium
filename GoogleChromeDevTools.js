@@ -1114,7 +1114,7 @@ class GoogleChromeDevToolsRuntime {
  *   * [Chrome Devtools Protocol](https://chromedevtools.github.io/devtools-protocol/)
  *
  * Supported platforms:
- *   * MacOS (64-bit)
+ *   * macOS (64-bit)
  *   * Linux (64-bit)
  *   * Windows (64-bit)
  *

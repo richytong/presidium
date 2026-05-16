@@ -139,7 +139,7 @@ async function getChromeFilepath() {
  *   * [Chrome for Testing availability](https://googlechromelabs.github.io/chrome-for-testing/)
  *
  * Supported platforms:
- *   * MacOS (64-bit)
+ *   * macOS (64-bit)
  *   * Linux (64-bit)
  *   * Windows (64-bit)
  *
