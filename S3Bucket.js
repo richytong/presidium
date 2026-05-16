@@ -212,8 +212,8 @@ class S3Bucket {
    */
   _awsRequest0(method, url, headers, body) {
     const amzDate = AmzDate()
-    const payloadHash = headers.ChecksumSHA256
-      ? Buffer.from(headers.ChecksumSHA256, 'base64').toString('hex')
+    const payloadHash = headers['X-Amz-Checksum-SHA256']
+      ? Buffer.from(headers['X-Amz-Checksum-SHA256'], 'base64').toString('hex')
       : crypto.createHash('sha256').update(body, 'utf8').digest('hex')
     const urlData = parseURL(url)
 
@@ -277,8 +277,8 @@ class S3Bucket {
    */
   _awsRequest1(method, url, headers, body) {
     const amzDate = AmzDate()
-    const payloadHash = headers.ChecksumSHA256
-      ? Buffer.from(headers.ChecksumSHA256, 'base64').toString('hex')
+    const payloadHash = headers['X-Amz-Checksum-SHA256']
+      ? Buffer.from(headers['X-Amz-Checksum-SHA256'], 'base64').toString('hex')
       : crypto.createHash('sha256').update(body, 'utf8').digest('hex')
     const urlData = parseURL(url)
 
@@ -287,7 +287,7 @@ class S3Bucket {
       'X-Amz-Content-SHA256': payloadHash,
       'X-Amz-Date': amzDate,
       'Date': new Date().toUTCString(),
-      'Content-Length': Buffer.byteLength(body, 'utf8'),
+      'Content-Length': headers['Content-Length'] ?? Buffer.byteLength(body, 'utf8'),
       'User-Agent': userAgent,
       ...headers,
     }
@@ -799,6 +799,7 @@ class S3Bucket {
    *     ObjectLockMode: 'GOVERNANCE'|'COMPLIANCE',
    *     ObjectLockRetainUntilDate: Date|DateString|TimestampSeconds,
    *     ObjectLockLegalHoldStatus: 'ON'|'OFF',
+   *     ReadStream: boolean,
    *   }
    * ) -> data Promise<{
    *   Expiration: string,
@@ -858,6 +859,7 @@ class S3Bucket {
    *     * `ObjectLockMode` - the object lock mode. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
    *     * `ObjectLockRetainUntilDate` - the date/time when the object's Object Lock expires. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
    *     * `ObjectLockLegalHoldStatus` - if `true`, a legal hold will be applied to the object. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
+   *     * `ReadStream` - `boolean` - whether to read the body as a readable stream into a buffer before uploading into the bucket. If `false`, the `ContentLength`, `ContentMD5`, `ChecksumSHA256` options are required along with this option. Defaults to `true`.
    *
    * Return:
    *   * `data`
@@ -921,7 +923,8 @@ class S3Bucket {
       headers['Content-Length'] = options.ContentLength
     }
 
-    if (body.readable) {
+    const ReadStream = options.ReadStream ?? true
+    if (ReadStream && body.readable) {
       body = await Readable.Buffer(body)
     }
     if (options.ContentMD5) {

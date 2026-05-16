@@ -152,6 +152,33 @@ const test1 = new Test('S3Bucket', async function integration1() {
     assert.deepEqual(data.Body, Buffer.from('ReadableStream'))
   }
 
+  {
+    const body1 = stream.Readable.from(['ReadableStream2'])
+    const hashSHA256 = crypto.createHash('sha256')
+    const hashMD5 = crypto.createHash('md5')
+    let contentLength = 0
+    body1.on('data', chunk => {
+      hashSHA256.update(chunk)
+      hashMD5.update(chunk)
+      contentLength += Buffer.byteLength(chunk)
+    })
+    await new Promise(resolve => {
+      body1.on('end', resolve)
+    })
+
+    const body2 = stream.Readable.from(['ReadableStream2'])
+    const response = await testBucket.putObject('ReadableStream2', stream.Readable.from(['ReadableStream2']), {
+      ReadStream: false,
+      ChecksumSHA256: hashSHA256.digest('base64'),
+      ContentMD5: hashMD5.digest('base64'),
+      ContentLength: contentLength,
+    })
+    assert.equal(typeof response.ETag, 'string')
+    const data = await testBucket.getObject('ReadableStream2')
+    assert.equal(data.ContentType, 'application/octet-stream')
+    assert.deepEqual(data.Body, Buffer.from('ReadableStream2'))
+  }
+
   const res = await testBucket.putObject('buffer', Buffer.from('buffer'))
   const buffer = await testBucket.getObject('buffer')
   assert(buffer.ContentType == 'application/octet-stream')
@@ -207,6 +234,7 @@ const test1 = new Test('S3Bucket', async function integration1() {
     const response = await testBucket.deleteAllObjects({ BatchSize: 1 })
     assert.deepEqual(response.Deleted.map(pick(['Key'])), [
       { Key: 'ReadableStream' },
+      { Key: 'ReadableStream2' },
       { Key: 'binary' },
       { Key: 'buffer' },
       { Key: 'buffer2' },
