@@ -46,29 +46,29 @@ const encodeURIComponentRFC3986 = require('./internal/encodeURIComponentRFC3986'
  * }) -> s3bucket S3Bucket
  * ```
  *
- * Presidium S3Bucket client for [AWS S3](https://aws.amazon.com/s3/). Creates a new S3 Bucket under `name` if a bucket does not already exist. Access to the newly created S3 Bucket is private.
+ * Presidium S3Bucket client for [Amazon S3](https://aws.amazon.com/s3/). Creates a new S3 Bucket under `name` if a bucket does not already exist. Access to the newly created S3 Bucket is private.
  *
  * S3Bucket instances have a `ready` promise that resolves when the S3 Bucket is active.
  *
  * Arguments:
  *   * `options`
- *     * `name` - globally unique name of the AWS S3 Bucket.
+ *     * `name` - globally unique name of the Amazon S3 Bucket.
  *     * `accessKeyId` - long term credential (ID) of an [IAM](https://aws.amazon.com/iam/) user.
  *     * `secretAccessKey` - long term credential (secret) of an [IAM](https://aws.amazon.com/iam/) user.
  *     * `region` - geographic location of data center cluster, e.g. `us-east-1` or `us-west-2`. [Full list of AWS regions](https://docs.aws.amazon.com/global-infrastructure/latest/regions/aws-regions.html#available-regions)
- *     * `BlockPublicACLs` - if `false`, AWS S3 does not block public access control lists (ACLs) for this bucket and objects in this bucket. Default `true`.
- *     * `IgnorePublicACLs` - if `false`, AWS S3 does not ignore public access control lists (ACLs) for this bucket and objects in this bucket. Default `true`.
- *     * `BlockPublicPolicy` - if `false`, AWS S3 does not block public bucket policies for this bucket. Default `true`.
- *     * `RestrictPublicBuckets` - if `false`, AWS S3 does not restrict public bucket policies for this bucket. Default `true`.
- *     * `RequestPayer` - the payer for requests to the AWS S3 Bucket. Defaults to `BucketOwner`.
- *     * `ObjectLockEnabled` - if `true`, AWS S3 enables Object Lock for this bucket. Defaults to `false`.
+ *     * `BlockPublicACLs` - if `false`, Amazon S3 does not block public access control lists (ACLs) for this bucket and objects in this bucket. Default `true`.
+ *     * `IgnorePublicACLs` - if `false`, Amazon S3 does not ignore public access control lists (ACLs) for this bucket and objects in this bucket. Default `true`.
+ *     * `BlockPublicPolicy` - if `false`, Amazon S3 does not block public bucket policies for this bucket. Default `true`.
+ *     * `RestrictPublicBuckets` - if `false`, Amazon S3 does not restrict public bucket policies for this bucket. Default `true`.
+ *     * `RequestPayer` - the payer for requests to the Amazon S3 Bucket. Defaults to `BucketOwner`.
+ *     * `ObjectLockEnabled` - if `true`, Amazon S3 enables Object Lock for this bucket. Defaults to `false`.
  *     * `ObjectLockDefaultRetentionMode` - the default Object Lock mode (`'GOVERNANCE'` or `'COMPLIANCE'`) for this bucket. Defaults to `'COMPLIANCE'`
  *       * `'COMPLIANCE'` - no one, including the root user, can delete a locked object.
  *       * `'GOVERNANCE'` - users with special permissions can delete a locked object.
  *     * `ObjectLockDefaultRetentionDays` - number of days that a locked object is protected by Object Lock for this bucket.
  *     * `ObjectLockDefaultRetentionYears` - number of years that a locked object is protected by Object Lock for this bucket.
- *     * `VersioningMfaDelete` - if `'Enabled'`, AWS S3 requires multifactor authentication (MFA) before permanently deleting object versions or change bucket versioning states for this bucket. Defaults to `'Disabled'`.
- *     * `VersioningStatus` - if `'Enabled'`, AWS S3 enables versioning for objects in this bucket, and all objects added to the bucket receive a unique Version ID. If `'Suspended'`, existing object versions remain in the bucket, new objects receive a `null` Version ID, and overwrites of objects behave as they would in an unversioned bucket. Defaults to `'Suspended'`.
+ *     * `VersioningMfaDelete` - if `'Enabled'`, Amazon S3 requires multifactor authentication (MFA) before permanently deleting object versions or change bucket versioning states for this bucket. Defaults to `'Disabled'`.
+ *     * `VersioningStatus` - if `'Enabled'`, Amazon S3 enables versioning for objects in this bucket, and all objects added to the bucket receive a unique Version ID. If `'Suspended'`, existing object versions remain in the bucket, new objects receive a `null` Version ID, and overwrites of objects behave as they would in an unversioned bucket. Defaults to `'Suspended'`.
  *
  * Return:
  *   * `s3Bucket` - an S3Bucket instance.
@@ -389,7 +389,7 @@ class S3Bucket {
    * bucket.create() -> data Promise<{}>
    * ```
    *
-   * Create the AWS S3 Bucket.
+   * Creates the S3 Bucket.
    *
    * Arguments:
    *   * (none)
@@ -436,9 +436,6 @@ class S3Bucket {
    * ```coffeescript [specscript]
    * putPublicAccessBlock() -> data Promise<{}>
    * ```
-   *
-   * Create or replace the `PublicAccessBlock` configuration for the AWS S3 Bucket.
-   *
    */
   async putPublicAccessBlock() {
     const headers = {}
@@ -471,9 +468,6 @@ class S3Bucket {
    * ```coffeescript [specscript]
    * putRequestPayment() -> data Promise<{}> 
    * ```
-   *
-   * Create or replace the `RequestPayment` configuration for the AWS S3 Bucket.
-   *
    */
   async putRequestPayment() {
     const headers = {}
@@ -503,9 +497,6 @@ class S3Bucket {
    * ```coffeescript [specscript]
    * putObjectLockConfiguration() -> Promise<{}>
    * ```
-   *
-   * Apply an AWS S3 Bucket policy to an AWS S3 Bucket.
-   *
    */
   async putObjectLockConfiguration() {
     const headers = {}
@@ -547,9 +538,6 @@ class S3Bucket {
    * ```coffeescript [specscript]
    * putVersioning() -> Promise<{}>
    * ```
-   *
-   * Apply an AWS S3 Bucket policy to an AWS S3 Bucket.
-   *
    */
   async putVersioning() {
     const headers = {}
@@ -583,7 +571,7 @@ class S3Bucket {
    * }) -> data Promise<{}>
    * ```
    *
-   * Apply an [AWS Access Policy](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html) to an AWS S3 Bucket.
+   * Apply an [Access Policy](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html) to the S3 Bucket.
    *
    * Arguments:
    *   * `options`
@@ -633,7 +621,7 @@ class S3Bucket {
    * }>
    * ```
    *
-   * Returns the [AWS Access Policy](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html) of an AWS S3 Bucket.
+   * Returns the [Access Policy](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html) of the S3 Bucket.
    *
    * Arguments:
    *   * (none)
@@ -684,7 +672,7 @@ class S3Bucket {
    * bucket.delete() -> data Promise<{}>
    * ```
    *
-   * Deletes an AWS S3 Bucket.
+   * Deletes the S3 Bucket.
    *
    * Arguments:
    *   * (none)
@@ -779,7 +767,7 @@ class S3Bucket {
    * }>
    * ```
    *
-   * Puts an object in the AWS S3 Bucket.
+   * Puts an object in the S3 Bucket.
    *
    * Arguments:
    *   * `key` - the key of the object inside the bucket. An object key is essentially the path to the object inside a bucket without the leading slash.
@@ -1254,7 +1242,7 @@ class S3Bucket {
    * }>
    * ```
    *
-   * Concurrently uploads an object to the AWS S3 Bucket in multiple parts.
+   * Concurrently uploads an object to the S3 Bucket in multiple parts.
    *
    * Arguments:
    *   * `key` - the key of the object inside the bucket. An object key is essentially the path to the object inside a bucket without the leading slash.
@@ -1441,7 +1429,7 @@ class S3Bucket {
    * }>
    * ```
    *
-   * Retrieves an object from the AWS S3 Bucket.
+   * Retrieves an object from the S3 Bucket.
    *
    * Arguments:
    *   * `key` - the key of the object inside the bucket. An object key is essentially the path to the object inside a bucket without the leading slash.
@@ -1772,7 +1760,7 @@ class S3Bucket {
    * }>
    * ```
    *
-   * Retrieve the access control list (ACL) of an object from the AWS S3 Bucket.
+   * Retrieve the access control list (ACL) of an object from the S3 Bucket.
    */
   async getObjectACL(key, options = {}) {
     const headers = {}
@@ -1874,7 +1862,7 @@ class S3Bucket {
    * }>
    * ```
    *
-   * Retrieves the headers of an object from the AWS S3 Bucket.
+   * Retrieves the headers of an object from the S3 Bucket.
    *
    * Arguments:
    *   * `key` - the key of the object inside the bucket. An object key is essentially the path to the object inside a bucket without the leading slash.
@@ -2181,7 +2169,7 @@ class S3Bucket {
    * }>
    * ```
    *
-   * Remove an object from the AWS S3 Bucket.
+   * Remove an object from the S3 Bucket.
    *
    * Arguments:
    *   * `key` - the key of the object inside the bucket. An object key is essentially the path to the object inside a bucket without the leading slash.
@@ -2192,7 +2180,7 @@ class S3Bucket {
    *
    * Return:
    *   * `data`
-   *     * `DeleteMarker` - if `VersionId` was specified and `DeleteMarker` is `true`, the specified object version that was permanently deleted was a delete marker. If `VersionId` was not specified (simple DELETE) and `DeleteMarker` is `true`, the current version of the object is a delete marker. See [Working with delete markers](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) for more information. This field is not present if the AWS S3 Bucket does not support versioning.
+   *     * `DeleteMarker` - if `VersionId` was specified and `DeleteMarker` is `true`, the specified object version that was permanently deleted was a delete marker. If `VersionId` was not specified (simple DELETE) and `DeleteMarker` is `true`, the current version of the object is a delete marker. See [Working with delete markers](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) for more information. This field is not present if the S3 Bucket does not support versioning.
    *     * `VersionId` - version ID of the [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) created as a result of the DELETE operation.
    *
    * ```javascript
@@ -2261,7 +2249,7 @@ class S3Bucket {
    * }>
    * ```
    *
-   * Removes multiple objects from the AWS S3 Bucket.
+   * Removes multiple objects from the S3 Bucket.
    *
    * Arguments:
    *   * `keys` - the keys and/or version IDs of the objects or object versions to delete inside the bucket.
@@ -2352,7 +2340,7 @@ class S3Bucket {
    * }>
    * ```
    *
-   * Removes all objects from an AWS S3 Bucket.
+   * Removes all objects from an S3 Bucket.
    *
    * Arguments:
    *   * `options`
@@ -2476,7 +2464,7 @@ class S3Bucket {
    * }>
    * ```
    *
-   * Lists some or all (up to 1,000) objects from the AWS S3 Bucket. Objects are returned in [lexicographical order](https://help.splunk.com/en/splunk-cloud-platform/search/spl2-search-manual/sort-and-order/lexicographical-order).
+   * Lists some or all (up to 1,000) objects from the S3 Bucket. Objects are returned in [lexicographical order](https://help.splunk.com/en/splunk-cloud-platform/search/spl2-search-manual/sort-and-order/lexicographical-order).
    *
    * Arguments:
    *   * `options`
@@ -2630,7 +2618,7 @@ class S3Bucket {
    * }>
    * ```
    *
-   * Lists some or all (up to 1,000) object versions from the AWS S3 Bucket. Object versions are returned in [lexicographical order](https://help.splunk.com/en/splunk-cloud-platform/search/spl2-search-manual/sort-and-order/lexicographical-order).
+   * Lists some or all (up to 1,000) object versions from the S3 Bucket. Object versions are returned in [lexicographical order](https://help.splunk.com/en/splunk-cloud-platform/search/spl2-search-manual/sort-and-order/lexicographical-order).
    *
    * Arguments:
    *   * `options`
