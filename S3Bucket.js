@@ -8,6 +8,7 @@
 require('rubico/global')
 const crypto = require('crypto')
 const fs = require('fs')
+const path = require('path')
 const HTTP = require('./HTTP')
 const Readable = require('./Readable')
 const userAgent = require('./userAgent')
@@ -1122,7 +1123,7 @@ class S3Bucket {
       let readLength = 0
       partBody.on('data', chunk => {
         readLength += chunk.length
-        console.log(`Uploading ${key} part ${partNumber} (${readLength} / ${contentLength} bytes) (${(readLength / contentLength * 100).toFixed(2)}%) (${readLength / 1024 / 1024 / (performance.now() - start) * 1000} MiB/s)`)
+        console.log(`Uploading ${key} part ${partNumber} (${readLength} / ${contentLength} bytes) (${(readLength / contentLength * 100).toFixed(2)}%) (${(readLength / 1024 / 1024 / (performance.now() - start) * 1000).toFixed(3)} MiB/s)`)
       })
     }
 
@@ -1230,6 +1231,7 @@ class S3Bucket {
    *   Expires: string,
    *   MaximumPartSize: number, # bytes
    *   Progress: boolean,
+   *   TmpDir: string,
    * }) -> data Promise<{
    *   CompleteMultipartUploadResult: {
    *     Location: string,
@@ -1256,6 +1258,7 @@ class S3Bucket {
    *     * `Expires` - the date/time after which the object is considered stale. For more information, see [Expires](https://www.rfc-editor.org/rfc/rfc7234#section-5.3).
    *     * `MaximumPartSize` - the maximum size in bytes of each upload part. Defaults to 1000000000. Maximum value 5000000000.
    *     * `Progress` - whether to show the progress of the parts upload. Defaults to true.
+   *     * `TmpDir` - the directory to which to write the temporary files. If the directory does not exist, it is created. Defaults to ".".
    *
    * Return:
    *   * `data`
@@ -1277,7 +1280,10 @@ class S3Bucket {
   async multipartUpload(key, body, options = {}) {
     const maximumPartSize = options.MaximumPartSize ?? 5000000000
     const progress = options.Progress ?? true
+    const tmpDir = options.TmpDir ?? '.'
     const multipartUpload = await this._createMultipartUpload(key, options)
+
+    await fs.promises.mkdir(tmpDir, { recursive: true })
 
     const promises = []
     const uploadId = multipartUpload.UploadId
@@ -1285,7 +1291,7 @@ class S3Bucket {
     let contentSHA256 = crypto.createHash('sha256')
     let contentLength = 0
     let partNumber = 1
-    let partBodyFilepath = `/tmp/presidium-S3Bucket-multipartUpload-${key}-${partNumber}`
+    let partBodyFilepath = path.join(tmpDir, `presidium-S3Bucket-multipartUpload-${key}-${partNumber}`)
     let partBody = fs.createWriteStream(partBodyFilepath)
 
     body.on('data', chunk => {
@@ -1314,7 +1320,7 @@ class S3Bucket {
         promises.push(promise)
 
         partNumber += 1
-        partBodyFilepath = `/tmp/presidium-S3Bucket-multipartUpload-${key}-${partNumber}`
+        partBodyFilepath = path.join(tmpDir, `presidium-S3Bucket-multipartUpload-${key}-${partNumber}`)
         partBody = fs.createWriteStream(partBodyFilepath)
         contentMD5 = crypto.createHash('md5')
         contentSHA256 = crypto.createHash('sha256')

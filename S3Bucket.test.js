@@ -373,6 +373,7 @@ const test1 = new Test('S3Bucket', async function integration1() {
 
     const multipartUploadData = await testBucket.multipartUpload('multipart-upload-1', readableStream, {
       MaximumPartSize: 50000000,
+      TmpDir: __dirname,
     })
 
     assert.equal(typeof multipartUploadData.CompleteMultipartUploadResult.ETag, 'string')
