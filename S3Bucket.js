@@ -163,7 +163,7 @@ class S3Bucket {
    *
    * @docs
    * ```coffeescript [specscript]
-   * bucket._readyPromise() -> ready Promise<>
+   * _readyPromise() -> ready Promise<>
    * ```
    */
   async _readyPromise() {
@@ -196,7 +196,7 @@ class S3Bucket {
    * ```coffeescript [specscript]
    * module http 'https://nodejs.org/api/http.html'
    *
-   * table._awsRequest0(
+   * _awsRequest0(
    *   method string,
    *   url string,
    *   headers object
@@ -261,7 +261,7 @@ class S3Bucket {
    * ```coffeescript [specscript]
    * module http 'https://nodejs.org/api/http.html'
    *
-   * table._awsRequest1(
+   * _awsRequest1(
    *   method string,
    *   url string,
    *   headers object
@@ -361,7 +361,7 @@ class S3Bucket {
    *
    * @docs
    * ```coffeescript [specscript]
-   * bucket.getLocation() -> data Promise<{
+   * getLocation() -> data Promise<{
    *   LocationConstraint: string|null
    * }>
    * ```
@@ -386,7 +386,7 @@ class S3Bucket {
    *
    * @docs
    * ```coffeescript [specscript]
-   * bucket.create() -> data Promise<{}>
+   * create() -> data Promise<{}>
    * ```
    *
    * Creates the S3 Bucket.
@@ -614,7 +614,7 @@ class S3Bucket {
    *
    * @docs
    * ```coffeescript [specscript]
-   * getPolicy() -> BucketPolicy Promise<{
+   * getPolicy() -> policy Promise<{
    *   Version: string,
    *   Id: string,
    *   Statement: Array,
@@ -627,7 +627,7 @@ class S3Bucket {
    *   * (none)
    *
    * Return:
-   *   * `BucketPolicy` - a promise of the bucket's access policy.
+   *   * `policy` - a promise of the bucket's access policy.
    *
    * ```javascript
    * const policy = await myBucket.getPolicy()
@@ -669,7 +669,7 @@ class S3Bucket {
    *
    * @docs
    * ```coffeescript [specscript]
-   * bucket.delete() -> data Promise<{}>
+   * delete() -> data Promise<{}>
    * ```
    *
    * Deletes the S3 Bucket.
@@ -705,7 +705,7 @@ class S3Bucket {
    * type DateString = string # Wed Dec 31 1969 16:00:00 GMT-0800 (PST)
    * type TimestampSeconds = number # 1751111429
    *
-   * bucket.putObject(
+   * putObject(
    *   key string,
    *   body Buffer|TypedArray|Blob|string|stream.Readable,
    *   options {
