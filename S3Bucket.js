@@ -767,7 +767,7 @@ class S3Bucket {
    * }>
    * ```
    *
-   * Puts an object in the S3 Bucket.
+   * Puts an object into the S3 Bucket.
    *
    * Arguments:
    *   * `key` - the key of the object inside the bucket. An object key is essentially the path to the object inside a bucket without the leading slash.
