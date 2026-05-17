@@ -2331,11 +2331,6 @@ class S3Bucket {
    *     VersionId: string,
    *     DeleteMarker: boolean,
    *     DeleteMarkerVersionId: string,
-   *   }>,
-   *   Errors: Array<{
-   *     Key: string,
-   *     VersionId: string,
-   *     Code: string
    *   }>
    * }>
    * ```
@@ -2354,10 +2349,6 @@ class S3Bucket {
    *       * `VersionId` - the version ID of the deleted object.
    *       * `DeleteMarker` - whether the current version or specified object version that was permanently deleted was a [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) before deletion.
    *       * `DeleteMarkerVersionId` - version ID of the [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) created as a result of the DELETE operation, or if a specific object version was deleted, the version ID of the deleted object version.
-   *     * `Errors` - container for a failed delete.
-   *       * `Key` - the name of the object of the attempted delete.
-   *       * `VersionId` - the version ID of the object of the attempted delete.
-   *       * `Code` - a response code that uniquely identifies the error condition. For a complete list of error responses, see [Error responses](https://docs.aws.amazon.com/AmazonS3/latest/API/ErrorResponses.html) from the _Amazon S3 API_.
    *
    * ```javascript
    * await myBucket.deleteAllObjects()
