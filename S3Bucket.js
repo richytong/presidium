@@ -56,19 +56,19 @@ const encodeURIComponentRFC3986 = require('./internal/encodeURIComponentRFC3986'
  *     * `accessKeyId` - long term credential (ID) of an [IAM](https://aws.amazon.com/iam/) user.
  *     * `secretAccessKey` - long term credential (secret) of an [IAM](https://aws.amazon.com/iam/) user.
  *     * `region` - geographic location of data center cluster, e.g. `us-east-1` or `us-west-2`. [Full list of AWS regions](https://docs.aws.amazon.com/global-infrastructure/latest/regions/aws-regions.html#available-regions)
- *     * `BlockPublicACLs` - if `false`, Amazon S3 does not block public access control lists (ACLs) for this bucket and objects in this bucket. Default `true`.
- *     * `IgnorePublicACLs` - if `false`, Amazon S3 does not ignore public access control lists (ACLs) for this bucket and objects in this bucket. Default `true`.
- *     * `BlockPublicPolicy` - if `false`, Amazon S3 does not block public bucket policies for this bucket. Default `true`.
- *     * `RestrictPublicBuckets` - if `false`, Amazon S3 does not restrict public bucket policies for this bucket. Default `true`.
+ *     * `BlockPublicACLs` - whether to block public access control lists (ACLs) for this bucket and objects in this bucket. Default `true`.
+ *     * `IgnorePublicACLs` - whether to ignore public access control lists (ACLs) for this bucket and objects in this bucket. Default `true`.
+ *     * `BlockPublicPolicy` - whether to block public bucket policies for this bucket. Default `true`.
+ *     * `RestrictPublicBuckets` - whether to restrict public bucket policies for this bucket. Default `true`.
  *     * `RequestPayer` - the payer for requests to the Amazon S3 Bucket. Defaults to `BucketOwner`.
- *     * `ObjectLockEnabled` - if `true`, Amazon S3 enables Object Lock for this bucket. Defaults to `false`.
+ *     * `ObjectLockEnabled` - whether to enable Object Lock for this bucket. Defaults to `false`.
  *     * `ObjectLockDefaultRetentionMode` - the default Object Lock mode (`'GOVERNANCE'` or `'COMPLIANCE'`) for this bucket. Defaults to `'COMPLIANCE'`
  *       * `'COMPLIANCE'` - no one, including the root user, can delete a locked object.
  *       * `'GOVERNANCE'` - users with special permissions can delete a locked object.
  *     * `ObjectLockDefaultRetentionDays` - number of days that a locked object is protected by Object Lock for this bucket.
  *     * `ObjectLockDefaultRetentionYears` - number of years that a locked object is protected by Object Lock for this bucket.
- *     * `VersioningMfaDelete` - if `'Enabled'`, Amazon S3 requires multifactor authentication (MFA) before permanently deleting object versions or change bucket versioning states for this bucket. Defaults to `'Disabled'`.
- *     * `VersioningStatus` - if `'Enabled'`, Amazon S3 enables versioning for objects in this bucket, and all objects added to the bucket receive a unique Version ID. If `'Suspended'`, existing object versions remain in the bucket, new objects receive a `null` Version ID, and overwrites of objects behave as they would in an unversioned bucket. Defaults to `'Suspended'`.
+ *     * `VersioningMfaDelete` - whether to require multifactor authentication (MFA) before permanently deleting object versions or change bucket versioning states for this bucket. Defaults to `'Disabled'`.
+ *     * `VersioningStatus` - whether to enable versioning for objects in this bucket, and all objects added to the bucket receive a unique Version ID. If `'Suspended'`, existing object versions remain in the bucket, new objects receive a `null` Version ID, and overwrites of objects behave as they would in an unversioned bucket. Defaults to `'Suspended'`.
  *
  * Return:
  *   * `s3Bucket` - an S3Bucket instance.
@@ -802,11 +802,11 @@ class S3Bucket {
    *     * `SSECustomerKeyMD5` - the 128-bit MD5 digest of the encryption key according to [RFC 1321](https://www.ietf.org/rfc/rfc1321.txt). Amazon S3 uses this header to check for message integrity.
    *     * `SSEKMSKeyId` - the [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) Key ID, Key ARN, or Key Alias used for object encryption. If a KMS key doesn't exist in the same account, this value must be the Key ARN.
    *     * `SSEKMSEncryptionContext` - additional [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) contextual information used for object encryption. The value for this header is a base64-encoded string of a UTF-8 encoded JSON value containing the encryption context as key-value pairs. This value is stored as object metadata and is passed automatically to AWS KMS for future `GetObject` operations on the object. For more information, see [Encryption context](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html#encryption-context) from the _Amazon S3 User Guide_.
-   *     * `BucketKeyEnabled` - if `true`, Amazon S3 uses the Amazon S3 Bucket key for object encryption with [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) keys (SSE-KMS).
+   *     * `BucketKeyEnabled` - whether to use the bucket key for object encryption with [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) keys (SSE-KMS).
    *     * `Tagging` - the [tag-set](https://docs.aws.amazon.com/whitepapers/latest/tagging-best-practices/what-are-tags.html) for the object encoded as URL query paramters (e.g. "Key1=Value1&Key2=Value2).
    *     * `ObjectLockMode` - the object lock mode. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
    *     * `ObjectLockRetainUntilDate` - the date/time when the object's Object Lock expires. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
-   *     * `ObjectLockLegalHoldStatus` - if `true`, a legal hold will be applied to the object. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
+   *     * `ObjectLockLegalHoldStatus` - whether to apply a legal hold to the object. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
    *     * `ReadStream` - `boolean` - whether to read the body as a readable stream into a buffer before uploading into the bucket. If `false`, the `ContentLength`, `ContentMD5`, and `ChecksumSHA256` options are required along with this option. Defaults to `true`.
    *
    * Return:
@@ -1435,7 +1435,7 @@ class S3Bucket {
    *   * `key` - the key of the object inside the bucket. An object key is essentially the path to the object inside a bucket without the leading slash.
    *   * `body` - the content of the object.
    *   * `options`
-   *     * `Stream` - if `true`, response body is returned as a Node.js ReadableStream
+   *     * `Stream` - whether to return the response body as a Node.js ReadableStream.
    *     * `IfMatch` - if the entity tag (ETag) in the response is different than the one specified in this option, Amazon S3 responds with HTTP status code `412 Precondition Failed`. For more information, see [If-Match](https://datatracker.ietf.org/doc/html/rfc7232#section-3.1).
    *     * `IfModifiedSince` - if the object has not been modified since the time specified in this option, Amazon S3 responds with HTTP status code `304 Not Modified`. If the `IfNoneMatch` option is specified, this option is ignored. For more information, see [If-Modified-Since](https://datatracker.ietf.org/doc/html/rfc7232#section-3.3).
    *     * `IfNoneMatch` - if the object has the same entity tag (ETag) as the one specified in this option, Amazon S3 responds with HTTP status code `304 Not Modified`. For more information, see [If-None-Match](https://datatracker.ietf.org/doc/html/rfc7232#section-3.2).
@@ -1456,7 +1456,7 @@ class S3Bucket {
    * Return:
    *   * `data`
    *     * `Body` - the object data.
-   *     * `DeleteMarker` - if `true`, the current version or specified object version is a [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html).
+   *     * `DeleteMarker` - whether the current version or specified object version is a [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html).
    *     * `AcceptRanges` - the range of bytes specified by the [Range](https://www.rfc-editor.org/rfc/rfc9110.html#section-14.2) header of the request.
    *     * `Expiration` - if the expiration is configured for the object (see [PutBucketLifecycleConfiguration](https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketLifecycleConfiguration.html) from the _Amazon S3 User Guide_), this header will be present in the response. Includes the `expiry-date` and `rule-id` key-value pairs that provide information about object expiration. The value of the `rule-id` is URL-encoded.
    *     * `Restore` - provides information about the object restoration action and expiration time of the restored object copy. For more information, see [Restoring an archived object](https://docs.aws.amazon.com/AmazonS3/latest/userguide/restoring-objects.html) from the _Amazon S3 User Guide_.
@@ -1886,7 +1886,7 @@ class S3Bucket {
    *
    * Return:
    *   * `data`
-   *     * `DeleteMarker` - if `true`, the current version or specified object version is a [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html).
+   *     * `DeleteMarker` - whether the current version or specified object version is a [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html).
    *     * `AcceptRanges` - the range of bytes specified by the [Range](https://www.rfc-editor.org/rfc/rfc9110.html#section-14.2) header of the request.
    *     * `Expiration` - if the expiration is configured for the object (see [PutBucketLifecycleConfiguration](https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketLifecycleConfiguration.html) from the _Amazon S3 User Guide_), this header will be present in the response. Includes the `expiry-date` and `rule-id` key-value pairs that provide information about object expiration. The value of the `rule-id` is URL-encoded.
    *     * `Restore` - provides information about the object restoration action and expiration time of the restored object copy. For more information, see [Restoring an archived object](https://docs.aws.amazon.com/AmazonS3/latest/userguide/restoring-objects.html) from the _Amazon S3 User Guide_.
@@ -2176,11 +2176,11 @@ class S3Bucket {
    *   * `options`
    *     * `MFA` - the concatenation of the authentication device's serial number, a space, and the value displayed on the authentication device. Required to permanently delete a versioned object if versioning is configured with Multifactor Authentication (MFA) delete enabled. For more information, see [Configuring MFA delete](https://docs.aws.amazon.com/AmazonS3/latest/userguide/MultiFactorAuthenticationDelete.html) from the _Amazon S3 User Guide_.
    *     * `VersionId` - the specific version of the object. For more information, see [Retaining multiple versions of objects with S3 Versioning](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html) from the _Amazon S3 User Guide_.
-   *     * `BypassGovernanceRetention` - if `true`, S3 Object Lock bypasses [Governance mode](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html#object-lock-retention-modes) restrictions to process this operation. Requires the `s3:BypassGovernanceRetention` permission.
+   *     * `BypassGovernanceRetention` - whether to bypass [Governance mode](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html#object-lock-retention-modes) restrictions to process the operation. Requires the `s3:BypassGovernanceRetention` permission.
    *
    * Return:
    *   * `data`
-   *     * `DeleteMarker` - if `VersionId` was specified and `DeleteMarker` is `true`, the specified object version that was permanently deleted was a delete marker. If `VersionId` was not specified (simple DELETE) and `DeleteMarker` is `true`, the current version of the object is a delete marker. See [Working with delete markers](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) for more information. This field is not present if the S3 Bucket does not support versioning.
+   *     * `DeleteMarker` - if `VersionId` was specified and this parameter is `true`, the specified object version that was permanently deleted was a delete marker. If `VersionId` was not specified (simple DELETE) and this parameter is `true`, the current version of the object is a delete marker. See [Working with delete markers](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) for more information. This field is not present if the S3 Bucket does not support versioning.
    *     * `VersionId` - version ID of the [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) created as a result of the DELETE operation.
    *
    * ```javascript
@@ -2254,14 +2254,14 @@ class S3Bucket {
    * Arguments:
    *   * `keys` - the keys and/or version IDs of the objects or object versions to delete inside the bucket.
    *   * `options`
-   *     * `BypassGovernanceRetention` - if `true`, S3 Object Lock bypasses [Governance mode](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html#object-lock-retention-modes) restrictions to process this operation. Requires the `s3:BypassGovernanceRetention` permission.
+   *     * `BypassGovernanceRetention` - whether to bypass [Governance mode](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html#object-lock-retention-modes) restrictions to process the operation. Requires the `s3:BypassGovernanceRetention` permission.
    *
    * Return:
    *   * `data`
    *     * `Deleted` - container for a successful delete.
    *       * `Key` - the name of a deleted object.
    *       * `VersionId` - the version ID of the deleted object.
-   *       * `DeleteMarker` - if `true`, the current version or specified object version that was permanently deleted was a [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) before deletion.
+   *       * `DeleteMarker` - whether the current version or specified object version that was permanently deleted was a [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) before deletion.
    *       * `DeleteMarkerVersionId` - version ID of the [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) created as a result of the DELETE operation, or if a specific object version was deleted, the version ID of the deleted object version.
    *     * `Errors` - container for a failed delete.
    *       * `Key` - the name of the object of the attempted delete.
@@ -2345,14 +2345,14 @@ class S3Bucket {
    * Arguments:
    *   * `options`
    *     * `BatchSize` - the maximum number of objects per batch of objects to delete.
-   *     * `BypassGovernanceRetention` - if `true`, S3 Object Lock bypasses [Governance mode](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html#object-lock-retention-modes) restrictions to process this operation. Requires the `s3:BypassGovernanceRetention` permission.
+   *     * `BypassGovernanceRetention` - whether to bypass [Governance mode](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html#object-lock-retention-modes) restrictions to process the operation. Requires the `s3:BypassGovernanceRetention` permission.
    *
    * Return:
    *   * `data`
    *     * `Deleted` - container for a successful delete.
    *       * `Key` - the name of a deleted object.
    *       * `VersionId` - the version ID of the deleted object.
-   *       * `DeleteMarker` - if `true`, the current version or specified object version that was permanently deleted was a [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) before deletion.
+   *       * `DeleteMarker` - whether the current version or specified object version that was permanently deleted was a [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) before deletion.
    *       * `DeleteMarkerVersionId` - version ID of the [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) created as a result of the DELETE operation, or if a specific object version was deleted, the version ID of the deleted object version.
    *     * `Errors` - container for a failed delete.
    *       * `Key` - the name of the object of the attempted delete.
@@ -2473,7 +2473,7 @@ class S3Bucket {
    *     * `MaxKeys` - maximum number of keys returned in the response. Defaults to `1000`.
    *     * `Prefix` - limits the response to keys that begin with the specified prefix.
    *     * `ContinuationToken` - indicates to Amazon S3 that the list is being continued on this bucket with a token. Used to paginate list results.
-   *     * `FetchOwner` - if `true`, the `Owner` field indicating the owner of the object will be present with each key in the response.
+   *     * `FetchOwner` - whether the `Owner` field indicating the owner of the object will be present with each key in the response.
    *     * `StartAfter` - the key after which Amazon S3 will start listing in [lexicographical order](https://help.splunk.com/en/splunk-cloud-platform/search/spl2-search-manual/sort-and-order/lexicographical-order).
    *
    * Return:
@@ -2633,7 +2633,7 @@ class S3Bucket {
    *   * `data`
    *     * `IsTruncated` - set to `true` if there are more object versions available in the bucket to retrieve.
    *     * `Versions` - data and metadata about each object version returned.
-   *       * `IsLatest` - if `true`, this object version is the latest version of the object. If `false`, this object version is not the latest version of the object.
+   *       * `IsLatest` - whether this object version is the latest version of the object. If `false`, this object version is not the latest version of the object.
    *       * `Key` - a name or path that, along with the VersionId uniquely identifies the object version.
    *       * `LastModified` - date and time when the object was last modified.
    *       * `ETag` - the entity tag or MD5 hash of the object.
@@ -2646,7 +2646,7 @@ class S3Bucket {
    *         * `ID` - the ID of the owner.
    *       * `VersionId` - Version ID of the object version.
    *     * `DeleteMarkers` - data and metadata about each delete marker returned.
-   *       * `IsLatest` - if `true`, this delete marker is the latest version of the object. If `false`, this delete marker is not the latest version of the object.
+   *       * `IsLatest` - whether this delete marker is the latest version of the object. If `false`, this delete marker is not the latest version of the object.
    *       * `Key` - a name or path that, along with the VersionId, uniquely identifies the delete marker.
    *       * `LastModified` - date and time when the object was last modified.
    *       * `Owner` - the owner of the object.
