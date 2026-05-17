@@ -7,6 +7,7 @@
 
 require('rubico/global')
 const crypto = require('crypto')
+const fs = require('fs')
 const HTTP = require('./HTTP')
 const Readable = require('./Readable')
 const userAgent = require('./userAgent')
@@ -147,13 +148,6 @@ class S3Bucket {
      * The ready promise for the S3Bucket instance. Resolves when the S3 Bucket is active.
      *
      * ```javascript
-     * const awsCreds = await AwsCredentials('default')
-     * awsCreds.region = 'us-east-1'
-     *
-     * const myBucket = new S3Bucket({
-     *   name: 'my-bucket-name',
-     *   ...awsCreds,
-     * })
      * await myBucket.ready
      * ```
      */
@@ -404,15 +398,6 @@ class S3Bucket {
    *   * `data` - a promise of an empty object.
    *
    * ```javascript
-   * const awsCreds = await AwsCredentials('default')
-   * awsCreds.region = 'us-east-1'
-   *
-   * const myBucket = new S3Bucket({
-   *   name: 'my-bucket-name',
-   *   ...awsCreds,
-   *   autoReady: false,
-   * })
-   *
    * await myBucket.create()
    * ```
    */
@@ -608,15 +593,6 @@ class S3Bucket {
    *   * `data` - a promise of an empty object.
    *
    * ```javascript
-   * const awsCreds = await AwsCredentials('default')
-   * awsCreds.region = 'us-east-1'
-   *
-   * const myBucket = new S3Bucket({
-   *   name: 'my-bucket-name',
-   *   ...awsCreds,
-   * })
-   * await myBucket.ready
-   *
    * await myBucket.putPolicy({
    *   "Version": "2012-10-17",
    *   "Statement": [
@@ -666,15 +642,6 @@ class S3Bucket {
    *   * `BucketPolicy` - a promise of the bucket's access policy.
    *
    * ```javascript
-   * const awsCreds = await AwsCredentials('default')
-   * awsCreds.region = 'us-east-1'
-   *
-   * const myBucket = new S3Bucket({
-   *   name: 'my-bucket-name',
-   *   ...awsCreds,
-   * })
-   * await myBucket.ready
-   *
    * const policy = await myBucket.getPolicy()
    * ```
    */
@@ -726,15 +693,6 @@ class S3Bucket {
    *   * `data` - a promise of an empty object.
    *
    * ```javascript
-   * const awsCreds = await AwsCredentials('default')
-   * awsCreds.region = 'us-east-1'
-   *
-   * const myBucket = new S3Bucket({
-   *   name: 'my-bucket-name',
-   *   ...awsCreds,
-   *   autoReady: false,
-   * })
-   *
    * await myBucket.delete()
    * ```
    *
@@ -754,12 +712,14 @@ class S3Bucket {
    *
    * @docs
    * ```coffeescript [specscript]
+   * module stream 'https://nodejs.org/api/stream.html'
+   *
    * type DateString = string # Wed Dec 31 1969 16:00:00 GMT-0800 (PST)
    * type TimestampSeconds = number # 1751111429
    *
    * bucket.putObject(
    *   key string,
-   *   body Buffer|TypedArray|Blob|string|ReadableStream,
+   *   body Buffer|TypedArray|Blob|string|stream.Readable,
    *   options {
    *     ACL: 'private'|'public-read'|'public-read-write'|'authenticated-read'
    *          |'aws-exec-read'|'bucket-owner-read'|'bucket-owner-full-control',
@@ -880,16 +840,7 @@ class S3Bucket {
    *     * `BucketKeyEnabled` - indicates that Amazon S3 used the Amazon S3 Bucket key for object encryption with [AWS KMS](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) keys (SSE-KMS).
    *
    * ```javascript
-   * const awsCreds = await AwsCredentials('default')
-   * awsCreds.region = 'us-east-1'
-   *
-   * const myBucket = new S3Bucket({
-   *   name: 'my-bucket-name',
-   *   ...awsCreds,
-   * })
-   * await myBucket.ready
-   *
-   * await myBucket.putObject('some-key', '{"hello":"world"}', {
+   * await myBucket.putObject('my-key', '{"hello":"world"}', {
    *   ContentType: 'application/json',
    * })
    * ```
@@ -1100,11 +1051,329 @@ class S3Bucket {
     throw new AwsError(await Readable.Text(response), response.status)
   }
 
+  // _createMultipartUpload(key, options) -> multipartUpload Promise<{ UploadId: string, Key: string, Bucket: string }>
+  async _createMultipartUpload(key, options) {
+    const headers = {}
+
+    if (options.CacheControl) {
+      headers['Cache-Control'] = options.CacheControl
+    }
+
+    if (options.ContentDisposition) {
+      headers['Content-Disposition'] = options.ContentDisposition
+    }
+    if (options.ContentEncoding) {
+      headers['Content-Encoding'] = options.ContentEncoding
+    }
+
+    if (options.ContentLanguage) {
+      headers['Content-Language'] = options.ContentLanguage
+    }
+
+    if (options.ContentType) {
+      headers['Content-Type'] = options.ContentType
+    } else {
+      headers['Content-Type'] = 'application/octet-stream'
+    }
+
+    if (options.Expires) {
+      headers['Expires'] = options.Expires
+    }
+
+    const encodedKey = encodeURIComponentRFC3986(key).replace(/%2F/g, '/')
+    const response = await this._awsRequest1('POST', `/${encodedKey}?uploads`, headers, '')
+
+    if (response.ok) {
+      const text = await Readable.Text(response)
+      const data = {}
+      const xmlData = XML.parse(HTMLEntities.decode(text))
+      data.Bucket = xmlData.InitiateMultipartUploadResult.Bucket
+      data.Key = xmlData.InitiateMultipartUploadResult.Key
+      data.UploadId = xmlData.InitiateMultipartUploadResult.UploadId
+      return data
+    }
+
+    throw new AwsError(await Readable.Text(response), response.status)
+  }
+
+  // _uploadPart(
+  //   key string,
+  //   partBodyFilepath string,
+  //   uploadId string,
+  //   partNumber number,
+  //   contentLength number,
+  //   contentMD5 crypto.Hash,
+  //   contentSHA256 crypto.Hash,
+  //   progress boolean
+  // ) -> Promise
+  async _uploadPart(
+    key,
+    partBodyFilepath,
+    uploadId,
+    partNumber,
+    contentLength,
+    contentMD5,
+    contentSHA256,
+    progress
+  ) {
+    const headers = {}
+
+    headers['Content-Length'] = contentLength
+    headers['Content-MD5'] = contentMD5.digest('base64')
+    headers['X-Amz-Checksum-SHA256'] = contentSHA256.digest('base64')
+
+    const searchParams = new URLSearchParams()
+
+    searchParams.set('partNumber', partNumber)
+    searchParams.set('uploadId', uploadId)
+
+    const partBody = fs.createReadStream(partBodyFilepath)
+
+    if (progress) {
+      let start = performance.now()
+      let readLength = 0
+      partBody.on('data', chunk => {
+        readLength += chunk.length
+        console.log(`Uploading ${key} part ${partNumber} (${readLength} / ${contentLength} bytes) (${(readLength / contentLength * 100).toFixed(2)}%) (${readLength / 1024 / 1024 / (performance.now() - start) * 1000} MiB/s)`)
+      })
+    }
+
+    // headers['Content-MD5'] = contentMD5.digest('base64')
+    const encodedKey = encodeURIComponentRFC3986(key).replace(/%2F/g, '/')
+    const response = await this._awsRequest1(
+      'PUT',
+      `/${encodedKey}?${searchParams.toString()}`,
+      headers,
+      partBody
+    )
+
+    if (response.ok) {
+      const text = await Readable.Text(response)
+      const data = {}
+
+      data.PartNumber = partNumber
+      data.ETag = response.headers.etag
+      data.ChecksumSHA256 = response.headers['x-amz-checksum-sha256']
+
+      await fs.promises.rm(partBodyFilepath)
+
+      return data
+    }
+
+    throw new AwsError(await Readable.Text(response), response.status)
+  }
+
+  // _completeMultipartUpload(key string, uploadId string, parts Array<{
+  //   ChecksumCRC32: string,
+  //   ChecksumCRC32C: string,
+  //   ChecksumCRC64NVME: string,
+  //   ChecksumMD5: string,
+  //   ChecksumSHA1: string,
+  //   ChecksumSHA256: string,
+  //   ChecksumSHA512: string,
+  //   ChecksumXXHASH128: string,
+  //   ChecksumXXHASH3: string,
+  //   ChecksumXXHASH64: string,
+  //   Etag: string,
+  //   PartNumber: number
+  // }>) -> data Promise<>
+  async _completeMultipartUpload(key, uploadId, parts) {
+    const body = `
+<?xml version="1.0" encoding="UTF-8"?>
+<CompleteMultipartUpload xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  ${parts.map(part => `
+  <Part>
+    <ETag>${part.ETag.replace(/"/g, '')}</ETag>
+    <PartNumber>${part.PartNumber}</PartNumber>
+  </Part>
+`.trim()).join('\n  ')}
+</CompleteMultipartUpload>
+    `.trim()
+
+    const searchParams = new URLSearchParams()
+    searchParams.set('uploadId', uploadId)
+
+    const headers = {}
+
+    headers['Content-MD5'] = crypto.createHash('md5').update(body).digest('base64')
+    headers['Content-Length'] = Buffer.byteLength(body)
+    headers['Content-Type'] = 'application/xml'
+
+    const encodedKey = encodeURIComponentRFC3986(key).replace(/%2F/g, '/')
+    const response = await this._awsRequest1(
+      'POST',
+      `/${encodedKey}?${searchParams.toString()}`,
+      headers,
+      body
+    )
+
+    if (response.ok) {
+      const text = await Readable.Text(response)
+      const data = {}
+      const xmlData = XML.parse(HTMLEntities.decode(text))
+
+      data.CompleteMultipartUploadResult = pick(xmlData.CompleteMultipartUploadResult, [
+        'Location',
+        'Bucket',
+        'Key',
+        'ETag',
+        'ChecksumCRC64NVME',
+        'ChecksumType',
+      ])
+      return data
+    }
+
+    throw new AwsError(await Readable.Text(response), response.status)
+  }
+
+  /**
+   * @name multipartUpload
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * module stream 'https://nodejs.org/api/stream.html'
+   *
+   * multipartUpload(key string, body stream.Readable, options {
+   *   CacheControl: string,
+   *   ContentDisposition: string,
+   *   ContentEncoding: string,
+   *   ContentLanguage: string,
+   *   ContentType: string,
+   *   Expires: string,
+   *   MaximumPartSize: number, # bytes
+   *   Progress: boolean,
+   * }) -> data Promise<{
+   *   CompleteMultipartUploadResult: {
+   *     Location: string,
+   *     Bucket: string,
+   *     Key: string,
+   *     ETag: string,
+   *     ChecksumCRC64NVME: string,
+   *     ChecksumType: string,
+   *   }
+   * }>
+   * ```
+   *
+   * Concurrently uploads an object to the AWS S3 Bucket in multiple parts.
+   *
+   * Arguments:
+   *   * `key` - the key of the object inside the bucket. An object key is essentially the path to the object inside a bucket without the leading slash.
+   *   * `body` - the content of the object.
+   *   * `options`
+   *     * `CacheControl` - lists directives for caches along the request/response chain. For more information, see [Cache-Control](https://www.rfc-editor.org/rfc/rfc9111#section-5.2).
+   *     * `ContentDisposition` - conveys additional information about how to process the response payload. For more information, see [Content-Disposition](https://www.rfc-editor.org/rfc/rfc6266#section-4).
+   *     * `ContentEncoding` - indicates what content coding(s) have been applied to the object in order to obtain data in the media type referenced by the `ContentType` option. For more information, see [Content-Encoding](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.4).
+   *     * `ContentLanguage` - describes the natural language(s) of the intended audience for the object. For more information, see [Content-Language](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.5)
+   *     * `ContentType` - indicates the media type of the object. For more information, see [Content-Type](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.3).
+   *     * `Expires` - the date/time after which the object is considered stale. For more information, see [Expires](https://www.rfc-editor.org/rfc/rfc7234#section-5.3).
+   *     * `MaximumPartSize` - the maximum size in bytes of each upload part. Defaults to 1000000000. Maximum value 5000000000.
+   *     * `Progress` - whether to show the progress of the parts upload. Defaults to true.
+   *
+   * Return:
+   *   * `data`
+   *     * `Location` - the URI of the newly created object.
+   *     * `Bucket` - the bucket name of the newly created object.
+   *     * `Key` - the key of the newly created object.
+   *     * `ETag` - the entity tag of the newly created object.
+   *     * `ChecksumCRC64NVME` - the base64-encoded, 64-bit CRC-64NVME [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
+   *     * `ChecksumType` - the checksum type of the object, which determines how part-level checksums are combined to create an object-level checksum for multipart objects. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
+   *
+   * ```javascript
+   * const readStream = fs.createReadStream('my-file')
+   *
+   * await myBucket.multipartUpload('my-multipart-object', readStream, {
+   *   MaximumPartSize: 1000000000,
+   * })
+   * ```
+   */
+  async multipartUpload(key, body, options = {}) {
+    const maximumPartSize = options.MaximumPartSize ?? 5000000000
+    const progress = options.Progress ?? true
+    const multipartUpload = await this._createMultipartUpload(key, options)
+
+    const promises = []
+    const uploadId = multipartUpload.UploadId
+    let contentMD5 = crypto.createHash('md5')
+    let contentSHA256 = crypto.createHash('sha256')
+    let contentLength = 0
+    let partNumber = 1
+    let partBodyFilepath = `/tmp/presidium-S3Bucket-multipartUpload-${key}-${partNumber}`
+    let partBody = fs.createWriteStream(partBodyFilepath)
+
+    body.on('data', chunk => {
+
+      if (contentLength + Buffer.byteLength(chunk) > maximumPartSize) {
+        if (contentLength === 0) {
+          throw new Error('MaximumPartSize too small')
+        }
+
+        partBody.end()
+
+        const promise = new Promise(resolve => {
+          partBody.on('finish', resolve)
+        }).then(thunkify.call(
+          this._uploadPart,
+          this,
+          key,
+          partBodyFilepath,
+          uploadId,
+          partNumber,
+          contentLength,
+          contentMD5,
+          contentSHA256,
+          progress
+        ))
+        promises.push(promise)
+
+        partNumber += 1
+        partBodyFilepath = `/tmp/presidium-S3Bucket-multipartUpload-${key}-${partNumber}`
+        partBody = fs.createWriteStream(partBodyFilepath)
+        contentMD5 = crypto.createHash('md5')
+        contentSHA256 = crypto.createHash('sha256')
+        contentLength = 0
+      }
+
+      partBody.write(chunk)
+      contentMD5.update(chunk)
+      contentSHA256.update(chunk)
+      contentLength += Buffer.byteLength(chunk)
+
+    })
+
+    await new Promise(resolve => {
+      body.on('end', resolve)
+    })
+
+    partBody.end()
+
+    const promise = new Promise(resolve => {
+      partBody.on('finish', resolve)
+    }).then(thunkify.call(
+      this._uploadPart,
+      this,
+      key,
+      partBodyFilepath,
+      uploadId,
+      partNumber,
+      contentLength,
+      contentMD5,
+      contentSHA256,
+      progress
+    ))
+    promises.push(promise)
+
+    const parts = await Promise.all(promises)
+
+    return this._completeMultipartUpload(key, uploadId, parts)
+  }
+
   /**
    * @name getObject
    *
    * @docs
    * ```coffeescript [specscript]
+   * module stream 'https://nodejs.org/api/stream.html'
+   *
    * type DateString = string # Wed Dec 31 1969 16:00:00 GMT-0800 (PST)
    * type TimestampSeconds = number # 1751111429
    *
@@ -1130,7 +1399,7 @@ class S3Bucket {
    *     ChecksumMode: 'ENABLED',
    *   },
    * ) -> data Promise<{
-   *   Body: Buffer|TypedArray|ReadableStream,
+   *   Body: Buffer|TypedArray|stream.Readable,
    *   DeleteMarker: boolean,
    *   AcceptRanges: string,
    *   Expiration: string,
@@ -1235,15 +1504,6 @@ class S3Bucket {
    *     * `ObjectLockLegalHoldStatus` - indicates the status of the legal hold applied to the object. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
    *
    * ```javascript
-   * const awsCreds = await AwsCredentials('default')
-   * awsCreds.region = 'us-east-1'
-   *
-   * const myBucket = new S3Bucket({
-   *   name: 'my-bucket-name',
-   *   ...awsCreds,
-   * })
-   * await myBucket.ready
-   *
    * const data = await myBucket.getObject('my-key')
    *
    * function myHTTPHandler(request, response) {
@@ -1674,15 +1934,6 @@ class S3Bucket {
    *     * `ObjectLockLegalHoldStatus` - indicates the status of the legal hold applied to the object. For more information, see [Locking objects with Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) from the _Amazon S3 User Guide_.
    *
    * ```javascript
-   * const awsCreds = await AwsCredentials('default')
-   * awsCreds.region = 'us-east-1'
-   *
-   * const myBucket = new S3Bucket({
-   *   name: 'my-bucket-name',
-   *   ...awsCreds,
-   * })
-   * await myBucket.ready
-   *
    * const data = await myBucket.headObject('my-key')
    * ```
    *
@@ -1945,15 +2196,6 @@ class S3Bucket {
    *     * `VersionId` - version ID of the [delete marker](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html) created as a result of the DELETE operation.
    *
    * ```javascript
-   * const awsCreds = await AwsCredentials('default')
-   * awsCreds.region = 'us-east-1'
-   *
-   * const myBucket = new S3Bucket({
-   *   name: 'my-bucket-name',
-   * })
-   *   ...awsCreds,
-   * await myBucket.ready
-   *
    * await myBucket.deleteObject('my-key')
    * ```
    *
@@ -2039,15 +2281,6 @@ class S3Bucket {
    *       * `Code` - a response code that uniquely identifies the error condition. For a complete list of error responses, see [Error responses](https://docs.aws.amazon.com/AmazonS3/latest/API/ErrorResponses.html) from the _Amazon S3 API_.
    *
    * ```javascript
-   * const awsCreds = await AwsCredentials('default')
-   * awsCreds.region = 'us-east-1'
-   *
-   * const myBucket = new S3Bucket({
-   *   name: 'my-bucket-name',
-   *   ...awsCreds,
-   * })
-   * await myBucket.ready
-   *
    * await myBucket.deleteObjects(['my-key-1', 'my-key-2'])
    * ```
    */
@@ -2139,15 +2372,6 @@ class S3Bucket {
    *       * `Code` - a response code that uniquely identifies the error condition. For a complete list of error responses, see [Error responses](https://docs.aws.amazon.com/AmazonS3/latest/API/ErrorResponses.html) from the _Amazon S3 API_.
    *
    * ```javascript
-   * const awsCreds = await AwsCredentials('default')
-   * awsCreds.region = 'us-east-1'
-   *
-   * const myBucket = new S3Bucket({
-   *   name: 'my-bucket-name',
-   *   ...awsCreds,
-   * })
-   * await myBucket.ready
-   *
    * await myBucket.deleteAllObjects()
    * ```
    */
@@ -2283,15 +2507,6 @@ class S3Bucket {
    *     * `NextContinuationToken` - indicates there are more keys available in the bucket to be listed. To continue the list, this value should be used as the `ContinuationToken` for the next list objects request.
    *
    * ```javascript
-   * const awsCreds = await AwsCredentials('default')
-   * awsCreds.region = 'us-east-1'
-   *
-   * const myBucket = new S3Bucket({
-   *   name: 'my-bucket-name',
-   *   ...awsCreds,
-   * })
-   * await myBucket.ready
-   *
    * const data1 = await myBucket.listObjects()
    *
    * const data2 = await myBucket.listObjects({
@@ -2456,20 +2671,9 @@ class S3Bucket {
    *     * `NextVersionIdMarker` - the Version ID of the object version at which to start the next page of object versions.
    *
    * ```javascript
-   * const awsCreds = await AwsCredentials('default')
-   * awsCreds.region = 'us-east-1'
-   *
-   * const myBucket = new S3Bucket({
-   *   name: 'my-bucket-name',
-   *   ...awsCreds,
-   * })
-   * await myBucket.ready
-   *
    * const data1 = await myBucket.listObjectVersions()
    *
-   * const data2 = await myBucket.listObjectVersions({
-   *   Prefix: 'my-prefix'
-   * })
+   * const data2 = await myBucket.listObjectVersions({ Prefix: 'my-prefix })
    * ```
    *
    */

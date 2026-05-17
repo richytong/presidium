@@ -1,4 +1,5 @@
 const _Buffer = require('./_Buffer')
+const convertUint32ToBase64 = require('./convertUint32ToBase64')
 
 /**
  * @name CRC32
@@ -42,6 +43,21 @@ class CRC32 {
    */
   get checksum() {
     return (this._value ^ 0xffffffff) >>> 0
+  }
+
+  /**
+   * @name digest
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * digest(format string) -> string
+   * ```
+   */
+  digest(format) {
+    if (format == 'base64') {
+      return convertUint32ToBase64(this.checksum)
+    }
+    throw new Error(`invalid format ${format}`)
   }
 
 }

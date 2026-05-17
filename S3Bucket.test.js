@@ -7,9 +7,9 @@ const fs = require('fs')
 const S3Bucket = require('./S3Bucket')
 const AwsCredentials = require('./AwsCredentials')
 const CRC32 = require('./internal/CRC32')
+const CRC32C = require('./internal/CRC32C')
 const AwsError = require('./internal/AwsError')
 const sleep = require('./internal/sleep')
-const crc32c = require('fast-crc32c')
 const convertUint32ToBase64 = require('./internal/convertUint32ToBase64')
 const { CrtCrc64Nvme } = require('@aws-sdk/crc64-nvme-crt')
 const encodeURIComponentRFC3986 = require('./internal/encodeURIComponentRFC3986')
@@ -364,6 +364,49 @@ const test1 = new Test('S3Bucket', async function integration1() {
     assert(!data3Keys.includes('max-keys-1'))
   }
 
+  {
+    const readableStream = stream.Readable.from((function * () {
+      for (let i = 0; i < 10; i++) {
+        yield Buffer.alloc(50000000)
+      }
+    })())
+
+    const multipartUploadData = await testBucket.multipartUpload('multipart-upload-1', readableStream, {
+      MaximumPartSize: 50000000,
+    })
+
+    assert.equal(typeof multipartUploadData.CompleteMultipartUploadResult.ETag, 'string')
+    assert.equal(typeof multipartUploadData.CompleteMultipartUploadResult.ChecksumCRC64NVME, 'string')
+    assert.equal(multipartUploadData.CompleteMultipartUploadResult.ChecksumType, 'FULL_OBJECT')
+  }
+
+  {
+    const readableStream = stream.Readable.from((function * () {
+      yield Buffer.alloc(50000000)
+    })())
+
+    const multipartUploadData = await testBucket.multipartUpload('multipart-upload-2', readableStream, {
+      MaximumPartSize: 50000000,
+      Progress: false,
+      CacheControl: 'nocache',
+      ContentDisposition: 'inline',
+      ContentEncoding: 'gzip',
+      ContentLanguage: 'en-US',
+      ContentType: 'text/plain',
+    })
+
+    assert.equal(typeof multipartUploadData.CompleteMultipartUploadResult.ETag, 'string')
+    assert.equal(typeof multipartUploadData.CompleteMultipartUploadResult.ChecksumCRC64NVME, 'string')
+    assert.equal(multipartUploadData.CompleteMultipartUploadResult.ChecksumType, 'FULL_OBJECT')
+
+    const headData = await testBucket.headObject('multipart-upload-2')
+
+    assert.equal(headData.CacheControl, 'nocache')
+    assert.equal(headData.ContentDisposition, 'inline')
+    assert.equal(headData.ContentEncoding, 'gzip')
+    assert.equal(headData.ContentLanguage, 'en-US')
+    assert.equal(headData.ContentType, 'text/plain')
+  }
 
   await testBucket.deleteAllObjects()
 
@@ -936,9 +979,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
     const key = 'test/checksum-crc32'
     const body = 'test-checksum-crc32'
 
-    const crc32 = new CRC32()
-    crc32.update(Buffer.from(body, 'utf8'))
-    const base64Checksum = convertUint32ToBase64(crc32.checksum)
+    const base64Checksum = new CRC32().update(Buffer.from(body, 'utf8')).digest('base64')
 
     const data1 = await testBucket3.putObject(key, body, {
       ChecksumAlgorithm: 'ChecksumCRC32',
@@ -964,8 +1005,7 @@ const test3 = new Test('S3Bucket', async function integration3() {
     const key = 'test/checksum-crc32c'
     const body = 'test-checksum-crc32c'
 
-    const checksum = crc32c.calculate(body)
-    const base64Checksum = convertUint32ToBase64(checksum)
+    const base64Checksum = new CRC32C().update(body).digest('base64')
 
     const data1 = await testBucket3.putObject(key, body, {
       ChecksumAlgorithm: 'ChecksumCRC32C',
