@@ -1285,7 +1285,8 @@ class S3Bucket {
 
     await fs.promises.mkdir(tmpDir, { recursive: true })
 
-    const promises = []
+    let uploadingPromise = Promise.resolve()
+    const parts = []
     const uploadId = multipartUpload.UploadId
     let contentMD5 = crypto.createHash('md5')
     let contentSHA256 = crypto.createHash('sha256')
@@ -1303,21 +1304,22 @@ class S3Bucket {
 
         partBody.end()
 
-        const promise = new Promise(resolve => {
-          partBody.on('finish', resolve)
-        }).then(thunkify.call(
-          this._uploadPart,
-          this,
-          key,
-          partBodyFilepath,
-          uploadId,
-          partNumber,
-          contentLength,
-          contentMD5,
-          contentSHA256,
-          progress
-        ))
-        promises.push(promise)
+        const partBodyFinish =
+          new Promise(curry.call(partBody.on, partBody, 'finish', __))
+
+        uploadingPromise =
+          uploadingPromise.then(always(partBodyFinish)).then(thunkify.call(
+            this._uploadPart,
+            this,
+            key,
+            partBodyFilepath,
+            uploadId,
+            partNumber,
+            contentLength,
+            contentMD5,
+            contentSHA256,
+            progress
+          )).then(curry.call(parts.push, parts, __))
 
         partNumber += 1
         partBodyFilepath = path.join(tmpDir, `presidium-S3Bucket-multipartUpload-${key}-${partNumber}`)
@@ -1340,23 +1342,24 @@ class S3Bucket {
 
     partBody.end()
 
-    const promise = new Promise(resolve => {
-      partBody.on('finish', resolve)
-    }).then(thunkify.call(
-      this._uploadPart,
-      this,
-      key,
-      partBodyFilepath,
-      uploadId,
-      partNumber,
-      contentLength,
-      contentMD5,
-      contentSHA256,
-      progress
-    ))
-    promises.push(promise)
+    const partBodyFinish =
+      new Promise(curry.call(partBody.on, partBody, 'finish', __))
 
-    const parts = await Promise.all(promises)
+    uploadingPromise =
+      uploadingPromise.then(always(partBodyFinish)).then(thunkify.call(
+        this._uploadPart,
+        this,
+        key,
+        partBodyFilepath,
+        uploadId,
+        partNumber,
+        contentLength,
+        contentMD5,
+        contentSHA256,
+        progress
+      )).then(curry.call(parts.push, parts, __))
+
+    await uploadingPromise
 
     return this._completeMultipartUpload(key, uploadId, parts)
   }
