@@ -812,7 +812,7 @@ class S3Bucket {
    * Return:
    *   * `data`
    *     * `Expiration` - if the expiration is configured for the object (see [PutBucketLifecycleConfiguration](https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketLifecycleConfiguration.html) from the _Amazon S3 User Guide_), this header will be present in the response. Includes the `expiry-date` and `rule-id` key-value pairs that provide information about object expiration. The value of the `rule-id` is URL-encoded.
-   *     * `ETag` - the entity tag or MD5 hash of the object.
+   *     * `ETag` - the entity tag of the object.
    *     * `ChecksumCRC32` - the base64-encoded, 32-bit CRC-32 [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
    *     * `ChecksumCRC32C` - the base64-encoded, 32-bit CRC-32C [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
    *     * `ChecksumCRC64NVME` - the base64-encoded, 64-bit CRC-64NVME [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
@@ -1462,7 +1462,7 @@ class S3Bucket {
    *     * `Restore` - provides information about the object restoration action and expiration time of the restored object copy. For more information, see [Restoring an archived object](https://docs.aws.amazon.com/AmazonS3/latest/userguide/restoring-objects.html) from the _Amazon S3 User Guide_.
    *     * `LastModified` - date/time when the object was last modified.
    *     * `ContentLength` - indicates the object's data length as a non-negative integer number of bytes. For more information, see [Content-Length](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.6).
-   *     * `ETag` - the entity tag or MD5 hash of the object.
+   *     * `ETag` - the entity tag of the object.
    *     * `ChecksumCRC32` - the base64-encoded, 32-bit CRC-32 [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
    *     * `ChecksumCRC32C` - the base64-encoded, 32-bit CRC-32C [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
    *     * `ChecksumCRC64NVME` - the base64-encoded, 64-bit CRC-64NVME [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
@@ -1893,7 +1893,7 @@ class S3Bucket {
    *     * `ArchiveStatus` - archive status of the object.
    *     * `LastModified` - date/time when the object was last modified.
    *     * `ContentLength` - indicates the object's data length as a non-negative integer number of bytes. For more information, see [Content-Length](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.6).
-   *     * `ETag` - the entity tag or MD5 hash of the object.
+   *     * `ETag` - the entity tag of the object.
    *     * `ChecksumCRC32` - the base64-encoded, 32-bit CRC-32 [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
    *     * `ChecksumCRC32C` - the base64-encoded, 32-bit CRC-32C [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
    *     * `ChecksumCRC64NVME` - the base64-encoded, 64-bit CRC-64NVME [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
@@ -2482,7 +2482,7 @@ class S3Bucket {
    *     * `Contents` - data and metadata about each object returned.
    *       * `Key` - a name or path that uniquely identifies the object. For more information, see [Naming Amazon S3 objects](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html) from the _Amazon S3 User Guide_.
    *       * `LastModified` - creation date of the object.
-   *       * `ETag` - the entity tag or MD5 hash of the object.
+   *       * `ETag` - the entity tag of the object.
    *       * `ChecksumAlgorithm`- indicates the algorithm used to create the [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
    *       * `Size` - size or data length in bytes of the object.
    *       * `StorageClass` - the [storage class](https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html) associated with the object. Defaults to `STANDARD`.
@@ -2636,7 +2636,7 @@ class S3Bucket {
    *       * `IsLatest` - whether this object version is the latest version of the object. If `false`, this object version is not the latest version of the object.
    *       * `Key` - a name or path that, along with the VersionId uniquely identifies the object version.
    *       * `LastModified` - date and time when the object was last modified.
-   *       * `ETag` - the entity tag or MD5 hash of the object.
+   *       * `ETag` - the entity tag of the object.
    *       * `ChecksumType` - checksum type (`'COMPOSITE'` or `'FULL_OBJECT'`) that is used to calcuulate the object version's checksum value.
    *       * `ChecksumAlgorithm`- indicates the algorithm used to create the [checksum](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Checksum.html) of the object. For more information, see [Checking object integrity in Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html) from the _Amazon S3 User Guide_.
    *       * `Size` - size or data length in bytes of the object.
