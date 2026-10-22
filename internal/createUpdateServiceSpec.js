@@ -229,12 +229,14 @@ const createUpdateServiceSpec = function (options) {
   }
 
   if (options.networks) {
+    result.TaskTemplate ??= {}
     result.TaskTemplate.Networks = options.networks.map(all({
       Target: __,
       Aliases: [],
       DriverOpts: {},
     }))
   } else if (options.network) {
+    result.TaskTemplate ??= {}
     result.TaskTemplate.Networks = [{
       Target: options.network,
       Aliases: [],

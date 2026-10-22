@@ -366,11 +366,32 @@ const test = new Test('createUpdateServiceSpec', createUpdateServiceSpec)
   network: 'my-network',
 }, {
   Name: 'my-service',
-  Networks: [{
-    Target: 'my-network',
-    Aliases: [],
-    DriverOpts: {},
-  }],
+  TaskTemplate: {
+    Networks: [{
+      Target: 'my-network',
+      Aliases: [],
+      DriverOpts: {},
+    }],
+  },
+})
+
+.case({
+  serviceName: 'my-service',
+  Spec: {},
+  networks: ['my-network', 'my-other-network'],
+}, {
+  Name: 'my-service',
+  TaskTemplate: {
+    Networks: [{
+      Target: 'my-network',
+      Aliases: [],
+      DriverOpts: {},
+    }, {
+      Target: 'my-other-network',
+      Aliases: [],
+      DriverOpts: {},
+    }],
+  },
 })
 
 .case({
