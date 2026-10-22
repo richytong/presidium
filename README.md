@@ -429,7 +429,7 @@ for await (const value of sortedHt.reverseIterator({ startingSortValue: 2, endin
 ```
 
 ## [Host your own distributed database](https://presidium.services/docs/DatabaseServer)
-```
+```javascript
 const DatabaseServer = require("presidium/DatabaseServer")
 const DiskHashTableClient = require("presidium/DiskHashTableClient")
 
@@ -458,7 +458,7 @@ await sessionHt.delete(accessToken)
 ```
 
 ## [Query your distributed database](https://presidium.services/docs/DiskSortedHashTableClient)
-```
+```javascript
 const DiskSortedHashTableClient = require("presidium/DiskSortedHashTableClient")
 
 const postHt = new DiskSortedHashTableClient({
