@@ -4,7 +4,7 @@ const package = require('./package.json')
 const index = require('.')
 
 const test = new Test('index.test', async function integration() {
-  assert.equal(Object.keys(index).length, 26)
+  assert.equal(Object.keys(index).length, 29)
 
   for (const name in index) {
     assert(package.files.includes(`${name}.js`))
