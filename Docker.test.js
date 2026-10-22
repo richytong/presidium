@@ -709,10 +709,10 @@ const test5 = new Test('Docker - swarm', async function integration() {
 }).case()
 
 const test = Test.all([
-  // test1,
-  // test2,
-  // test3,
-  // test4,
+  test1,
+  test2,
+  test3,
+  test4,
   test5,
 ])
 
