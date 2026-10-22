@@ -431,16 +431,36 @@ for await (const value of sortedHt.reverseIterator({ startingSortValue: 2, endin
 ## [Host your own distributed database](https://presidium.services/docs/DatabaseServer)
 ```javascript
 const DatabaseServer = require("presidium/DatabaseServer")
-const DiskHashTableClient = require("presidium/DiskHashTableClient")
 
 const server = new DatabaseServer({
   databasePath: `${__dirname}/database`,
 })
 await server.init()
 
+await server.registerDiskHashTable("Session", {
+  storagePath: `${this.databasePath}/Session/storage`,
+  headerPath: `${this.databasePath}/Session/header`,
+  initialLength: 536870912,
+  itemSize: 512,
+})
+
+await server.registerDiskSortedHashTable("Post", {
+  storagePath: `${this.databasePath}/Post/storage`,
+  headerPath: `${this.databasePath}/Post/header`,
+  initialLength: 1048576,
+  itemSize: 8192,
+  sortValueType: "number",
+  degree: 2,
+})
+
 server.listen(5000, () => {
   console.log("Database server listening on port 5000")
 })
+```
+
+## [Call a database table from anywhere](https://presidium.services/docs/DiskHashTableClient)
+```javascript
+const DiskHashTableClient = require("presidium/DiskHashTableClient")
 
 const sessionHt = new DiskHashTableClient({
   serverUrl: "http://localhost:5000",
@@ -457,9 +477,9 @@ const sessionJson = await sessionHt.get(accessToken)
 await sessionHt.delete(accessToken)
 ```
 
-## [Query your distributed database](https://presidium.services/docs/DiskSortedHashTableClient)
+## [Query a database table from anywhere](https://presidium.services/docs/DiskSortedHashTableClient)
 ```javascript
-const DiskSortedHashTableClient = require("presidium/DiskSortedHashTableClient")
+const DiskSortedHashTableClient = require("presidium-db-client-server/DiskSortedHashTableClient")
 
 const postHt = new DiskSortedHashTableClient({
   serverUrl: "http://localhost:5000",
