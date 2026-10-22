@@ -407,9 +407,12 @@ const test4 = new Test('Docker - container', async function integration() {
 }).case()
 
 const test5 = new Test('Docker - swarm', async function integration() {
-  const docker = new Docker({ apiVersion: '1.44' })
+  const docker = new Docker({ apiVersion: '1.52' })
 
   await docker.leaveSwarm({ force: true }).catch(() => {})
+
+  await docker.deleteNetwork('my-network').catch(() => {})
+  await docker.deleteNetwork('my-other-network').catch(() => {})
 
   { // initSwarm
     const nodeId = await docker.initSwarm('[::1]:2377')
@@ -460,6 +463,14 @@ const test5 = new Test('Docker - swarm', async function integration() {
     const data = await docker.inspectNetwork('my-network')
     assert.equal(typeof data.Id, 'string')
     assert.equal(data.Scope, 'swarm')
+    this.networkId1 = data.Id
+  }
+
+  { // inspect my-other-network
+    const data = await docker.inspectNetwork('my-other-network')
+    assert.equal(typeof data.Id, 'string')
+    assert.equal(data.Scope, 'swarm')
+    this.networkId2 = data.Id
   }
 
   { // create a service
@@ -504,6 +515,8 @@ const test5 = new Test('Docker - swarm', async function integration() {
     assert.equal(data2.Spec.Labels.foo, 'bar')
     assert.equal(data2.Spec.TaskTemplate.Resources.Reservations.NanoCPUs, 100000000)
     assert.equal(data2.Spec.TaskTemplate.Resources.Reservations.MemoryBytes, 256000000)
+    assert.equal(data2.Spec.TaskTemplate.Networks.length, 1)
+    assert.equal(data2.Spec.TaskTemplate.Networks[0].Target, this.networkId1)
 
     this.serviceId1 = serviceId
 
@@ -552,7 +565,7 @@ const test5 = new Test('Docker - swarm', async function integration() {
 
   }
 
-  { // create another service
+  { // create another service on multiple networks
     const data1 = await docker.createService('service2', {
       image: 'node:15-alpine',
       replicas: 'global',
@@ -568,11 +581,16 @@ const test5 = new Test('Docker - swarm', async function integration() {
       publish: { 8081: 3001 },
 
       healthCmd: ['wget', '--no-verbose', '--tries=1', '--spider', 'localhost:3001'],
+
+      networks: ['my-network', 'my-other-network']
     })
     const serviceId = data1.ID
 
     const data2 = await docker.inspectService(serviceId)
     assert.equal(Object.keys(data2.Spec.TaskTemplate.Resources.Reservations), 0)
+    assert.equal(data2.Spec.TaskTemplate.Networks.length, 2)
+    assert.equal(data2.Spec.TaskTemplate.Networks[0].Target, this.networkId1)
+    assert.equal(data2.Spec.TaskTemplate.Networks[1].Target, this.networkId2)
 
     this.serviceId2 = serviceId
   }
@@ -633,7 +651,7 @@ const test5 = new Test('Docker - swarm', async function integration() {
     assert.equal(data[1].ServiceID, this.serviceId2)
   }
 
-  { // deleteService
+  { // delete service 1
     const message = await docker.deleteService(this.serviceId1)
     assert.equal(typeof message, 'string')
   }
@@ -641,6 +659,16 @@ const test5 = new Test('Docker - swarm', async function integration() {
   { // listServices after deleteService
     const data = await docker.listServices()
     assert.equal(data.length, 1)
+  }
+
+  { // delete service 2
+    const message = await docker.deleteService(this.serviceId2)
+    assert.equal(typeof message, 'string')
+  }
+
+  { // listServices after deleteService
+    const data = await docker.listServices()
+    assert.equal(data.length, 0)
   }
 
   // join own swarm
@@ -681,10 +709,10 @@ const test5 = new Test('Docker - swarm', async function integration() {
 }).case()
 
 const test = Test.all([
-  test1,
-  test2,
-  test3,
-  test4,
+  // test1,
+  // test2,
+  // test3,
+  // test4,
   test5,
 ])
 

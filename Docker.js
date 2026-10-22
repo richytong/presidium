@@ -1650,6 +1650,7 @@ class Docker {
    *     * `rollbackMonitor` - the amount of time in nanoseconds to monitor each rolled back task for failures. Defaults to `15e9`.
    *     * `rollbackMaxFailureRatio` - the maximum ratio of tasks that may fail during a rollback before the failure action is invoked. Defaults to `0.15`.
    *     * `network` - the network name or ID for attachment.
+   *     * `networks` - the names or IDs of networks for attachment.
    *     * `cmd` - the command that to be run by the Docker service.
    *     * `workdir` - the working directory of the containers of the Docker service.
    *     * `env` - an object of the Docker service's environment variables. Maps environment variable names to environment variable values, e.g. `{ FOO: 'bar' }`.
@@ -1684,7 +1685,7 @@ class Docker {
    *   * [Docker Swarm](https://docs.docker.com/engine/swarm/)
    */
   async createService(service, options = {}) {
-    const body = JSON.stringify({
+    const config = {
       Name: service,
       Labels: options.labels ?? {},
       TaskTemplate: {
@@ -1739,6 +1740,20 @@ class Docker {
           }),
         },
 
+        ...options.networks ? {
+          Networks: options.networks.map(all({
+            Target: __,
+            Aliases: [],
+            DriverOpts: {},
+          }))
+        } : options.network ? {
+          Networks: [{
+            Target: options.network,
+            Aliases: [],
+            DriverOpts: {},
+          }],
+        } : {},
+
         Resources: {
           Reservations: {
             ...options.memory ? {
@@ -1789,14 +1804,6 @@ class Docker {
         MaxFailureRatio: get('rollbackMaxFailureRatio', 0.15),
       })(options),
 
-      ...options.network && {
-        Networks: [{
-          Target: options.network,
-          Aliases: [],
-          DriverOpts: {},
-        }],
-      },
-
       ...options.publish && {
         EndpointSpec: {
           Ports: Object.entries(options.publish).map(pipe([
@@ -1814,10 +1821,10 @@ class Docker {
           ])),
         },
       },
-    })
+    }
 
     const response = await this.http.post('/services/create', {
-      body,
+      body: JSON.stringify(config),
       headers: {
         'Content-Type': 'application/json',
         'X-Registry-Auth': pipe(options, [

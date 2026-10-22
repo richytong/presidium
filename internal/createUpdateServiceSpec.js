@@ -228,8 +228,14 @@ const createUpdateServiceSpec = function (options) {
     result.RollbackConfig.MaxFailureRatio = options.rollbackMaxFailureRatio
   }
 
-  if (options.network != null) {
-    result.Networks = [{
+  if (options.networks) {
+    result.TaskTemplate.Networks = options.networks.map(all({
+      Target: __,
+      Aliases: [],
+      DriverOpts: {},
+    }))
+  } else if (options.network) {
+    result.TaskTemplate.Networks = [{
       Target: options.network,
       Aliases: [],
       DriverOpts: {},
