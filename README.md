@@ -37,113 +37,113 @@ npm i presidium
 require Presidium in [CommonJS](https://nodejs.org/docs/latest/api/modules.html#modules-commonjs-modules):
 ```javascript
 // import Presidium globally
-require('presidium/global')
+require("presidium/global")
 
 // import Presidium
-const presidium = require('presidium')
+const presidium = require("presidium")
 
 // import Presidium clients
-const DynamoDBTable = require('presidium/DynamoDBTable')
-const S3Bucket = require('presidium/S3Bucket')
-const WebSocket = require('presidium/WebSocket')
-const Readable = require('presidium/Readable')
+const DynamoDBTable = require("presidium/DynamoDBTable")
+const S3Bucket = require("presidium/S3Bucket")
+const WebSocket = require("presidium/WebSocket")
+const Readable = require("presidium/Readable")
 ```
 
 ## [Handle HTTP](https://presidium.services/docs/HTTP)
 ```javascript
-const HTTP = require('presidium/HTTP')
+const HTTP = require("presidium/HTTP")
 
 const server = HTTP.Server((request, response) => {
-  response.writeHead(200, { 'Content-Type': 'application/json' })
-  response.write(JSON.stringify({ greeting: 'Hello World' }))
+  response.writeHead(200, { "Content-Type": "application/json" })
+  response.write(JSON.stringify({ greeting: "Hello World" }))
   response.end()
 })
 
 server.listen(3000)
 
-const http = new HTTP('http://localhost:3000/')
+const http = new HTTP("http://localhost:3000/")
 
-http.get('/')
+http.get("/")
   .then(response => response.json())
-  .then(console.log) // { greeting: 'Hello World' }
+  .then(console.log) // { greeting: "Hello World" }
 ```
 
 ## [Send messages with WebSocket](https://presidium.services/docs/WebSocket)
 ```javascript
-const WebSocket = require('presidium/WebSocket')
+const WebSocket = require("presidium/WebSocket")
 
 const server = new WebSocket.Server(websocket => {
-  websocket.on('message', message => {
-    console.log('Message from client:', message)
-    websocket.send('Hello Client!')
+  websocket.on("message", message => {
+    console.log("Message from client:", message)
+    websocket.send("Hello Client!")
   })
-  websocket.on('close', () => {
-    console.log('websocket closed')
+  websocket.on("close", () => {
+    console.log("websocket closed")
   })
 })
 server.listen(1337)
 
-const websocket = new WebSocket('ws://localhost:1337/')
-websocket.on('open', () => {
-  websocket.send('Hello Server!')
+const websocket = new WebSocket("ws://localhost:1337/")
+websocket.on("open", () => {
+  websocket.send("Hello Server!")
 })
-websocket.on('message', message => {
-  console.log('Message from server:', message)
+websocket.on("message", message => {
+  console.log("Message from server:", message)
 })
 ```
 
 ## [Create, read, update, delete, and query with AWS DynamoDB](https://presidium.services/docs/DynamoDBTable)
 ```javascript
-const DynamoDBTable = require('presidium/DynamoDBTable')
-const DynamoDBGlobalSecondaryIndex = require('presidium/DynamoDBGlobalSecondaryIndex')
-const AwsCredentials = require('presidium/AwsCredentials')
+const DynamoDBTable = require("presidium/DynamoDBTable")
+const DynamoDBGlobalSecondaryIndex = require("presidium/DynamoDBGlobalSecondaryIndex")
+const AwsCredentials = require("presidium/AwsCredentials")
 
-const awsCreds = await AwsCredentials('default')
-awsCreds.region = 'us-east-1'
+const awsCreds = await AwsCredentials("default")
+awsCreds.region = "us-east-1"
 
 const myTable = new DynamoDBTable({
-  name: 'my-table',
-  key: [{ id: 'string' }],
+  name: "my-table",
+  key: [{ id: "string" }],
   ...awsCreds,
 })
 await myTable.ready
 
 const myTypeAgeIndex = new DynamoDBGlobalSecondaryIndex({
-  table: 'my-table',
-  key: [{ type: 'string' }, { age: 'number' }],
+  table: "my-table",
+  key: [{ type: "string" }, { age: "number" }],
   ...awsCreds,
 })
 await myTypeAgeIndex.ready
 
-await myTable.putItem({ id: { S: '1' }, name: { S: 'John' }, type: { S: 'person' } })
-await myTable.updateItem({ id: { S: '1' } }, { age: { N: '32' } })
+await myTable.putItem({ id: { S: "1" }, name: { S: "John" }, type: { S: "person" } })
+await myTable.updateItem({ id: { S: "1" } }, { age: { N: "32" } })
 
-await myTable.putItemJSON({ id: '2', name: 'Joe', age: 19, type: 'person' })
-await myTable.putItemJSON({ id: '3', name: 'Jane', age: 33, type: 'person' })
+await myTable.putItemJSON({ id: "2", name: "Joe", age: 19, type: "person" })
+await myTable.putItemJSON({ id: "3", name: "Jane", age: 33, type: "person" })
 
 {
-  const data = await myTable.getItem({ id: { S: '1' } }),
+  const data = await myTable.getItem({ id: { S: "1" } }),
   console.log(data)
-  // { Item: { id: { S: '1' }, name: { S: 'John' }, age: { N: '32' } } }
+  // { Item: { id: { S: "1" }, name: { S: "John" }, age: { N: "32" } } }
 }
 
 {
-  const data = await myTable.getItemJSON({ id: '1' })
+  const data = await myTable.getItemJSON({ id: "1" })
   console.log(data)
-  // { item: { id: '1', name: 'John', age: 32 } }
+  // { item: { id: "1", name: "John", age: 32 } }
 }
 
 {
   const data = await myTypeAgeIndex.query(
-    'type = :type AND age < :age',
-    { type: { S: 'person' }, age: { N: '100' } },
+    "type = :type AND age < :age",
+    { type: { S: "person" }, age: { N: "100" } },
     { Limit: 2, ScanIndexForward: true },
   )
   console.log(data)
   // {
   //   Items: [
-  //     { id: { S: '1' }, name: { S: 'John' }, age: { N: '32' }, type: { S: 'person' } },
-  //     { id: { S: '2' }, name: { S: 'Joe' }, age: { N: '19' }, type: { S: 'person' } },
+  //     { id: { S: "1" }, name: { S: "John" }, age: { N: "32" }, type: { S: "person" } },
+  //     { id: { S: "2" }, name: { S: "Joe" }, age: { N: "19" }, type: { S: "person" } },
   //   ],
   //   Count: 2,
   //   ScannedCount: 2,
@@ -152,15 +152,15 @@ await myTable.putItemJSON({ id: '3', name: 'Jane', age: 33, type: 'person' })
 
 {
   const data = await myTypeAgeIndex.queryJSON(
-    'type = :type AND age < :age',
-    { type: 'person', age: 100 },
+    "type = :type AND age < :age",
+    { type: "person", age: 100 },
     { Limit: 2, ScanIndexForward: true },
   )
   console.log(data)
   // {
   //   ItemsJSON: [
-  //     { id: '1', name: 'John', age: 32, type: 'person' },
-  //     { id: '2', name: 'Joe', age: 19, type: 'person' },
+  //     { id: "1", name: "John", age: 32, type: "person" },
+  //     { id: "2", name: "Joe", age: 19, type: "person" },
   //   ],
   //   Count: 2,
   //   ScannedCount: 2,
@@ -169,51 +169,51 @@ await myTable.putItemJSON({ id: '3', name: 'Jane', age: 33, type: 'person' })
 
 {
   const ItemIterator = myTypeAgeIndex.queryItemsIterator(
-    'type = :type AND age < :age',
-    { type: { S: 'person' }, age: { N: '100' } },
+    "type = :type AND age < :age",
+    { type: { S: "person" }, age: { N: "100" } },
     { ScanIndexForward: true },
   )
   for await (const Item of ItemIterator) {
     console.log(Item)
-    // { id: { S: '2' }, name: { S: 'Joe' }, age: { N: '19' }, type: { S: 'person' } },
-    // { id: { S: '1' }, name: { S: 'John' }, age: { N: '32' }, type: { S: 'person' } },
-    // { id: { S: '3' }, name: { S: 'Jane' }, age: { N: '33' }, type: { S: 'person' } },
+    // { id: { S: "2" }, name: { S: "Joe" }, age: { N: "19" }, type: { S: "person" } },
+    // { id: { S: "1" }, name: { S: "John" }, age: { N: "32" }, type: { S: "person" } },
+    // { id: { S: "3" }, name: { S: "Jane" }, age: { N: "33" }, type: { S: "person" } },
   }
 }
 
 {
   const itemsIterator = myTypeAgeIndex.queryItemsIteratorJSON(
-    'type = :type AND age < :age',
-    { type: 'person', age: 100 },
+    "type = :type AND age < :age",
+    { type: "person", age: 100 },
     { ScanIndexForward: true },
   )
   for await (const item of itemsIterator) {
     console.log(item)
-    // { id: '2', name: 'Joe', age: 19, type: 'person' }
-    // { id: '1', name: 'John', age: 32, type: 'person' }
-    // { id: '3', name: 'Jane', age: 33, type: 'person' }
+    // { id: "2", name: "Joe", age: 19, type: "person" }
+    // { id: "1", name: "John", age: 32, type: "person" }
+    // { id: "3", name: "Jane", age: 33, type: "person" }
   }
 }
 ```
 
 ## [Consume AWS DynamoDB Streams](https://presidium.services/docs/DynamoDBStream)
 ```javascript
-const DynamoDBTable = require('presidium/DynamoDBTable')
-const DynamoDBStream = require('presidium/DynamoDBStream')
-const AwsCredentials = require('presidium/AwsCredentials')
+const DynamoDBTable = require("presidium/DynamoDBTable")
+const DynamoDBStream = require("presidium/DynamoDBStream")
+const AwsCredentials = require("presidium/AwsCredentials")
 
-const awsCreds = await AwsCredentials('default')
-awsCreds.region = 'us-east-1'
+const awsCreds = await AwsCredentials("default")
+awsCreds.region = "us-east-1"
 
 const myTable = new DynamoDBTable({
-  name: 'my-table',
-  key: [{ id: 'string' }],
+  name: "my-table",
+  key: [{ id: "string" }],
   ...awsCreds,
 })
 await myTable.ready
 
 const myStream = new DynamoDBStream({
-  table: 'my-table',
+  table: "my-table",
   ...awsCreds,
 })
 await myStream.ready
@@ -226,7 +226,7 @@ for await (const record of myStream) {
 }
 
 const myStreamJSON = new DynamoDBStream({
-  table: 'my-table',
+  table: "my-table",
   ...awsCreds,
   JSON: true,
 })
@@ -242,25 +242,25 @@ for await (const record of myStreamJSON) {
 
 ## [Download and upload with AWS S3](https://presidium.services/docs/S3Bucket)
 ```javascript
-const S3Bucket = require('presidium/S3Bucket')
-const AwsCredentials = require('presidium/AwsCredentials')
+const S3Bucket = require("presidium/S3Bucket")
+const AwsCredentials = require("presidium/AwsCredentials")
 
-const awsCreds = await AwsCredentials('default')
-awsCreds.region = 'us-east-1'
+const awsCreds = await AwsCredentials("default")
+awsCreds.region = "us-east-1"
 
 const myBucket = new S3Bucket({
-  name: 'my-bucket',
+  name: "my-bucket",
   ...awsCreds,
 })
 await myBucket.ready
 
-await myBucket.putObject('some-key', '{"hello":"world"}', {
-  ContentType: 'application/json',
+await myBucket.putObject("some-key", "{"hello":"world"}", {
+  ContentType: "application/json",
 })
 
-const data = await myBucket.getObject('some-key')
+const data = await myBucket.getObject("some-key")
 console.log(data)
-// { Etag: '...', Body: <Buffer 7b 22 68 ...>, ContentType: 'application/json' }
+// { Etag: "...", Body: <Buffer 7b 22 68 ...>, ContentType: "application/json" }
 
 await myBucket.deleteAllObjects()
 await myBucket.delete()
@@ -268,19 +268,19 @@ await myBucket.delete()
 
 ## [Build and push Docker images](https://presidium.services/docs/Docker)
 ```javascript
-const Docker = require('presidium/Docker')
-const NpmToken = require('presidium/NpmToken')
-const fs = require('fs')
+const Docker = require("presidium/Docker")
+const NpmToken = require("presidium/NpmToken")
+const fs = require("fs")
 
-const myImage = 'my-app:1.0.0'
+const myImage = "my-app:1.0.0"
 
-const npmrc = fs.createWriteStream('.npmrc')
+const npmrc = fs.createWriteStream(".npmrc")
 npmrc.write(`//registry.npmjs.org/:_authToken=${await NpmToken()}`)
 npmrc.end()
 
 const buildStream = await docker.buildImage(__dirname, {
   image: myImage,
-  ignore: ['.github', 'node_modules'],
+  ignore: [".github", "node_modules"],
   archive: {
     Dockerfile: `
 FROM node:15-alpine
@@ -297,10 +297,10 @@ CMD ["npm", "start"]
 
 buildStream.pipe(process.stdout)
 
-buildStream.on('end', () => {
+buildStream.on("end", () => {
   const pushStream = await docker.pushImage({
     image: myImage,
-    repository: 'my-registry.io',
+    repository: "my-registry.io",
   })
   pushStream.pipe(process.stdout)
 })
@@ -309,14 +309,14 @@ buildStream.on('end', () => {
 
 ## [Run Docker containers](https://presidium.services/docs/Docker)
 ```javascript
-const Docker = require('presidium/Docker')
+const Docker = require("presidium/Docker")
 
 const docker = new Docker()
 
 const runStream = await docker.runContainer({
-  image: 'node:15-alpine',
-  env: { FOO: 'Example' },
-  cmd: ['node', '-e', 'console.log(process.env.FOO)'],
+  image: "node:15-alpine",
+  env: { FOO: "Example" },
+  cmd: ["node", "-e", "console.log(process.env.FOO)"],
   rm: true,
 })
 
@@ -325,18 +325,18 @@ runStream.pipe(process.stdout) // Example
 
 ## [Deploy Docker Swarm services](https://presidium.services/docs/Docker)
 ```javascript
-const Docker = require('presidium/Docker')
+const Docker = require("presidium/Docker")
 
 const docker = new Docker()
 
 // initialize docker swarm
-await docker.initSwarm('eth0:2377')
+await docker.initSwarm("eth0:2377")
 
 await docker.createService({
-  name: 'my-service',
-  image: 'nginx:1.19',
+  name: "my-service",
+  image: "nginx:1.19",
   publish: { 80: 80 },
-  healthCheck: ['curl', '[::1]'],
+  healthCheck: ["curl", "[::1]"],
   replicas: 5,
 })
 // new nginx service is deploying to the docker swarm
@@ -344,8 +344,8 @@ await docker.createService({
 
 ## [Automate tests with Google Chrome for Testing](https://presidium.services/docs/GoogleChromeDevTools)
 ```javascript
-const GoogleChromeForTesting = require('presidium/GoogleChromeForTesting')
-const GoogleChromeDevTools = require('presidium/GoogleChromeDevTools')
+const GoogleChromeForTesting = require("presidium/GoogleChromeForTesting")
+const GoogleChromeDevTools = require("presidium/GoogleChromeDevTools")
 
 const googleChromeForTesting = new GoogleChromeForTesting()
 await googleChromeForTesting.init() // downloads Google Chrome for Testing
@@ -355,7 +355,7 @@ await googleChromeDevTools.init() // connects to the DevTools server
 
 // get targets
 const targetsData = await googleChromeDevTools.Target.getTargets()
-const pageTarget = targetsData.result.targetInfos.find(info => info.type == 'page')
+const pageTarget = targetsData.result.targetInfos.find(info => info.type == "page")
 
 // attach to target
 const attachToTargetData = await googleChromeDevTools.Target.attachToTarget({
@@ -371,39 +371,39 @@ const data = await googleChromeDevTools.Page.navigate({
 })
 ```
 
-## [Store data on disk as a hash table](https://presidium.services/docs/DiskHashTable)
+## [Store data on disk in a hash table](https://presidium.services/docs/DiskHashTable)
 ```javascript
-const DiskHashTable = require('presidium-db/DiskHashTable')
+const DiskHashTable = require("presidium/DiskHashTable")
 
 const ht = new DiskHashTable({
-  storageFilepath: '/path/to/ht-storage-file',
-  headerFilepath: '/path/to/ht-header-file',
+  storageFilepath: "/path/to/ht-storage-file",
+  headerFilepath: "/path/to/ht-header-file",
   initialLength: 1024,
 })
 await ht.init()
 
-await ht.set('my-key', 'my-value')
+await ht.set("my-key", "my-value")
 
-const myValue = await ht.get('my-key')
-console.log(myValue) // 'my-value'
+const myValue = await ht.get("my-key")
+console.log(myValue) // my-value
 
-await ht.delete('my-key')
+await ht.delete("my-key")
 ```
 
-## [Store data on disk as a sorted hash table](https://presidium.services/docs/DiskSortedHashTable)
+## [Store data on disk in a sorted hash table](https://presidium.services/docs/DiskSortedHashTable)
 ```javascript
-const DiskSortedHashTable = require('presidium-db/DiskSortedHashTable')
+const DiskSortedHashTable = require("presidium/DiskSortedHashTable")
 
 const sortedHt = new DiskSortedHashTable({
-  storageFilepath: '/path/to/sortedHt-storage-file',
-  headerFilepath: '/path/to/sortedHt-header-file',
+  storageFilepath: "/path/to/sortedHt-storage-file",
+  headerFilepath: "/path/to/sortedHt-header-file",
   initialLength: 1024,
 })
 await sortedHt.init()
 
-await sortedHt.set('first-key', 'first-value', 1)
-await sortedHt.set('second-key', 'second-value', 2)
-await sortedHt.set('third-key', 'third-value', 3)
+await sortedHt.set("first-key", "first-value", 1)
+await sortedHt.set("second-key", "second-value", 2)
+await sortedHt.set("third-key", "third-value", 3)
 
 for await (const value of sortedHt.forwardIterator()) {
   console.log(value) // first-value
@@ -425,6 +425,76 @@ for await (const value of sortedHt.forwardIterator({ startingSortValue: 2, endin
 for await (const value of sortedHt.reverseIterator({ startingSortValue: 2, endingSortValue: 1 })) {
   console.log(value) // second-value
                      // first-value
+}
+```
+
+## [Host your own distributed database](https://presidium.services/docs/DatabaseServer)
+```
+const DatabaseServer = require("presidium/DatabaseServer")
+const DiskHashTableClient = require("presidium/DiskHashTableClient")
+
+const server = new DatabaseServer({
+  databasePath: `${__dirname}/database`,
+})
+await server.init()
+
+server.listen(5000, () => {
+  console.log("Database server listening on port 5000")
+})
+
+const sessionHt = new DiskHashTableClient({
+  serverUrl: "http://localhost:5000",
+  tableName: "Session",
+})
+
+const accessToken = "token"
+const session = { accessToken }
+
+await sessionHt.set(accessToken, JSON.stringify(session))
+
+const sessionJson = await sessionHt.get(accessToken)
+
+await sessionHt.delete(accessToken)
+```
+
+## [Query your distributed database](https://presidium.services/docs/DiskSortedHashTableClient)
+```
+const DiskSortedHashTableClient = require("presidium/DiskSortedHashTableClient")
+
+const postHt = new DiskSortedHashTableClient({
+  serverUrl: "http://localhost:5000",
+  tableName: "Post",
+  sortValueType: "number",
+})
+
+const post1 = {
+  id: "post-1",
+  images: ["/assets/post-1/image-1.jpg"],
+  content: "First post",
+  time: Date.now(),
+}
+
+const post2 = {
+  id: "post-2",
+  images: ["/assets/post-2/image-2.jpg"],
+  content: "Second post",
+  time: Date.now(),
+}
+
+const post3 = {
+  id: "post-3",
+  images: ["/assets/post-3/image-3.jpg"],
+  content: "Third post",
+  time: Date.now(),
+}
+
+await postHt.set(post1.id, JSON.stringify(post1), post1.time)
+await postHt.set(post2.id, JSON.stringify(post2), post2.time)
+await postHt.set(post3.id, JSON.stringify(post3), post3.time)
+
+const myPosts = []
+for await (const postJson of postHt.reverseIterator()) {
+  myPosts.push(JSON.parse(postJson))
 }
 ```
 
