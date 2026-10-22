@@ -28,6 +28,15 @@ License: [CFOSS](https://cloutsworld.com/en-us/legal/license/cfoss)
 [![codecov](https://codecov.io/gh/richytong/presidium-db/branch/master/graph/badge.svg)](https://codecov.io/gh/richytong/presidium-db)
 [![npm version](https://img.shields.io/npm/v/presidium-db.svg?style=flat)](https://www.npmjs.com/package/presidium-db)
 
+### Presidium DB Client and Server
+
+Source code: [GitHub](https://github.com/richytong/presidium-db-client-server) |
+License: [CFOSS](https://cloutsworld.com/en-us/legal/license/cfoss)
+
+![Node.js CI](https://github.com/richytong/presidium-db-client-server/workflows/Node.js%20CI/badge.svg)
+[![codecov](https://codecov.io/gh/richytong/presidium-db-client-server/graph/badge.svg?token=07P6G8GIOQ)](https://codecov.io/gh/richytong/presidium-db-client-server)
+[![npm version](https://img.shields.io/npm/v/presidium-db-client-server.svg?style=flat)](https://www.npmjs.com/package/presidium-db-client-server)
+
 ## Installation
 with [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm):
 ```bash
@@ -521,5 +530,5 @@ for await (const postJson of postHt.reverseIterator()) {
 ## License
 Presidium is distributed under the [CFOSS License](https://cloutsworld.com/en-us/legal/license/cfoss).
 
-# Support
+## Support
  * minimum Node.js version: 16
