@@ -62,7 +62,7 @@
     "xml"
   ],
   "dependencies": {
-    "extract-zip": "^2.0.1",
+    "adm-zip": "^0.6.1",
     "html-entities": "^2.6.0",
     "presidium-db": ">=3.10.0",
     "presidium-websocket": ">=3.2.1",

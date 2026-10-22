@@ -9,7 +9,7 @@ const fs = require('fs')
 const path = require('path')
 const { spawn } = require('child_process')
 const readline = require('readline')
-const extract = require('extract-zip')
+const AdmZip = require('adm-zip')
 const HTTP = require('./HTTP')
 const XML = require('./XML')
 const Readable = require('./Readable')
@@ -66,7 +66,8 @@ async function installChrome() {
   await promise
 
   console.log('Extracting', filepath)
-  await extract(filepath, { dir: parentDir })
+  const zip = new AdmZip(filepath)
+  zip.extractAllTo(parentDir, true, true)
 }
 
 async function getChromeFilepath() {
