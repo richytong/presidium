@@ -26,14 +26,14 @@ const test1 = new Test('GoogleChromeForTesting', async function integration1() {
 
   {
     const googleChromeForTesting = new GoogleChromeForTesting({
-      chromeVersion: 'stable',
+      chromeVersion: '151.0.7922.138',
       chromeDir: `${__dirname}/google-chrome-for-testing`,
       remoteDebuggingPort: 9222,
       headless: true,
       userDataDir: `${__dirname}/tmp/chrome`,
       useMockKeychain: true,
     })
-    assert.equal(googleChromeForTesting.chromeVersion, 'stable')
+    assert.equal(googleChromeForTesting.chromeVersion, '151.0.7922.138')
     assert.equal(googleChromeForTesting.chromeDir, `${__dirname}/google-chrome-for-testing`)
     assert.equal(googleChromeForTesting.remoteDebuggingPort, 9222)
     assert.equal(googleChromeForTesting.headless, true)

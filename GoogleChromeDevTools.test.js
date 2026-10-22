@@ -25,14 +25,14 @@ const test = new Test('GoogleChromeDevTools', async function integration() {
 
   {
     const googleChromeDevTools = new GoogleChromeDevTools({
-      chromeVersion: 'stable',
+      chromeVersion: '151.0.7922.138',
       chromeDir: `${__dirname}/google-chrome-for-testing`,
       remoteDebuggingPort: 9222,
       headless: true,
       userDataDir: `${__dirname}/tmp/chrome`,
       useMockKeychain: true,
     })
-    assert.equal(googleChromeDevTools.chromeVersion, 'stable')
+    assert.equal(googleChromeDevTools.chromeVersion, '151.0.7922.138')
     assert.equal(googleChromeDevTools.chromeDir, `${__dirname}/google-chrome-for-testing`)
     assert.equal(googleChromeDevTools.remoteDebuggingPort, 9222)
     assert.equal(googleChromeDevTools.headless, true)
@@ -55,19 +55,22 @@ const test = new Test('GoogleChromeDevTools', async function integration() {
     await closePromise
   }
 
-  const googleChromeForTesting = new GoogleChromeForTesting({ headless: true })
+  const googleChromeForTesting = new GoogleChromeForTesting({
+    headless: true,
+    chromeVersion: '151.0.7922.138',
+  })
   await googleChromeForTesting.init()
 
   const googleChromeDevTools = new GoogleChromeDevTools(googleChromeForTesting)
   await googleChromeDevTools.init()
   await googleChromeDevTools.init()
 
-  assert.equal(googleChromeDevTools.chromeVersion, 'stable')
+  assert.equal(googleChromeDevTools.chromeVersion, '151.0.7922.138')
   assert.equal(googleChromeDevTools.chromeDir, 'google-chrome-for-testing')
   assert.equal(googleChromeDevTools.remoteDebuggingPort, 9222)
   assert.equal(googleChromeDevTools.headless, true)
   assert.equal(googleChromeDevTools.userDataDir, 'tmp/chrome')
-  assert.equal(googleChromeDevTools.googleChromeForTesting.chromeVersion, 'stable')
+  assert.equal(googleChromeDevTools.googleChromeForTesting.chromeVersion, '151.0.7922.138')
   assert.equal(googleChromeDevTools.googleChromeForTesting.chromeDir, 'google-chrome-for-testing')
   assert.equal(googleChromeDevTools.googleChromeForTesting.remoteDebuggingPort, 9222)
   assert.equal(googleChromeDevTools.googleChromeForTesting.headless, true)
