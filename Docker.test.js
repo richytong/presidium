@@ -407,7 +407,7 @@ const test4 = new Test('Docker - container', async function integration() {
 }).case()
 
 const test5 = new Test('Docker - swarm', async function integration() {
-  const docker = new Docker({ apiVersion: '1.52' })
+  const docker = new Docker({ apiVersion: '1.44' })
 
   await docker.leaveSwarm({ force: true }).catch(() => {})
 
