@@ -49,7 +49,7 @@ const handleDockerHTTPResponse = require('./internal/handleDockerHTTPResponse')
  * System dependencies:
  *   * `docker`
  *
- * Note: the Presidium Docker client connects to the Docker socket at `/var/run/docker.sock`. For security purposes, please avoid exposing any code using the Presidium Docker client to the internet.
+ * Note: the Presidium Docker client connects to the Docker socket at `/var/run/docker.sock`. For security purposes, please avoid exposing code running the Presidium Docker client to the internet.
  */
 class Docker {
   constructor(options = {}) {
