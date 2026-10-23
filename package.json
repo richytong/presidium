@@ -68,7 +68,7 @@
     "adm-zip": "^0.6.1",
     "html-entities": "^2.6.0",
     "presidium-db": ">=4.6.2",
-    "presidium-db-client-server": ">=0.6.11",
+    "presidium-db-client-server": ">=0.7.0",
     "presidium-websocket": ">=4.2.2",
     "rubico": "^2.21.0",
     "tar-stream": "^3.2.2",
