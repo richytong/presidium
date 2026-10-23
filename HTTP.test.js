@@ -428,7 +428,7 @@ const test2 = new Test('HTTP CONNECT', async function integration() {
     proxy.on('error', reject)
   })
 
-  const _http = new HTTP('http://localhost:3001/')
+  const _http = new HTTP('localhost:3001')
 
   const request = _http.CONNECT({ path: 'www.google.com:80' })
   const chunks = []

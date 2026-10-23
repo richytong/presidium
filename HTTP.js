@@ -57,6 +57,10 @@ const httpConfigure = require('./internal/httpConfigure')
  */
 class HTTP {
   constructor(baseUrl, requestOptions = {}) {
+    if (typeof baseUrl == "string" && !baseUrl.startsWith("http")) {
+      baseUrl = `http://${baseUrl}`
+    }
+
     if (
       typeof baseUrl == 'string'
       || typeof baseUrl?.toString == 'function'
