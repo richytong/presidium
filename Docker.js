@@ -16,6 +16,7 @@ const { spawn } = require('child_process')
 const Readable = require('./Readable')
 const HTTP = require('./HTTP')
 const querystring = require('querystring')
+const Archive = require('./internal/Archive')
 const split = require('./internal/split')
 const join = require('./internal/join')
 const isArray = require('./internal/isArray')
@@ -47,7 +48,6 @@ const handleDockerHTTPResponse = require('./internal/handleDockerHTTPResponse')
  *
  * System dependencies:
  *   * `docker`
- *   * `tar`
  *
  * Note: the Presidium Docker client connects to the Docker socket `/var/run/docker.sock`. For security purposes, please avoid exposing any code using the Presidium Docker client to the internet, see [How would an attacker gain access to the host machine from within a Docker container?](https://www.google.com/search?hl=en&q=how+would+an+attacker+gain+access+to+the+host+machine+from+within+a+docker+container&ia=web).
  */
@@ -408,54 +408,12 @@ class Docker {
    *   * [Dockerfile](https://docs.docker.com/engine/reference/builder/)
    */
   async buildImage(path, options = {}) {
-    path = path.endsWith('/') ? path : `${path}/`
-
-    const archiveDir = `presidium-Docker-buildImage-tmp-${uniqid()}`
-
-    await fs.promises.mkdir(archiveDir, { recursive: true })
-
-    const archiveFilename = `${archiveDir}/archive.tar`
-
-    const cmdArgs = []
-
-    cmdArgs.push(`--exclude=${archiveDir}`)
-    if (options.ignore) {
-      for (const pattern of options.ignore) {
-        cmdArgs.push(`--exclude=${pattern}`)
-      }
-    }
-
-    cmdArgs.push('-cf', archiveFilename, '-C', path, '.')
-
-    const cmd = spawn('tar', cmdArgs, { stdio: 'inherit' })
-
-    await new Promise(resolve => {
-      cmd.on('close', resolve)
+    const pack = Archive.tar(path, {
+      base: options.archive,
+      ignore: options.ignore ?? ['node_modules', '.git', '.nyc_output'],
     })
 
-    if (options.archive) {
-      for (const filename in options.archive) {
-        await fs.promises.writeFile(
-          `${archiveDir}/${filename}`, options.archive[filename]
-        )
-
-        const cmdArgs = [
-          '-rf',
-          archiveFilename,
-          `--directory=${archiveDir}`,
-        ]
-
-        cmdArgs.push(filename)
-
-        const cmd = spawn('tar', cmdArgs, { stdio: 'inherit' })
-
-        await new Promise(resolve => {
-          cmd.on('close', resolve)
-        })
-      }
-    }
-
-    const archive = fs.createReadStream(archiveFilename).pipe(zlib.createGzip())
+    const compressed = pack.pipe(zlib.createGzip())
 
     const response = await this.http.post(`/build?${querystring.stringify({
       dockerfile: options.archiveDockerfile ?? 'Dockerfile',
@@ -463,18 +421,13 @@ class Docker {
       forcerm: true,
       platform: options.platform ?? '',
     })}`, {
-      body: archive,
+      body: compressed,
       headers: {
         'Content-Type': 'application/x-tar',
       },
     })
 
     const dataStream = await handleDockerHTTPResponse(response, { stream: true })
-
-    dataStream.on('end', async () => {
-      await fs.promises.rm(archiveDir, { recursive: true })
-    })
-
     return dataStream
   }
 

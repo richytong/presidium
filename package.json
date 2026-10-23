@@ -71,6 +71,7 @@
     "presidium-db-client-server": ">=0.6.6",
     "presidium-websocket": ">=4.2.2",
     "rubico": "^2.21.0",
+    "tar-stream": "^3.2.2",
     "uniqid": "^5.4.0"
   },
   "scripts": {
