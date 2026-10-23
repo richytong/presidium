@@ -1,8 +1,16 @@
+/**
+ * @name Validator
+ *
+ * @docs
+ * ```specscript
+ * Validator
+ * ```
+ */
 const Validator = {
   name: "Validator",
 
   /**
-   * @name Validator.Object
+   * @name Object
    *
    * @docs
    * ```specscript
@@ -37,7 +45,7 @@ const Validator = {
   },
 
   /**
-   * @name Validator.Array
+   * @name Array
    *
    * @docs
    * ```specscript
@@ -78,7 +86,7 @@ const Validator = {
   },
 
   /**
-   * @name Validator.Number
+   * @name Number
    *
    * @docs
    * ```specscript
@@ -95,7 +103,7 @@ const Validator = {
   },
 
   /**
-   * @name Validator.String
+   * @name String
    *
    * @docs
    * ```specscript
@@ -112,7 +120,7 @@ const Validator = {
   },
 
   /**
-   * @name Validator.Email
+   * @name Email
    *
    * @docs
    * ```specscript
@@ -136,7 +144,7 @@ const Validator = {
   },
 
   /**
-   * @name Validator.Boolean
+   * @name Boolean
    *
    * @docs
    * ```specscript
@@ -153,7 +161,7 @@ const Validator = {
   },
 
   /**
-   * @name Validator.OneOf
+   * @name OneOf
    *
    * @docs
    * ```specscript
@@ -174,7 +182,7 @@ const Validator = {
   },
 
   /**
-   * @name Validator.Optional
+   * @name Optional
    *
    * @docs
    * ```specscript
