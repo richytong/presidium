@@ -82,7 +82,7 @@ class Docker {
    * Validates credentials for a Docker container registry. If available, gets an identity token for accessing the registry without password.
    *
    * Arguments:
-   *   * `options` - address used for inter-manager communication that is also advertised to other nodes.
+   *   * `options` - address for inter-manager communication and discovery.
    *     * `username` - authentication credentials.
    *     * `password` - authentication credentials.
    *     * `email` - authentication credentials.
@@ -91,7 +91,7 @@ class Docker {
    * Return:
    *   * `data`
    *     * `Status` - the status message of the authentication
-   *     * `IdentityToken` - a token used to authenticate the user in place of a username and password.
+   *     * `IdentityToken` - a token for authenticating users in place of username and password.
    *
    * ```javascript
    * const docker = new Docker()
@@ -155,7 +155,7 @@ class Docker {
    *     * `Created` - the date and time at which the image was created as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
    *     * `Size` - the total size in bytes of the image including all layers that the image is composed of.
    *     * `SharedSize` - total size of image layers that are shared between the image and other images. `-1` indicates that this value has not been calculated.
-   *     * `Labels` - object of user-defined key/value metadata.
+   *     * `Labels` - object of key-value metadata.
    *     * `Containers` - number of containers using this image. Includes both stopped and running containers. `-1` indicates that this value has not been calculated.
    *     * `Manifests` - list of [image manifests](https://docs.docker.com/reference/cli/docker/manifest/) available in the image. Warning: `Manifests` is experimental and may change at any time without any backward compatibility.
    *     * `Descriptor` - an object containing digest, media type, and size for the image, as defined in the [OCI Content Descriptors Specification](https://github.com/opencontainers/image-spec/blob/v1.0.1/descriptor.md).
@@ -217,20 +217,20 @@ class Docker {
    *   * `data`
    *     * `Id` - the Docker container ID
    *     * `Names` - the names associated with the Docker container.
-   *     * `Image` - the name or ID of the image used to create the Docker container.
-   *     * `ImageID` - the ID of the image used to create the Docker container.
-   *     * `ImageManifestDescriptor` - an object containing digest, media type, and size for the image used to create the Docker container, as defined in the [OCI Content Descriptors Specification](https://github.com/opencontainers/image-spec/blob/v1.0.1/descriptor.md).
+   *     * `Image` - the name or ID of the image of the Docker container.
+   *     * `ImageID` - the ID of the image of the Docker container.
+   *     * `ImageManifestDescriptor` - an object containing digest, media type, and size for the image of the Docker container, as defined in the [OCI Content Descriptors Specification](https://github.com/opencontainers/image-spec/blob/v1.0.1/descriptor.md).
    *     * `Command` - the command to run when starting the Docker container.
    *     * `Created` - the date and time at which the image was created as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
    *     * `Ports` - port-mappings for the Docker container.
    *     * `SizeRw` - the size of files that have been created or changed by the Docker container.
-   *     * `SizeRootFs` - the total size of all files in the read-only layers of the image that are used by the Docker container.
-   *     * `Labels` - object of user-defined key/value metadata.
+   *     * `SizeRootFs` - the total size of all files in the read-only layers of the image of the Docker container.
+   *     * `Labels` - object of key-value metadata.
    *     * `State` - the state of the Docker container.
    *     * `Status` - additional human-readable status of the Docker container, e.g. `'Exit 0'`.
    *     * `HostConfig` - summary of host-specific runtime information of the Docker container.
    *     * `NetworkSettings` - summary of the Docker container's network settings.
-   *     * `Mounts` - list of mounts used by the Docker container.
+   *     * `Mounts` - list of mounts of the Docker container.
    *     * `Health` - summary of the Docker container's health status.
    *
    * ```javascript
@@ -281,7 +281,7 @@ class Docker {
    *     * `password` - authentication credentials.
    *     * `email` - authentication credentials.
    *     * `serveraddress` - domain or IP of the registry server.
-   *     * `identitytoken` - a token used to authenticate the user in place of a username and password.
+   *     * `IdentityToken` - a token for authenticating users in place of username and password.
    *
    * Return:
    *   * `dataStream` - a readable stream of the progress of the Docker `pullImage` operation.
@@ -461,7 +461,7 @@ class Docker {
    *     * `password` - authentication credentials.
    *     * `email` - authentication credentials.
    *     * `serveraddress` - domain or IP of the registry server.
-   *     * `identitytoken` - a token used to authenticate the user in place of a username and password.
+   *     * `IdentityToken` - a token for authenticating users in place of username and password.
    *
    * Return:
    *   * `dataStream` - a readable stream of the progress of the Docker `pushImage` operation.
@@ -562,13 +562,13 @@ class Docker {
    *     * `Comment` - optional message that was set when committing or importing the image.
    *     * `Created` - the date and time at which the image was created as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
    *     * `Author` - the name of the author that was specified when committing the image.
-   *     * `Config` - the configuration of the image. `Config` fields are used as defaults when starting a container from an image.
+   *     * `Config` - the configuration of the image. `Config` fields are the defaults when starting a container from an image.
    *     * `Architecture` - the CPU architecture that the image runs on.
    *     * `Variant` - a CPU architecture variant.
    *     * `Os` - the operating system that the image is built to run on.
    *     * `OsVersion` - the version of the operating system that the image is built to run on.
    *     * `Size` - the total size in bytes of the image including all layers that the image is composed of.
-   *     * `GraphDriver` - information about the storage driver that stores the filesystem used by the Docker container and the image.
+   *     * `GraphDriver` - information about the storage driver that stores the filesystem of the Docker container and the image.
    *     * `RootFS` - information about the image's RootFS, including the layer IDs.
    *     * `Metadata` - additional metadata of the image in the local cache. This information is not part of the image itself.
    *
@@ -632,12 +632,12 @@ class Docker {
    * }) -> data Promise<Array<{ Untagged: string }|{ Deleted: string }>>
    * ```
    *
-   * Removes a Docker image and any untagged parent images that were referenced by the Docker image from the server. Docker images can't be removed if they have descendant images, are being used by a running container, or are being used by a build.
+   * Removes a Docker image and any untagged parent images that were referenced by the Docker image from the server. Docker images can't be removed if they have descendant images, have a running container, or are being referenced by a build.
    *
    * Arguments:
    *   * `image` - the name or ID of the image to remove.
    *   * `options`
-   *     * `force` - if `true`, removes the image even if it is being used by stopped containers or has other tags. If `false`, the operation will error if the image is being used by stopped containers. Defaults to `false`.
+   *     * `force` - if `true`, removes the image even if it is referenced by stopped containers or has other tags. If `false`, the operation will error if the image is referenced by stopped containers. Defaults to `false`.
    *     * `noprune` - if `true`, the operation will not delete untagged parent images. If `false`, the operation will delete untagged parent images. Defaults to `false`.
    *
    * Return:
@@ -712,7 +712,7 @@ class Docker {
    *     * `image` - the name and tag of the image.
    *     * `rm` - automatically remove the Docker container when it exits.
    *     * `restart` - the restart policy for the Docker container.
-   *     * `logDriver` - the logging driver used for the Docker container.
+   *     * `logDriver` - the logging driver of the Docker container.
    *     * `logDriverOptions` - driver-specific configuration options for the logging driver.
    *     * `publish` - object of mappings of host ports to container ports with optional protocols.
    *     * `healthCmd` - a command that checks the health of the Docker container. The health check fails if the command errors. The command is run inside the Docker container.
@@ -756,7 +756,7 @@ class Docker {
    *   * `image` - mounts a Docker image.
    *   * `npipe` - mounts a named pipe from the host into the Docker container.
    *   * `tmpfs` - create a tmpfs with the given options. The `source` cannot be specified with mount type `tmpfs`.
-   *   * `volume` - creates a volume with the given name and options or uses a pre-existing volume with the same name and options. The volume persists when the Docker container is removed.
+   *   * `volume` - creates or references a volume with the given name and options. The volume persists when the Docker container is removed.
    *
    * ```javascript
    * const docker = new Docker()
@@ -991,7 +991,7 @@ class Docker {
    *     * `image` - the name and tag of the image.
    *     * `rm` - automatically remove the Docker container when it exits.
    *     * `restart` - the restart policy for the Docker container.
-   *     * `logDriver` - the logging driver used for the Docker container.
+   *     * `logDriver` - the logging driver of the Docker container.
    *     * `logDriverOptions` - driver-specific configuration options for the logging driver.
    *     * `publish` - object of mappings of host ports to container ports with optional protocols.
    *     * `healthCmd` - a command that checks the health of the Docker container. The health check fails if the command errors. The command is run inside the Docker container.
@@ -1033,7 +1033,7 @@ class Docker {
    *   * `image` - mounts a Docker image.
    *   * `npipe` - mounts a named pipe from the host into the Docker container.
    *   * `tmpfs` - create a tmpfs with the given options. The `source` cannot be specified with mount type `tmpfs`.
-   *   * `volume` - creates a volume with the given name and options or uses a pre-existing volume with the same name and options. The volume persists when the Docker container is removed.
+   *   * `volume` - creates or references a volume with the given name and options. The volume persists when the Docker container is removed.
    *
    * ```javascript
    * const docker = new Docker()
@@ -1288,16 +1288,16 @@ class Docker {
    *     * `Id` - the ID of the Docker container.
    *     * `Created` - the date and time at which the Docker container was created as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
    *     * `Path` - the path to the command run by the Docker container.
-   *     * `Args` - the arguments to the command being run by the Docker container.
+   *     * `Args` - the arguments to the command run by the Docker container.
    *     * `State` - `DockerDocs.ContainerState` stores the Docker container's running state.
    *     * `Image` - the ID (digest) of the image that the Docker container was created from.
    *     * `ResolveConfPath` - the location of `/etc/resolve.conf` generated for the Docker container on the host.
    *     * `HostnamePath` - the location of `/etc/hostname` generated for the Docker container on the host.
    *     * `HostsPath` - the location of `/etc/hosts` generated for the Docker container on the host.
-   *     * `LogPath` - the location of the file used to buffer the Docker container's logs.
+   *     * `LogPath` - the location of the file that buffers the Docker container's logs.
    *     * `Name` - the name associated with the Docker container.
    *     * `RestartCount` - the number of times the Docker container was restarted since it was created or since the Docker daemon was started.
-   *     * `Driver` - the storage-driver used for the Docker container's filesystem.
+   *     * `Driver` - the storage-driver of the Docker container's filesystem.
    *     * `Platform` - the platform (operating system) for which the Docker container was created.
    *     * `ImageManifestDescriptor` - an object containing digest, media type, and size for the image from which the Docker container was created, as defined in the [OCI Content Descriptors Specification](https://github.com/opencontainers/image-spec/blob/v1.0.1/descriptor.md).
    *     * `MountLabel` - the SELinux mount label set for the Docker container.
@@ -1305,11 +1305,11 @@ class Docker {
    *     * `AppArmorProfile` - the AppArmor profile set for the Docker container.
    *     * `ExecIDs` - the IDs of exec instances that are running in the Docker container.
    *     * `HostConfig` - host configuration for the Docker container.
-   *     * `GraphDriver` - information about the storage driver that stores the filesystem used by the Docker container and the image.
-   *     * `Storage` - information about the storage used by the Docker container.
+   *     * `GraphDriver` - information about the storage driver that stores the filesystem of the Docker container and the image.
+   *     * `Storage` - information about the storage of the Docker container.
    *     * `SizeRw` - the size of files that have been created or changed by the Docker container.
-   *     * `SizeRootFs` - the total size of all files in the read-only layers of the image that are used by the Docker container.
-   *     * `Mounts` - list of mounts used by the Docker container.
+   *     * `SizeRootFs` - the total size of all files in the read-only layers of the image of the Docker container.
+   *     * `Mounts` - list of mounts of the Docker container.
    *     * `Config` - the configuration of the Docker container.
    *     * `NetworkSettings` - summary of the Docker container's network settings.
    *
@@ -1376,8 +1376,8 @@ class Docker {
    *     * `DefaultAddrPool` - the default subnet pools for global scope networks of the Docker swarm.
    *     * `SubnetSize` - the subnet size of the networks created from the default address pool.
    *     * `JoinTokens` - tokens for worker and manager nodes to join the Docker swarm.
-   *       * `Worker` - the token that worker nodes can use to join the Docker swarm.
-   *       * `Manager` - the token that manager nodes can use to join the Docker swarm.
+   *       * `Worker` - the token for worker nodes to join the Docker swarm.
+   *       * `Manager` - the token for manager nodes to join the Docker swarm.
    *
    * ```javascript
    * const docker = new Docker()
@@ -1404,7 +1404,7 @@ class Docker {
    * Initializes a new Docker swarm.
    *
    * Arguments:
-   *   * `address` - address used for inter-manager communication that is also advertised to other nodes.
+   *   * `address` - address for inter-manager communication and discovery.
    *
    * Return:
    *   * `nodeId` - the ID of the current Docker swarm manager node.
@@ -1445,9 +1445,9 @@ class Docker {
    * Joins the current node (server) to a Docker swarm.
    *
    * Arguments:
-   *   * `address` - address used for inter-manager communication that is also advertised to other nodes.
+   *   * `address` - address for inter-manager communication and discovery.
    *   * `options`
-   *     * `RemoteAddrs` - address or interface for data path traffic. Used to separate data traffic from management traffic.
+   *     * `RemoteAddrs` - address or interface for data path traffic. Separates data traffic from management traffic.
    *     * `JoinToken` - worker or manager token for joining the swarm.
    *
    * Return:
@@ -1577,11 +1577,11 @@ class Docker {
    * Arguments:
    *   * `service` - the Docker service name.
    *   * `options`
-   *     * `image` - the Docker image that will be used by the Docker service.
+   *     * `image` - the Docker image of the Docker service.
    *     * `replicas` - the number of containers that the Docker service will run across all nodes of the Docker swarm. If `replicas` is set to 'global', the Docker service will run containers on each node of the Docker swarm.
    *     * `restart` - the restart policy for the Docker service.
    *     * `restartDelay` - the delay between restarts for the Docker service.
-   *     * `logDriver` - the logging driver used for the Docker service.
+   *     * `logDriver` - the logging driver of the Docker service.
    *     * `logDriverOptions` - driver-specific configuration options for the logging driver.
    *     * `publish` - object of mappings of host ports to Docker service ports with optional protocols.
    *     * `healthCmd` - a command that checks the health of the Docker service. The health check fails if the command errors. The command is run inside each Docker container of the Docker service.
@@ -1612,7 +1612,7 @@ class Docker {
    *     * `password` - authentication credentials.
    *     * `email` - authentication credentials.
    *     * `serveraddress` - domain or IP of the registry server.
-   *     * `identitytoken` - a token used to authenticate the user in place of a username and password.
+   *     * `IdentityToken` - a token for authenticating users in place of username and password.
    *
    * Return:
    *   * `data`
@@ -1859,7 +1859,7 @@ class Docker {
    *     * `replicas` - the number of containers that the Docker service will run across all nodes of the Docker swarm. If `replicas` is set to 'global', the Docker service will run containers on each node of the Docker swarm.
    *     * `restart` - the restart policy for the Docker service.
    *     * `restartDelay` - the delay between restarts for the Docker service.
-   *     * `logDriver` - the logging driver used for the Docker service.
+   *     * `logDriver` - the logging driver of the Docker service.
    *     * `logDriverOptions` - driver-specific configuration options for the logging driver.
    *     * `publish` - object of mappings of host ports to Docker service ports with optional protocols.
    *     * `healthCmd` - a command that checks the health of the Docker service. The health check fails if the command errors. The command is run inside each Docker container of the Docker service.
@@ -2221,12 +2221,12 @@ class Docker {
    *     * `CreatedAt` - the date and time at which the task was created as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
    *     * `UpdatedAt` - the date and time at which the task was updated as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT).
    *     * `Name` - the name of the task.
-   *     * `Labels` - object of user-defined key/value metadata.
+   *     * `Labels` - object of key-value metadata.
    *     * `Spec` - the task configuration.
    *     * `ServiceID` - the ID of the Docker service that the task belongs to.
-   *     * `Slot` - used by the orchestrator for scheduling purposes.
+   *     * `Slot` - for scheduling purposes.
    *     * `NodeID` - the ID of the node that the task is on.
-   *     * `AssignedGenericResources` - user-defined resources.
+   *     * `AssignedGenericResources` - resources.
    *     * `Status` - the status of the task.
    *     * `DesiredState` - the desired status of the task.
    *     * `JobIteration` - the version number of the task.
@@ -2386,7 +2386,7 @@ class Docker {
    * }>
    * ```
    *
-   * Prunes Docker images. Deletes unused Docker images from the server.
+   * Prunes Docker images. Deletes Docker images without containers from the server.
    *
    * Arguments:
    *   * (none)
@@ -2454,7 +2454,7 @@ class Docker {
    * }>
    * ```
    *
-   * Prunes Docker volumes. Deletes unused volumes from the server.
+   * Prunes Docker volumes. Deletes volumes without containers from the server.
    *
    * Arguments:
    *   * (none)
@@ -2531,7 +2531,7 @@ class Docker {
    * Arguments:
    *   * `options`
    *     * `name` - the name of the network to create.
-   *     * `driver` - the name of the network driver plugin to use.
+   *     * `driver` - the name of the network driver plugin.
    *     * `ingress` - if `true`, creates an ingress network. The ingress network is the network that provides the routing-mesh in swarm mode. If `false`, does not create an ingress network.
    *     * `subnet` - the subnet of the network.
    *     * `gateway` - the gateway of the network.
@@ -2621,7 +2621,7 @@ class Docker {
    *     * `Id` - the network ID.
    *     * `Created` - the date and time at which the network was created as seconds since EPOCH (January 1, 1970 at midnight UTC/GMT). 
    *     * `Scope` - the level at which the network exists.
-   *     * `Driver` - the name of the driver used to create the network.
+   *     * `Driver` - the name of the driver of the network.
    *     * `EnableIPv4` - whether the network was created with IPv4 enabled.
    *     * `EnableIPv6` - whether the network was created with IPv6 enabled.
    *     * `IPAM` - the network's IPAM configuration.
@@ -2629,9 +2629,9 @@ class Docker {
    *     * `Attachable` - whether the network is manually attachable by regular containers from worker nodes in a Docker swarm.
    *     * `Ingress` - whether the network is providing the routing-mesh for a Docker swarm.
    *     * `ConfigFrom` - the config-only network source that provides the configuration for the network.
-   *     * `ConfigOnly` - whether the network is a config-only network. Config-only networks are placeholder networks for network configurations to be used by other networks. Config-only networks cannot be used directly to run containers or services.
-   *     * `Options` - network-specific options used when creating the network.
-   *     * `Labels` - object of user-defined key/value metadata.
+   *     * `ConfigOnly` - whether the network is a config-only network. Config-only networks are placeholder networks for network configurations for other networks. Containers and services cannot attach to config-only networks.
+   *     * `Options` - network-specific options for creating the network.
+   *     * `Labels` - object of key-value metadata.
    *     * `Peers` - list of peer nodes for the network. `Peers` is only present if the network is an overlay network.
    *
    * ```javascript
