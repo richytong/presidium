@@ -42,6 +42,7 @@
     "WebSocketServer.js",
     "WebSocketSecureServer.js",
     "ServerWebSocket.js",
+    "Validator.js",
     "XML.js",
     "LICENSE"
   ],
