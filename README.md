@@ -101,178 +101,45 @@ websocket.on("message", message => {
 })
 ```
 
-## [Create, read, update, delete, and query with AWS DynamoDB](https://presidium.services/docs/DynamoDBTable)
+## [Validate data](https://presidium.services/docs/Validator)
 ```javascript
-const DynamoDBTable = require("presidium/DynamoDBTable")
-const DynamoDBGlobalSecondaryIndex = require("presidium/DynamoDBGlobalSecondaryIndex")
-const AwsCredentials = require("presidium/AwsCredentials")
+const Validator = require("presidium/Validator")
 
-const awsCreds = await AwsCredentials("default")
-awsCreds.region = "us-east-1"
+const {
+  Object, Array, Number, String, Email, Boolean, OneOf, Optional,
+} = Validator
 
-const myTable = new DynamoDBTable({
-  name: "my-table",
-  key: [{ id: "string" }],
-  ...awsCreds,
-})
-await myTable.ready
-
-const myTypeAgeIndex = new DynamoDBGlobalSecondaryIndex({
-  table: "my-table",
-  key: [{ type: "string" }, { age: "number" }],
-  ...awsCreds,
-})
-await myTypeAgeIndex.ready
-
-await myTable.putItem({ id: { S: "1" }, name: { S: "John" }, type: { S: "person" } })
-await myTable.updateItem({ id: { S: "1" } }, { age: { N: "32" } })
-
-await myTable.putItemJSON({ id: "2", name: "Joe", age: 19, type: "person" })
-await myTable.putItemJSON({ id: "3", name: "Jane", age: 33, type: "person" })
-
-{
-  const data = await myTable.getItem({ id: { S: "1" } }),
-  console.log(data)
-  // { Item: { id: { S: "1" }, name: { S: "John" }, age: { N: "32" } } }
-}
-
-{
-  const data = await myTable.getItemJSON({ id: "1" })
-  console.log(data)
-  // { item: { id: "1", name: "John", age: 32 } }
-}
-
-{
-  const data = await myTypeAgeIndex.query(
-    "type = :type AND age < :age",
-    { type: { S: "person" }, age: { N: "100" } },
-    { Limit: 2, ScanIndexForward: true },
-  )
-  console.log(data)
-  // {
-  //   Items: [
-  //     { id: { S: "1" }, name: { S: "John" }, age: { N: "32" }, type: { S: "person" } },
-  //     { id: { S: "2" }, name: { S: "Joe" }, age: { N: "19" }, type: { S: "person" } },
-  //   ],
-  //   Count: 2,
-  //   ScannedCount: 2,
-  // }
-}
-
-{
-  const data = await myTypeAgeIndex.queryJSON(
-    "type = :type AND age < :age",
-    { type: "person", age: 100 },
-    { Limit: 2, ScanIndexForward: true },
-  )
-  console.log(data)
-  // {
-  //   ItemsJSON: [
-  //     { id: "1", name: "John", age: 32, type: "person" },
-  //     { id: "2", name: "Joe", age: 19, type: "person" },
-  //   ],
-  //   Count: 2,
-  //   ScannedCount: 2,
-  // }
-}
-
-{
-  const ItemIterator = myTypeAgeIndex.queryItemsIterator(
-    "type = :type AND age < :age",
-    { type: { S: "person" }, age: { N: "100" } },
-    { ScanIndexForward: true },
-  )
-  for await (const Item of ItemIterator) {
-    console.log(Item)
-    // { id: { S: "2" }, name: { S: "Joe" }, age: { N: "19" }, type: { S: "person" } },
-    // { id: { S: "1" }, name: { S: "John" }, age: { N: "32" }, type: { S: "person" } },
-    // { id: { S: "3" }, name: { S: "Jane" }, age: { N: "33" }, type: { S: "person" } },
-  }
-}
-
-{
-  const itemsIterator = myTypeAgeIndex.queryItemsIteratorJSON(
-    "type = :type AND age < :age",
-    { type: "person", age: 100 },
-    { ScanIndexForward: true },
-  )
-  for await (const item of itemsIterator) {
-    console.log(item)
-    // { id: "2", name: "Joe", age: 19, type: "person" }
-    // { id: "1", name: "John", age: 32, type: "person" }
-    // { id: "3", name: "Jane", age: 33, type: "person" }
-  }
-}
-```
-
-## [Consume AWS DynamoDB Streams](https://presidium.services/docs/DynamoDBStream)
-```javascript
-const DynamoDBTable = require("presidium/DynamoDBTable")
-const DynamoDBStream = require("presidium/DynamoDBStream")
-const AwsCredentials = require("presidium/AwsCredentials")
-
-const awsCreds = await AwsCredentials("default")
-awsCreds.region = "us-east-1"
-
-const myTable = new DynamoDBTable({
-  name: "my-table",
-  key: [{ id: "string" }],
-  ...awsCreds,
-})
-await myTable.ready
-
-const myStream = new DynamoDBStream({
-  table: "my-table",
-  ...awsCreds,
-})
-await myStream.ready
-
-for await (const record of myStream) {
-  console.log(record)
-  // { dynamodb: { Keys: {...}, NewImage: {...}, OldImage: {...} }  }
-  // { dynamodb: { Keys: {...}, NewImage: {...}, OldImage: {...} }  }
-  // { dynamodb: { Keys: {...}, NewImage: {...}, OldImage: {...} }  }
-}
-
-const myStreamJSON = new DynamoDBStream({
-  table: "my-table",
-  ...awsCreds,
-  JSON: true,
-})
-await myStream.ready
-
-for await (const record of myStreamJSON) {
-  console.log(record)
-  // { dynamodb: { KeysJSON: {...}, NewImageJSON: {...}, OldImageJSON: {...} }  }
-  // { dynamodb: { KeysJSON: {...}, NewImageJSON: {...}, OldImageJSON: {...} }  }
-  // { dynamodb: { KeysJSON: {...}, NewImageJSON: {...}, OldImageJSON: {...} }  }
-}
-```
-
-## [Download and upload with AWS S3](https://presidium.services/docs/S3Bucket)
-```javascript
-const S3Bucket = require("presidium/S3Bucket")
-const AwsCredentials = require("presidium/AwsCredentials")
-
-const awsCreds = await AwsCredentials("default")
-awsCreds.region = "us-east-1"
-
-const myBucket = new S3Bucket({
-  name: "my-bucket",
-  ...awsCreds,
-})
-await myBucket.ready
-
-await myBucket.putObject("some-key", "{"hello":"world"}", {
-  ContentType: "application/json",
+const validator = Object({
+  Name: String,
+  Email: Email,
+  Password: String,
+  Preferences: Object({
+    Gender: OneOf("Male", "Female"),
+  }),
+  Gender: OneOf("Male", "Female"),
+  IsReturning: Boolean,
+  Time: Optional(Number),
+  Media: Array(Object({
+    MediaUrl: String,
+    Description: String,
+  })),
 })
 
-const data = await myBucket.getObject("some-key")
-console.log(data)
-// { Etag: "...", Body: <Buffer 7b 22 68 ...>, ContentType: "application/json" }
+const data = {
+  Name: "Example Name",
+  Email: "email@domain.com",
+  Password: "************",
+  Preferences: {
+    Gender: "Male",
+  },
+  IsReturning: false,
+  Media: [{
+    MediaUrl: "https://cdn.my-website.com/assets/1.mp4",
+    Description: "Example description.",
+  }],
+}
 
-await myBucket.deleteAllObjects()
-await myBucket.delete()
+validator(data)
 ```
 
 ## [Build and push Docker images](https://presidium.services/docs/Docker)
