@@ -4,6 +4,7 @@
 
 module.exports = {
   AwsCredentials: require('./AwsCredentials.js'),
+  DatabaseLoadBalancer: require('./DatabaseLoadBalancer.js'),
   DatabaseServer: require('./DatabaseServer.js'),
   DiskHashTable: require('./DiskHashTable.js'),
   DiskHashTableClient: require('./DiskHashTableClient.js'),
