@@ -8,6 +8,9 @@ const test = new Test('index.test', async function integration() {
 
   for (const name in index) {
     assert(package.files.includes(`${name}.js`))
+    if (typeof index[name] == "object") {
+      assert.equal(require(`./${name}`).name, name)
+    }
   }
 }).case()
 

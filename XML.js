@@ -8,7 +8,7 @@
  * @docs
  * Presidium XML class.
  */
-const XML = {}
+const XML = { name: "XML" }
 
 /**
  * @name _parseTags

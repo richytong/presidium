@@ -8,7 +8,7 @@
  * @docs
  * Presidium Readable class. Contains methods for reading [Node.js stream.Readable](https://nodejs.org/docs/latest-v24.x/api/stream.html#class-streamreadable) objects.
  */
-const Readable = {}
+function Readable() {}
 
 /**
  * @name Readable.Buffer

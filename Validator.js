@@ -1,4 +1,5 @@
 const Validator = {
+  name: "Validator",
 
   /**
    * @name Validator.Object

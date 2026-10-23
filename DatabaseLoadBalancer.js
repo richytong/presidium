@@ -1,3 +1,3 @@
-const DatabaseServer = require("presidium-db-client-server/DatabaseServer")
+const DatabaseLoadBalancer = require("presidium-db-client-server/DatabaseLoadBalancer")
 
-module.exports = DatabaseServer
+module.exports = DatabaseLoadBalancer

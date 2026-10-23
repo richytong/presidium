@@ -10,7 +10,7 @@ const crypto = require('crypto')
  * @docs
  * Presidium Password class. Contains methods for storing and verifying passwords.
  */
-const Password = {}
+function Password() {}
 
 /**
  * @name Password.hash
