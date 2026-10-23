@@ -22,6 +22,7 @@ const test = Test.all([
   require('./WebSocketServer.test'),
   require('./WebSocketSecureServer.test'),
   require('./ServerWebSocket.test'),
+  require('./Validator.test'),
   require('./XML.test'),
 
   require('./internal/createUpdateServiceSpec.test'),
