@@ -636,6 +636,15 @@ const test5 = new Test('Docker - swarm', async function integration() {
       assert.equal(typeof item.ServiceID, 'string')
       assert.equal(typeof item.Status, 'object')
       assert.equal(typeof item.DesiredState, 'string')
+
+      const task = await docker.inspectTask(item.ID)
+      assert(task.NetworksAttachments)
+      assert(Array.isArray(task.NetworksAttachments))
+      assert(task.NetworksAttachments.length > 0)
+      for (const na of task.NetworksAttachments) {
+        assert(na.Network)
+        assert(Array.isArray(na.Addresses))
+      }
     }
   }
 

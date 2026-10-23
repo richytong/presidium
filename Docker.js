@@ -2305,6 +2305,43 @@ class Docker {
   }
 
   /**
+   * @name inspectTask
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * module DockerDocs 'https://docs.docker.com/reference/api/engine/version/v1.52/'
+   *
+   * inspectTask(taskId string) -> data Promise<{
+   *   ID: string,
+   *   Version: DockerDocs.ObjectVersion,
+   *   CreatedAt: string, # ISO 8601 date string
+   *   UpdatedAt: string, # ISO 8601 date string
+   *   Name: string,
+   *   Labels: Object<string>,
+   *   Spec: DockerDocs.TaskSpec,
+   *   ServiceID: string,
+   *   Slot: number,
+   *   NodeID: string,
+   *   AssignedGenericResources: Array<DockerDocs.GenericResources>,
+   *   Status: DockerDocs.TaskStatus,
+   *   DesiredState: 'new'|'allocated'|'pending'|'assigned'|'accepted'
+   *     |'preparing'|'ready'|'starting'|'running'|'complete'|'shutdown'
+   *     |'failed'|'rejected'|'remove'|'orphaned',
+   *   JobIteration: DockerDocs.ObjectVersion,
+   *   NetworksAttachments: Array<{
+   *     Network: DockerDocs.Network,
+   *     Addresses: Array<cidr string>,
+   *   }>,
+   * }>
+   * ```
+   */
+  async inspectTask(taskId) {
+    const response = await this.http.get(`/tasks/${taskId}`)
+    const data = await handleDockerHTTPResponse(response)
+    return data
+  }
+
+  /**
    * @name listNodes
    *
    * @docs
