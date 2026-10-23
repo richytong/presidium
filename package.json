@@ -67,9 +67,9 @@
   "dependencies": {
     "adm-zip": "^0.6.1",
     "html-entities": "^2.6.0",
-    "presidium-db": "^4.6.2",
-    "presidium-db-client-server": "^0.3.1",
-    "presidium-websocket": "^4.2.2",
+    "presidium-db": ">=4.7.0",
+    "presidium-db-client-server": ">=0.6.3",
+    "presidium-websocket": ">=4.2.2",
     "rubico": "^2.21.0",
     "uniqid": "^5.4.0"
   },
