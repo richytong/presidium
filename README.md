@@ -394,7 +394,7 @@ for await (const postJson of postHt.reverseIterator()) {
 }
 ```
 
-## [Load balance your distributed database](https://presidium.services/docs/DiskSortedHashTableClient)
+## [Load balance your distributed database](https://presidium.services/docs/DatabaseLoadBalancer)
 ```javascript
 const DatabaseLoadBalancer = require("presidium/DatabaseLoadBalancer")
 
