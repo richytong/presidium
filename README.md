@@ -389,7 +389,7 @@ await postHt.set(post2.id, JSON.stringify(post2), post2.time)
 await postHt.set(post3.id, JSON.stringify(post3), post3.time)
 
 const myPosts = []
-for await (const postJson of postHt.reverseIterator()) {
+for await (const postJson of await postHt.reverseIterator()) {
   myPosts.push(JSON.parse(postJson))
 }
 ```
