@@ -473,6 +473,13 @@ const test5 = new Test('Docker - swarm', async function integration() {
     this.networkId2 = data.Id
   }
 
+  { // create volume
+    const data = await docker.createVolume("test-volume")
+    assert.equal(data.Name, "test-volume")
+    assert.equal(typeof data.Mountpoint, "string")
+    assert.equal(data.Scope, "local")
+  }
+
   { // create a service
     const data1 = await docker.createService('service1', {
       image: 'node:15-alpine',
@@ -482,8 +489,8 @@ const test5 = new Test('Docker - swarm', async function integration() {
       workdir: '/opt/test0',
       env: { TEST: 'test' },
       mounts: [{
-        source: 'other-volume',
-        target: '/opt/other-volume',
+        source: 'test-volume',
+        target: '/opt/test-volume',
         readonly: true,
       }],
       memory: 256e6, // bytes
@@ -531,8 +538,8 @@ const test5 = new Test('Docker - swarm', async function integration() {
       workdir: '/opt/test0',
       env: { TEST: 'test' },
       mounts: [{
-        source: 'other-volume',
-        target: '/opt/other-volume',
+        source: 'test-volume',
+        target: '/opt/test-volume',
         readonly: true,
       }],
       memory: 256e6, // bytes
@@ -573,8 +580,8 @@ const test5 = new Test('Docker - swarm', async function integration() {
       workdir: '/opt/test0',
       env: { TEST: 'test' },
       mounts: [{
-        source: 'other-volume',
-        target: '/opt/other-volume',
+        source: 'test-volume',
+        target: '/opt/test-volume',
         readonly: true,
       }],
       restart: 'on-failure',

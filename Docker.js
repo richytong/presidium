@@ -2,29 +2,29 @@
  * Presidium may be freely distributed under the CFOSS license.
  */
 
-require('rubico/global')
-const isString = require('rubico/x/isString')
-const identity = require('rubico/x/identity')
-const size = require('rubico/x/size')
-const defaultsDeep = require('rubico/x/defaultsDeep')
-const Transducer = require('rubico/Transducer')
-const http = require('http')
-const fs = require('fs')
-const zlib = require('zlib')
-const uniqid = require('uniqid')
-const { spawn } = require('child_process')
-const Readable = require('./Readable')
-const HTTP = require('./HTTP')
-const querystring = require('querystring')
-const Archive = require('./internal/Archive')
-const split = require('./internal/split')
-const join = require('./internal/join')
-const isArray = require('./internal/isArray')
-const pathJoin = require('./internal/pathJoin')
-const has = require('./internal/has')
-const filterExists = require('./internal/filterExists')
-const createUpdateServiceSpec = require('./internal/createUpdateServiceSpec')
-const handleDockerHTTPResponse = require('./internal/handleDockerHTTPResponse')
+require("rubico/global")
+const isString = require("rubico/x/isString")
+const identity = require("rubico/x/identity")
+const size = require("rubico/x/size")
+const defaultsDeep = require("rubico/x/defaultsDeep")
+const Transducer = require("rubico/Transducer")
+const http = require("http")
+const fs = require("fs")
+const zlib = require("zlib")
+const uniqid = require("uniqid")
+const { spawn } = require("child_process")
+const Readable = require("./Readable")
+const HTTP = require("./HTTP")
+const querystring = require("querystring")
+const Archive = require("./internal/Archive")
+const split = require("./internal/split")
+const join = require("./internal/join")
+const isArray = require("./internal/isArray")
+const pathJoin = require("./internal/pathJoin")
+const has = require("./internal/has")
+const filterExists = require("./internal/filterExists")
+const createUpdateServiceSpec = require("./internal/createUpdateServiceSpec")
+const handleDockerHTTPResponse = require("./internal/handleDockerHTTPResponse")
 
 /**
  * @name Docker
@@ -40,7 +40,7 @@ const handleDockerHTTPResponse = require('./internal/handleDockerHTTPResponse')
  *
  * Arguments:
  *   * `options`
- *     * `apiVersion` - the version of the Docker API. Defaults to `'1.48'`.
+ *     * `apiVersion` - the version of the Docker API. Defaults to `"1.48"`.
  *
  * Supported platforms:
  *   * macOS (64-bit)
@@ -54,11 +54,11 @@ const handleDockerHTTPResponse = require('./internal/handleDockerHTTPResponse')
 class Docker {
   constructor(options = {}) {
     const agent = new http.Agent({
-      socketPath: '/var/run/docker.sock',
+      socketPath: "/var/run/docker.sock",
       maxSockets: Infinity,
     })
 
-    this.apiVersion = options.apiVersion ?? '1.48'
+    this.apiVersion = options.apiVersion ?? "1.48"
 
     this.http = new HTTP(`http://0.0.0.0/v${this.apiVersion}`, { agent })
   }
@@ -97,20 +97,20 @@ class Docker {
    * const docker = new Docker()
    *
    * const data = await docker.auth({
-   *   username: 'admin',
-   *   password: 'password',
-   *   email: 'test@example.com',
-   *   serveraddress: 'localhost:5000',
+   *   username: "admin",
+   *   password: "password",
+   *   email: "test@example.com",
+   *   serveraddress: "localhost:5000",
    * })
    * ```
    */
   async auth(options) {
-    const response = await this.http.post('/auth', {
+    const response = await this.http.post("/auth", {
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: pipe(options, [
-        pick(['username', 'password', 'email', 'serveraddress', 'identitytoken']),
+        pick(["username", "password", "email", "serveraddress", "identitytoken"]),
         JSON.stringify,
       ]),
     })
@@ -124,7 +124,7 @@ class Docker {
    *
    * @docs
    * ```coffeescript [specscript]
-   * module DockerDocs 'https://docs.docker.com/reference/api/engine/version/v1.52/'
+   * module DockerDocs "https://docs.docker.com/reference/api/engine/version/v1.52/"
    *
    * listImages() -> data Promise<[
    *   Id: string,
@@ -167,7 +167,7 @@ class Docker {
    * ```
    */
   async listImages() {
-    const response = await this.http.get('/images/json')
+    const response = await this.http.get("/images/json")
     const data = await handleDockerHTTPResponse(response)
     return data
   }
@@ -177,7 +177,7 @@ class Docker {
    *
    * @docs
    * ```coffeescript [specscript]
-   * module DockerDocs 'https://docs.docker.com/reference/api/engine/version/v1.52/'
+   * module DockerDocs "https://docs.docker.com/reference/api/engine/version/v1.52/"
    *
    * listContainers() -> data Promise<[
    *   Id: string,
@@ -191,7 +191,7 @@ class Docker {
    *   SizeRw: number,
    *   SizeRootFs: number,
    *   Labels: Object<string>,
-   *   State: 'created'|'running'|'paused'|'restarting'|'exited'|'removing'|'dead',
+   *   State: "created"|"running"|"paused"|"restarting"|"exited"|"removing"|"dead",
    *   Status: string,
    *   HostConfig: {
    *     NetworkMode: string,
@@ -202,7 +202,7 @@ class Docker {
    *   },
    *   Mounts: Array<DockerDocs.MountPoint>,
    *   Health: {
-   *     Status: 'none'|'starting'|'healthy'|'unhealthy',
+   *     Status: "none"|"starting"|"healthy"|"unhealthy",
    *     FailingStreak: number,
    *   },
    * ]>
@@ -227,7 +227,7 @@ class Docker {
    *     * `SizeRootFs` - the total size of all files in the read-only layers of the image of the Docker container.
    *     * `Labels` - object of key-value metadata.
    *     * `State` - the state of the Docker container.
-   *     * `Status` - additional human-readable status of the Docker container, e.g. `'Exit 0'`.
+   *     * `Status` - additional human-readable status of the Docker container, e.g. `"Exit 0"`.
    *     * `HostConfig` - summary of host-specific runtime information of the Docker container.
    *     * `NetworkSettings` - summary of the Docker container's network settings.
    *     * `Mounts` - list of mounts of the Docker container.
@@ -240,7 +240,7 @@ class Docker {
    * ```
    */
   async listContainers() {
-    const response = await this.http.get('/containers/json')
+    const response = await this.http.get("/containers/json")
     const data = await handleDockerHTTPResponse(response)
     return data
   }
@@ -250,7 +250,7 @@ class Docker {
    *
    * @docs
    * ```coffeescript [specscript]
-   * module stream 'https://nodejs.org/api/stream.html'
+   * module stream "https://nodejs.org/api/stream.html"
    *
    * pullImage(
    *   name string,
@@ -258,7 +258,7 @@ class Docker {
    *     repo: string,
    *     tag: string,
    *     message: string,
-   *     platform: string, # '<os>[/arch[/variant]]'
+   *     platform: string, # "<os>[/arch[/variant]]"
    *     username: string,
    *     password: string,
    *     email: string,
@@ -289,31 +289,31 @@ class Docker {
    * ```javascript
    * const docker = new Docker()
    *
-   * const pullStream = await docker.pullImage('nginx:1.19')
+   * const pullStream = await docker.pullImage("nginx:1.19")
    *
    * pullStream.pipe(process.stdout)
-   * pullStream.on('end', () => {
-   *   console.log('pullImage success')
+   * pullStream.on("end", () => {
+   *   console.log("pullImage success")
    * })
    * ```
    */
   async pullImage(name, options = {}) {
     const response = await this.http.post(`/images/create?${querystring.stringify({
       fromImage: name,
-      ...pick(['repo', 'tag', 'message', 'platform'])(options),
+      ...pick(["repo", "tag", "message", "platform"])(options),
     })}`, {
       headers: {
-        'X-Registry-Auth': pipe(options, [
+        "X-Registry-Auth": pipe(options, [
           pick([
-            'username',
-            'password',
-            'email',
-            'serveraddress',
-            'identitytoken',
+            "username",
+            "password",
+            "email",
+            "serveraddress",
+            "identitytoken",
           ]),
           JSON.stringify,
           Buffer.from,
-          buffer => buffer.toString('base64'),
+          buffer => buffer.toString("base64"),
         ]),
       },
     })
@@ -327,7 +327,7 @@ class Docker {
    *
    * @docs
    * ```coffeescript [specscript]
-   * module stream 'https://nodejs.org/api/stream.html'
+   * module stream "https://nodejs.org/api/stream.html"
    *
    * buildImage(path string, options {
    *   image: string,
@@ -338,7 +338,7 @@ class Docker {
    *     ...
    *   >,
    *   archiveDockerfile: string,
-   *   platform: string, # '<os>[/arch[/variant]]'
+   *   platform: string, # "<os>[/arch[/variant]]"
    * }) -> dataStream Promise<stream.Readable>
    * ```
    *
@@ -347,11 +347,11 @@ class Docker {
    * Arguments:
    *   * `path` - parent directory of the build context.
    *   * `options`
-   *     * `image` - the name and optional tag of the image. If no tag is present, `'LATEST'` is assumed as the value for the tag.
+   *     * `image` - the name and optional tag of the image. If no tag is present, `"LATEST"` is assumed as the value for the tag.
    *     * `ignore` - patterns to ignore when bundling files and directories for the build context.
    *     * `archive` - an object of filenames and file contents that will be present in the build context.
-   *     * `archiveDockerfile` - the filepath including filename of the Dockerfile, e.g. `'Dockerfiles/Dockerfile2'`. Defaults to `'Dockerfile'`.
-   *     * `platform` - target platform for the build, e.g. `'linux/arm64'`.
+   *     * `archiveDockerfile` - the filepath including filename of the Dockerfile, e.g. `"Dockerfiles/Dockerfile2"`. Defaults to `"Dockerfile"`.
+   *     * `platform` - target platform for the build, e.g. `"linux/arm64"`.
    *
    * Return:
    *   * `dataStream` - a readable stream of the progress of the Docker `buildImage` operation.
@@ -360,7 +360,7 @@ class Docker {
    * const docker = new Docker()
    *
    * const buildStream = await docker.buildImage(__dirname, {
-   *   image: 'my-image',
+   *   image: "my-image",
    *   archive: {
    *     Dockerfile: `
    * FROM node:15-alpine
@@ -371,23 +371,23 @@ class Docker {
    * })
    *
    * buildStream.pipe(process.stdout)
-   * buildStream.on('end', () => {
-   *   console.log('Build success')
+   * buildStream.on("end", () => {
+   *   console.log("Build success")
    * })
    * ```
    *
    * ### Dockerfile Syntax
    * ```sh
    * HEALTHCHECK \
-   *   [--interval=<duration '30s'|string>] \
-   *   [--timeout=<duration '30s'|string>] \
-   *   [--start-period=<duration '0s'|string>] \
-   *   [--start-interval=<duration '5s'|string>] \
+   *   [--interval=<duration "30s"|string>] \
+   *   [--timeout=<duration "30s"|string>] \
+   *   [--start-period=<duration "0s"|string>] \
+   *   [--start-interval=<duration "5s"|string>] \
    *   [--retries=<3|number>]
    *
    * ENV <key>=<value> ...
    *
-   * EXPOSE <port>/<protocol 'tcp'|'udp'> ...
+   * EXPOSE <port>/<protocol "tcp"|"udp"> ...
    *
    * WORKDIR <path>
    *
@@ -410,20 +410,20 @@ class Docker {
   async buildImage(path, options = {}) {
     const pack = Archive.tar(path, {
       base: options.archive,
-      ignore: options.ignore ?? ['node_modules', '.git', '.nyc_output'],
+      ignore: options.ignore ?? ["node_modules", ".git", ".nyc_output"],
     })
 
     const compressed = pack.pipe(zlib.createGzip())
 
     const response = await this.http.post(`/build?${querystring.stringify({
-      dockerfile: options.archiveDockerfile ?? 'Dockerfile',
+      dockerfile: options.archiveDockerfile ?? "Dockerfile",
       t: options.image,
       forcerm: true,
-      platform: options.platform ?? '',
+      platform: options.platform ?? "",
     })}`, {
       body: compressed,
       headers: {
-        'Content-Type': 'application/x-tar',
+        "Content-Type": "application/x-tar",
       },
     })
 
@@ -436,10 +436,10 @@ class Docker {
    *
    * @docs
    * ```coffeescript [specscript]
-   * module stream 'https://nodejs.org/api/stream.html'
+   * module stream "https://nodejs.org/api/stream.html"
    *
    * pushImage(options {
-   *   image: string, # '[<repo>/]<name>:<tag>'
+   *   image: string, # "[<repo>/]<name>:<tag>"
    *   registry: string,
    *   authToken: string,
    *   username: string,
@@ -470,38 +470,38 @@ class Docker {
    * const docker = new Docker()
    *
    * const dataStream = await docker.pushImage({
-   *   image: 'repo/my-image:mytag',
-   *   registry: 'my-registry.io',
+   *   image: "repo/my-image:mytag",
+   *   registry: "my-registry.io",
    * })
    * dataStream.pipe(process.stdout)
-   * dataStream.on('end', () => {
-   *   console.log('Push success')
+   * dataStream.on("end", () => {
+   *   console.log("Push success")
    * })
    * ```
    *
    */
   async pushImage(options = {}) {
     const authOptions = pick(options, [
-      'username',
-      'password',
-      'email',
-      'serveraddress',
-      'identitytoken'
+      "username",
+      "password",
+      "email",
+      "serveraddress",
+      "identitytoken"
     ])
 
     if (options.authToken) {
-      const decoded = Buffer.from(options.authToken, 'base64').toString('utf8')
-      const [username, password] = decoded.split(':')
+      const decoded = Buffer.from(options.authToken, "base64").toString("utf8")
+      const [username, password] = decoded.split(":")
       authOptions.username = username
       authOptions.password = password
     }
 
     const headers = {
-      'X-Registry-Auth':
-        Buffer.from(JSON.stringify(authOptions)).toString('base64')
+      "X-Registry-Auth":
+        Buffer.from(JSON.stringify(authOptions)).toString("base64")
     }
 
-    const [name, tag] = options.image.split(':')
+    const [name, tag] = options.image.split(":")
     const remoteImageName = `${options.repository ?? options.registry}/${name}`
     const queryParams = `tag=${encodeURIComponent(tag)}`
 
@@ -519,7 +519,7 @@ class Docker {
    *
    * @docs
    * ```coffeescript [specscript]
-   * module DockerDocs 'https://docs.docker.com/reference/api/engine/version/v1.52/'
+   * module DockerDocs "https://docs.docker.com/reference/api/engine/version/v1.52/"
    *
    * inspectImage(image string) -> data Promise<{
    *   Id: string,
@@ -575,7 +575,7 @@ class Docker {
    * ```javascript
    * const docker = new Docker()
    *
-   * const data = await docker.inspectImage('my-image:example')
+   * const data = await docker.inspectImage("my-image:example")
    * ```
    */
   async inspectImage(image) {
@@ -590,8 +590,8 @@ class Docker {
    * @docs
    * ```coffeescript [specscript]
    * tagImage(
-   *   sourceImageTag string, # '[<repo>/]<image>:<tag>'
-   *   targetImageTag string, # '[<repo>/]<image>:<tag>'
+   *   sourceImageTag string, # "[<repo>/]<image>:<tag>"
+   *   targetImageTag string, # "[<repo>/]<image>:<tag>"
    * ) -> data Promise<{}>
    * ```
    *
@@ -607,13 +607,13 @@ class Docker {
    * ```javascript
    * const docker = new Docker()
    *
-   * await docker.tagImage('my-image:example', 'my-registry/my-image:example')
+   * await docker.tagImage("my-image:example", "my-registry/my-image:example")
    * ```
    */
   async tagImage(sourceImageTag, targetImageTag) {
-    const targetImageTagParts = targetImageTag.split(':')
+    const targetImageTagParts = targetImageTag.split(":")
     const tag = targetImageTagParts[targetImageTagParts.length - 1]
-    const repo = targetImageTagParts.slice(0, -1).join(':')
+    const repo = targetImageTagParts.slice(0, -1).join(":")
     const response = await this.http.post(`
 /images/${sourceImageTag}/tag?${querystring.stringify({ repo, tag })}
     `.trim())
@@ -648,12 +648,12 @@ class Docker {
    * ```javascript
    * const docker = new Docker()
    *
-   * await docker.removeImage('my-image:example')
+   * await docker.removeImage("my-image:example")
    * ```
    */
   async removeImage(image, options = {}) {
     const response = await this.http.delete(`/images/${image}?${
-      querystring.stringify(pick(options, ['force', 'noprune']))
+      querystring.stringify(pick(options, ["force", "noprune"]))
     }`)
 
     const data = await handleDockerHTTPResponse(response)
@@ -669,12 +669,12 @@ class Docker {
    *   name: string,
    *   image: string,
    *   rm: boolean,
-   *   restart: 'no'|'on-failure[:<max-retries>]'|'always'|'unless-stopped',
-   *   logDriver: 'local'|'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'etwlogs'|'none',
+   *   restart: "no"|"on-failure[:<max-retries>]"|"always"|"unless-stopped",
+   *   logDriver: "local"|"json-file"|"syslog"|"journald"|"gelf"|"fluentd"|"awslogs"|"splunk"|"etwlogs"|"none",
    *   logDriverOptions: Object<string>,
    *   publish: Object<
    *     [hostPort string]: containerPort string # 8080
-   *       |containerPortWithProtocol string # '<containerPort>[/<"tcp"|"udp"|"sctp">]'
+   *       |containerPortWithProtocol string # "<containerPort>[/<"tcp"|"udp"|"sctp">]"
    *   >,
    *   healthCmd: Array<string>,
    *   healthInterval: number, # nanoseconds, minimum 1e6, default 10e9
@@ -687,14 +687,14 @@ class Docker {
    *     source: string,
    *     target: string,
    *     readonly: boolean,
-   *     type: 'bind'|'cluster'|'image'|'npipe'|'tmpfs'|'volume',
+   *     type: "bind"|"cluster"|"image"|"npipe"|"tmpfs"|"volume",
    *   }>|Array<
-   *     mount string, # '<source>:<target>[:<readonly true|false>]'
+   *     mount string, # "<source>:<target>[:<readonly true|false>]"
    *   >,
    *
    *   # Dockerfile defaults
    *   cmd: Array<string|number>,
-   *   expose: Array<port string>, # '<port>[/<"tcp"|"udp"|"sctp">]'
+   *   expose: Array<port string>, # "<port>[/<"tcp"|"udp"|"sctp">]"
    *   volume: Array<path string>,
    *   workdir: path string,
    *   env: Object<string>,
@@ -731,7 +731,7 @@ class Docker {
    *     * `expose` - an array of ports with optional protocols that the Docker container exposes.
    *     * `volume` - an array of mount point paths inside the Docker container.
    *     * `workdir` - the working directory of the Docker container.
-   *     * `env` - an object of the Docker container's environment variables. Maps environment variable names to environment variable values, e.g. `{ FOO: 'bar' }`.
+   *     * `env` - an object of the Docker container"s environment variables. Maps environment variable names to environment variable values, e.g. `{ FOO: "bar' }`.
    *
    * Return:
    *   * `data`
@@ -746,9 +746,9 @@ class Docker {
    *
    * Health checks:
    *   * `[]` - inherit healthcheck from image or parent image
-   *   * `['NONE']` - disable healthcheck
-   *   * `['CMD', ...args]` - exec arguments directly
-   *   * `['CMD-SHELL', command string]` - run command with system's default shell
+   *   * `["NONE"]` - disable healthcheck
+   *   * `["CMD", ...args]` - exec arguments directly
+   *   * `["CMD-SHELL", command string]` - run command with system's default shell
    *
    * Mount types:
    *   * `bind` - mounts a file or directory from the host into the Docker container. The `source` must exist prior to creating the Docker container.
@@ -762,8 +762,8 @@ class Docker {
    * const docker = new Docker()
    *
    * const data = await docker.createContainer({
-   *   image: 'node:15-alpine',
-   *   cmd: ['node', '-e', 'console.log(\'Hello World.\')'],
+   *   image: "node:15-alpine",
+   *   cmd: ["node", "-e", "console.log(\'Hello World.\')"],
    *   rm: true,
    * })
    * ```
@@ -790,9 +790,9 @@ class Docker {
         ...options.expose && {
           ExposedPorts: transform(options.expose, Transducer.map(pipe([
             String,
-            split('/'),
-            all([get(0), get(1, 'tcp')]),
-            join('/'),
+            split("/"),
+            all([get(0), get(1, "tcp")]),
+            join("/"),
             port => ({ [port]: {} }),
           ])), {}),
         },
@@ -809,12 +809,12 @@ class Docker {
 
         ...options.healthCmd && {
           Healthcheck: { // note: this is correct versus the healthCmd in createService, which is HealthCheck
-            Test: ['CMD', ...options.healthCmd],
+            Test: ["CMD", ...options.healthCmd],
             ...all({
-              Interval: get('healthInterval', 10e9),
-              Timeout: get('healthTimeout', 20e9),
-              Retries: get('healthRetries', 5),
-              StartPeriod: get('healthStartPeriod', 1e6),
+              Interval: get("healthInterval", 10e9),
+              Timeout: get("healthTimeout", 20e9),
+              Retries: get("healthRetries", 5),
+              StartPeriod: get("healthStartPeriod", 1e6),
             })(options),
           },
         },
@@ -825,16 +825,16 @@ class Docker {
               switchCase([
                 isString,
                 pipe([
-                  split(':'),
+                  split(":"),
                   all({ target: get(0), source: get(1), readonly: get(2) }),
                 ]),
                 identity,
               ]),
               all({
-                Target: get('target'),
-                Source: get('source'),
-                Type: get('type', 'volume'),
-                ReadOnly: get('readonly', false),
+                Target: get("target"),
+                Source: get("source"),
+                Type: get("type", "volume"),
+                ReadOnly: get("readonly", false),
               }),
             ]))
           },
@@ -847,9 +847,9 @@ class Docker {
               pipe([ // container port
                 get(1),
                 String,
-                split('/'),
-                all([get(0), get(1, 'tcp')]),
-                join('/'),
+                split("/"),
+                all([get(0), get(1, "tcp")]),
+                join("/"),
               ]),
               pipe([ // host port
                 get(0),
@@ -867,9 +867,9 @@ class Docker {
           },
           ...options.restart && {
             RestartPolicy: all({
-              Name: get(0, 'no'),
+              Name: get(0, "no"),
               MaximumRetryCount: pipe([get(1, 0), Number]),
-            })(options.restart.split(':')),
+            })(options.restart.split(":")),
           },
           ...options.rm && { AutoRemove: options.rm },
 
@@ -877,7 +877,7 @@ class Docker {
       }),
 
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     })
 
@@ -890,7 +890,7 @@ class Docker {
    *
    * @docs
    * ```coffeescript [specscript]
-   * module stream 'https://nodejs.org/api/stream.html'
+   * module stream "https://nodejs.org/api/stream.html"
    *
    * attachContainer(containerId string, options {
    *   stdout: boolean,
@@ -903,8 +903,8 @@ class Docker {
    * Arguments:
    *   * `containerId` - the ID of the Docker container.
    *   * `options`
-   *     * `stdout` - if `true`, `attachContainer` attaches to the Docker container's `stdout`. If `false`, `attachContainer` does not attach to the Docker container's `stdout`. Defaults to `true`.
-   *     * `stderr` - if `true`, `attachContainer` attaches to the Docker container's `stderr`. If `false`, `attachContainer` does not attach to the Docker container's `stderr`. Defaults to `true`.
+   *     * `stdout` - if `true`, `attachContainer` attaches to the Docker container"s `stdout`. If `false`, `attachContainer` does not attach to the Docker container"s `stdout`. Defaults to `true`.
+   *     * `stderr` - if `true`, `attachContainer` attaches to the Docker container"s `stderr`. If `false`, `attachContainer` does not attach to the Docker container"s `stderr`. Defaults to `true`.
    *
    * Return:
    *   * `dataStream` - a readable stream of the Docker container's `stdout` and/or `stderr`.
@@ -913,16 +913,16 @@ class Docker {
    * const docker = new Docker()
    *
    * const data = await docker.createContainer({
-   *   image: 'node:15-alpine',
-   *   cmd: ['node', '-e', 'console.log(\'Hello World.\')'],
+   *   image: "node:15-alpine",
+   *   cmd: ["node", "-e", "console.log(\'Hello World.\')"],
    *   rm: true,
    * })
    * const containerId = data.Id
    *
    * const attachStream = await docker.attachContainer(containerId)
    * attachStream.pipe(process.stdout) // Hello World.
-   * attachStream.on('end', () => {
-   *   console.log('Attach success')
+   * attachStream.on("end", () => {
+   *   console.log("Attach success")
    * })
    *
    * await docker.startContainer(containerId)
@@ -945,18 +945,18 @@ class Docker {
    *
    * @docs
    * ```coffeescript [specscript]
-   * module stream 'https://nodejs.org/api/stream.html'
+   * module stream "https://nodejs.org/api/stream.html"
    *
    * runContainer(options {
    *   name: string,
    *   image: string,
    *   rm: boolean,
-   *   restart: 'no'|'on-failure[:<max-retries>]'|'always'|'unless-stopped',
-   *   logDriver: 'local'|'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'etwlogs'|'none',
+   *   restart: "no"|"on-failure[:<max-retries>]"|"always"|"unless-stopped",
+   *   logDriver: "local"|"json-file"|"syslog"|"journald"|"gelf"|"fluentd"|"awslogs"|"splunk"|"etwlogs"|"none",
    *   logDriverOptions: Object<string>,
    *   publish: Object<
    *     [hostPort string]: containerPort string # 8080
-   *       |containerPortWithProtocol string # '<containerPort>[/<"tcp"|"udp"|"sctp">]'
+   *       |containerPortWithProtocol string # "<containerPort>[/<"tcp"|"udp"|"sctp">]"
    *   >,
    *   healthCmd: Array<string>,
    *   healthInterval: number, # nanoseconds, minimum 1e6, default 10e9
@@ -969,14 +969,14 @@ class Docker {
    *     source: string,
    *     target: string,
    *     readonly: boolean,
-   *     type: 'bind'|'cluster'|'image'|'npipe'|'tmpfs'|'volume',
+   *     type: "bind"|"cluster"|"image"|"npipe"|"tmpfs"|"volume",
    *   }>|Array<
-   *     mount string, # '<source>:<target>[:<readonly true|false>]'
+   *     mount string, # "<source>:<target>[:<readonly true|false>]"
    *   >,
    *
    *   # Dockerfile defaults
    *   cmd: Array<string|number>,
-   *   expose: Array<port string>, # '<port>[/<"tcp"|"udp"|"sctp">]'
+   *   expose: Array<port string>, # "<port>[/<"tcp"|"udp"|"sctp">]"
    *   volume: Array<path string>,
    *   workdir: path string,
    *   env: Object<string>,
@@ -1010,7 +1010,7 @@ class Docker {
    *     * `expose` - an array of ports with optional protocols that the Docker container exposes.
    *     * `volume` - an array of mount point paths inside the Docker container.
    *     * `workdir` - the working directory of the Docker container.
-   *     * `env` - an object of the Docker container's environment variables. Maps environment variable names to environment variable values, e.g. `{ FOO: 'bar' }`.
+   *     * `env` - an object of the Docker container"s environment variables. Maps environment variable names to environment variable values, e.g. `{ FOO: "bar' }`.
    *
    * Return:
   *   * `dataStream` - a readable stream of the Docker container's `stdout` and/or `stderr`.
@@ -1023,9 +1023,9 @@ class Docker {
    *
    * Health checks:
    *   * `[]` - inherit healthcheck from image or parent image
-   *   * `['NONE']` - disable healthcheck
-   *   * `['CMD', ...args]` - exec arguments directly
-   *   * `['CMD-SHELL', command string]` - run command with system's default shell
+   *   * `["NONE"]` - disable healthcheck
+   *   * `["CMD", ...args]` - exec arguments directly
+   *   * `["CMD-SHELL", command string]` - run command with system's default shell
    *
    * Mount types:
    *   * `bind` - mounts a file or directory from the host into the Docker container. The `source` must exist prior to creating the Docker container.
@@ -1039,14 +1039,14 @@ class Docker {
    * const docker = new Docker()
    *
    * const dataStream = await docker.runContainer({
-   *   image: 'node:15-alpine',
-   *   cmd: ['node', '-e', 'console.log(\'Hello World.\')'],
+   *   image: "node:15-alpine",
+   *   cmd: ["node", "-e", "console.log(\'Hello World.\')"],
    *   rm: true,
    * })
    *
    * dataStream.pipe(process.stdout) // Hello World.
-   * dataStream.on('end', () => {
-   *   console.log('Run success')
+   * dataStream.on("end", () => {
+   *   console.log("Run success")
    * })
    * ```
    *
@@ -1064,7 +1064,7 @@ class Docker {
    *
    * @docs
    * ```coffeescript [specscript]
-   * module stream 'https://nodejs.org/api/stream.html'
+   * module stream "https://nodejs.org/api/stream.html"
    *
    * execContainer(
    *   containerId string,
@@ -1085,8 +1085,8 @@ class Docker {
    * const docker = new Docker()
    *
    * const data = await docker.createContainer({
-   *   image: 'node:15-alpine',
-   *   cmd: ['node', '-e', 'setTimeout(() => {}, 500)'],
+   *   image: "node:15-alpine",
+   *   cmd: ["node", "-e", "setTimeout(() => {}, 500)"],
    *   rm: true,
    * })
    *
@@ -1095,12 +1095,12 @@ class Docker {
    * await docker.startContainer(containerId)
    * const execDataStream = await docker.execContainer(
    *   containerId,
-   *   ['node', '-e', 'console.log(\'Hello from Exec.\')']
+   *   ["node", "-e", "console.log(\'Hello from Exec.\')"]
    * )
    *
    * execDataStream.pipe(process.stdout) // Hello from Exec.
-   * execDataStream.on('end', () => {
-   *   console.log('Exec success.')
+   * execDataStream.on("end", () => {
+   *   console.log("Exec success.")
    * })
    * ```
    */
@@ -1114,7 +1114,7 @@ class Docker {
         Cmd: cmd,
       }),
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     })
 
@@ -1124,7 +1124,7 @@ class Docker {
     const startResponse = await this.http.post(`/exec/${execId}/start`, {
       body: JSON.stringify({ Detach: false, Tty: false }),
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     })
 
@@ -1137,7 +1137,7 @@ class Docker {
    *
    * @docs
    * ```coffeescript [specscript]
-   * module stream 'https://nodejs.org/api/stream.html'
+   * module stream "https://nodejs.org/api/stream.html"
    *
    * startContainer(containerId string) -> message string
    * ```
@@ -1154,33 +1154,33 @@ class Docker {
    * const docker = new Docker()
    *
    * const data = await docker.createContainer({
-   *   image: 'node:15-alpine',
-   *   cmd: ['node', '-e', `
+   *   image: "node:15-alpine",
+   *   cmd: ["node", "-e", `
    * const server = http.createServer((request, response) => {
    *   request.pipe(response)
-   *   request.on('end', () => {
+   *   request.on("end", () => {
    *     response.end()
    *     server.close()
    *   })
    * })
    * server.listen(8081)
    *   `],
-   *   publish: { 8081: '8081' },
-   *   expose: ['8081'],
+   *   publish: { 8081: "8081" },
+   *   expose: ["8081"],
    *   rm: true,
    * })
    * const containerId = data.Id
    *
    * await docker.startContainer(containerId)
    *
-   * const http = new HTTP('http://localhost:8081')
+   * const http = new HTTP("http://localhost:8081")
    *
-   * let response = await http.post('/', {
-   *   body: 'Echo Message.',
+   * let response = await http.post("/", {
+   *   body: "Echo Message.",
    * }).catch(() => ({ ok: false }))
    * while (!response.ok) {
-   *   response = await http.post('/', {
-   *     body: 'Echo Message.',
+   *   response = await http.post("/", {
+   *     body: "Echo Message.",
    *   }).catch(() => ({ ok: false }))
    * }
    *
@@ -1217,8 +1217,8 @@ class Docker {
    * const docker = new Docker()
    *
    * const data = await docker.createContainer({
-   *   image: 'node:15-alpine',
-   *   cmd: ['node', '-e', 'http.createServer(() => {})'],
+   *   image: "node:15-alpine",
+   *   cmd: ["node", "-e", "http.createServer(() => {})"],
    *   rm: true,
    * })
    *
@@ -1227,7 +1227,7 @@ class Docker {
    * await docker.startContainer(containerId)
    *
    * await docker.stopContainer(containerId)
-   * console.log('Stop success')
+   * console.log("Stop success")
    * ```
    */
   async stopContainer(containerId, options = {}) {
@@ -1245,7 +1245,7 @@ class Docker {
    *
    * @docs
    * ```coffeescript [specscript]
-   * module DockerDocs 'https://docs.docker.com/reference/api/engine/version/v1.52/'
+   * module DockerDocs "https://docs.docker.com/reference/api/engine/version/v1.52/"
    *
    * inspectContainer(containerId string) -> data Promise<{
    *   Id: string,
@@ -1317,8 +1317,8 @@ class Docker {
    * const docker = new Docker()
    *
    * const data = await docker.createContainer({
-   *   image: 'node:15-alpine',
-   *   cmd: ['node', '-e', 'http.createServer(() => {})'],
+   *   image: "node:15-alpine",
+   *   cmd: ["node", "-e", "http.createServer(() => {})"],
    *   rm: true,
    * })
    *
@@ -1338,7 +1338,7 @@ class Docker {
    *
    * @docs
    * ```coffeescript [specscript]
-   * module DockerDocs 'https://docs.docker.com/reference/api/engine/version/v1.52/'
+   * module DockerDocs "https://docs.docker.com/reference/api/engine/version/v1.52/"
    *
    * inspectSwarm() -> data Promise<{
    *   ID: string,
@@ -1382,13 +1382,13 @@ class Docker {
    * ```javascript
    * const docker = new Docker()
    *
-   * await docker.initSwarm('[::1]:2377')
+   * await docker.initSwarm("[::1]:2377")
    *
    * const data = await docker.inspectSwarm()
    * ```
    */
   async inspectSwarm() {
-    const response = await this.http.get('/swarm')
+    const response = await this.http.get("/swarm")
     const data = await handleDockerHTTPResponse(response)
     return data
   }
@@ -1412,14 +1412,14 @@ class Docker {
    * ```javascript
    * const docker = new Docker()
    *
-   * await docker.initSwarm('[::1]:2377')
+   * await docker.initSwarm("[::1]:2377")
    * ```
    */
   async initSwarm(address) {
-    const port = address.split(':')[1]
-    const response = await this.http.post('/swarm/init', {
+    const port = address.split(":")[1]
+    const response = await this.http.post("/swarm/init", {
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         AdvertiseAddr: address,
@@ -1456,19 +1456,19 @@ class Docker {
    * ```javascript
    * const docker = new Docker()
    *
-   * const workerJoinToken = 'token'
+   * const workerJoinToken = "token"
    *
-   * await docker.joinSwarm('[::1]:2377', {
-   *   RemoteAddrs: ['ip-102-30-0-70.ec2.internal'],
+   * await docker.joinSwarm("[::1]:2377", {
+   *   RemoteAddrs: ["ip-102-30-0-70.ec2.internal"],
    *   JoinToken: workerJoinToken,
    * })
    * ```
    */
   async joinSwarm(address, options) {
-    const port = address.split(':')[1]
-    const response = await this.http.post('/swarm/join', {
+    const port = address.split(":")[1]
+    const response = await this.http.post("/swarm/join", {
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         ListenAddr: `0.0.0.0:${port}`,
@@ -1507,7 +1507,7 @@ class Docker {
    */
   async leaveSwarm(options = {}) {
     const response = await this.http.post(`/swarm/leave?${
-      querystring.stringify(pick(options, ['force']))
+      querystring.stringify(pick(options, ["force"]))
     }`)
     const message = await handleDockerHTTPResponse(response, { text: true })
     return message
@@ -1521,13 +1521,13 @@ class Docker {
    * createService(service string, options {
    *   image: string,
    *   replicas: 1|number,
-   *   restart: 'no'|'on-failure[:<max-retries>]'|'any',
+   *   restart: "no"|"on-failure[:<max-retries>]"|"any",
    *   restartDelay: 10e9|number,
-   *   logDriver: 'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'none',
+   *   logDriver: "json-file"|"syslog"|"journald"|"gelf"|"fluentd"|"awslogs"|"splunk"|"none",
    *   logDriverOptions: Object<string>,
    *   publish: Object<
    *     [hostPort string]: containerPort string # 8080
-   *       |containerPortWithProtocol string # '<containerPort>[/<"tcp"|"udp"|"sctp">]'
+   *       |containerPortWithProtocol string # "<containerPort>[/<"tcp"|"udp"|"sctp">]"
    *   >,
    *   healthCmd: Array<string>,
    *   healthInterval: number, # number greater than 1e6
@@ -1540,18 +1540,18 @@ class Docker {
    *     source: string,
    *     target: string,
    *     readonly: boolean,
-   *     type: 'bind'|'cluster'|'image'|'npipe'|'tmpfs'|'volume',
+   *     type: "bind"|"cluster"|"image"|"npipe"|"tmpfs"|"volume",
    *   }>|Array<
-   *     mount string, # '<source>:<target>[:<readonly true|false>]'
+   *     mount string, # "<source>:<target>[:<readonly true|false>]"
    *   >,
    *   updateParallelism: number,
    *   updateDelay: number,
-   *   updateFailureAction: 'pause'|'continue'|'rollback',
+   *   updateFailureAction: "pause"|"continue"|"rollback",
    *   updateMonitor: number,
    *   updateMaxFailureRatio: number, # [0, 1]
    *   rollbackParallelism: 2|number,
    *   rollbackDelay: 1e9|number,
-   *   rollbackFailureAction: 'pause'|'continue',
+   *   rollbackFailureAction: "pause"|"continue",
    *   rollbackMonitor: 15e9|number,
    *   rollbackMaxFailureRatio: 0.15|number,
    *   network: string,
@@ -1578,7 +1578,7 @@ class Docker {
    *   * `service` - the Docker service name.
    *   * `options`
    *     * `image` - the Docker image of the Docker service.
-   *     * `replicas` - the number of containers that the Docker service will run across all nodes of the Docker swarm. If `replicas` is set to 'global', the Docker service will run containers on each node of the Docker swarm.
+   *     * `replicas` - the number of containers that the Docker service will run across all nodes of the Docker swarm. If `replicas` is set to "global", the Docker service will run containers on each node of the Docker swarm.
    *     * `restart` - the restart policy for the Docker service.
    *     * `restartDelay` - the delay between restarts for the Docker service.
    *     * `logDriver` - the logging driver of the Docker service.
@@ -1599,14 +1599,14 @@ class Docker {
    *     * `updateMaxFailureRatio` - the maximum ratio of tasks that may fail during an update before the failure action is invoked. Defaults to `0.15`.
    *     * `rollbackParallelism` - the maximum number of tasks to be rolled back in one iteration. `0` means unlimited parallelism. Defaults to `1`.
    *     * `rollbackDelay` - the delay in nanoseconds between rollback iterations. Defaults to `1e9`.
-   *     * `rollbackFailureAction` - the action to take if a rolled back task fails to run, or stops running during the rollback. Defaults to `'pause'`.
+   *     * `rollbackFailureAction` - the action to take if a rolled back task fails to run, or stops running during the rollback. Defaults to `"pause"`.
    *     * `rollbackMonitor` - the amount of time in nanoseconds to monitor each rolled back task for failures. Defaults to `15e9`.
    *     * `rollbackMaxFailureRatio` - the maximum ratio of tasks that may fail during a rollback before the failure action is invoked. Defaults to `0.15`.
    *     * `network` - the network name or ID for attachment.
    *     * `networks` - the names or IDs of networks for attachment.
    *     * `cmd` - the command that to be run by the Docker service.
    *     * `workdir` - the working directory of the containers of the Docker service.
-   *     * `env` - an object of the Docker service's environment variables. Maps environment variable names to environment variable values, e.g. `{ FOO: 'bar' }`.
+   *     * `env` - an object of the Docker service"s environment variables. Maps environment variable names to environment variable values, e.g. `{ FOO: "bar' }`.
    *     * `labels` - object of user-defined key/value metadata.
    *     * `username` - authentication credentials.
    *     * `password` - authentication credentials.
@@ -1622,15 +1622,15 @@ class Docker {
    * ```javascript
    * const docker = new Docker()
    *
-   * await docker.createService('my-service', {
-   *   image: 'node:15-alpine',
+   * await docker.createService("my-service", {
+   *   image: "node:15-alpine",
    *   replicas: 3,
-   *   cmd: ['node', '-e', 'http.createServer((request, response) => response.end(\'Hello World.\')).listen(3001)'],
-   *   workdir: '/home/node',
-   *   env: { TEST: 'test' },
-   *   restart: 'on-failure',
+   *   cmd: ["node", "-e", "http.createServer((request, response) => response.end(\'Hello World.\')).listen(3001)"],
+   *   workdir: "/home/node",
+   *   env: { TEST: "test" },
+   *   restart: "on-failure",
    *   publish: { 8081: 3001 },
-   *   healthCmd: ['wget', '--no-verbose', '--tries=1', '--spider', 'localhost:3001'],
+   *   healthCmd: ["wget", "--no-verbose", "--tries=1", "--spider", "localhost:3001"],
     })
    * ```
    *
@@ -1658,37 +1658,37 @@ class Docker {
               switchCase([
                 isString,
                 pipe([
-                  split(':'),
+                  split(":"),
                   all({ target: get(0), source: get(1), readonly: get(2) }),
                 ]),
                 identity,
               ]),
               all({
-                Target: get('target'),
-                Source: get('source'),
-                Type: get('type', 'volume'),
-                ReadOnly: get('readonly', false),
+                Target: get("target"),
+                Source: get("source"),
+                Type: get("type", "volume"),
+                ReadOnly: get("readonly", false),
               }),
             ]))
           },
 
           ...options.healthCmd && {
             HealthCheck: {
-              Test: ['CMD', ...options.healthCmd],
+              Test: ["CMD", ...options.healthCmd],
               ...all(options, {
-                Interval: get('healthInterval', 10e9),
-                Timeout: get('healthTimeout', 20e9),
-                Retries: get('healthRetries', 5),
-                StartPeriod: get('healthStartPeriod', 1e6),
+                Interval: get("healthInterval", 10e9),
+                Timeout: get("healthTimeout", 20e9),
+                Retries: get("healthRetries", 5),
+                StartPeriod: get("healthStartPeriod", 1e6),
               }),
             },
           },
         },
 
         ...options.restart && {
-          RestartPolicy: all(options.restart.split(':'), {
+          RestartPolicy: all(options.restart.split(":"), {
             Delay: options.restartDelay ?? 10e9,
-            Condition: get(0, 'on-failure'),
+            Condition: get(0, "on-failure"),
             MaxAttempts: pipe([get(1, 10), Number]),
           }),
         },
@@ -1716,10 +1716,10 @@ class Docker {
               NanoCPUs: Number(options.cpus * 1e9),
             } : {},
 
-            ...options.gpus == 'all' ? {
+            ...options.gpus == "all" ? {
               GenericResources: [{
                 DiscreteResourceSpec: {
-                  Kind: 'gpu',
+                  Kind: "gpu",
                   Value: 1,
                 },
               }],
@@ -1735,26 +1735,26 @@ class Docker {
         },
       },
 
-      Mode: options.replicas == 'global' ? {
+      Mode: options.replicas == "global" ? {
         Global: {},
       } : {
         Replicated: { Replicas: options.replicas ?? 1 }
       },
 
       UpdateConfig: all({
-        Parallelism: get('updateParallelism', 2),
-        Delay: get('updateDelay', 1e9),
-        FailureAction: get('updateFailureAction', 'pause'),
-        Monitor: get('updateMonitor', 15e9),
-        MaxFailureRatio: get('updateMaxFailureRatio', 0.15),
+        Parallelism: get("updateParallelism", 2),
+        Delay: get("updateDelay", 1e9),
+        FailureAction: get("updateFailureAction", "pause"),
+        Monitor: get("updateMonitor", 15e9),
+        MaxFailureRatio: get("updateMaxFailureRatio", 0.15),
       })(options),
 
       RollbackConfig: all({
-        Parallelism: get('rollbackParallelism', 1),
-        Delay: get('rollbackDelay', 1e9),
-        FailureAction: get('rollbackFailureAction', 'pause'),
-        Monitor: get('rollbackMonitor', 15e9),
-        MaxFailureRatio: get('rollbackMaxFailureRatio', 0.15),
+        Parallelism: get("rollbackParallelism", 1),
+        Delay: get("rollbackDelay", 1e9),
+        FailureAction: get("rollbackFailureAction", "pause"),
+        Monitor: get("rollbackMonitor", 15e9),
+        MaxFailureRatio: get("rollbackMaxFailureRatio", 0.15),
       })(options),
 
       ...options.publish && {
@@ -1763,34 +1763,34 @@ class Docker {
             map(String),
             all({
               Protocol: ([hostPort, containerPort]) => {
-                const hostProtocol = hostPort.split('/')[1],
-                  containerProtocol = containerPort.split('/')[1]
-                return hostProtocol ?? containerProtocol ?? 'tcp'
+                const hostProtocol = hostPort.split("/")[1],
+                  containerProtocol = containerPort.split("/")[1]
+                return hostProtocol ?? containerProtocol ?? "tcp"
               },
-              TargetPort: pipe([get(1), split('/'), get(0), Number]),
-              PublishedPort: pipe([get(0), split('/'), get(0), Number]),
-              PublishMode: always('ingress'),
+              TargetPort: pipe([get(1), split("/"), get(0), Number]),
+              PublishedPort: pipe([get(0), split("/"), get(0), Number]),
+              PublishMode: always("ingress"),
             }),
           ])),
         },
       },
     }
 
-    const response = await this.http.post('/services/create', {
+    const response = await this.http.post("/services/create", {
       body: JSON.stringify(config),
       headers: {
-        'Content-Type': 'application/json',
-        'X-Registry-Auth': pipe(options, [
+        "Content-Type": "application/json",
+        "X-Registry-Auth": pipe(options, [
           pick([
-            'username',
-            'password',
-            'email',
-            'serveraddress',
-            'identitytoken',
+            "username",
+            "password",
+            "email",
+            "serveraddress",
+            "identitytoken",
           ]),
           JSON.stringify,
           Buffer.from,
-          buffer => buffer.toString('base64'),
+          buffer => buffer.toString("base64"),
         ]),
       },
     })
@@ -1805,17 +1805,17 @@ class Docker {
    * @docs
    * ```coffeescript [specscript]
    * updateService(service string, options {
-   *   rollback: 'previous',
+   *   rollback: "previous",
    *   force: boolean,
    *   image: string,
    *   replicas: 1|number,
-   *   restart: 'no'|'on-failure[:<max-retries>]'|'any',
+   *   restart: "no"|"on-failure[:<max-retries>]"|"any",
    *   restartDelay: 10e9|number,
-   *   logDriver: 'json-file'|'syslog'|'journald'|'gelf'|'fluentd'|'awslogs'|'splunk'|'none',
+   *   logDriver: "json-file"|"syslog"|"journald"|"gelf"|"fluentd"|"awslogs"|"splunk"|"none",
    *   logDriverOptions: Object<string>,
    *   publish: Object<
    *     [hostPort string]: containerPort string # 8080
-   *       |containerPortWithProtocol string # '<containerPort>[/<"tcp"|"udp"|"sctp">]'
+   *       |containerPortWithProtocol string # "<containerPort>[/<"tcp"|"udp"|"sctp">]"
    *   >,
    *   healthCmd: Array<string>,
    *   healthInterval: number, # number greater than 1e6
@@ -1828,9 +1828,9 @@ class Docker {
    *     source: string,
    *     target: string,
    *     readonly: boolean,
-   *     type: 'bind'|'cluster'|'image'|'npipe'|'tmpfs'|'volume',
+   *     type: "bind"|"cluster"|"image"|"npipe"|"tmpfs"|"volume",
    *   }>|Array<
-   *     mount string, # '<source>:<target>[:<readonly true|false>]'
+   *     mount string, # "<source>:<target>[:<readonly true|false>]"
    *   >,
    *   cmd: Array<string|number>,
    *   workdir: path string,
@@ -1856,7 +1856,7 @@ class Docker {
    *     * `rollback` - causes a rollback to the previous Docker service version.
    *     * `force` - if `true`, an update of the Docker service will occur even if no relevant parameters have been changed. If `false`, no update will occur if no relevant parameters have been changed.
    *     * `image` - the Docker image that will be used by the Docker service.
-   *     * `replicas` - the number of containers that the Docker service will run across all nodes of the Docker swarm. If `replicas` is set to 'global', the Docker service will run containers on each node of the Docker swarm.
+   *     * `replicas` - the number of containers that the Docker service will run across all nodes of the Docker swarm. If `replicas` is set to "global", the Docker service will run containers on each node of the Docker swarm.
    *     * `restart` - the restart policy for the Docker service.
    *     * `restartDelay` - the delay between restarts for the Docker service.
    *     * `logDriver` - the logging driver of the Docker service.
@@ -1873,7 +1873,7 @@ class Docker {
    *     * `updateParallelism` - the maximum number of tasks to be updated in one iteration. `0` means unlimited parallelism. Defaults to `2`.
    *     * `cmd` - the command that to be run by the Docker service.
    *     * `workdir` - the working directory of the containers of the Docker service.
-   *     * `env` - an object of the Docker service's environment variables. Maps environment variable names to environment variable values, e.g. `{ FOO: 'bar' }`.
+   *     * `env` - an object of the Docker service"s environment variables. Maps environment variable names to environment variable values, e.g. `{ FOO: "bar' }`.
    *     * `labels` - object of user-defined key/value metadata.
    *     * `username` - authentication credentials.
    *     * `password` - authentication credentials.
@@ -1888,8 +1888,8 @@ class Docker {
    * ```javascript
    * const docker = new Docker()
    *
-   * await docker.updateService('my-service', {
-   *   image: 'node:16-alpine',
+   * await docker.updateService("my-service", {
+   *   image: "node:16-alpine",
    *   memory: 512e6,
    *   cpus: 2,
    * })
@@ -1910,24 +1910,24 @@ class Docker {
     const response = await this.http.post(`/services/${service}/update?${
       querystring.stringify({
         version: serviceData.Version.Index,
-        ...pick(options, ['rollback']),
+        ...pick(options, ["rollback"]),
       })
     }`, {
 
       body: JSON.stringify(updateServiceSpec),
       headers: {
-        'Content-Type': 'application/json',
-        'X-Registry-Auth': pipe(options, [
+        "Content-Type": "application/json",
+        "X-Registry-Auth": pipe(options, [
           pick([
-            'username',
-            'password',
-            'email',
-            'serveraddress',
-            'identitytoken',
+            "username",
+            "password",
+            "email",
+            "serveraddress",
+            "identitytoken",
           ]),
           JSON.stringify,
           Buffer.from,
-          buffer => buffer.toString('base64'),
+          buffer => buffer.toString("base64"),
         ]),
       },
     })
@@ -1955,7 +1955,7 @@ class Docker {
    * ```javascript
    * const docker = new Docker()
    *
-   * await docker.deleteService('my-service')
+   * await docker.deleteService("my-service")
    * ```
    *
    * References:
@@ -1972,7 +1972,7 @@ class Docker {
    *
    * @docs
    * ```coffeescript [specscript]
-   * module DockerDocs 'https://docs.docker.com/reference/api/engine/version/v1.52/'
+   * module DockerDocs "https://docs.docker.com/reference/api/engine/version/v1.52/"
    *
    * listServices(options { filters: string }) -> data Promise<{
    *   ID: string,
@@ -1989,7 +1989,7 @@ class Docker {
    *     }>,
    *   }>,
    *   UpdateStatus: {
-   *     State: 'updating'|'paused'|'completed',
+   *     State: "updating"|"paused"|"completed",
    *     StartedAt: string, # ISO 8601 date string
    *     CompletedAt: string, # ISO 8601 date string
    *     Message: string,
@@ -2040,7 +2040,7 @@ class Docker {
    */
   async listServices(options = {}) {
     const response = await this.http.get(`/services?${
-      querystring.stringify(pick(options, ['filters']))
+      querystring.stringify(pick(options, ["filters"]))
     }`)
     const data = await handleDockerHTTPResponse(response)
     return data
@@ -2051,7 +2051,7 @@ class Docker {
    *
    * @docs
    * ```coffeescript [specscript]
-   * module DockerDocs 'https://docs.docker.com/reference/api/engine/version/v1.52/'
+   * module DockerDocs "https://docs.docker.com/reference/api/engine/version/v1.52/"
    *
    * inspectService(serviceId string) -> data Promise<{
    *   ID: string,
@@ -2068,7 +2068,7 @@ class Docker {
    *     }>,
    *   }>,
    *   UpdateStatus: {
-   *     State: 'updating'|'paused'|'completed',
+   *     State: "updating"|"paused"|"completed",
    *     StartedAt: string, # ISO 8601 date string
    *     CompletedAt: string, # ISO 8601 date string
    *     Message: string,
@@ -2104,7 +2104,7 @@ class Docker {
    * ```javascript
    * const docker = new Docker()
    *
-   * const data = await docker.inspectService('my-service')
+   * const data = await docker.inspectService("my-service")
    * ```
    *
    * References:
@@ -2121,7 +2121,7 @@ class Docker {
    *
    * @docs
    * ```coffeescript [specscript]
-   * module stream 'https://nodejs.org/api/stream.html'
+   * module stream "https://nodejs.org/api/stream.html"
    *
    * getServiceLogs(serviceId string, options {
    *   stdout: boolean,
@@ -2151,14 +2151,14 @@ class Docker {
    * ```javascript
    * const docker = new Docker()
    *
-   * const logStream = await docker.getServiceLogs('my-service', {
+   * const logStream = await docker.getServiceLogs("my-service", {
    *   tail: 1000,
    *   follow: true,
    * })
    *
    * logStream.pipe(process.stdout)
-   * logStream.on('end', () => {
-   *   console.log('getServiceLogs success.')
+   * logStream.on("end", () => {
+   *   console.log("getServiceLogs success.")
    * })
    * ```
    *
@@ -2168,8 +2168,8 @@ class Docker {
   async getServiceLogs(serviceId, options = {}) {
     const response = await this.http.get(`/services/${serviceId}/logs?${
       querystring.stringify(pick(options, [
-        'stdout', 'stderr', 'follow',
-        'since', 'timestamps', 'tail',
+        "stdout", "stderr", "follow",
+        "since", "timestamps", "tail",
       ]))
     }`)
 
@@ -2182,10 +2182,10 @@ class Docker {
    *
    * @docs
    * ```coffeescript [specscript]
-   * module DockerDocs 'https://docs.docker.com/reference/api/engine/version/v1.52/'
+   * module DockerDocs "https://docs.docker.com/reference/api/engine/version/v1.52/"
    *
    * listTasks(options {
-   *   desiredState: 'running'|'shutdown'|'accepted'
+   *   desiredState: "running"|"shutdown"|"accepted"
    *   service: string,
    * }) -> data Promise<[
    *   ID: string,
@@ -2200,9 +2200,9 @@ class Docker {
    *   NodeID: string,
    *   AssignedGenericResources: Array<DockerDocs.GenericResources>,
    *   Status: DockerDocs.TaskStatus,
-   *   DesiredState: 'new'|'allocated'|'pending'|'assigned'|'accepted'
-   *     |'preparing'|'ready'|'starting'|'running'|'complete'|'shutdown'
-   *     |'failed'|'rejected'|'remove'|'orphaned',
+   *   DesiredState: "new"|"allocated"|"pending"|"assigned"|"accepted"
+   *     |"preparing"|"ready"|"starting"|"running"|"complete"|"shutdown"
+   *     |"failed"|"rejected"|"remove"|"orphaned",
    *   JobIteration: DockerDocs.ObjectVersion,
    * ]>
    * ```
@@ -2235,7 +2235,7 @@ class Docker {
    * const docker = new Docker()
    *
    * const tasksData = await docker.listTasks()
-   * const runningTasksData = await docker.listTasks({ desiredState: 'running' })
+   * const runningTasksData = await docker.listTasks({ desiredState: "running" })
    * ```
    *
    * References:
@@ -2243,7 +2243,7 @@ class Docker {
    */
   async listTasks(options = {}) {
     const filters = pipe({
-      'desired-state': options.desiredState,
+      "desired-state": options.desiredState,
       service: options.service,
     }, [
       filter(value => value != null),
@@ -2262,7 +2262,7 @@ class Docker {
    *
    * @docs
    * ```coffeescript [specscript]
-   * module DockerDocs 'https://docs.docker.com/reference/api/engine/version/v1.52/'
+   * module DockerDocs "https://docs.docker.com/reference/api/engine/version/v1.52/"
    *
    * inspectTask(taskId string) -> data Promise<{
    *   ID: string,
@@ -2277,9 +2277,9 @@ class Docker {
    *   NodeID: string,
    *   AssignedGenericResources: Array<DockerDocs.GenericResources>,
    *   Status: DockerDocs.TaskStatus,
-   *   DesiredState: 'new'|'allocated'|'pending'|'assigned'|'accepted'
-   *     |'preparing'|'ready'|'starting'|'running'|'complete'|'shutdown'
-   *     |'failed'|'rejected'|'remove'|'orphaned',
+   *   DesiredState: "new"|"allocated"|"pending"|"assigned"|"accepted"
+   *     |"preparing"|"ready"|"starting"|"running"|"complete"|"shutdown"
+   *     |"failed"|"rejected"|"remove"|"orphaned",
    *   JobIteration: DockerDocs.ObjectVersion,
    *   NetworksAttachments: Array<{
    *     Network: DockerDocs.Network,
@@ -2299,7 +2299,7 @@ class Docker {
    *
    * @docs
    * ```coffeescript [specscript]
-   * module DockerDocs 'https://docs.docker.com/reference/api/engine/version/v1.52/'
+   * module DockerDocs "https://docs.docker.com/reference/api/engine/version/v1.52/"
    *
    * listNodes() -> data Promise<[
    *   ID: string,
@@ -2339,7 +2339,7 @@ class Docker {
    *   * [Docker Swarm](https://docs.docker.com/engine/swarm/)
    */
   async listNodes() {
-    const response = await this.http.get('/nodes')
+    const response = await this.http.get("/nodes")
     const data = await handleDockerHTTPResponse(response)
     return data
   }
@@ -2363,7 +2363,7 @@ class Docker {
    * ```javascript
    * const docker = new Docker()
    *
-   * await docker.deleteNode('node-id')
+   * await docker.deleteNode("node-id")
    * ```
    *
    * References:
@@ -2403,7 +2403,7 @@ class Docker {
    * ```
    */
   async pruneImages() {
-    const response = await this.http.post('/images/prune')
+    const response = await this.http.post("/images/prune")
     const data = await handleDockerHTTPResponse(response)
     data.ImagesDeleted ??= []
     return data
@@ -2437,7 +2437,7 @@ class Docker {
    * ```
    */
   async pruneContainers() {
-    const response = await this.http.post('/containers/prune')
+    const response = await this.http.post("/containers/prune")
     const data = await handleDockerHTTPResponse(response)
     data.ContainersDeleted ??= []
     return data
@@ -2471,7 +2471,7 @@ class Docker {
    * ```
    */
   async pruneVolumes() {
-    const response = await this.http.post('/volumes/prune')
+    const response = await this.http.post("/volumes/prune")
     const data = await handleDockerHTTPResponse(response)
     data.VolumesDeleted ??= []
     return data
@@ -2503,7 +2503,7 @@ class Docker {
    * ```
    */
   async pruneNetworks() {
-    const response = await this.http.post('/networks/prune')
+    const response = await this.http.post("/networks/prune")
     const data = await handleDockerHTTPResponse(response)
     data.NetworksDeleted ??= []
     return data
@@ -2516,7 +2516,7 @@ class Docker {
    * ```coffeescript [specscript]
    * createNetwork(options {
    *   name: string,
-   *   driver: 'bridge'|'host'|'overlay'|'ipvlan'|'macvlan',
+   *   driver: "bridge"|"host"|"overlay"|"ipvlan"|"macvlan",
    *   ingress: boolean,
    *   subnet: string,
    *   gateway: string,
@@ -2545,15 +2545,15 @@ class Docker {
    * const docker = new Docker()
    *
    * const data = await docker.createNetwork({
-   *   name: 'my-network',
-   *   driver: 'overlay',
+   *   name: "my-network",
+   *   driver: "overlay",
    * })
    * ```
    */
   async createNetwork(options) {
-    const response = await this.http.post('/networks/create', {
+    const response = await this.http.post("/networks/create", {
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(filterExists({
         Name: options.name,
@@ -2562,7 +2562,7 @@ class Docker {
         CheckDuplicate: true,
         ...options.subnet == null && options.gateway == null ? {} : {
           IPAM: {
-            Driver: 'default',
+            Driver: "default",
             Config: [filterExists({
               Subnet: options.subnet,
               Gateway: options.gateway,
@@ -2582,7 +2582,7 @@ class Docker {
    *
    * @docs
    * ```coffeescript [specscript]
-   * module DockerDocs 'https://docs.docker.com/reference/api/engine/version/v1.52/'
+   * module DockerDocs "https://docs.docker.com/reference/api/engine/version/v1.52/"
    *
    * inspectNetwork(networkId string) -> data Promise<{
    *   Containers: Object<DockerDocs.EndpointResource>,
@@ -2591,7 +2591,7 @@ class Docker {
    *   Name: string,
    *   Id: string,
    *   Created: string, # ISO 8601 date string
-   *   Scope: 'swarm'|'local',
+   *   Scope: "swarm"|"local",
    *   Driver: string,
    *   EnableIPv4: boolean,
    *   EnableIPv6: boolean,
@@ -2637,7 +2637,7 @@ class Docker {
    * ```javascript
    * const docker = new Docker()
    *
-   * const data = await docker.inspectNetwork('my-network')
+   * const data = await docker.inspectNetwork("my-network")
    * ```
    */
   async inspectNetwork(id) {
@@ -2665,7 +2665,7 @@ class Docker {
    * ```javascript
    * const docker = new Docker()
    *
-   * await docker.deleteNetwork('my-network')
+   * await docker.deleteNetwork("my-network")
    * ```
    */
   async deleteNetwork(id) {
@@ -2674,8 +2674,66 @@ class Docker {
     return message
   }
 
-}
+  /**
+   * @name createVolume
+   *
+   * @docs
+   * ```coffeescript [specscript]
+   * createVolume(name string) -> data Promise<{
+   *   Name: string,
+   *   Driver: string,
+   *   Mountpoint: string,
+   *   CreatedAt: string,
+   *   Status: object,
+   *   Labels: object,
+   *   Scope: "local",
+   *   Options: object,
+   *   UsageData: {
+   *     Size: number,
+   *     RefCount: number,
+   *   },
+   * }>
+   * ```
+   *
+   * Creates a local Docker volume.
+   *
+   * Arguments:
+   *   * `name` - `string` - the name of the volume.
+   *
+   * Return:
+   *   * `data` - `Promise<{...}>` - a promise of data about the created volume.
+   *     * `Name` - `string` - the name of the volume.
+   *     * `Driver` - `string` - the name of the volume driver of the volume.
+   *     * `Mountpoint` - `string` - the mount path of the volume on the host.
+   *     * `CreatedAt` - `string` - an ISO 8601 date string for the volume creation time.
+   *     * `Status` - `object` - low-level details about the volume provided by the volume driver.
+   *     * `Labels` - `object` - key/value metadata
+   *     * `Scope` - `string` - the level at which the volume exists, either `"local"` for machine level or `"global"` for for cluster-wide.
+   *     * `Options` - `object` - the driver-specific options for creating the volume.
+   *     * `UsageData` - `object`
+   *       * `Size` - `number` - amount of disk space taken up by the volume in bytes. Only available for volumes at the `"local"` level, otherwise set to `-1`.
+   *       * `RefCount` - `number` - the number of containers referencing the volume. Set to `-1` if the reference count is unavailable.
+   *
+   * ```javascript
+   * const docker = new Docker()
+   *
+   * await docker.createVolume("local-database")
+   * ```
+   */
+  async createVolume(name) {
+    const response = await this.http.post("volumes/create", {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        Name: name,
+        Driver: "local",
+      }),
+    })
+    const data = await handleDockerHTTPResponse(response)
+    return data
+  }
 
-// Docker.RawStreamHeader = function (buffer) {}
+}
 
 module.exports = Docker
