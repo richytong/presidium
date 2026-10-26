@@ -339,6 +339,7 @@ class Docker {
    *   >,
    *   archiveDockerfile: string,
    *   platform: string, # "<os>[/arch[/variant]]"
+   *   nocache: boolean,
    * }) -> dataStream Promise<stream.Readable>
    * ```
    *
@@ -350,8 +351,9 @@ class Docker {
    *     * `image` - the name and optional tag of the image. If no tag is present, `"LATEST"` is assumed as the value for the tag.
    *     * `ignore` - patterns to ignore when bundling files and directories for the build context.
    *     * `archive` - an object of filenames and file contents that will be present in the build context.
-   *     * `archiveDockerfile` - the filepath including filename of the Dockerfile, e.g. `"Dockerfiles/Dockerfile2"`. Defaults to `"Dockerfile"`.
+   *     * `archiveDockerfile` - the filepath within the build context to the Dockerfile, e.g. `"Dockerfiles/Dockerfile2"`. Defaults to `"Dockerfile"`.
    *     * `platform` - target platform for the build, e.g. `"linux/arm64"`.
+   *     * `nocache` - causes Docker to not reference image layers from the cache when building the image.
    *
    * Return:
    *   * `dataStream` - a readable stream of the progress of the Docker `buildImage` operation.
@@ -420,6 +422,7 @@ class Docker {
       t: options.image,
       forcerm: true,
       platform: options.platform ?? "",
+      nocache: options.nocache ?? false,
     })}`, {
       body: compressed,
       headers: {

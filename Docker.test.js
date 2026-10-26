@@ -58,23 +58,38 @@ const test3 = new Test('Docker - image', async function integration() {
   await docker.removeImage('presidium-test:test').catch(() => {})
   await docker.removeImage('localhost:5000/presidium-test:test').catch(() => {})
 
-  { // pull node-15:alpine
-    const dataStream = await docker.pullImage('node:15-alpine')
+  { // pull node-26:alpine
+    const dataStream = await docker.pullImage('node:26-alpine')
     dataStream.pipe(process.stdout)
     await new Promise(resolve => dataStream.on('end', resolve))
   }
 
-  {
-    const dataStream = await docker.buildImage(__dirname, {
+  { // build test 1
+    const dataStream = await docker.buildImage(`${__dirname}/test`, {
       image: 'presidium-test:test',
       archive: {
         Dockerfile: `
-FROM node:15-alpine
+FROM node:26-alpine
 WORKDIR /opt
 COPY . .
-EXPOSE 8888`,
+EXPOSE 8888
+        `,
       },
       ignore: ['.git', '.github', '.nyc_output', 'node_modules', 'tmp'],
+    })
+    dataStream.pipe(process.stdout)
+    await new Promise(resolve => {
+      dataStream.on('end', resolve)
+    })
+  }
+
+  { // build test 1 nocache
+    const dataStream = await docker.buildImage(`${__dirname}/test`, {
+      image: 'presidium-test:test-1',
+      archiveDockerfile: 'DockerfileTest',
+      ignore: ['.git', '.github', '.nyc_output', 'node_modules', 'tmp'],
+      nocache: true,
+      platform: 'linux/x86',
     })
     dataStream.pipe(process.stdout)
     await new Promise(resolve => {
@@ -98,8 +113,8 @@ EXPOSE 8888`,
       runStream.on('end', resolve)
     })
 
-    assert(output.includes('/opt/Docker.js'))
-    assert(output.includes('/opt/Docker.test.js'))
+    assert(output.includes('/opt/test/a.txt'))
+    assert(output.includes('/opt/externalTest.js'))
   }
 
 
@@ -166,7 +181,7 @@ const test4 = new Test('Docker - container', async function integration() {
   {
     const data = await docker.createContainer({
       name: `test-alpine-3-${Date.now()}`,
-      image: 'node:15-alpine',
+      image: 'node:26-alpine',
       cmd: ['node', '-e', 'console.log(\'test0\')'],
       rm: true,
     })
@@ -208,7 +223,7 @@ const test4 = new Test('Docker - container', async function integration() {
   {
     const data = await docker.createContainer({
       name: `test-alpine-30-${Date.now()}`,
-      image: 'node:15-alpine',
+      image: 'node:26-alpine',
       cmd: ['node', '-e', 'console.error(\'test0\')'],
       rm: true,
     })
@@ -249,7 +264,7 @@ const test4 = new Test('Docker - container', async function integration() {
   {
     const data = await docker.createContainer({
       name: `test-alpine-1-${Date.now()}`,
-      image: 'node:15-alpine',
+      image: 'node:26-alpine',
       cmd: ['node', '-e', 'console.log(\'test\')'],
       workdir: '/opt/test0',
       expose: [22, 8888, '8889/udp'],
@@ -308,7 +323,7 @@ const test4 = new Test('Docker - container', async function integration() {
   {
     const data = await docker.createContainer({
       name: `test-alpine-2-${Date.now()}`,
-      image: 'node:15-alpine',
+      image: 'node:26-alpine',
       cmd: ['node', '-e', 'http.createServer((request, response) => response.end(\'x0\')).listen(2999)'],
       rm: true,
     })
@@ -333,7 +348,7 @@ const test4 = new Test('Docker - container', async function integration() {
   {
     const runStream = await docker.runContainer({
       name: `test-alpine-4-${Date.now()}`,
-      image: 'node:15-alpine',
+      image: 'node:26-alpine',
       cmd: ['node', '-e', 'console.log(\'x0\')'],
       rm: true,
     })
@@ -351,7 +366,7 @@ const test4 = new Test('Docker - container', async function integration() {
   }
 
   await assert.rejects(
-    docker.removeImage('node:15-alpine'),
+    docker.removeImage('node:26-alpine'),
     error => {
       assert(error.message.includes('conflict'))
       assert.equal(error.code, 409)
@@ -361,7 +376,7 @@ const test4 = new Test('Docker - container', async function integration() {
 
   {
     const data = await docker.inspectContainer(this.containerId)
-    assert.equal(data.Config.Image, 'node:15-alpine')
+    assert.equal(data.Config.Image, 'node:26-alpine')
     assert.deepEqual(data.Config.Volumes, { '/opt/my-volume': {} })
     assert.equal(data.Config.WorkingDir, '/opt/test0')
     assert.deepEqual(data.Config.ExposedPorts, { '22/tcp': {}, '8888/tcp': {}, '8889/udp': {} })
@@ -482,7 +497,7 @@ const test5 = new Test('Docker - swarm', async function integration() {
 
   { // create a service
     const data1 = await docker.createService('service1', {
-      image: 'node:15-alpine',
+      image: 'node:26-alpine',
       labels: { foo: 'bar' },
       replicas: 2,
       cmd: ['node', '-e', 'http.createServer((request, response) => response.end(\'service1\')).listen(3000)'],
@@ -531,7 +546,7 @@ const test5 = new Test('Docker - swarm', async function integration() {
 
   { // create the same service
     const p = docker.createService('service1', {
-      image: 'node:15-alpine',
+      image: 'node:26-alpine',
       labels: { foo: 'bar' },
       replicas: 2,
       cmd: ['node', '-e', 'http.createServer((request, response) => response.end(\'service1\')).listen(3000)'],
@@ -574,7 +589,7 @@ const test5 = new Test('Docker - swarm', async function integration() {
 
   { // create another service on multiple networks
     const data1 = await docker.createService('service2', {
-      image: 'node:15-alpine',
+      image: 'node:26-alpine',
       replicas: 'global',
       cmd: ['node', '-e', 'http.createServer((request, response) => response.end(\'service2\')).listen(3001)'],
       workdir: '/opt/test0',
