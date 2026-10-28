@@ -37,6 +37,15 @@ License: [CFOSS](https://cloutsworld.com/en-us/legal/license/cfoss)
 [![codecov](https://codecov.io/gh/richytong/presidium-db-client-server/graph/badge.svg?token=07P6G8GIOQ)](https://codecov.io/gh/richytong/presidium-db-client-server)
 [![npm version](https://img.shields.io/npm/v/presidium-db-client-server.svg?style=flat)](https://www.npmjs.com/package/presidium-db-client-server)
 
+### Presidium File Client and Server
+
+Source code: [GitHub](https://github.com/richytong/presidium-file-client-server) |
+License: [CFOSS](https://cloutsworld.com/en-us/legal/license/cfoss)
+
+![Node.js CI](https://github.com/richytong/presidium-file-client-server/workflows/Node.js%20CI/badge.svg)
+[![codecov](https://codecov.io/gh/richytong/presidium-file-client-server/graph/badge.svg?token=07P6G8GIOQ)](https://codecov.io/gh/richytong/presidium-file-client-server)
+[![npm version](https://img.shields.io/npm/v/presidium-file-client-server.svg?style=flat)](https://www.npmjs.com/package/presidium-file-client-server)
+
 ## Installation
 with [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm):
 ```bash
