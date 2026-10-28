@@ -369,11 +369,12 @@ const DiskSortedHashTableClient = require("presidium-db-client-server/DiskSorted
 const postHt = new DiskSortedHashTableClient({
   serverUrl: "http://localhost:5000",
   tableName: "Post",
-  sortValueType: "number",
+  sortValueType: ["string", "number"],
 })
 
 const post1 = {
   id: "post-1",
+  profileId: "profile-1",
   images: ["/assets/post-1/image-1.jpg"],
   content: "First post",
   time: Date.now(),
@@ -381,6 +382,7 @@ const post1 = {
 
 const post2 = {
   id: "post-2",
+  profileId: "profile-1",
   images: ["/assets/post-2/image-2.jpg"],
   content: "Second post",
   time: Date.now(),
@@ -388,17 +390,21 @@ const post2 = {
 
 const post3 = {
   id: "post-3",
+  profileId: "profile-1",
   images: ["/assets/post-3/image-3.jpg"],
   content: "Third post",
   time: Date.now(),
 }
 
-await postHt.set(post1.id, JSON.stringify(post1), post1.time)
-await postHt.set(post2.id, JSON.stringify(post2), post2.time)
-await postHt.set(post3.id, JSON.stringify(post3), post3.time)
+await postHt.set(post1.id, JSON.stringify(post1), "profile-1", post1.time)
+await postHt.set(post2.id, JSON.stringify(post2), "profile-1", post2.time)
+await postHt.set(post3.id, JSON.stringify(post3), "profile-1", post3.time)
 
 const myPosts = []
-for await (const postJson of await postHt.reverseIterator()) {
+for await (const postJson of postHt.reverseIterator({
+  startingSortValue: ["profile-1", 0],
+  endingSortValue: ["profile-1", Infinity],
+})) {
   myPosts.push(JSON.parse(postJson))
 }
 ```
