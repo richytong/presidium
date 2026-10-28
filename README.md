@@ -398,20 +398,69 @@ for await (const postJson of await postHt.reverseIterator()) {
 ```javascript
 const DatabaseLoadBalancer = require("presidium/DatabaseLoadBalancer")
 
-function hash(tableName, key, length) {
-  const value = `${tableName}${key}`
-  const digest = crypto.createHash("md5").update(value).digest()
-  const integerHash = digest.readUInt16BE(0)
-  const index = Math.floor(integerHash / 65535 * length)
-  return index
-}
-
-const loadBalancer = new DatabaseLoadBalancer(hash, {
+const loadBalancer = new DatabaseLoadBalancer({
   serverIps: ["10.0.0.1:8080", "10.0.0.2:8080"],
 })
 
 loadBalancer.listen(6333, () => {
   console.log("Database load balancer listening on port 6333")
+})
+```
+
+## [Host your own file service](https://presidium.services/docs/FileServer)
+```javascript
+const FileServer = require("presidium/FileServer")
+
+const fileServer = new FileServer({
+  dir: `${__dirname}/files`,
+  databasePath: `${__dirname}/database`,
+})
+await fileServer.init()
+
+fileServer.listen(9000, () => {
+  console.log("File server listening on port 9000")
+})
+```
+
+## [Call your file service](https://presidium.services/docs/FileClient)
+```javascript
+const FileClient = require("presidium/FileClient")
+
+const fileClient = new FileClient({
+  serverUrl: "http://localhost:9000",
+})
+
+const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Page</title>
+</head>
+<body>
+    <h1>My Page</h1>
+</body>
+</html>
+`
+
+await fileClient.write("/public/my-page", html, {
+  ContentType: "text/html",
+})
+
+const data = await fileClient.read("/public/my-page")
+data.FileStream.pipe(process.stdout)
+```
+
+## [Load balance and distribute content from your file service](https://presidium.services/docs/FileLoadBalancer)
+```javascript
+const FileLoadBalancer = require("presidium/FileLoadBalancer")
+
+const loadBalancer = new FileLoadBalancer({
+  serverIps: ["10.0.0.1:8080", "10.0.0.2:8080"],
+})
+
+loadBalancer.listen(9000, () => {
+  console.log("Database load balancer listening on port 9000")
 })
 ```
 
