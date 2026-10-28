@@ -402,8 +402,8 @@ await postHt.set(post3.id, JSON.stringify(post3), "profile-1", post3.time)
 
 const myPosts = []
 for await (const postJson of postHt.reverseIterator({
-  startingSortValue: ["profile-1", 0],
-  endingSortValue: ["profile-1", Infinity],
+  startingSortValue: ["profile-1", Infinity],
+  endingSortValue: ["profile-1", 0],
 })) {
   myPosts.push(JSON.parse(postJson))
 }
