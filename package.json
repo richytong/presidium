@@ -69,10 +69,10 @@
   "dependencies": {
     "adm-zip": "^0.6.1",
     "html-entities": "^2.6.0",
-    "presidium-db": ">=4.6.2",
-    "presidium-db-client-server": ">=4.1.0",
+    "presidium-db": ">=4.7.0",
+    "presidium-db-client-server": ">=4.2.0",
     "presidium-websocket": ">=4.2.2",
-    "rubico": "^2.21.0",
+    "rubico": ">=2.22.1",
     "tar-stream": "^3.2.2",
     "uniqid": "^5.4.0"
   },
