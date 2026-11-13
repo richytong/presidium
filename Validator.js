@@ -49,7 +49,7 @@ const Validator = {
    *
    * @docs
    * ```specscript
-   * Validator.Array(data) -> Array
+   * Validator.Array(data any) -> Array
    *
    * Validator.Array(validator function) -> arrayValidator
    *
@@ -165,12 +165,26 @@ const Validator = {
    *
    * @docs
    * ```specscript
-   * Validator.OneOf(...values Arguments) -> oneOfValidator
+   * Validator.OneOf(...values Arguments<function|any>) -> oneOfValidator
    *
    * oneOfValidator(data any) -> result string|number
    * ```
    */
   OneOf(...values) {
+    if (typeof values[0] == "function") {
+      return function _OneOf(data) {
+        for (const validator of values) {
+          try {
+            validator(data)
+            return data
+          } catch {
+          }
+        }
+        const error = new Error("NotOneOf")
+        error.data = data
+        throw error
+      }
+    }
     return function _OneOf(data) {
       if (values.includes(data)) {
         return data

@@ -20,6 +20,7 @@ async function test0() {
     d: Boolean,
     e: OneOf("x", "y"),
     f: Optional(Number),
+    g: OneOf(Object({ x: Number }), Object({ y: Number })),
   })
 
   assert.deepEqual(validator({
@@ -28,12 +29,14 @@ async function test0() {
     c: "test@test.test",
     d: true,
     e: "x",
+    g: { x: 1 },
   }), {
     a: 1,
     b: "2",
     c: "test@test.test",
     d: true,
     e: "x",
+    g: { x: 1 },
   })
 
   assert.deepEqual(validator({
@@ -42,12 +45,14 @@ async function test0() {
     c: "test@test.test",
     d: true,
     e: "y",
+    g: { y: 1 },
   }), {
     a: 1,
     b: "2",
     c: "test@test.test",
     d: true,
     e: "y",
+    g: { y: 1 },
   })
 
   assert.deepEqual(validator({
@@ -57,6 +62,7 @@ async function test0() {
     d: true,
     e: "x",
     f: 1,
+    g: { x: 1 },
   }), {
     a: 1,
     b: "2",
@@ -64,6 +70,7 @@ async function test0() {
     d: true,
     e: "x",
     f: 1,
+    g: { x: 1 },
   })
 
   assert.throws(
@@ -73,6 +80,7 @@ async function test0() {
       c: "test@test.test",
       d: true,
       e: "x",
+      g: { x: 1 },
     }),
     { name: "Error", message: "BadNumber", key: "a", data: "1" },
   )
@@ -84,6 +92,7 @@ async function test0() {
       c: "test@test.test",
       d: true,
       e: "x",
+      g: { x: 1 },
     }),
     { name: "Error", message: "BadString", key: "b", data: 2 },
   )
@@ -95,6 +104,7 @@ async function test0() {
       c: "@test.test",
       d: true,
       e: "x",
+      g: { x: 1 },
     }),
     { name: "Error", message: "BadEmail", key: "c", data: "@test.test" },
   )
@@ -106,6 +116,7 @@ async function test0() {
       c: "test@test.test",
       d: NaN,
       e: "x",
+      g: { x: 1 },
     }),
     { name: "Error", message: "BadBoolean", key: "d", data: NaN },
   )
@@ -117,8 +128,21 @@ async function test0() {
       c: "test@test.test",
       d: true,
       e: "a",
+      g: { x: 1 },
     }),
     { name: "Error", message: "NotOneOf", key: "e", data: "a" },
+  )
+
+  assert.throws(
+    () => validator({
+      a: 1,
+      b: "2",
+      c: "test@test.test",
+      d: true,
+      e: "x",
+      g: { z: 1 },
+    }),
+    { name: "Error", message: "NotOneOf", data: { z: 1 } },
   )
 }
 
