@@ -183,11 +183,23 @@ async function test3() {
   )
 }
 
+async function test4() {
+  const validator = Array(Object({ a: Number }))
+
+  assert.deepEqual(validator([{ a: 1 }, { a: 2 }]), [{ a: 1 }, { a: 2 }])
+
+  assert.throws(
+    () => validator([{ a: 1 }, { b: 2 }]),
+    { name: "Error", message: "BadObject", key: "a", data: { b: 2 } },
+  )
+}
+
 async function test() {
   await test0()
   await test1()
   await test2()
   await test3()
+  await test4()
   console.log("Success")
 }
 

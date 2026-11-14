@@ -32,6 +32,12 @@ const Validator = {
               result[key] = validator(value)
             }
           } catch (error) {
+            if (!(key in data)) {
+              const error = new Error("BadObject")
+              error.key = key
+              error.data = data
+              throw error
+            }
             error.key = key
             throw error
           }
