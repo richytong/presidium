@@ -1558,6 +1558,7 @@ class Docker {
    *   rollbackMonitor: 15e9|number,
    *   rollbackMaxFailureRatio: 0.15|number,
    *   network: string,
+   *   networks: Array<string>,
    *   cmd: Array<string|number>,
    *   workdir: path string,
    *   env: Object<string>,
